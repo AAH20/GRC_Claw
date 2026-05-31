@@ -1,28 +1,34 @@
 # GRC_Claw
 
-### OpenClaw for GRC
+### OpenClaw for GRC — built for enterprise compliance operations
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
+[![GitHub](https://img.shields.io/badge/GitHub-AAH20%2FGRC__Claw-181717?logo=github)](https://github.com/AAH20/GRC_Claw)
 [![OpenClaw for GRC](https://img.shields.io/badge/OpenClaw-for%20GRC-8b5cf6)](ARCHITECTURE.md)
 [![Agentic AI Security](https://img.shields.io/badge/Agentic%20AI-Secured-green)](docs/AGENTIC_AI_SECURITY.md)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2z--soc.com-red)](https://a2z-soc.com)
 
-**GRC_Claw is [OpenClaw](https://openclaw.ai) for GRC** — a supervised gateway daemon, agent runtime with mandatory security policy, and modular compliance packs. Fork it, run it on-prem, or connect it to your SOC at **[a2z-soc.com](https://a2z-soc.com)**.
+**GRC_Claw** takes the local gateway control-plane pattern from **[OpenClaw](https://github.com/openclaw/openclaw)** and extends it into a production-grade stack for **governance, risk, and compliance (GRC)** and security operations.
 
-| | OpenClaw | GRC_Claw |
+[OpenClaw](https://github.com/openclaw/openclaw) is an excellent foundation for personal AI assistants—messaging channels, skills, and a supervised gateway on your own hardware. **GRC_Claw is architecturally related but purpose-built for a different class of problem:** regulated tenants, continuous control monitoring, immutable evidence, SIEM and cloud alert normalization, ISO/IEC 42001 AIMS alignment, and optional integration with a live SOC at **[a2z-soc.com](https://a2z-soc.com)**. Same daemon philosophy; materially deeper surface area for security and compliance teams.
+
+| | [OpenClaw](https://github.com/openclaw/openclaw) | **GRC_Claw** (this repo) |
 |---|----------|----------|
-| **Focus** | Messaging & general agents | **Governance, risk & compliance** |
-| **Control plane** | Gateway daemon (WS) | Gateway daemon (WS + HTTP) |
-| **Agents** | Tools + skills | Tools + **exec policy** (allowlist → approval → sandbox) |
-| **Data** | Channels, chat | **Controls, evidence, frameworks, SIEM/cloud alerts** |
-| **Production SOC** | Bring your own | **[a2z-soc.com](https://a2z-soc.com)** |
+| **Primary use** | Personal assistant & chat channels | **Enterprise GRC + SOC automation** |
+| **Control plane** | Gateway daemon (WebSocket) | Gateway daemon (**WS + HTTP APIs**) |
+| **Agent governance** | Tools + skills (operator-defined) | **Mandatory exec policy** (allowlist → approval → sandbox) |
+| **Compliance** | General-purpose | **Framework packs** (ISO 27001, NIST CSF, SOC 2, ISO 42001 AIMS) |
+| **Evidence** | Workspace files | **SHA-256 lineage** + SOC attach API |
+| **Ingest** | Channel messages | **OSS SIEM/IDS/firewall + AWS/Azure/GCP** normalizers |
+| **AI supply chain** | Model provider choice | **BYOC LLM + MCP** with gated tool registry |
+| **Production SOC** | Bring your own | **[a2z-soc.com](https://a2z-soc.com)** bridge (events, controls, alerts) |
 
 ---
 
 ## Why GRC_Claw
 
-GRC_Claw is an MIT **npm workspaces monorepo** for teams who want OpenClaw-style architecture applied to compliance: continuous control testing, evidence lineage, audit-ready framework packs (ISO 27001, NIST CSF, SOC 2, **ISO/IEC 42001 AIMS**), and **agentic AI that cannot bypass policy**.
+GRC_Claw is an MIT **npm workspaces monorepo** for organizations that need more than a general agent gateway: continuous control testing, audit-ready framework packs, evidence you can defend in an assessment, and **agentic AI that cannot bypass policy**—without giving up the operability that made [OpenClaw](https://github.com/openclaw/openclaw) influential in the first place.
 
 Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise SIEM, multi-cloud ingest, and production SOC operations—or run GRC_Claw standalone for demos, audits, and integrator builds.
 
@@ -97,7 +103,7 @@ GRC_Claw/
 - **Node.js** ≥ 20 · **npm** ≥ 9 (workspaces)
 
 ```bash
-git clone <your-grc-claw-repo> GRC_Claw && cd GRC_Claw
+git clone https://github.com/AAH20/GRC_Claw.git && cd GRC_Claw
 npm install && npm run build
 ```
 
@@ -128,7 +134,7 @@ npm install && npm run build
 
 ## Architecture
 
-**Architecture first, daemons second** — same philosophy as OpenClaw, applied to GRC and security operations.
+**Architecture first, daemons second** — informed by [OpenClaw](https://github.com/openclaw/openclaw), extended for GRC and security operations.
 
 | Plane | Components | Role |
 |-------|------------|------|
@@ -347,4 +353,4 @@ npm install && npm run build && npm run test:comprehensive
 
 ---
 
-**OpenClaw for GRC. Secured for agents. Production SOC at [a2z-soc.com](https://a2z-soc.com).**
+**Inspired by [OpenClaw](https://github.com/openclaw/openclaw). Engineered for enterprise GRC. Secured for agents. Production SOC at [a2z-soc.com](https://a2z-soc.com).**
