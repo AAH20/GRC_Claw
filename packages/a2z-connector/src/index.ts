@@ -106,7 +106,7 @@ export class A2ZSocConnector implements GRCEngineFacade {
     }
     const q = frameworkCode ? `?framework=${encodeURIComponent(frameworkCode)}` : '';
     const res = await fetch(this.url(`/api/grc/controls${q}`), {
-      headers: { ...this.headers(), 'X-A2Z-Org-Context': String(tenantId) },
+      headers: this.headers(),
     });
     if (!res.ok) throw new Error(`A2Z SOC controls: ${res.status}`);
     const body = (await res.json()) as { controls: GRCEngineFacade extends never ? never : Awaited<ReturnType<GRCEngineFacade['listControls']>> };

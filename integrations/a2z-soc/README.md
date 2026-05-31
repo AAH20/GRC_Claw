@@ -11,7 +11,7 @@ GRC_Claw (OSS) connects to **Private A2Z SOC** via `@grc-claw/a2z-connector`. No
 | `X-GRC-Claw-Bridge: 1` | Identifies GRC_Claw traffic |
 | `Idempotency-Key` | Required on writes |
 
-## Endpoints (A2Z SOC — planned / implement in private deployment)
+## Endpoints (implemented in Private A2Z SOC)
 
 ### `GET /api/events?since=<iso>&limit=100`
 
