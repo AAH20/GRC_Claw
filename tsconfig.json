@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/ingest" },
+    { "path": "./packages/evidence" },
+    { "path": "./packages/frameworks" },
+    { "path": "./packages/agent-runtime" },
+    { "path": "./packages/a2z-connector" },
+    { "path": "./packages/aims" },
+    { "path": "./packages/gateway" }
+  ]
+}

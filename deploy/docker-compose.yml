@@ -1,0 +1,19 @@
+services:
+  grc-claw-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "127.0.0.1:18791:18791"
+    environment:
+      GRC_CLAW_HOST: 0.0.0.0
+      GRC_CLAW_PORT: 18791
+      GRC_CLAW_GATEWAY_TOKEN: ${GRC_CLAW_GATEWAY_TOKEN:-demo-compose-token}
+      A2Z_SOC_MODE: ${A2Z_SOC_MODE:-demo}
+      A2Z_SOC_BASE_URL: ${A2Z_SOC_BASE_URL:-http://host.docker.internal:3000}
+      A2Z_SOC_API_KEY: ${A2Z_SOC_API_KEY:-}
+      A2Z_SOC_TENANT_ID: ${A2Z_SOC_TENANT_ID:-1}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp

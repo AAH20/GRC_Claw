@@ -1,0 +1,30 @@
+{
+  "name": "@grc-claw/gateway",
+  "version": "0.1.0",
+  "description": "GRC_Claw supervised control-plane gateway daemon",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "grc-claw-gateway": "./dist/cli.js" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "doctor": "node dist/doctor.js"
+  },
+  "dependencies": {
+    "@grc-claw/aims": "0.1.0",
+    "@grc-claw/a2z-connector": "0.1.0",
+    "@grc-claw/agent-runtime": "0.1.0",
+    "@grc-claw/core": "0.1.0",
+    "@grc-claw/evidence": "0.1.0",
+    "@grc-claw/frameworks": "0.1.0",
+    "@grc-claw/ingest": "0.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13"
+  },
+  "files": ["dist"]
+}

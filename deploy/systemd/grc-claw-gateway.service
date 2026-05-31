@@ -1,0 +1,18 @@
+[Unit]
+Description=GRC_Claw Gateway (GRC control plane for A2Z SOC)
+Documentation=https://github.com/your-org/GRC_Claw
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/grc-claw/gateway.env
+ExecStart=/usr/local/bin/node /opt/grc-claw/packages/gateway/dist/cli.js
+Restart=on-failure
+RestartSec=5
+User=grc-claw
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/grc-claw
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+{
+  "name": "@grc-claw/frameworks",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "dependencies": { "@grc-claw/core": "0.1.0" },
+  "files": ["dist"]
+}

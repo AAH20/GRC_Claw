@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "test",
+    "outDir": "dist-test",
+    "noEmit": false,
+    "composite": false
+  },
+  "include": ["test/**/*"],
+  "references": [
+    { "path": "./tsconfig.json" },
+    { "path": "../agent-runtime" },
+    { "path": "../a2z-connector" },
+    { "path": "../evidence" },
+    { "path": "../frameworks" }
+  ]
+}
