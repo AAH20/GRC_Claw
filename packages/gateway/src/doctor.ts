@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { getConnectorRegistry } from '@grc-claw/connectors';
+
 const checks: { name: string; ok: boolean; hint?: string }[] = [];
 
 const token = process.env.GRC_CLAW_GATEWAY_TOKEN;
@@ -33,7 +35,44 @@ checks.push({
   hint: 'Expose via reverse proxy + TLS for remote access',
 });
 
-console.log('GRC_Claw doctor — Agentic AI Security + A2Z SOC bridge\n');
+try {
+  const reg = getConnectorRegistry();
+  for (const llm of reg.listLlm()) {
+    checks.push({
+      name: `LLM ${llm.id} api key (${llm.apiKeyEnv})`,
+      ok: Boolean(reg.resolveApiKey(llm.apiKeyEnv)),
+      hint: llm.apiKeyEnv,
+    });
+  }
+  for (const mcp of reg.listMcp()) {
+    checks.push({
+      name: `MCP ${mcp.id} configured`,
+      ok: Boolean(mcp.url),
+      hint: mcp.url,
+    });
+    if (mcp.apiKeyEnv) {
+      checks.push({
+        name: `MCP ${mcp.id} api key (${mcp.apiKeyEnv})`,
+        ok: Boolean(reg.resolveApiKey(mcp.apiKeyEnv)),
+      });
+    }
+  }
+  if (reg.listLlm().length === 0 && reg.listMcp().length === 0) {
+    checks.push({
+      name: 'BYOC connectors (optional)',
+      ok: true,
+      hint: 'Set GRC_CLAW_CONNECTORS_CONFIG for LLM/MCP',
+    });
+  }
+} catch (e) {
+  checks.push({
+    name: 'BYOC connectors config',
+    ok: false,
+    hint: e instanceof Error ? e.message : 'invalid config',
+  });
+}
+
+console.log('GRC_Claw doctor — Agentic AI Security + A2Z SOC bridge + BYOC\n');
 for (const c of checks) {
   console.log(`${c.ok ? '✓' : '✗'} ${c.name}${c.hint ? ` (${c.hint})` : ''}`);
 }

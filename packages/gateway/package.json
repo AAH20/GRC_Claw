@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@grc-claw/aims": "0.1.0",
+    "@grc-claw/connectors": "0.1.0",
     "@grc-claw/a2z-connector": "0.1.0",
     "@grc-claw/agent-runtime": "0.1.0",
     "@grc-claw/core": "0.1.0",

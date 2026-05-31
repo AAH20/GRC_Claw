@@ -17,7 +17,14 @@ echo "▶ Phase 1: Unit tests (ingest, aims, agent, GRC, architecture)"
 npm run build
 npm run test -w @grc-claw/ingest
 npm run test -w @grc-claw/aims
+npm run test -w @grc-claw/connectors
 UNIT_EXIT=$?
+echo ""
+
+echo "▶ Phase 1b: BYOC connectors (gateway)"
+BYOC_EXIT=0
+GRC_CLAW_CONNECTORS_JSON='{"version":1,"llm":[{"id":"mock","label":"Mock","kind":"openai_compatible","baseUrl":"http://127.0.0.1:9","apiKeyEnv":"OPENAI_API_KEY"}]}' \
+  bash scripts/test-byoc-connectors.sh || BYOC_EXIT=$?
 echo ""
 
 echo "▶ Phase 2: Gateway integration (daemon + A2Z bridge + ingest API)"
@@ -98,6 +105,11 @@ if [[ $UNIT_EXIT -ne 0 ]]; then
   echo " Unit tests: FAILED"
   exit 1
 fi
+if [[ ${BYOC_EXIT:-1} -ne 0 ]]; then
+  echo " BYOC connectors: FAILED"
+  exit 1
+fi
+echo " BYOC connectors: PASSED"
 echo " Unit tests: PASSED"
 echo " Integration (phase 2): $pass passed, $fail failed"
 if [[ ${CLOUD_EXIT:-1} -ne 0 ]]; then

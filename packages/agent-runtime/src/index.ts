@@ -26,7 +26,7 @@ export interface ExecDecision {
   requiresApproval: boolean;
 }
 
-const DEFAULT_TOOLS: ToolDefinition[] = [
+export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'grc.list_controls', tier: 'read' },
   { name: 'grc.get_compliance_score', tier: 'read' },
   { name: 'evidence.read', tier: 'read' },
@@ -46,7 +46,7 @@ export class ExecPolicy {
   readonly config: ExecPolicyConfig;
 
   constructor(
-    private readonly tools: ToolDefinition[] = DEFAULT_TOOLS,
+    private readonly tools: ToolDefinition[] = BUILTIN_AGENT_TOOLS,
     config: Partial<ExecPolicyConfig> = {}
   ) {
     this.config = {

@@ -1,7 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
-import { AgentSession, ExecPolicy } from '@grc-claw/agent-runtime';
+import { AgentSession } from '@grc-claw/agent-runtime';
+import { getConnectorRegistry, isConnectorTool } from '@grc-claw/connectors';
 import { EvidenceStore } from '@grc-claw/evidence';
 import {
   AIMS_SCOPE_TEMPLATE,
@@ -13,6 +14,12 @@ import {
 } from '@grc-claw/aims';
 import { listFrameworkPacks } from '@grc-claw/frameworks';
 import { CLOUD_INGEST_SOURCES, normalizeBySource, type IngestSource } from '@grc-claw/ingest';
+import type { ExecPolicy } from '@grc-claw/agent-runtime';
+import {
+  buildExecPolicyWithConnectors,
+  handleConnectorsRoute,
+  invokeWithConnectorDispatch,
+} from './connectors-api.js';
 import { IdempotencyCache } from './idempotency.js';
 
 export interface GatewayConfig {
@@ -25,7 +32,15 @@ export function createGateway(config: GatewayConfig) {
   const dedupe = new IdempotencyCache();
   const evidence = new EvidenceStore();
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
-  const execPolicy = new ExecPolicy();
+  const connectors = getConnectorRegistry();
+  let execPolicy!: ExecPolicy;
+
+  async function refreshExecPolicy(): Promise<ExecPolicy> {
+    execPolicy = await buildExecPolicyWithConnectors(connectors);
+    return execPolicy;
+  }
+
+  void refreshExecPolicy();
 
   function authOk(req: IncomingMessage): boolean {
     const header = req.headers['x-grc-claw-token'] ?? req.headers.authorization;
@@ -40,6 +55,7 @@ export function createGateway(config: GatewayConfig) {
     const path = req.url?.split('?')[0] ?? '/';
 
     if (path === '/health') {
+      const summary = connectors.toPublicSummary();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
@@ -49,12 +65,28 @@ export function createGateway(config: GatewayConfig) {
           agentic_ai_security: true,
           cloud_security_integration: true,
           iso_42001_aims: true,
+          byoc_connectors: true,
+          llm_providers: summary.llm.length,
+          mcp_servers: summary.mcp.length,
           cloud_sources: CLOUD_INGEST_SOURCES,
           marketing: 'OpenClaw for GRC — pairs with a2z-soc.com',
         })
       );
       return;
     }
+
+    const connectorHandled = await handleConnectorsRoute(
+      req,
+      res,
+      path,
+      authOk,
+      readJson,
+      async () => execPolicy ?? refreshExecPolicy(),
+      async () => {
+        await refreshExecPolicy();
+      }
+    );
+    if (connectorHandled) return;
 
     if (path === '/api/frameworks' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -142,15 +174,39 @@ export function createGateway(config: GatewayConfig) {
         res.end(JSON.stringify({ ok: true, deduped: true }));
         return;
       }
-      const session = new AgentSession(String(body.sessionId ?? 'default'), execPolicy);
+      const policy = execPolicy ?? (await refreshExecPolicy());
+      const session = new AgentSession(String(body.sessionId ?? 'default'), policy);
+      const tool = String(body.tool ?? '');
+      const args = (body.args as Record<string, unknown>) ?? {};
       const decision = await session.invoke({
-        tool: String(body.tool ?? ''),
-        args: (body.args as Record<string, unknown>) ?? {},
+        tool,
+        args,
         approvalToken: body.approvalToken as string | undefined,
         idempotencyKey: idem || undefined,
       });
-      res.writeHead(decision.allowed ? 200 : 403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ decision, audit: session.getAuditLog() }));
+      if (!decision.allowed) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ decision, audit: session.getAuditLog() }));
+        return;
+      }
+      let output: Record<string, unknown> | undefined;
+      if (isConnectorTool(tool)) {
+        try {
+          output = await invokeWithConnectorDispatch(connectors, tool, args);
+        } catch (e) {
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              decision,
+              error: e instanceof Error ? e.message : 'connector_dispatch_failed',
+              audit: session.getAuditLog(),
+            })
+          );
+          return;
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, decision, output, audit: session.getAuditLog() }));
       return;
     }
 
@@ -197,6 +253,7 @@ export function createGateway(config: GatewayConfig) {
       }),
     evidence,
     a2z,
+    refreshExecPolicy,
   };
 }
 

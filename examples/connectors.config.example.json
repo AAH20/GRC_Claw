@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "llm": [
+    {
+      "id": "openai",
+      "label": "OpenAI",
+      "kind": "openai_compatible",
+      "baseUrl": "https://api.openai.com",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "defaultModel": "gpt-4o-mini"
+    },
+    {
+      "id": "anthropic",
+      "label": "Anthropic",
+      "kind": "anthropic_messages",
+      "baseUrl": "https://api.anthropic.com",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "defaultModel": "claude-sonnet-4-20250514"
+    },
+    {
+      "id": "ollama",
+      "label": "Ollama (local)",
+      "kind": "openai_compatible",
+      "baseUrl": "http://127.0.0.1:11434",
+      "apiKeyEnv": "OLLAMA_API_KEY",
+      "defaultModel": "llama3.2"
+    }
+  ],
+  "mcp": [
+    {
+      "id": "filesystem",
+      "label": "Filesystem MCP (example)",
+      "transport": "http",
+      "url": "http://127.0.0.1:3100/mcp",
+      "defaultTier": "read",
+      "destructiveTools": ["write_file", "delete_file"]
+    },
+    {
+      "id": "sentinel",
+      "label": "Azure Sentinel MCP (example)",
+      "transport": "http",
+      "url": "https://your-mcp-proxy.example/mcp/sentinel",
+      "apiKeyEnv": "SENTINEL_MCP_API_KEY",
+      "destructiveTools": ["run_playbook"]
+    }
+  ]
+}

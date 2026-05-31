@@ -12,7 +12,8 @@
     "packages/frameworks",
     "packages/a2z-connector",
     "packages/ingest",
-    "packages/aims"
+    "packages/aims",
+    "packages/connectors"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
@@ -20,6 +21,7 @@
     "doctor": "npm run doctor -w @grc-claw/gateway",
     "test": "npm run test -w @grc-claw/ingest",
     "test:iso42001": "bash scripts/test-iso-42001.sh",
+    "test:byoc": "bash scripts/test-byoc-connectors.sh",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
     "test:cloud": "bash scripts/test-cloud-security.sh"
   },

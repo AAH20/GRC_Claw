@@ -59,6 +59,7 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
 | **ISO/IEC 42001 AIMS** | Vendor gap matrix (Anthropic, OpenAI, Cursor, OpenClaw), technical controls API |
+| **BYOC connectors** | Bring your own **LLM** (OpenAI, Anthropic, Ollama) and **MCP** servers — gated by exec policy |
 | **[a2z-soc.com](https://a2z-soc.com)** | Optional connector for live SOC + GRC sync |
 | **Ship-ready OSS** | Docker Compose, systemd, comprehensive tests |
 
@@ -80,6 +81,7 @@ GRC_Claw/
 │   ├── evidence/
 │   ├── frameworks/
 │   ├── aims/                    # ISO/IEC 42001 AIMS (vendor gaps, clauses)
+│   ├── connectors/              # BYOC LLM + MCP registry
 │   ├── ingest/                  # OSS + cloud normalizers
 │   └── a2z-connector/           # a2z-soc.com API bridge
 ├── integrations/iso-42001/
@@ -111,6 +113,7 @@ npm install && npm run build
 | `@grc-claw/evidence` | SHA-256 evidence lineage |
 | `@grc-claw/frameworks` | ISO 27001, NIST CSF, SOC 2, ISO 42001 starter packs |
 | `@grc-claw/aims` | ISO 42001 vendor gaps, clause map, technical controls |
+| `@grc-claw/connectors` | BYOC LLM providers + MCP servers (registry, proxy, policy tools) |
 | `@grc-claw/ingest` | OSS SIEM/IDS/firewall + AWS/Azure/GCP normalizers |
 | `@grc-claw/a2z-connector` | Bridge to **[a2z-soc.com](https://a2z-soc.com)** APIs |
 
@@ -119,7 +122,7 @@ npm install && npm run build
 | Build | `npm run build` |
 | Gateway | `npm run gateway` |
 | Doctor | `npm run doctor` |
-| Tests | `npm run test` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
+| Tests | `npm run test` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
 
 ---
 
@@ -207,7 +210,12 @@ Run `npm run doctor` before production.
 | `POST` | `/api/ingest/normalize` | Alert → canonical event + control impact |
 | `POST` | `/api/a2z/sync` | Sync events from A2Z SOC |
 | `POST` | `/api/agent/invoke` | Gated agent tool call |
+| `GET` | `/api/connectors` | BYOC LLM + MCP registry (redacted) |
+| `POST` | `/api/connectors/llm/:id/chat` | LLM chat proxy |
+| `GET` | `/api/connectors/mcp/:id/tools` | Discover MCP tools |
 | `WS` | `/` | `connect` → `hello-ok` |
+
+See [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) for configuration.
 
 Auth: `X-GRC-Claw-Token` or `Authorization: Bearer`.
 
@@ -307,6 +315,7 @@ Production: strong gateway token, TLS at reverse proxy, scoped **a2z-soc.com** A
 | [docs/AGENTIC_AI_SECURITY.md](docs/AGENTIC_AI_SECURITY.md) | Agent threat model |
 | [docs/MARKETING_A2Z_SOC.md](docs/MARKETING_A2Z_SOC.md) | Positioning with [a2z-soc.com](https://a2z-soc.com) |
 | [integrations/a2z-soc/README.md](integrations/a2z-soc/README.md) | API contract |
+| [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) | Bring Your Own LLM + MCP |
 | [docs/ISO_42001_AIMS.md](docs/ISO_42001_AIMS.md) | ISO/IEC 42001 AIMS architecture + APIs |
 | [integrations/iso-42001/README.md](integrations/iso-42001/README.md) | ISO 42001 integration guide |
 | Cursor skill | `.cursor/skills/iso-42001-ai-management-engineering/` |

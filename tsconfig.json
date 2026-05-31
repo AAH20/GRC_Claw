@@ -8,6 +8,7 @@
     { "path": "./packages/agent-runtime" },
     { "path": "./packages/a2z-connector" },
     { "path": "./packages/aims" },
+    { "path": "./packages/connectors" },
     { "path": "./packages/gateway" }
   ]
 }

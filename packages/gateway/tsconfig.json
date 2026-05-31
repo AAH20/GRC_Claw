@@ -13,6 +13,7 @@
     { "path": "../frameworks" },
     { "path": "../a2z-connector" },
     { "path": "../ingest" },
-    { "path": "../aims" }
+    { "path": "../aims" },
+    { "path": "../connectors" }
   ]
 }
