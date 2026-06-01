@@ -17,7 +17,7 @@
 |---|----------|----------|
 | **Primary use** | Personal assistant & chat channels | **Enterprise GRC + SOC automation** |
 | **Control plane** | Gateway daemon (WebSocket) | Gateway daemon (**WS + HTTP APIs**) |
-| **Agent governance** | Tools + skills (operator-defined) | **Mandatory exec policy** (allowlist → approval → sandbox) |
+| **Agent governance** | Tools + skills (operator-defined) | **Mandatory exec policy** + **`claw.*` skill executor** (list / get / run) |
 | **Compliance** | General-purpose | **Framework packs** (ISO 27001, NIST CSF, SOC 2, ISO 42001 AIMS) |
 | **Evidence** | Workspace files | **SHA-256 lineage** + SOC attach API |
 | **Ingest** | Channel messages | **OSS SIEM/IDS/firewall + AWS/Azure/GCP** normalizers |
@@ -42,6 +42,7 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
 - [Operator console](#operator-console)
+- [Skill executor](#skill-executor)
 - [Configuration](#configuration)
 - [Gateway API](#gateway-api)
 - [Log and alert ingestion](#log-and-alert-ingestion)
@@ -62,6 +63,7 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 |------|----------------|
 | **OpenClaw for GRC** | Long-lived gateway, `connect` handshake, idempotency, collector nodes |
 | **GRC engine** | `GRCEngineFacade`, framework packs, control ↔ evidence linkage |
+| **Skill executor** | OpenClaw-style `claw.list_skills`, `claw.get_skill`, `claw.run_skill` — runs `.cursor/skills` playbooks via BYOC LLM + gated tools |
 | **Agentic AI security** | Three-phase exec policy, tool tiers, session audit log |
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
@@ -92,6 +94,7 @@ GRC_Claw/
 │   ├── frameworks/
 │   ├── aims/                    # ISO/IEC 42001 AIMS (vendor gaps, clauses)
 │   ├── connectors/              # BYOC LLM + MCP registry
+│   ├── skill-executor/          # Skill discovery + claw.* run loop
 │   ├── ingest/                  # OSS + cloud normalizers
 │   └── a2z-connector/           # a2z-soc.com API bridge
 ├── integrations/iso-42001/
@@ -124,6 +127,7 @@ npm install && npm run build
 | `@grc-claw/frameworks` | ISO 27001, NIST CSF, SOC 2, ISO 42001 starter packs |
 | `@grc-claw/aims` | ISO 42001 vendor gaps, clause map, technical controls |
 | `@grc-claw/connectors` | BYOC LLM providers + MCP servers (registry, proxy, policy tools) |
+| `@grc-claw/skill-executor` | Cursor skill discovery, `claw.*` dispatch, LLM run loop (`TOOL_CALL` / `FINAL_ANSWER`) |
 | `@grc-claw/ingest` | OSS SIEM/IDS/firewall + AWS/Azure/GCP normalizers |
 | `@grc-claw/a2z-connector` | Bridge to **[a2z-soc.com](https://a2z-soc.com)** APIs |
 | `@grc-claw/console` | Operator UI (`apps/console`) — Vite + React |
@@ -135,7 +139,7 @@ npm install && npm run build
 | Gateway | `npm run gateway` |
 | Console (dev) | `npm run console` → http://localhost:5174 |
 | Doctor | `npm run doctor` |
-| Tests | `npm run test` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
+| Tests | `npm run test` · `npm run test:skills` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
 
 ---
 
@@ -206,7 +210,9 @@ The **operator console** (`apps/console`) is a React app that exposes every gate
 | Mode | What it does |
 |------|----------------|
 | **Gemini** | Direct BYOC chat via `POST /api/connectors/llm/:id/chat` (full multi-paragraph replies) |
-| **Cursor Auto** | Runs live gateway tools (health, sync, frameworks, read-tier agent), lists schedulable jobs, and answers with GRC operator rules |
+| **Cursor Auto** | Runs live gateway tools (health, sync, frameworks, read-tier agent), lists skills/jobs from catalog, and answers with GRC operator rules |
+
+The **Agent** page and gateway support **`claw.list_skills`**, **`claw.get_skill`**, and **`claw.run_skill`** — see [Skill executor](#skill-executor).
 
 ### Frontend project tree (`apps/console`)
 
@@ -239,6 +245,7 @@ apps/console/
     │   ├── chatPrompts.ts     # Gemini + Cursor Auto system prompts
     │   ├── cursorAuto.ts        # curl snippets, automation rules
     │   ├── operatorAgent.ts   # Live gateway tool dispatch (Cursor Auto)
+    │   ├── skillsCatalog.ts   # Skill list + claw.* tool reference
     │   └── schedulableJobs.ts # Daemon + cron-friendly job catalog
     └── pages/
         ├── DashboardPage.tsx  # Health, BYOC summary, A2Z sync, agent chat
@@ -306,6 +313,47 @@ Console pages: Dashboard · Frameworks · Ingest · Agent · ISO 42001 · BYOC �
 
 ---
 
+## Skill executor
+
+GRC_Claw executes Cursor-style skills (markdown under `.cursor/skills/<id>/SKILL.md`) on the gateway with the same exec policy as other agent tools — inspired by [OpenClaw](https://github.com/openclaw/openclaw) skills, built for regulated operations.
+
+| Tool | Tier | Purpose |
+|------|------|---------|
+| `claw.list_skills` | read | Catalog discovered skills (GRC_Claw repo + parent workspace) |
+| `claw.get_skill` | read | Metadata + optional full `SKILL.md` body |
+| `claw.run_skill` | write | Run playbook for a task (BYOC LLM loop + gated `grc.*` / MCP tools) |
+
+**HTTP routes:** `GET /api/skills`, `GET /api/skills/:id`, `POST /api/skills/run`, `GET /api/cursor-skills` (alias).
+
+**Example — list skills:**
+
+```bash
+curl -s -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN" -X POST http://127.0.0.1:18791/api/agent/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"demo","tool":"claw.list_skills","args":{}}' | jq .
+```
+
+**Example — run ISO 42001 skill** (requires `GEMINI_API_KEY` or another BYOC LLM in connectors config):
+
+```bash
+curl -s -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN" -X POST http://127.0.0.1:18791/api/skills/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "demo",
+    "skillId": "iso-42001-ai-management-engineering",
+    "task": "Summarize top Cursor vendor gaps in three bullets.",
+    "llmProviderId": "gemini",
+    "idempotencyKey": "skill-run-demo-1",
+    "maxSteps": 6
+  }' | jq .
+```
+
+Discovery: `GRC_CLAW_SKILLS_DIRS` or default `<cwd>/.cursor/skills` and `<cwd>/../.cursor/skills`.
+
+Full reference: [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
+
+---
+
 ## Configuration
 
 | Variable | Description |
@@ -336,7 +384,11 @@ Run `npm run doctor` before production. Never commit `.env` — use `examples/*.
 | `GET` | `/api/aims/technical-controls` | AIMS scope, clauses, TC-01…TC-06 |
 | `POST` | `/api/ingest/normalize` | Alert → canonical event + control impact |
 | `POST` | `/api/a2z/sync` | Sync events from A2Z SOC |
-| `POST` | `/api/agent/invoke` | Gated agent tool call |
+| `POST` | `/api/agent/invoke` | Gated agent tool call (`claw.*`, `grc.*`, MCP) |
+| `GET` | `/api/skills` | Skill catalog (`.cursor/skills`) |
+| `GET` | `/api/skills/:id` | Skill metadata + body (`?body=0` for metadata only) |
+| `POST` | `/api/skills/run` | Run skill executor loop (BYOC LLM + gated tools) |
+| `GET` | `/api/cursor-skills` | Alias of skill catalog |
 | `GET` | `/api/connectors` | BYOC LLM + MCP registry (redacted) |
 | `POST` | `/api/connectors/llm/:id/chat` | LLM chat proxy |
 | `GET` | `/api/connectors/mcp/:id/tools` | Discover MCP tools |
@@ -345,6 +397,8 @@ Run `npm run doctor` before production. Never commit `.env` — use `examples/*.
 **LLM provider kinds:** `openai_compatible` · `anthropic_messages` · `gemini_generate`
 
 See [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) for configuration.
+
+**Skill executor:** `claw.list_skills`, `claw.get_skill`, `claw.run_skill` — see [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
 
 Auth: `X-GRC-Claw-Token` or `Authorization: Bearer`.
 
@@ -408,8 +462,8 @@ OpenClaw for GRC means agents are **untrusted by default**:
 
 | Tier | Examples |
 |------|----------|
-| Read | `grc.list_controls`, `sentinel.get_incident`, `soc.query_events` |
-| Write | `evidence.attach` (+ idempotency key) |
+| Read | `claw.list_skills`, `claw.get_skill`, `grc.list_controls`, `sentinel.get_incident`, `soc.query_events` |
+| Write | `claw.run_skill`, `evidence.attach` (+ idempotency key) |
 | Destructive | `sentinel.run_playbook`, `chronicle.soar.run_playbook` |
 
 [docs/AGENTIC_AI_SECURITY.md](docs/AGENTIC_AI_SECURITY.md)
@@ -420,6 +474,7 @@ OpenClaw for GRC means agents are **untrusted by default**:
 
 ```bash
 npm run test:comprehensive   # OSS + architecture + ISO 42001 + cloud
+npm run test:skills          # Skill discovery + claw.* tool definitions
 npm run test:iso42001        # AIMS package + gateway AIMS APIs
 npm run test:cloud           # AWS / Azure / GCP
 ./scripts/test.sh            # Gateway smoke
@@ -445,6 +500,7 @@ Production: strong gateway token, TLS at reverse proxy, scoped **a2z-soc.com** A
 | [docs/MARKETING_A2Z_SOC.md](docs/MARKETING_A2Z_SOC.md) | Positioning with [a2z-soc.com](https://a2z-soc.com) |
 | [integrations/a2z-soc/README.md](integrations/a2z-soc/README.md) | API contract |
 | [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) | Bring Your Own LLM + MCP |
+| [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md) | `claw.*` tools, run loop, HTTP examples |
 | [docs/ISO_42001_AIMS.md](docs/ISO_42001_AIMS.md) | ISO/IEC 42001 AIMS architecture + APIs |
 | [integrations/iso-42001/README.md](integrations/iso-42001/README.md) | ISO 42001 integration guide |
 | Cursor skill | `.cursor/skills/iso-42001-ai-management-engineering/` |
@@ -470,6 +526,7 @@ npm install && npm run build && npm run test:comprehensive
 ## Roadmap
 
 - [x] Operator console with Gemini + Cursor Auto agent chat
+- [x] Full skill executor (`claw.list_skills`, `claw.get_skill`, `claw.run_skill`)
 - [ ] npm publish `@grc-claw/*`
 - [ ] Helm chart
 - [ ] Gateway metrics (Prometheus)

@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { BUILTIN_AGENT_TOOLS, AgentSession, ExecPolicy } from '@grc-claw/agent-runtime';
+import { CLAW_SKILL_TOOLS } from '@grc-claw/skill-executor';
 import {
   buildConnectorToolDefinitions,
   chatViaProvider,
@@ -24,7 +25,7 @@ export async function buildExecPolicyWithConnectors(
     }
   }
   const connectorTools = buildConnectorToolDefinitions(registry, mcpTools);
-  return new ExecPolicy([...BUILTIN_AGENT_TOOLS, ...connectorTools]);
+  return new ExecPolicy([...BUILTIN_AGENT_TOOLS, ...CLAW_SKILL_TOOLS, ...connectorTools]);
 }
 
 export function matchConnectorPath(path: string): {

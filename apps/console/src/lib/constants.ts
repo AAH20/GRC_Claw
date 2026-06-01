@@ -13,6 +13,12 @@ export const CLOUD_SOURCES = [
   'gcp_cloud_logging',
 ] as const;
 
+export const CLAW_SKILL_TOOLS = [
+  { name: 'claw.list_skills', tier: 'read' as const },
+  { name: 'claw.get_skill', tier: 'read' as const },
+  { name: 'claw.run_skill', tier: 'write' as const },
+];
+
 export const BUILTIN_TOOLS = [
   { name: 'grc.list_controls', tier: 'read' },
   { name: 'grc.get_compliance_score', tier: 'read' },

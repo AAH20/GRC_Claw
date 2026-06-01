@@ -130,7 +130,14 @@ function extractGeminiText(body: {
   return text;
 }
 
-async function geminiChat(
+const DEFAULT_GEMINI_FALLBACKS = ['gemini-2.0-flash-001', 'gemini-2.0-flash', 'gemini-2.5-pro'];
+
+function geminiRetryable(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /llm_http_503|llm_http_429|llm_http_500|UNAVAILABLE|high demand|RESOURCE_EXHAUSTED/i.test(msg);
+}
+
+async function geminiChatOnce(
   provider: LlmProviderConfig,
   apiKey: string,
   model: string,
@@ -153,7 +160,6 @@ async function geminiChat(
     maxOutputTokens,
     temperature: req.temperature ?? 0.4,
   };
-  // Gemini 2.5 "thinking" can consume the entire token budget — leave room for visible reply
   if (/gemini-2\.5/i.test(model)) {
     generationConfig.thinkingConfig = { thinkingBudget: 1024 };
   }
@@ -185,4 +191,30 @@ async function geminiChat(
   };
   const content = extractGeminiText(body);
   return { providerId: provider.id, model, content, raw: body as Record<string, unknown> };
+}
+
+async function geminiChat(
+  provider: LlmProviderConfig,
+  apiKey: string,
+  model: string,
+  req: LlmChatRequest
+): Promise<LlmChatResult> {
+  const envFallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const fallbacks = envFallbacks.length ? envFallbacks : DEFAULT_GEMINI_FALLBACKS;
+  const models = [model, ...fallbacks.filter((m) => m !== model)];
+
+  let lastError: unknown;
+  for (const m of models) {
+    try {
+      return await geminiChatOnce(provider, apiKey, m, req);
+    } catch (e) {
+      lastError = e;
+      if (geminiRetryable(e) && m !== models[models.length - 1]) continue;
+      throw e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('gemini_all_models_failed');
 }

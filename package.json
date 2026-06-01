@@ -14,7 +14,8 @@
     "packages/a2z-connector",
     "packages/ingest",
     "packages/aims",
-    "packages/connectors"
+    "packages/connectors",
+    "packages/skill-executor"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
@@ -26,7 +27,8 @@
     "test:iso42001": "bash scripts/test-iso-42001.sh",
     "test:byoc": "bash scripts/test-byoc-connectors.sh",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
-    "test:cloud": "bash scripts/test-cloud-security.sh"
+    "test:cloud": "bash scripts/test-cloud-security.sh",
+    "test:skills": "npm run test -w @grc-claw/skill-executor"
   },
   "engines": {
     "node": ">=20"

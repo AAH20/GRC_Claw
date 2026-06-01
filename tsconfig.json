@@ -9,6 +9,7 @@
     { "path": "./packages/a2z-connector" },
     { "path": "./packages/aims" },
     { "path": "./packages/connectors" },
+    { "path": "./packages/skill-executor" },
     { "path": "./packages/gateway" }
   ]
 }

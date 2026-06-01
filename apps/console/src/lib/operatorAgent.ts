@@ -1,6 +1,7 @@
 import { api } from './api';
 import { loadSettings } from './settings';
 import { GATEWAY_JOBS, wantsJobCatalog } from './schedulableJobs';
+import { wantsSkillsQuery } from './skillsCatalog';
 
 export interface OperatorToolResult {
   tool: string;
@@ -22,11 +23,20 @@ export async function runOperatorTools(userText: string): Promise<OperatorToolRe
   const wantsControls = /\b(control|compliance|score|grc\.)/i.test(userText);
   const wantsAutomation = AUTOMATION_KEYWORDS.test(userText);
   const wantsCatalog = wantsJobCatalog(userText);
+  const wantsSkills = wantsSkillsQuery(userText);
   const wantsHealth =
     /\b(health|status|capabilities|up\b)/i.test(userText) ||
-    (!wantsFrameworks && !wantsSync && !wantsControls && !wantsAutomation && !wantsCatalog);
+    (!wantsFrameworks &&
+      !wantsSync &&
+      !wantsControls &&
+      !wantsAutomation &&
+      !wantsCatalog &&
+      !wantsSkills);
 
-  if (wantsHealth || (!wantsFrameworks && !wantsSync && !wantsControls && !wantsAutomation)) {
+  if (
+    wantsHealth ||
+    (!wantsFrameworks && !wantsSync && !wantsControls && !wantsAutomation && !wantsCatalog && !wantsSkills)
+  ) {
     try {
       const h = await api.health();
       results.push({
@@ -100,6 +110,14 @@ export async function runOperatorTools(userText: string): Promise<OperatorToolRe
         summary: e instanceof Error ? e.message : 'agent invoke failed',
       });
     }
+  }
+
+  if (wantsSkills) {
+    results.push({
+      tool: 'GET /api/cursor-skills',
+      ok: true,
+      summary: 'Skill catalog via GET /api/cursor-skills (also claw.list_skills).',
+    });
   }
 
   if (wantsAutomation || wantsCatalog) {

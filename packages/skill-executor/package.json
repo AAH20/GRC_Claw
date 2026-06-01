@@ -1,0 +1,19 @@
+{
+  "name": "@grc-claw/skill-executor",
+  "version": "0.1.0",
+  "description": "Cursor skill discovery and gated skill execution loop for GRC_Claw",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/test/skill-executor.test.js"
+  },
+  "dependencies": {
+    "@grc-claw/agent-runtime": "0.1.0",
+    "@grc-claw/connectors": "0.1.0"
+  },
+  "files": ["dist"]
+}

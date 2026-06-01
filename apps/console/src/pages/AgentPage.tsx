@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
-import { BUILTIN_TOOLS } from '../lib/constants';
+import { BUILTIN_TOOLS, CLAW_SKILL_TOOLS } from '../lib/constants';
 import { JsonBlock } from '../components/JsonBlock';
 import { PageShell } from '../components/PageShell';
 import { PAGE_META } from '../lib/pageMeta';
 
 const DEFAULT_ARGS: Record<string, string> = {
+  'claw.list_skills': '{}',
+  'claw.get_skill': JSON.stringify({ skillId: 'iso-42001-ai-management-engineering', includeBody: false }, null, 2),
+  'claw.run_skill': JSON.stringify(
+    {
+      skillId: 'iso-42001-ai-management-engineering',
+      task: 'Summarize top vendor gaps for Cursor in 3 bullets.',
+      llmProviderId: 'gemini',
+      maxSteps: 6,
+    },
+    null,
+    2
+  ),
   'grc.list_controls': JSON.stringify({ tenantId: 1 }, null, 2),
   'grc.get_compliance_score': JSON.stringify({ tenantId: 1 }, null, 2),
   'evidence.read': JSON.stringify({ evidenceId: 'sample' }, null, 2),
@@ -56,7 +68,8 @@ export function AgentPage() {
     }
   }
 
-  const selected = BUILTIN_TOOLS.find((t) => t.name === tool);
+  const allTools = [...CLAW_SKILL_TOOLS, ...BUILTIN_TOOLS];
+  const selected = allTools.find((t) => t.name === tool);
 
   return (
     <PageShell meta={meta}>
@@ -64,7 +77,7 @@ export function AgentPage() {
         <div className="form-row">
           <label htmlFor="tool">Agent tool</label>
           <select id="tool" value={tool} onChange={(e) => pickTool(e.target.value)}>
-            {BUILTIN_TOOLS.map((t) => (
+            {allTools.map((t) => (
               <option key={t.name} value={t.name}>
                 {t.name} ({t.tier})
               </option>
@@ -130,7 +143,7 @@ export function AgentPage() {
             </tr>
           </thead>
           <tbody>
-            {BUILTIN_TOOLS.map((t) => (
+            {allTools.map((t) => (
               <tr key={t.name}>
                 <td>
                   <code>{t.name}</code>

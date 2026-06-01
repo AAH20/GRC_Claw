@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
-import { AgentSession } from '@grc-claw/agent-runtime';
+import { AgentSession, type ExecPolicy } from '@grc-claw/agent-runtime';
 import { getConnectorRegistry, isConnectorTool } from '@grc-claw/connectors';
 import { EvidenceStore } from '@grc-claw/evidence';
 import {
@@ -14,14 +14,16 @@ import {
 } from '@grc-claw/aims';
 import { listFrameworkPacks } from '@grc-claw/frameworks';
 import { CLOUD_INGEST_SOURCES, normalizeBySource, type IngestSource } from '@grc-claw/ingest';
-import type { ExecPolicy } from '@grc-claw/agent-runtime';
 import {
   buildExecPolicyWithConnectors,
   handleConnectorsRoute,
-  invokeWithConnectorDispatch,
 } from './connectors-api.js';
 import { IdempotencyCache } from './idempotency.js';
 import { applyCors, tryServeConsoleStatic } from './console-static.js';
+import { discoverCursorSkills } from './cursor-skills.js';
+import { dispatchAgentTool } from './agent-dispatch.js';
+import { createClawDispatchContext } from './skill-runtime.js';
+import { getSkillById, listSkills } from '@grc-claw/skill-executor';
 
 export interface GatewayConfig {
   host: string;
@@ -42,6 +44,18 @@ export function createGateway(config: GatewayConfig) {
   }
 
   void refreshExecPolicy();
+
+  function makeClawContext(policy: ExecPolicy) {
+    const llmProviders = connectors.listLlm();
+    return createClawDispatchContext({
+      registry: connectors,
+      evidence,
+      a2z,
+      defaultLlmProviderId: llmProviders[0]?.id ?? 'gemini',
+      getPolicy: () => policy,
+      makeSession: (sessionId, pol) => new AgentSession(sessionId, pol),
+    });
+  }
 
   function authOk(req: IncomingMessage): boolean {
     const header = req.headers['x-grc-claw-token'] ?? req.headers.authorization;
@@ -99,6 +113,93 @@ export function createGateway(config: GatewayConfig) {
     if (path === '/api/frameworks' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ packs: listFrameworkPacks() }));
+      return;
+    }
+
+    if (path === '/api/cursor-skills' && req.method === 'GET') {
+      const skills = discoverCursorSkills();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          ok: true,
+          note: 'Skill catalog — execute via claw.list_skills, claw.get_skill, claw.run_skill or POST /api/skills/run',
+          skills,
+        })
+      );
+      return;
+    }
+
+    if (path === '/api/skills' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, skills: listSkills() }));
+      return;
+    }
+
+    const skillDetail = path.match(/^\/api\/skills\/([^/]+)$/);
+    if (skillDetail && req.method === 'GET') {
+      const skillId = decodeURIComponent(skillDetail[1]!);
+      const includeBody = new URL(req.url ?? '', 'http://local').searchParams.get('body') !== '0';
+      const skill = getSkillById(skillId);
+      if (!skill) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'skill_not_found', skillId }));
+        return;
+      }
+      if (!includeBody) {
+        const { body: _b, ...meta } = skill;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, skill: { ...meta, hasBody: true } }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, skill }));
+      return;
+    }
+
+    if (path === '/api/skills/run' && req.method === 'POST') {
+      if (!authOk(req)) {
+        res.writeHead(401);
+        res.end(JSON.stringify({ error: 'unauthorized' }));
+        return;
+      }
+      const body = await readJson(req);
+      const skillId = String(body.skillId ?? '');
+      const task = String(body.task ?? '');
+      if (!skillId || !task) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'skillId_and_task_required' }));
+        return;
+      }
+      const policy = execPolicy ?? (await refreshExecPolicy());
+      const session = new AgentSession(String(body.sessionId ?? 'skill-run'), policy);
+      const idem = String(body.idempotencyKey ?? `skill-run-${skillId}-${Date.now()}`);
+      const decision = await session.invoke({
+        tool: 'claw.run_skill',
+        args: body,
+        idempotencyKey: idem,
+      });
+      if (!decision.allowed) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, decision, audit: session.getAuditLog() }));
+        return;
+      }
+      const claw = makeClawContext(policy);
+      const result = await claw.runSkill({
+        skillId,
+        task,
+        llmProviderId: typeof body.llmProviderId === 'string' ? body.llmProviderId : undefined,
+        maxSteps: typeof body.maxSteps === 'number' ? body.maxSteps : undefined,
+        readOnlyTools: body.readOnlyTools !== false,
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          ok: result.ok,
+          decision,
+          result,
+          audit: session.getAuditLog(),
+        })
+      );
       return;
     }
 
@@ -198,20 +299,24 @@ export function createGateway(config: GatewayConfig) {
         return;
       }
       let output: Record<string, unknown> | undefined;
-      if (isConnectorTool(tool)) {
-        try {
-          output = await invokeWithConnectorDispatch(connectors, tool, args);
-        } catch (e) {
-          res.writeHead(502, { 'Content-Type': 'application/json' });
-          res.end(
-            JSON.stringify({
-              decision,
-              error: e instanceof Error ? e.message : 'connector_dispatch_failed',
-              audit: session.getAuditLog(),
-            })
-          );
-          return;
-        }
+      try {
+        const claw = makeClawContext(policy);
+        output = await dispatchAgentTool(tool, args, {
+          registry: connectors,
+          evidence,
+          a2z,
+          claw,
+        });
+      } catch (e) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            decision,
+            error: e instanceof Error ? e.message : 'agent_dispatch_failed',
+            audit: session.getAuditLog(),
+          })
+        );
+        return;
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, decision, output, audit: session.getAuditLog() }));

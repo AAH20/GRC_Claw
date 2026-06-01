@@ -1,0 +1,33 @@
+{
+  "note": "Fallback when gateway /api/cursor-skills is unreachable. Cursor IDE skills are not invoked from browser chat.",
+  "skills": [
+    {
+      "id": "iso-42001-ai-management-engineering",
+      "name": "iso-42001-ai-management-engineering",
+      "description": "ISO/IEC 42001 AIMS architecture, vendor gaps (Anthropic, OpenAI, Cursor, OpenClaw), technical controls.",
+      "scope": "grc_claw",
+      "path": ".cursor/skills/iso-42001-ai-management-engineering/SKILL.md"
+    },
+    {
+      "id": "ingest-oss-siem-ids-logs",
+      "name": "ingest-oss-siem-ids-logs",
+      "description": "Ingest Wazuh, Suricata, Snort, Elastic, UFW logs into canonical security_events.",
+      "scope": "workspace",
+      "path": ".cursor/skills/ingest-oss-siem-ids-logs/SKILL.md"
+    },
+    {
+      "id": "netsec-grc-architecture-engineering",
+      "name": "netsec-grc-architecture-engineering",
+      "description": "Network, cybersecurity, and GRC architecture with OpenClaw-style gateway daemons.",
+      "scope": "workspace",
+      "path": ".cursor/skills/netsec-grc-architecture-engineering/SKILL.md"
+    },
+    {
+      "id": "grc-claw-cloud-security-integration",
+      "name": "grc-claw-cloud-security-integration",
+      "description": "AWS, Azure, GCP security ingest and SOAR integration with GRC_Claw.",
+      "scope": "workspace",
+      "path": ".cursor/skills/grc-claw-cloud-security-integration/SKILL.md"
+    }
+  ]
+}

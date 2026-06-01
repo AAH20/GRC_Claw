@@ -21,6 +21,7 @@
     "@grc-claw/evidence": "0.1.0",
     "@grc-claw/frameworks": "0.1.0",
     "@grc-claw/ingest": "0.1.0",
+    "@grc-claw/skill-executor": "0.1.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

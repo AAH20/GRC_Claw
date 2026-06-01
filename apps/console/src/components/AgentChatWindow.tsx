@@ -3,6 +3,7 @@ import { api, ApiError } from '../lib/api';
 import { GEMINI_SYSTEM_PROMPT, CURSOR_AUTO_SYSTEM_PROMPT } from '../lib/chatPrompts';
 import { runOperatorTools, formatToolResultsForPrompt } from '../lib/operatorAgent';
 import { wantsJobCatalog, formatSchedulableJobsCatalog } from '../lib/schedulableJobs';
+import { wantsSkillsQuery, formatSkillsCatalog } from '../lib/skillsCatalog';
 
 export type ChatMode = 'gemini' | 'cursor-auto';
 
@@ -63,30 +64,74 @@ export function AgentChatWindow({
     return text;
   }
 
+  /** Catalog answers — no Gemini call (avoids 503 when listing skills/jobs). */
+  async function tryLocalReply(
+    userText: string,
+    chatMode: ChatMode
+  ): Promise<{ content: string; meta: string } | null> {
+    if (wantsSkillsQuery(userText)) {
+      return {
+        content: await formatSkillsCatalog(),
+        meta: 'From skills catalog (no LLM)',
+      };
+    }
+    if (wantsJobCatalog(userText)) {
+      let out = formatSchedulableJobsCatalog();
+      if (chatMode === 'cursor-auto') {
+        const toolResults = await runOperatorTools(userText);
+        const health = toolResults.find((r) => r.tool === 'GET /health');
+        if (health) out += `\n---\n**Live gateway:** ${health.summary}\n`;
+      }
+      return { content: out, meta: 'From schedulable jobs catalog (no LLM)' };
+    }
+    return null;
+  }
+
   async function sendGemini(history: ChatMessage[], userText: string) {
-    return completeChat(GEMINI_SYSTEM_PROMPT, history, userText, '');
+    const local = await tryLocalReply(userText, 'gemini');
+    if (local) return local;
+    const text = await completeChat(GEMINI_SYSTEM_PROMPT, history, userText, '');
+    return { content: text, meta: '' };
   }
 
   async function sendCursorAuto(history: ChatMessage[], userText: string) {
+    const local = await tryLocalReply(userText, 'cursor-auto');
+    if (local) return local;
+
     const toolResults = await runOperatorTools(userText);
-
-    if (wantsJobCatalog(userText)) {
-      const health = toolResults.find((r) => r.tool === 'GET /health');
-      let out = formatSchedulableJobsCatalog();
-      if (health) {
-        out += `\n---\n**Live gateway:** ${health.summary}\n`;
-      }
-      return out;
-    }
-
     const toolContext = formatToolResultsForPrompt(toolResults);
-    return completeChat(CURSOR_AUTO_SYSTEM_PROMPT, history, userText, toolContext);
+    const antiHallucination =
+      '\n\nNEVER invent tools like claw.list_skills(). Use only gateway APIs and the skills catalog when listing skills.\n';
+    const text = await completeChat(
+      CURSOR_AUTO_SYSTEM_PROMPT,
+      history,
+      userText,
+      toolContext + antiHallucination
+    );
+    return { content: text, meta: 'Gateway tools may have been invoked' };
+  }
+
+  function friendlyLlmError(e: unknown): string {
+    const raw =
+      e instanceof ApiError
+        ? `${e.message}: ${typeof e.body === 'string' ? e.body : JSON.stringify(e.body)}`
+        : e instanceof Error
+          ? e.message
+          : 'Send failed';
+    if (/503|UNAVAILABLE|high demand/i.test(raw)) {
+      return (
+        'Gemini is temporarily overloaded (503). Try again in a minute, switch to **Cursor Auto** for gateway-only tasks, or use "List skills" / "List jobs" which do not call Gemini.'
+      );
+    }
+    return raw;
   }
 
   async function handleSend() {
     const text = input.trim();
     if (!text || sending) return;
-    if (!llmAvailable) {
+
+    const needsLlm = !wantsSkillsQuery(text) && !wantsJobCatalog(text);
+    if (needsLlm && !llmAvailable) {
       setError('No LLM provider configured on gateway — set GEMINI_API_KEY and reload connectors.');
       return;
     }
@@ -100,29 +145,21 @@ export function AgentChatWindow({
 
     try {
       const history = messages.filter((m) => m.mode === mode);
-      const reply =
-        mode === 'gemini'
-          ? await sendGemini(history, text)
-          : await sendCursorAuto(history, text);
+      const result =
+        mode === 'gemini' ? await sendGemini(history, text) : await sendCursorAuto(history, text);
 
       setMessages((prev) => [
         ...prev,
         {
           id: uid(),
           role: 'assistant',
-          content: reply,
+          content: result.content,
           mode,
-          meta: mode === 'cursor-auto' ? 'Gateway tools may have been invoked' : undefined,
+          meta: result.meta || undefined,
         },
       ]);
     } catch (e) {
-      const msg =
-        e instanceof ApiError
-          ? `${e.message}: ${typeof e.body === 'string' ? e.body : JSON.stringify(e.body)}`
-          : e instanceof Error
-            ? e.message
-            : 'Send failed';
-      setError(msg);
+      setError(friendlyLlmError(e));
     } finally {
       setSending(false);
     }
@@ -207,7 +244,11 @@ export function AgentChatWindow({
           <div className="chat-bubble assistant">
             <div className="chat-bubble-label">{mode === 'gemini' ? 'Gemini' : 'Cursor Auto'}</div>
             <div className="chat-bubble-body chat-typing">
-              {mode === 'cursor-auto' ? 'Running gateway tools & composing reply…' : 'Thinking…'}
+              {wantsSkillsQuery(input) || wantsJobCatalog(input)
+                ? 'Loading catalog…'
+                : mode === 'cursor-auto'
+                  ? 'Running gateway tools & composing reply…'
+                  : 'Thinking…'}
             </div>
           </div>
         )}

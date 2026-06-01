@@ -45,6 +45,25 @@ export const api = {
 
   frameworks: () => request<{ packs: unknown[] }>('/api/frameworks', { auth: false }),
 
+  cursorSkills: () =>
+    request<{ ok: boolean; note: string; skills: unknown[] }>('/api/cursor-skills', {
+      auth: false,
+    }),
+
+  skills: () => request<{ ok: boolean; skills: unknown[] }>('/api/skills', { auth: false }),
+
+  skillDetail: (skillId: string, includeBody = true) =>
+    request<{ ok: boolean; skill: unknown }>(
+      `/api/skills/${encodeURIComponent(skillId)}${includeBody ? '' : '?body=0'}`,
+      { auth: false }
+    ),
+
+  skillRun: (body: unknown) =>
+    request<Record<string, unknown>>('/api/skills/run', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
   aimsVendorGaps: (vendor?: string) =>
     request<{ summary: unknown[]; gaps: unknown[] }>(
       vendor ? `/api/aims/vendor-gaps?vendor=${encodeURIComponent(vendor)}` : '/api/aims/vendor-gaps',
