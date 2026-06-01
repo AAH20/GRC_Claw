@@ -208,6 +208,50 @@ The **operator console** (`apps/console`) is a React app that exposes every gate
 | **Gemini** | Direct BYOC chat via `POST /api/connectors/llm/:id/chat` (full multi-paragraph replies) |
 | **Cursor Auto** | Runs live gateway tools (health, sync, frameworks, read-tier agent), lists schedulable jobs, and answers with GRC operator rules |
 
+### Frontend project tree (`apps/console`)
+
+Workspace package: `@grc-claw/console` · Vite + React + React Router.
+
+```
+apps/console/
+├── index.html                 # App shell, llms.txt link
+├── package.json
+├── vite.config.ts             # Dev :5174, proxy /api + /health → gateway
+├── tsconfig.json
+├── public/
+│   └── llms.txt               # Machine-readable API map (Cursor Auto / agents)
+└── src/
+    ├── main.tsx
+    ├── App.tsx                # Routes: /, /frameworks, /ingest, /agent, /aims, /connectors, /settings
+    ├── index.css
+    ├── components/
+    │   ├── Layout.tsx         # Sidebar nav + A2Z trust badge
+    │   ├── PageShell.tsx      # Per-page explain blocks + Cursor Auto panel
+    │   ├── A2ZTrustBadge.tsx  # Secured by A2Z SOC SVG badge
+    │   ├── AgentChatWindow.tsx # Dashboard chat (Gemini | Cursor Auto)
+    │   ├── CursorAutoPanel.tsx
+    │   └── JsonBlock.tsx
+    ├── lib/
+    │   ├── api.ts             # Gateway HTTP client
+    │   ├── settings.ts        # localStorage: token, tenant, trust profile, Cursor Auto flag
+    │   ├── constants.ts       # Ingest sources, sample payloads, builtin tools
+    │   ├── pageMeta.ts        # Self-explanatory copy per route
+    │   ├── chatPrompts.ts     # Gemini + Cursor Auto system prompts
+    │   ├── cursorAuto.ts        # curl snippets, automation rules
+    │   ├── operatorAgent.ts   # Live gateway tool dispatch (Cursor Auto)
+    │   └── schedulableJobs.ts # Daemon + cron-friendly job catalog
+    └── pages/
+        ├── DashboardPage.tsx  # Health, BYOC summary, A2Z sync, agent chat
+        ├── FrameworksPage.tsx
+        ├── IngestPage.tsx
+        ├── AgentPage.tsx
+        ├── AimsPage.tsx
+        ├── ConnectorsPage.tsx
+        └── SettingsPage.tsx
+```
+
+Build output: `apps/console/dist/` (served when `GRC_CLAW_CONSOLE_STATIC` is set).
+
 **Dev (Vite proxies to gateway):**
 
 ```bash
