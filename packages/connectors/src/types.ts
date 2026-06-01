@@ -1,6 +1,6 @@
 import type { ToolTier } from '@grc-claw/agent-runtime';
 
-export type LlmProviderKind = 'openai_compatible' | 'anthropic_messages';
+export type LlmProviderKind = 'openai_compatible' | 'anthropic_messages' | 'gemini_generate';
 
 export interface LlmProviderConfig {
   id: string;

@@ -1,0 +1,55 @@
+# GRC_Claw Operator Console — llms.txt
+# For Cursor Auto Mode, agents, and automations interacting with the gateway.
+
+## What this is
+GRC_Claw is an open-source GRC control plane paired with Private A2Z SOC (https://a2z-soc.com).
+The operator console is a React UI; all features are also available as HTTP APIs on the gateway.
+
+## Gateway base URL
+- Dev (Vite proxy): http://localhost:5174 → proxies /api and /health to http://127.0.0.1:18791
+- Direct gateway: http://127.0.0.1:18791
+
+## Authentication
+Header: X-GRC-Claw-Token: <matches GRC_CLAW_GATEWAY_TOKEN>
+Or: Authorization: Bearer <token>
+
+## Public endpoints (no auth)
+GET /health — service status, a2z_soc_mode, capability flags
+GET /api/frameworks — ISO 27001, NIST CSF, SOC 2, ISO 42001 packs
+GET /api/aims/vendor-gaps — optional ?vendor=anthropic|openai|cursor|openclaw
+GET /api/aims/technical-controls — AIMS scope, clauses, technical controls
+GET /api/connectors — BYOC LLM and MCP registry summary
+
+## Authenticated endpoints
+POST /api/ingest/normalize — { source, tenantId, payload }
+POST /api/agent/invoke — { sessionId, tool, args, approvalToken?, idempotencyKey? }
+POST /api/a2z/sync — pull last hour from Private A2Z SOC bridge
+POST /api/connectors/reload — reload BYOC from environment
+POST /api/connectors/llm/:id/chat — LLM proxy
+GET  /api/connectors/mcp/:id/tools — list MCP tools
+POST /api/connectors/mcp/:id/call — { name, arguments }
+
+## Agent tool tiers
+read: grc.list_controls, grc.get_compliance_score, evidence.read, soc.query_events, sentinel.get_incident, aws.guardduty.list_findings
+write: evidence.attach, control.update_status (requires idempotencyKey)
+destructive: soar.run_playbook, firewall.apply_rule, sentinel.run_playbook, chronicle.soar.run_playbook (requires approvalToken)
+
+## Ingest sources
+OSS: wazuh, suricata, snort, elastic, ufw
+Cloud: aws_guardduty, aws_cloudwatch, aws_securityhub, aws_cloudtrail, azure_sentinel, azure_defender, azure_monitor, gcp_chronicle, gcp_scc, gcp_cloud_logging
+
+## Cursor Auto Mode workflow
+1. GET /health — confirm gateway up
+2. Read settings token from browser localStorage key grc-claw-console-settings
+3. Use read-tier agent tools before write/destructive
+4. Normalize alerts with POST /api/ingest/normalize before mapping controls
+5. Sync A2Z SOC with POST /api/a2z/sync when bridge is configured
+
+## A2Z SOC trust
+Console displays "Secured by A2Z SOC" trust badge on every page.
+Trust profile: https://a2z-soc.com/trust/{tenantId}
+
+## Do not
+- Call destructive tools without explicit human approval
+- Commit gateway tokens to git
+- Assume demo mode returns live SOC data (set A2Z_SOC_MODE=private for production)

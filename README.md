@@ -41,6 +41,7 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 - [Packages](#packages)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
+- [Operator console](#operator-console)
 - [Configuration](#configuration)
 - [Gateway API](#gateway-api)
 - [Log and alert ingestion](#log-and-alert-ingestion)
@@ -65,9 +66,10 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
 | **ISO/IEC 42001 AIMS** | Vendor gap matrix (Anthropic, OpenAI, Cursor, OpenClaw), technical controls API |
-| **BYOC connectors** | Bring your own **LLM** (OpenAI, Anthropic, Ollama) and **MCP** servers — gated by exec policy |
+| **BYOC connectors** | Bring your own **LLM** (OpenAI, Anthropic, **Google Gemini**, Ollama) and **MCP** servers — gated by exec policy |
 | **[a2z-soc.com](https://a2z-soc.com)** | Optional connector for live SOC + GRC sync |
 | **Ship-ready OSS** | Docker Compose, systemd, comprehensive tests |
+| **Operator console** | React UI — dashboard agent chat (Gemini + Cursor Auto), A2Z SOC trust badge, all gateway APIs |
 
 ---
 
@@ -79,6 +81,8 @@ GRC_Claw/
 ├── tsconfig.json
 ├── LICENSE
 ├── ARCHITECTURE.md
+├── apps/
+│   └── console/                 # Operator UI (Vite + React)
 ├── docs/
 ├── packages/
 │   ├── core/
@@ -122,11 +126,14 @@ npm install && npm run build
 | `@grc-claw/connectors` | BYOC LLM providers + MCP servers (registry, proxy, policy tools) |
 | `@grc-claw/ingest` | OSS SIEM/IDS/firewall + AWS/Azure/GCP normalizers |
 | `@grc-claw/a2z-connector` | Bridge to **[a2z-soc.com](https://a2z-soc.com)** APIs |
+| `@grc-claw/console` | Operator UI (`apps/console`) — Vite + React |
 
 | Script | Command |
 |--------|---------|
 | Build | `npm run build` |
+| Build console | `npm run build:console` |
 | Gateway | `npm run gateway` |
+| Console (dev) | `npm run console` → http://localhost:5174 |
 | Doctor | `npm run doctor` |
 | Tests | `npm run test` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
 
@@ -173,6 +180,8 @@ npm run gateway
 curl -s http://127.0.0.1:18791/health | jq .
 ```
 
+See [Operator console](#operator-console) for the full UI workflow.
+
 **Example — normalize a Suricata alert:**
 
 ```bash
@@ -190,18 +199,86 @@ docker compose -f deploy/docker-compose.yml up --build
 
 ---
 
+## Operator console
+
+The **operator console** (`apps/console`) is a React app that exposes every gateway capability with an **A2Z SOC trust badge** on each page, self-explanatory guides, and a **dashboard agent chat** with two modes:
+
+| Mode | What it does |
+|------|----------------|
+| **Gemini** | Direct BYOC chat via `POST /api/connectors/llm/:id/chat` (full multi-paragraph replies) |
+| **Cursor Auto** | Runs live gateway tools (health, sync, frameworks, read-tier agent), lists schedulable jobs, and answers with GRC operator rules |
+
+**Dev (Vite proxies to gateway):**
+
+```bash
+# Terminal 1 — gateway
+export GRC_CLAW_GATEWAY_TOKEN=grc-test-token
+npm run gateway
+
+# Terminal 2 — console
+npm run console
+# → http://localhost:5174
+# Settings → X-GRC-Claw-Token must match GRC_CLAW_GATEWAY_TOKEN
+```
+
+**Production (same origin as gateway):**
+
+```bash
+npm run build:console
+export GRC_CLAW_CONSOLE_STATIC="$(pwd)/apps/console/dist"
+npm run gateway
+# → http://127.0.0.1:18791/
+```
+
+### Google Gemini (BYOC)
+
+```bash
+cp examples/gemini-byoc.env.example .env
+# Set GEMINI_API_KEY and GRC_CLAW_CONNECTORS_CONFIG=examples/gemini-connectors.json
+set -a && source .env && set +a
+npm run gateway
+```
+
+Uses provider kind `gemini_generate` (default model `gemini-2.5-flash`). See [examples/gemini-connectors.json](examples/gemini-connectors.json).
+
+### Cursor Auto Mode & scheduling
+
+The browser console **cannot** start OS daemons or edit your crontab. It **can**:
+
+- Call gateway HTTP APIs on demand (health, A2Z sync, ingest, agent read tools)
+- Show a **catalog of schedulable jobs** (gateway daemon + cron-friendly endpoints)
+- Point you to **Cursor Automations** (desktop) or **host cron → curl** for background work
+
+Machine-readable API map for Cursor agents: `http://localhost:5174/llms.txt` (dev) or `/llms.txt` when served by the gateway.
+
+**Example hourly A2Z sync (host cron):**
+
+```bash
+0 * * * * curl -s -X POST http://127.0.0.1:18791/api/a2z/sync \
+  -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN"
+```
+
+Console pages: Dashboard · Frameworks · Ingest · Agent · ISO 42001 · BYOC · Settings.
+
+---
+
 ## Configuration
 
 | Variable | Description |
 |----------|-------------|
 | `GRC_CLAW_GATEWAY_TOKEN` | API auth token (**required**) |
 | `GRC_CLAW_HOST` / `GRC_CLAW_PORT` | Bind (default `127.0.0.1:18791`) |
+| `GRC_CLAW_CONSOLE_STATIC` | Path to built console (`apps/console/dist`) for same-origin UI |
+| `GRC_CLAW_CORS_ORIGIN` | CORS origin for cross-origin console (default `*`) |
 | `A2Z_SOC_MODE` | `demo` or `private` (live **[a2z-soc.com](https://a2z-soc.com)**) |
 | `A2Z_SOC_BASE_URL` | Your A2Z SOC API base (e.g. `https://a2z-soc.com`) |
 | `A2Z_SOC_API_KEY` | Integration key from A2Z SOC |
 | `A2Z_SOC_TENANT_ID` | Tenant scope |
+| `GRC_CLAW_CONNECTORS_JSON` | Inline BYOC registry JSON |
+| `GRC_CLAW_CONNECTORS_CONFIG` | Path to BYOC JSON file (e.g. `examples/gemini-connectors.json`) |
+| `GEMINI_API_KEY` | Google Gemini API key (when using `gemini_generate` provider) |
 
-Run `npm run doctor` before production.
+Run `npm run doctor` before production. Never commit `.env` — use `examples/*.env.example` as templates.
 
 ---
 
@@ -220,6 +297,8 @@ Run `npm run doctor` before production.
 | `POST` | `/api/connectors/llm/:id/chat` | LLM chat proxy |
 | `GET` | `/api/connectors/mcp/:id/tools` | Discover MCP tools |
 | `WS` | `/` | `connect` → `hello-ok` |
+
+**LLM provider kinds:** `openai_compatible` · `anthropic_messages` · `gemini_generate`
 
 See [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) for configuration.
 
@@ -346,6 +425,7 @@ npm install && npm run build && npm run test:comprehensive
 
 ## Roadmap
 
+- [x] Operator console with Gemini + Cursor Auto agent chat
 - [ ] npm publish `@grc-claw/*`
 - [ ] Helm chart
 - [ ] Gateway metrics (Prometheus)

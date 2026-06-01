@@ -105,10 +105,19 @@ export async function handleConnectorsRoute(
     const body = await readJson(req);
     try {
       const messages = (body.messages as { role: string; content: string }[]) ?? [];
+      const maxTokens =
+        typeof body.maxTokens === 'number'
+          ? body.maxTokens
+          : typeof body.max_tokens === 'number'
+            ? body.max_tokens
+            : 8192;
+      const temperature =
+        typeof body.temperature === 'number' ? body.temperature : undefined;
       const result = await chatViaProvider(registry, route.llmId, {
         messages,
         model: typeof body.model === 'string' ? body.model : undefined,
-        maxTokens: typeof body.maxTokens === 'number' ? body.maxTokens : undefined,
+        maxTokens,
+        temperature,
       });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, ...result }));

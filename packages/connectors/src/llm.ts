@@ -31,6 +31,9 @@ export async function chatViaProvider(
   if (provider.kind === 'anthropic_messages') {
     return anthropicChat(provider, apiKey, model, req);
   }
+  if (provider.kind === 'gemini_generate') {
+    return geminiChat(provider, apiKey, model, req);
+  }
   return openAiCompatibleChat(provider, apiKey, model, req);
 }
 
@@ -102,5 +105,84 @@ async function anthropicChat(
     content?: { type: string; text?: string }[];
   };
   const content = body.content?.find((c) => c.type === 'text')?.text ?? '';
+  return { providerId: provider.id, model, content, raw: body as Record<string, unknown> };
+}
+
+function extractGeminiText(body: {
+  candidates?: {
+    content?: { parts?: { text?: string }[] };
+    finishReason?: string;
+  }[];
+  promptFeedback?: { blockReason?: string };
+}): string {
+  const candidate = body.candidates?.[0];
+  if (!candidate?.content?.parts?.length) {
+    const reason = body.promptFeedback?.blockReason ?? candidate?.finishReason ?? 'no_candidates';
+    throw new Error(`gemini_empty_response:${reason}`);
+  }
+  const text = candidate.content.parts
+    .map((p) => p.text ?? '')
+    .join('')
+    .trim();
+  if (!text) {
+    throw new Error(`gemini_empty_text:${candidate.finishReason ?? 'unknown'}`);
+  }
+  return text;
+}
+
+async function geminiChat(
+  provider: LlmProviderConfig,
+  apiKey: string,
+  model: string,
+  req: LlmChatRequest
+): Promise<LlmChatResult> {
+  const base =
+    provider.baseUrl.replace(/\/$/, '') || 'https://generativelanguage.googleapis.com/v1beta';
+  const url = `${base}/models/${model}:generateContent`;
+
+  const systemMsg = req.messages.find((m) => m.role === 'system')?.content;
+  const contents = req.messages
+    .filter((m) => m.role !== 'system')
+    .map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+
+  const maxOutputTokens = req.maxTokens ?? 8192;
+  const generationConfig: Record<string, unknown> = {
+    maxOutputTokens,
+    temperature: req.temperature ?? 0.4,
+  };
+  // Gemini 2.5 "thinking" can consume the entire token budget — leave room for visible reply
+  if (/gemini-2\.5/i.test(model)) {
+    generationConfig.thinkingConfig = { thinkingBudget: 1024 };
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    },
+    body: JSON.stringify({
+      ...(systemMsg
+        ? { systemInstruction: { parts: [{ text: systemMsg }] } }
+        : {}),
+      contents,
+      generationConfig,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`llm_http_${res.status}:${detail.slice(0, 300)}`);
+  }
+  const body = (await res.json()) as {
+    candidates?: {
+      content?: { parts?: { text?: string }[] };
+      finishReason?: string;
+    }[];
+    promptFeedback?: { blockReason?: string };
+  };
+  const content = extractGeminiText(body);
   return { providerId: provider.id, model, content, raw: body as Record<string, unknown> };
 }

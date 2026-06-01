@@ -21,6 +21,7 @@ import {
   invokeWithConnectorDispatch,
 } from './connectors-api.js';
 import { IdempotencyCache } from './idempotency.js';
+import { applyCors, tryServeConsoleStatic } from './console-static.js';
 
 export interface GatewayConfig {
   host: string;
@@ -52,6 +53,13 @@ export function createGateway(config: GatewayConfig) {
   }
 
   const httpServer = createServer(async (req, res) => {
+    applyCors(res);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     const path = req.url?.split('?')[0] ?? '/';
 
     if (path === '/health') {
@@ -209,6 +217,8 @@ export function createGateway(config: GatewayConfig) {
       res.end(JSON.stringify({ ok: true, decision, output, audit: session.getAuditLog() }));
       return;
     }
+
+    if (tryServeConsoleStatic(req, res, path)) return;
 
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'not_found' }));

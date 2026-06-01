@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "llm": [
+    {
+      "id": "gemini",
+      "label": "Google Gemini",
+      "kind": "gemini_generate",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+      "apiKeyEnv": "GEMINI_API_KEY",
+      "defaultModel": "gemini-2.5-flash"
+    }
+  ]
+}

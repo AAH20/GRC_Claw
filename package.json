@@ -5,6 +5,7 @@
   "description": "Modular open-source GRC control plane with agentic AI security — integrates with Private A2Z SOC",
   "license": "MIT",
   "workspaces": [
+    "apps/console",
     "packages/core",
     "packages/gateway",
     "packages/agent-runtime",
@@ -17,6 +18,8 @@
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
+    "console": "npm run dev -w @grc-claw/console",
+    "build:console": "npm run build -w @grc-claw/console",
     "gateway": "npm run start -w @grc-claw/gateway",
     "doctor": "npm run doctor -w @grc-claw/gateway",
     "test": "npm run test -w @grc-claw/ingest",
