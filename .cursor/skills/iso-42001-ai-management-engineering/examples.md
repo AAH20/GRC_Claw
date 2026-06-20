@@ -40,5 +40,5 @@ npm run test:iso42001
 | KPI | Source |
 |-----|--------|
 | % destructive calls blocked without approval | Agent audit via `/api/agent/invoke` |
-| Evidence attach latency | a2z-soc.com + `@grc-claw/evidence` |
+| Evidence attach latency | a2zsoc.com + `@grc-claw/evidence` |
 | Sessions hitting max tool calls | Gateway audit logs |

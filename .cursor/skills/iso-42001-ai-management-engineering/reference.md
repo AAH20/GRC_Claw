@@ -70,6 +70,6 @@ See `packages/aims/src/vendor-gaps.ts` and `GET /api/aims/vendor-gaps`.
 | ID | Source | Destination | Purpose |
 |----|--------|-------------|---------|
 | A01 | Agent runtime | GRC_Claw gateway | Audited tool calls |
-| A02 | Gateway | a2z-soc.com | Security + GRC events |
+| A02 | Gateway | a2zsoc.com | Security + GRC events |
 | A03 | Operators | Gateway :18791 | Management |
 | A04 | LLM vendor API | Agent (via app) | Inference (scoped keys) |

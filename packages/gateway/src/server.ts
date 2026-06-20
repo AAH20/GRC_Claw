@@ -91,7 +91,7 @@ export function createGateway(config: GatewayConfig) {
           llm_providers: summary.llm.length,
           mcp_servers: summary.mcp.length,
           cloud_sources: CLOUD_INGEST_SOURCES,
-          marketing: 'OpenClaw for GRC — pairs with a2z-soc.com',
+          marketing: 'OpenClaw for GRC — pairs with a2zsoc.com',
         })
       );
       return;

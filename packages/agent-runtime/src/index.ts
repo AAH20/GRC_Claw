@@ -39,6 +39,10 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sentinel.run_playbook', tier: 'destructive' },
   { name: 'aws.guardduty.list_findings', tier: 'read' },
   { name: 'chronicle.soar.run_playbook', tier: 'destructive' },
+  // Enterprise Connector Tools (Nvidia/Nemotron Strategy)
+  { name: 'servicenow.create_incident', tier: 'write' },
+  { name: 'sap.query_access_logs', tier: 'read' },
+  { name: 'nemotron.evaluate_compliance', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox */
@@ -148,3 +152,7 @@ export class AgentSession {
     return [...this.audit];
   }
 }
+
+export * from './hermes-provider.js';
+export * from './orchestrator.js';
+

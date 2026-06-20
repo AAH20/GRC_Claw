@@ -11,7 +11,7 @@ ISO42001 comprehensive architecture and engineering with implementation while hi
 
 **Architecture first, implementation second.** Define AIMS scope, risk treatment, and control objectives before tooling. Align technical controls with `netsec-grc-architecture-engineering` (planes, gateway daemons) and **GRC_Claw** (OpenClaw for GRC, exec policy, evidence).
 
-Production SOC context: **[a2z-soc.com](https://a2z-soc.com)** for tenant GRC + security events.
+Production SOC context: **[a2zsoc.com](https://a2zsoc.com)** for tenant GRC + security events.
 
 ## GRC_Claw integration
 
@@ -95,7 +95,7 @@ Use as **review prompts**, not legal findings. Programmatic matrix: `@grc-claw/a
 | Traceability | Audit log per tool invocation | `AgentSession.getAuditLog()` |
 | Access control | Gateway token + WS `connect` | `@grc-claw/gateway` |
 | Integrity of records | SHA-256 evidence lineage | `@grc-claw/evidence` |
-| Monitoring AI incidents | Normalize alerts → controls | `@grc-claw/ingest` + a2z-soc.com |
+| Monitoring AI incidents | Normalize alerts → controls | `@grc-claw/ingest` + a2zsoc.com |
 | Supplier API hygiene | Scoped keys, no keys in repo | `npm run doctor` |
 
 ## Verification checklist

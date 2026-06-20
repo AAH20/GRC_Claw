@@ -2,7 +2,7 @@
 # For Cursor Auto Mode, agents, and automations interacting with the gateway.
 
 ## What this is
-GRC_Claw is an open-source GRC control plane paired with Private A2Z SOC (https://a2z-soc.com).
+GRC_Claw is an open-source GRC control plane paired with Private A2Z SOC (https://a2zsoc.com).
 The operator console is a React UI; all features are also available as HTTP APIs on the gateway.
 
 ## Gateway base URL
@@ -47,7 +47,7 @@ Cloud: aws_guardduty, aws_cloudwatch, aws_securityhub, aws_cloudtrail, azure_sen
 
 ## A2Z SOC trust
 Console displays "Secured by A2Z SOC" trust badge on every page.
-Trust profile: https://a2z-soc.com/trust/{tenantId}
+Trust profile: https://a2zsoc.com/trust/{tenantId}
 
 ## Do not
 - Call destructive tools without explicit human approval

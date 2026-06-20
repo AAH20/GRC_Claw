@@ -143,7 +143,7 @@ export const PAGE_META: Record<string, PageMeta> = {
         'Technical controls tab — scope template, clauses 4–10, and TC-* mappings.',
       ],
       a2zRole:
-        'AIMS scope references a2z-soc.com as the production SOC anchor; trust badge reflects continuous compliance posture on A2Z SOC.',
+        'AIMS scope references a2zsoc.com as the production SOC anchor; trust badge reflects continuous compliance posture on A2Z SOC.',
     },
     cursor: {
       endpoint: '/api/aims/vendor-gaps',

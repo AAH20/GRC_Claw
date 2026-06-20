@@ -7,11 +7,11 @@
 [![GitHub](https://img.shields.io/badge/GitHub-AAH20%2FGRC__Claw-181717?logo=github)](https://github.com/AAH20/GRC_Claw)
 [![OpenClaw for GRC](https://img.shields.io/badge/OpenClaw-for%20GRC-8b5cf6)](ARCHITECTURE.md)
 [![Agentic AI Security](https://img.shields.io/badge/Agentic%20AI-Secured-green)](docs/AGENTIC_AI_SECURITY.md)
-[![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2z--soc.com-red)](https://a2z-soc.com)
+[![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2z--soc.com-red)](https://a2zsoc.com)
 
 **GRC_Claw** takes the local gateway control-plane pattern from **[OpenClaw](https://github.com/openclaw/openclaw)** and extends it into a production-grade stack for **governance, risk, and compliance (GRC)** and security operations.
 
-[OpenClaw](https://github.com/openclaw/openclaw) is an excellent foundation for personal AI assistants—messaging channels, skills, and a supervised gateway on your own hardware. **GRC_Claw is architecturally related but purpose-built for a different class of problem:** regulated tenants, continuous control monitoring, immutable evidence, SIEM and cloud alert normalization, ISO/IEC 42001 AIMS alignment, and optional integration with a live SOC at **[a2z-soc.com](https://a2z-soc.com)**. Same daemon philosophy; materially deeper surface area for security and compliance teams.
+[OpenClaw](https://github.com/openclaw/openclaw) is an excellent foundation for personal AI assistants—messaging channels, skills, and a supervised gateway on your own hardware. **GRC_Claw is architecturally related but purpose-built for a different class of problem:** regulated tenants, continuous control monitoring, immutable evidence, SIEM and cloud alert normalization, ISO/IEC 42001 AIMS alignment, and optional integration with a live SOC at **[a2zsoc.com](https://a2zsoc.com)**. Same daemon philosophy; materially deeper surface area for security and compliance teams.
 
 | | [OpenClaw](https://github.com/openclaw/openclaw) | **GRC_Claw** (this repo) |
 |---|----------|----------|
@@ -22,7 +22,7 @@
 | **Evidence** | Workspace files | **SHA-256 lineage** + SOC attach API |
 | **Ingest** | Channel messages | **OSS SIEM/IDS/firewall + AWS/Azure/GCP** normalizers |
 | **AI supply chain** | Model provider choice | **BYOC LLM + MCP** with gated tool registry |
-| **Production SOC** | Bring your own | **[a2z-soc.com](https://a2z-soc.com)** bridge (events, controls, alerts) |
+| **Production SOC** | Bring your own | **[a2zsoc.com](https://a2zsoc.com)** bridge (events, controls, alerts) |
 
 ---
 
@@ -30,7 +30,7 @@
 
 GRC_Claw is an MIT **npm workspaces monorepo** for organizations that need more than a general agent gateway: continuous control testing, audit-ready framework packs, evidence you can defend in an assessment, and **agentic AI that cannot bypass policy**—without giving up the operability that made [OpenClaw](https://github.com/openclaw/openclaw) influential in the first place.
 
-Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise SIEM, multi-cloud ingest, and production SOC operations—or run GRC_Claw standalone for demos, audits, and integrator builds.
+Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SIEM, multi-cloud ingest, and production SOC operations—or run GRC_Claw standalone for demos, audits, and integrator builds.
 
 ---
 
@@ -46,7 +46,7 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 - [Configuration](#configuration)
 - [Gateway API](#gateway-api)
 - [Log and alert ingestion](#log-and-alert-ingestion)
-- [A2Z SOC integration (a2z-soc.com)](#a2z-soc-integration-a2z-soccom)
+- [A2Z SOC integration (a2zsoc.com)](#a2z-soc-integration-a2z-soccom)
 - [Agentic AI security](#agentic-ai-security)
 - [Testing](#testing)
 - [Deployment](#deployment)
@@ -65,11 +65,13 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 | **GRC engine** | `GRCEngineFacade`, framework packs, control ↔ evidence linkage |
 | **Skill executor** | OpenClaw-style `claw.list_skills`, `claw.get_skill`, `claw.run_skill` — runs `.cursor/skills` playbooks via BYOC LLM + gated tools |
 | **Agentic AI security** | Three-phase exec policy, tool tiers, session audit log |
+| **Hermes/Nemotron Agent Runtime** | Zero-dependency autonomous orchestrator, self-healing supervisor loop |
+| **Enterprise Connectors** | Native integration with SAP, ServiceNow, and Chronicle SOAR |
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
 | **ISO/IEC 42001 AIMS** | Vendor gap matrix (Anthropic, OpenAI, Cursor, OpenClaw), technical controls API |
 | **BYOC connectors** | Bring your own **LLM** (OpenAI, Anthropic, **Google Gemini**, Ollama) and **MCP** servers — gated by exec policy |
-| **[a2z-soc.com](https://a2z-soc.com)** | Optional connector for live SOC + GRC sync |
+| **[a2zsoc.com](https://a2zsoc.com)** | Optional connector for live SOC + GRC sync |
 | **Ship-ready OSS** | Docker Compose, systemd, comprehensive tests |
 | **Operator console** | React UI — dashboard agent chat (Gemini + Cursor Auto), A2Z SOC trust badge, all gateway APIs |
 
@@ -96,7 +98,7 @@ GRC_Claw/
 │   ├── connectors/              # BYOC LLM + MCP registry
 │   ├── skill-executor/          # Skill discovery + claw.* run loop
 │   ├── ingest/                  # OSS + cloud normalizers
-│   └── a2z-connector/           # a2z-soc.com API bridge
+│   └── a2z-connector/           # a2zsoc.com API bridge
 ├── integrations/iso-42001/
 ├── .cursor/skills/iso-42001-ai-management-engineering/
 ├── integrations/a2z-soc/
@@ -129,7 +131,7 @@ npm install && npm run build
 | `@grc-claw/connectors` | BYOC LLM providers + MCP servers (registry, proxy, policy tools) |
 | `@grc-claw/skill-executor` | Cursor skill discovery, `claw.*` dispatch, LLM run loop (`TOOL_CALL` / `FINAL_ANSWER`) |
 | `@grc-claw/ingest` | OSS SIEM/IDS/firewall + AWS/Azure/GCP normalizers |
-| `@grc-claw/a2z-connector` | Bridge to **[a2z-soc.com](https://a2z-soc.com)** APIs |
+| `@grc-claw/a2z-connector` | Bridge to **[a2zsoc.com](https://a2zsoc.com)** APIs |
 | `@grc-claw/console` | Operator UI (`apps/console`) — Vite + React |
 
 | Script | Command |
@@ -164,7 +166,7 @@ npm install && npm run build
                          │
          ┌───────────────┼───────────────┐
          ▼               ▼               ▼
-    frameworks      agent-runtime    a2z-soc.com
+    frameworks      agent-runtime    a2zsoc.com
     evidence         (gated SOAR)     (optional)
 ```
 
@@ -178,7 +180,7 @@ Details: [ARCHITECTURE.md](ARCHITECTURE.md).
 cp examples/a2z-private-bridge.env.example .env
 
 export GRC_CLAW_GATEWAY_TOKEN=change-me-in-production
-export A2Z_SOC_MODE=demo   # use private + a2z-soc.com URL for production
+export A2Z_SOC_MODE=demo   # use private + a2zsoc.com URL for production
 
 npm run gateway
 curl -s http://127.0.0.1:18791/health | jq .
@@ -362,8 +364,8 @@ Full reference: [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
 | `GRC_CLAW_HOST` / `GRC_CLAW_PORT` | Bind (default `127.0.0.1:18791`) |
 | `GRC_CLAW_CONSOLE_STATIC` | Path to built console (`apps/console/dist`) for same-origin UI |
 | `GRC_CLAW_CORS_ORIGIN` | CORS origin for cross-origin console (default `*`) |
-| `A2Z_SOC_MODE` | `demo` or `private` (live **[a2z-soc.com](https://a2z-soc.com)**) |
-| `A2Z_SOC_BASE_URL` | Your A2Z SOC API base (e.g. `https://a2z-soc.com`) |
+| `A2Z_SOC_MODE` | `demo` or `private` (live **[a2zsoc.com](https://a2zsoc.com)**) |
+| `A2Z_SOC_BASE_URL` | Your A2Z SOC API base (e.g. `https://a2zsoc.com`) |
 | `A2Z_SOC_API_KEY` | Integration key from A2Z SOC |
 | `A2Z_SOC_TENANT_ID` | Tenant scope |
 | `GRC_CLAW_CONNECTORS_JSON` | Inline BYOC registry JSON |
@@ -429,13 +431,13 @@ See [packages/ingest](packages/ingest).
 
 ---
 
-## A2Z SOC integration (a2z-soc.com)
+## A2Z SOC integration (a2zsoc.com)
 
-Production security operations and tenant GRC data live on **[a2z-soc.com](https://a2z-soc.com)**. GRC_Claw connects via `@grc-claw/a2z-connector`:
+Production security operations and tenant GRC data live on **[a2zsoc.com](https://a2zsoc.com)**. GRC_Claw connects via `@grc-claw/a2z-connector`:
 
 ```bash
 A2Z_SOC_MODE=private
-A2Z_SOC_BASE_URL=https://a2z-soc.com
+A2Z_SOC_BASE_URL=https://a2zsoc.com
 A2Z_SOC_API_KEY=<your-integration-key>
 A2Z_SOC_TENANT_ID=1
 ```
@@ -448,7 +450,7 @@ A2Z_SOC_TENANT_ID=1
 
 **Demo mode** (`A2Z_SOC_MODE=demo`) works offline for CI and local dev—no API key required.
 
-Learn more about the platform: **[https://a2z-soc.com](https://a2z-soc.com)**
+Learn more about the platform: **[https://a2zsoc.com](https://a2zsoc.com)**
 
 ---
 
@@ -487,7 +489,7 @@ npm run test:cloud           # AWS / Azure / GCP
 - **systemd:** [deploy/systemd/grc-claw-gateway.service](deploy/systemd/grc-claw-gateway.service)  
 - **Docker:** [deploy/docker-compose.yml](deploy/docker-compose.yml)  
 
-Production: strong gateway token, TLS at reverse proxy, scoped **a2z-soc.com** API key, agent approvals enabled.
+Production: strong gateway token, TLS at reverse proxy, scoped **a2zsoc.com** API key, agent approvals enabled.
 
 ---
 
@@ -497,7 +499,7 @@ Production: strong gateway token, TLS at reverse proxy, scoped **a2z-soc.com** A
 |-----|--------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Gateway daemon, planes, OpenClaw mapping |
 | [docs/AGENTIC_AI_SECURITY.md](docs/AGENTIC_AI_SECURITY.md) | Agent threat model |
-| [docs/MARKETING_A2Z_SOC.md](docs/MARKETING_A2Z_SOC.md) | Positioning with [a2z-soc.com](https://a2z-soc.com) |
+| [docs/MARKETING_A2Z_SOC.md](docs/MARKETING_A2Z_SOC.md) | Positioning with [a2zsoc.com](https://a2zsoc.com) |
 | [integrations/a2z-soc/README.md](integrations/a2z-soc/README.md) | API contract |
 | [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) | Bring Your Own LLM + MCP |
 | [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md) | `claw.*` tools, run loop, HTTP examples |
@@ -534,4 +536,4 @@ npm install && npm run build && npm run test:comprehensive
 
 ---
 
-**Inspired by [OpenClaw](https://github.com/openclaw/openclaw). Engineered for enterprise GRC. Secured for agents. Production SOC at [a2z-soc.com](https://a2z-soc.com).**
+**Inspired by [OpenClaw](https://github.com/openclaw/openclaw). Engineered for enterprise GRC. Secured for agents. Production SOC at [a2zsoc.com](https://a2zsoc.com).**

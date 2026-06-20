@@ -28,7 +28,7 @@ curl -s http://127.0.0.1:18791/api/frameworks | jq '.packs[] | select(.code=="is
 
 ## Production SOC
 
-Live tenant GRC and security operations: **[https://a2z-soc.com](https://a2z-soc.com)** via `@grc-claw/a2z-connector`.
+Live tenant GRC and security operations: **[https://a2zsoc.com](https://a2zsoc.com)** via `@grc-claw/a2z-connector`.
 
 ## Tests
 

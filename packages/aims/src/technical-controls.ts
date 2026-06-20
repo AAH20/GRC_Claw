@@ -37,7 +37,7 @@ export const AIMS_TECHNICAL_CONTROLS: AimsTechnicalControl[] = [
     id: 'TC-05',
     objective: 'Monitoring AI-related security events',
     clause: '9 / A.10',
-    grcClawComponent: '@grc-claw/ingest + a2z-soc.com',
+    grcClawComponent: '@grc-claw/ingest + a2zsoc.com',
     evidenceCommand: 'POST /api/ingest/normalize',
   },
   {

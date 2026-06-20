@@ -115,7 +115,7 @@ export function AimsPage() {
           <div className="card section-gap">
             <h2>AIMS scope template</h2>
             <p className="explain-lead">
-              ISO/IEC 42001 scope statement — references production SOC anchor at a2z-soc.com.
+              ISO/IEC 42001 scope statement — references production SOC anchor at a2zsoc.com.
             </p>
             <JsonBlock data={(controlsData as { scope: unknown }).scope} />
           </div>

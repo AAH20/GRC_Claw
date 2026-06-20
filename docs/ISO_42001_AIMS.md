@@ -10,7 +10,7 @@ GRC_Claw implements **ISO/IEC 42001:2023** (AI Management System) as architectur
 | Control | Gateway daemon, `ExecPolicy`, idempotency |
 | Experience | Operator docs, health flags, integration READMEs |
 | Evidence | `@grc-claw/evidence`, agent audit logs |
-| Data | `@grc-claw/ingest` → [a2z-soc.com](https://a2z-soc.com) |
+| Data | `@grc-claw/ingest` → [a2zsoc.com](https://a2zsoc.com) |
 
 ## Packages and APIs
 
@@ -29,7 +29,7 @@ Architecture review prompts for common agentic stacks:
 - **Anthropic** — Customer-operated AIMS boundary; tool-chain visibility via gateway mediation.
 - **OpenAI** — Autonomous loops; mitigate with exec policy + max calls per session.
 - **Cursor** — Local vs cloud processing in SoA; MCP supply-chain governance.
-- **OpenClaw** — Deployer accountability; harden with token auth, `doctor`, SIEM forward to a2z-soc.com.
+- **OpenClaw** — Deployer accountability; harden with token auth, `doctor`, SIEM forward to a2zsoc.com.
 
 Full matrix: `import { VENDOR_GAP_MATRIX } from '@grc-claw/aims'` or `curl …/api/aims/vendor-gaps`.
 

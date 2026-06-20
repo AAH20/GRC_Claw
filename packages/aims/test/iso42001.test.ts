@@ -46,7 +46,7 @@ describe('ISO/IEC 42001 AIMS (@grc-claw/aims)', () => {
     );
   });
 
-  it('AIMS scope references a2z-soc.com', () => {
+  it('AIMS scope references a2zsoc.com', () => {
     assert.equal(AIMS_SCOPE_TEMPLATE.standard, 'ISO/IEC 42001:2023');
     assert.match(AIMS_SCOPE_TEMPLATE.productionSoc, /a2z-soc\.com/);
   });
