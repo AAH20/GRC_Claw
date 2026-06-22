@@ -37,7 +37,7 @@ async function runUasGovernanceTest() {
 
   console.log(`  Policy Evaluation: Allowed=${decision1.allowed}, Sandbox=${decision1.sandbox}`);
 
-  const output1 = await dispatchBuiltinGrcTool('uas.validate_telemetry', compliantTele, deps);
+  const output1 = (await dispatchBuiltinGrcTool('uas.validate_telemetry', compliantTele, deps)) as any;
   console.log(`  Harness Verification Result: status=${output1.complianceStatus}, packets=${output1.verifiedPacketsCount}`);
   console.log(`  Issues: ${JSON.stringify(output1.issues)}\n`);
 
@@ -67,7 +67,7 @@ async function runUasGovernanceTest() {
 
   console.log(`  Policy Evaluation: Allowed=${decision2.allowed}, Sandbox=${decision2.sandbox}`);
 
-  const output2 = await dispatchBuiltinGrcTool('uas.validate_telemetry', rogueTele, deps);
+  const output2 = (await dispatchBuiltinGrcTool('uas.validate_telemetry', rogueTele, deps)) as any;
   console.log(`  Harness Verification Result: status=${output2.complianceStatus}, packets=${output2.verifiedPacketsCount}`);
   console.log(`  Issues identified:`);
   for (const issue of output2.issues) {
@@ -98,7 +98,7 @@ async function runUasGovernanceTest() {
     agentRole: 'reviewer'
   });
 
-  const output3 = await dispatchBuiltinGrcTool('cuas.audit_hardware_status', compliantDew, deps);
+  const output3 = (await dispatchBuiltinGrcTool('cuas.audit_hardware_status', compliantDew, deps)) as any;
   console.log(`  Harness Verification Result: status=${output3.complianceStatus}, DEW Safe Status=${output3.dewSafeStatus}, RF Spectrum=${output3.rfSpectrumStatus}\n`);
 
   if (decision3.allowed && output3.complianceStatus === 'COMPLIANT' && output3.dewSafeStatus === 'SAFE') {
@@ -124,7 +124,7 @@ async function runUasGovernanceTest() {
     agentRole: 'reviewer'
   });
 
-  const output4 = await dispatchBuiltinGrcTool('cuas.audit_hardware_status', overlimitDew, deps);
+  const output4 = (await dispatchBuiltinGrcTool('cuas.audit_hardware_status', overlimitDew, deps)) as any;
   console.log(`  Harness Verification Result: status=${output4.complianceStatus}, DEW Safe Status=${output4.dewSafeStatus}, RF Spectrum=${output4.rfSpectrumStatus}`);
   console.log(`  Toxicity Level: ${session.getToxicityScore()}`);
   console.log(`  Anomalies: ${JSON.stringify(decision4.anomaliesDetected)}\n`);
