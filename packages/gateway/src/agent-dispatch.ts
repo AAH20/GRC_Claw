@@ -19,7 +19,9 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('firewall.') ||
     tool.startsWith('sentinel.') ||
     tool.startsWith('aws.') ||
-    tool.startsWith('chronicle.')
+    tool.startsWith('chronicle.') ||
+    tool.startsWith('uas.') ||
+    tool.startsWith('cuas.')
   );
 }
 
@@ -82,6 +84,55 @@ export async function dispatchBuiltinGrcTool(
       return { incidentId: args.incidentId ?? 'demo', status: 'New', severity: 'High' };
     case 'aws.guardduty.list_findings':
       return { findings: [], region: args.region ?? 'us-east-1', mode: 'demo' };
+    case 'uas.validate_telemetry': {
+      const droneId = String(args.droneId ?? 'unknown-uas');
+      const packets = (args.telemetryStream as Array<any>) ?? [];
+      const issues: string[] = [];
+      let verifiedPacketsCount = 0;
+
+      for (const packet of packets) {
+        verifiedPacketsCount++;
+        if (packet.signatureEnabled !== true) {
+          issues.push(`Packet ${verifiedPacketsCount}: MAVLink v2 cryptographic signing disabled`);
+        }
+        if (packet.firmwareHash && packet.firmwareHash !== '0xPX4v1_14') {
+          issues.push(`Packet ${verifiedPacketsCount}: Firmware mismatch anomaly detected (${packet.firmwareHash})`);
+        }
+        if (packet.flightMode === 'UNAUTHORIZED_OFFBOARD') {
+          issues.push(`Packet ${verifiedPacketsCount}: Unauthorized offboard flight mode control command override`);
+        }
+      }
+
+      const complianceStatus = issues.length === 0 ? 'COMPLIANT' : 'NON_COMPLIANT';
+      return {
+        ok: true,
+        droneId,
+        complianceStatus,
+        issues,
+        verifiedPacketsCount,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'cuas.audit_hardware_status': {
+      const stationId = String(args.stationId ?? 'c-uas-edge-station');
+      const jammingActive = !!args.jammingArrayActive;
+      const energyLimitKw = Number(args.directedEnergyLimitKw ?? 0);
+      const rfScanMhz = Number(args.rfScanSpanMhz ?? 0);
+
+      const dewSafeStatus = energyLimitKw <= 50 ? 'SAFE' : 'EXCEEDED';
+      const rfSpectrumStatus = rfScanMhz >= 400 && rfScanMhz <= 6000 ? 'AUTHORIZED' : 'UNAUTHORIZED';
+
+      return {
+        ok: true,
+        stationId,
+        jammingActive,
+        directedEnergyLimitKw: energyLimitKw,
+        dewSafeStatus,
+        rfSpectrumStatus,
+        complianceStatus: (dewSafeStatus === 'SAFE' && rfSpectrumStatus === 'AUTHORIZED') ? 'COMPLIANT' : 'NON_COMPLIANT',
+        auditTimestamp: new Date().toISOString()
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }

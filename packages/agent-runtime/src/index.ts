@@ -58,6 +58,9 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   // Canary/Honeypot Decoy Tools for Anti-Swarm Testing
   { name: 'connector.canary_override', tier: 'destructive' },
   { name: 'connector.admin_db_override', tier: 'destructive' },
+  // UAS Swarm Governance and C-UAS Audit Tools
+  { name: 'uas.validate_telemetry', tier: 'read' },
+  { name: 'cuas.audit_hardware_status', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
