@@ -6,10 +6,19 @@ export interface ToolDefinition {
   allowedPrefixes?: string[];
 }
 
+export interface SoDRule {
+  conflictRoleA: string;
+  conflictRoleB: string;
+  ruleName?: string;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
 export interface ExecPolicyConfig {
   maxCallsPerTurn: number;
   callTimeoutMs: number;
   defaultSandbox: 'docker' | 'host';
+  canaryTools?: string[];
+  sodRules?: SoDRule[];
 }
 
 export interface ToolInvocation {
@@ -17,6 +26,7 @@ export interface ToolInvocation {
   args: Record<string, unknown>;
   approvalToken?: string;
   idempotencyKey?: string;
+  agentRole?: string; // Added for Swarm Harness (SoD checks)
 }
 
 export interface ExecDecision {
@@ -24,6 +34,8 @@ export interface ExecDecision {
   reason: string;
   sandbox: 'docker' | 'host' | 'denied';
   requiresApproval: boolean;
+  toxicityScore?: number; // Real-time toxicity feedback
+  anomaliesDetected?: string[];
 }
 
 export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
@@ -43,9 +55,12 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'servicenow.create_incident', tier: 'write' },
   { name: 'sap.query_access_logs', tier: 'read' },
   { name: 'nemotron.evaluate_compliance', tier: 'read' },
+  // Canary/Honeypot Decoy Tools for Anti-Swarm Testing
+  { name: 'connector.canary_override', tier: 'destructive' },
+  { name: 'connector.admin_db_override', tier: 'destructive' },
 ];
 
-/** Three-phase exec policy: allowlist → approval → sandbox */
+/** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
 export class ExecPolicy {
   readonly config: ExecPolicyConfig;
 
@@ -57,11 +72,28 @@ export class ExecPolicy {
       maxCallsPerTurn: 12,
       callTimeoutMs: 30_000,
       defaultSandbox: 'docker',
+      canaryTools: ['connector.canary_override', 'connector.admin_db_override'],
+      sodRules: [
+        { conflictRoleA: 'developer', conflictRoleB: 'reviewer', ruleName: 'Dev-Review SoD Conflict' },
+        { conflictRoleA: 'developer', conflictRoleB: 'deployer', ruleName: 'Dev-Deploy SoD Conflict' }
+      ],
       ...config,
     };
   }
 
   evaluate(inv: ToolInvocation, approvedDestructive = false): ExecDecision {
+    // 1. Check for Canary / Honeypot Tools (Anti-Swarm Defense)
+    const isCanary = this.config.canaryTools?.includes(inv.tool) || inv.tool.includes('.canary') || inv.tool.includes('canary_');
+    if (isCanary) {
+      return {
+        allowed: false,
+        reason: 'honeypot_triggered',
+        sandbox: 'denied',
+        requiresApproval: false,
+        anomaliesDetected: ['HONEYPOT_ACCESS_ATTEMPT'],
+      };
+    }
+
     const def = this.tools.find((t) => t.name === inv.tool);
     if (!def) {
       return { allowed: false, reason: 'tool_not_in_allowlist', sandbox: 'denied', requiresApproval: false };
@@ -113,6 +145,15 @@ export interface AgentAuditEntry {
 export class AgentSession {
   private calls = 0;
   private readonly audit: AgentAuditEntry[] = [];
+  private toxicityScore = 0;
+  
+  // Keep track of call history to perform behavioral auditing
+  private readonly callHistory: {
+    tool: string;
+    argsString: string;
+    agentRole?: string;
+    timestamp: number;
+  }[] = [];
 
   constructor(
     public readonly sessionId: string,
@@ -120,12 +161,17 @@ export class AgentSession {
   ) {}
 
   async invoke(inv: ToolInvocation): Promise<ExecDecision> {
+    const timestamp = Date.now();
+    const anomalies: string[] = [];
+
+    // 1. Max calls safety check
     if (this.calls >= this.policy.config.maxCallsPerTurn) {
       const decision: ExecDecision = {
         allowed: false,
         reason: 'max_calls_exceeded',
         sandbox: 'denied',
         requiresApproval: false,
+        toxicityScore: this.toxicityScore,
       };
       this.audit.push({
         at: new Date().toISOString(),
@@ -137,7 +183,100 @@ export class AgentSession {
       return decision;
     }
     this.calls++;
-    const decision = this.policy.evaluate(inv);
+
+    // 2. Behavioral Auditing: Loop Anomaly Detection
+    const argsString = JSON.stringify(inv.args);
+    const consecutiveRepeats = this.callHistory.slice(-2).filter(
+      (h) => h.tool === inv.tool && h.argsString === argsString
+    ).length;
+    if (consecutiveRepeats >= 2) {
+      anomalies.push('LOOP_ANOMALY');
+      this.toxicityScore = Math.min(100, this.toxicityScore + 25);
+    }
+
+    // 3. Behavioral Auditing: Rapid Discovery / Timing Anomaly
+    const lastCall = this.callHistory[this.callHistory.length - 1];
+    if (lastCall && (timestamp - lastCall.timestamp) < 50) {
+      anomalies.push('RAPID_DISCOVERY_ANOMALY');
+      this.toxicityScore = Math.min(100, this.toxicityScore + 15);
+    }
+
+    // 4. Swarm Harness: Segregation of Duties (SoD) Checks
+    if (inv.agentRole && this.policy.config.sodRules) {
+      const activeRoles = new Set(
+        this.callHistory
+          .map((h) => h.agentRole)
+          .filter((r): r is string => !!r)
+      );
+      
+      // Add current role to trace path
+      activeRoles.add(inv.agentRole);
+
+      for (const rule of this.policy.config.sodRules) {
+        if (activeRoles.has(rule.conflictRoleA) && activeRoles.has(rule.conflictRoleB)) {
+          anomalies.push('SOD_CONFLICT_DETECTED');
+          this.toxicityScore = Math.min(100, this.toxicityScore + 30);
+          
+          const decision: ExecDecision = {
+            allowed: false,
+            reason: `segregation_of_duties_violation: ${rule.ruleName || 'conflict'}`,
+            sandbox: 'denied',
+            requiresApproval: false,
+            toxicityScore: this.toxicityScore,
+            anomaliesDetected: anomalies,
+          };
+          
+          this.audit.push({
+            at: new Date().toISOString(),
+            sessionId: this.sessionId,
+            tool: inv.tool,
+            decision,
+            argsRedacted: { keys: Object.keys(inv.args) },
+          });
+          return decision;
+        }
+      }
+    }
+
+    // 5. Evaluate base policy rules (canary, allowed prefix, tier limits)
+    let decision = this.policy.evaluate(inv);
+    
+    // Inject behavioral audit results
+    if (anomalies.length > 0) {
+      decision.anomaliesDetected = [
+        ...(decision.anomaliesDetected ?? []),
+        ...anomalies
+      ];
+    }
+    
+    // Apply toxicity modifiers to decision routing
+    if (decision.anomaliesDetected?.includes('HONEYPOT_ACCESS_ATTEMPT')) {
+      this.toxicityScore = 100;
+    }
+    
+    decision.toxicityScore = this.toxicityScore;
+
+    // Toxicity Containment Policy:
+    // - Toxicity >= 75 -> Immediately deny execution
+    // - Toxicity >= 40 -> Contain execution in Docker sandbox (override host setting)
+    if (this.toxicityScore >= 75) {
+      if (decision.allowed) {
+        decision.allowed = false;
+        decision.reason = `high_toxicity_containment: score=${this.toxicityScore}`;
+      }
+      decision.sandbox = 'denied';
+    } else if (this.toxicityScore >= 40) {
+      decision.sandbox = 'docker'; // Force isolated sandbox containment
+    }
+
+    // Store call history
+    this.callHistory.push({
+      tool: inv.tool,
+      argsString,
+      agentRole: inv.agentRole,
+      timestamp,
+    });
+
     this.audit.push({
       at: new Date().toISOString(),
       sessionId: this.sessionId,
@@ -145,14 +284,20 @@ export class AgentSession {
       decision,
       argsRedacted: { keys: Object.keys(inv.args) },
     });
+
     return decision;
   }
 
   getAuditLog(): AgentAuditEntry[] {
     return [...this.audit];
   }
+
+  getToxicityScore(): number {
+    return this.toxicityScore;
+  }
 }
 
 export * from './hermes-provider.js';
 export * from './orchestrator.js';
+
 

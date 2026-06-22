@@ -3,6 +3,7 @@ import { HermesProvider, Message } from './hermes-provider.js';
 
 export interface OrchestratorOptions {
   maxSteps?: number;
+  agentRole?: string; // Define the role under which this agent/swarm squad is running
   onToolCall?: (invocation: ToolInvocation) => Promise<string | Record<string, unknown>>;
 }
 
@@ -63,7 +64,8 @@ export class AgentOrchestrator {
 
         const invocation: ToolInvocation = {
           tool: toolName,
-          args: parsedArgs
+          args: parsedArgs,
+          agentRole: options?.agentRole // Pass the role to enforce Segregation of Duties
         };
 
         // Pass invocation to the strict GRC_Claw ExecPolicy
@@ -84,7 +86,7 @@ export class AgentOrchestrator {
           }
         } else {
           // If denied, feed the exact reason back to the model so it learns
-          toolResultText = `DENIED: ${decision.reason}. Sandbox: ${decision.sandbox}. Requires Approval: ${decision.requiresApproval}`;
+          toolResultText = `DENIED: ${decision.reason}. Sandbox: ${decision.sandbox}. Requires Approval: ${decision.requiresApproval}. Toxicity: ${decision.toxicityScore ?? 0}`;
         }
 
         // Send tool result back to model
@@ -104,3 +106,4 @@ export class AgentOrchestrator {
     return this.messages;
   }
 }
+
