@@ -66,6 +66,9 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 | **Skill executor** | OpenClaw-style `claw.list_skills`, `claw.get_skill`, `claw.run_skill` — runs `.cursor/skills` playbooks via BYOC LLM + gated tools |
 | **Agentic AI security** | Three-phase exec policy, tool tiers, session audit log |
 | **Hermes/Nemotron Agent Runtime** | Zero-dependency autonomous orchestrator, self-healing supervisor loop |
+| **Swarm Harness & SoD** | Segregation of Duties checking (e.g. developer vs reviewer role conflicts) and token verification |
+| **Anti-Swarm Defense** | Behavioral Auditing (timing anomalies, reasoning loops, toxicity scaling, and forced Docker sandbox containment) |
+| **Tactical UAS & C-UAS** | MAVLink v2 signature validation, PX4/Ardupilot firmware authentication, and DEW power safety audits |
 | **Enterprise Connectors** | Native integration with SAP, ServiceNow, and Chronicle SOAR |
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
@@ -92,6 +95,8 @@ GRC_Claw/
 │   ├── core/
 │   ├── gateway/                 # OpenClaw-style control plane
 │   ├── agent-runtime/
+│   │   ├── src/                 # Exec policy, SoD, Anti-Swarm behavioral audit
+│   │   └── scripts/             # test-anti-swarm.ts, test-uas-governance.ts
 │   ├── evidence/
 │   ├── frameworks/
 │   ├── aims/                    # ISO/IEC 42001 AIMS (vendor gaps, clauses)
@@ -124,7 +129,7 @@ npm install && npm run build
 |---------|-------------|
 | `@grc-claw/core` | Canonical events, `GRCEngineFacade` |
 | `@grc-claw/gateway` | **OpenClaw for GRC** — HTTP/WS gateway daemon |
-| `@grc-claw/agent-runtime` | Exec policy + audited agent sessions |
+| `@grc-claw/agent-runtime` | Exec policy, SoD Swarm Harness, Anti-Swarm engine & audited sessions |
 | `@grc-claw/evidence` | SHA-256 evidence lineage |
 | `@grc-claw/frameworks` | ISO 27001, NIST CSF, SOC 2, ISO 42001 starter packs |
 | `@grc-claw/aims` | ISO 42001 vendor gaps, clause map, technical controls |
@@ -142,6 +147,8 @@ npm install && npm run build
 | Console (dev) | `npm run console` → http://localhost:5174 |
 | Doctor | `npm run doctor` |
 | Tests | `npm run test` · `npm run test:skills` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
+| Anti-Swarm Test | `npx tsx scripts/test-anti-swarm.ts` (under packages/agent-runtime) |
+| UAS Swarm Test | `npx tsx scripts/test-uas-governance.ts` (under packages/agent-runtime) |
 
 ---
 
