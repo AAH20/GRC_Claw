@@ -9,6 +9,7 @@ const NAV = [
   { path: '/agent', label: 'Agent' },
   { path: '/aims', label: 'ISO 42001' },
   { path: '/connectors', label: 'BYOC' },
+  { path: '/cmmc', label: 'CMMC 2.0' },
   { path: '/settings', label: 'Settings' },
 ];
 

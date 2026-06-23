@@ -206,4 +206,30 @@ export const PAGE_META: Record<string, PageMeta> = {
         'Read settings from localStorage key grc-claw-console-settings. Use X-GRC-Claw-Token header on all authenticated routes. See /llms.txt for full API map.',
     },
   },
+  cmmc: {
+    id: 'cmmc',
+    title: 'CMMC 2.0 & NIST SP 800-171',
+    subtitle:
+      'Continuous compliance boundaries for defense contractors — automated CMMC Level 1, 2, and 3 control validation.',
+    explain: {
+      what: 'CMMC (Cybersecurity Maturity Model Certification) gates the defense supply chain. GRC_Claw maps system telemetry and airgap boundaries to CMMC control points.',
+      why: 'Handling Controlled Unclassified Information (CUI) requires automated NIST 800-171/172 verification and cryptographic evidence generation.',
+      how: [
+        'Use the System Boundary Auditor to check MFA, timeout limits, and encryption.',
+        'Run the Sovereign Compute Auditor to verify local airgapped hardware parameters.',
+        'Generate cryptographically signed, hashed evidence packages for C3PAO audits.',
+      ],
+      a2zRole:
+        'The A2Z SOC GRC MCP already includes the complete CMMC framework with all control points, mapping telemetry signals to compliance dashboards automatically.',
+    },
+    cursor: {
+      endpoint: '/api/agent/invoke',
+      method: 'POST',
+      auth: true,
+      description: 'Invoke gated CMMC boundary checks and evidence generation.',
+      exampleBody: '{"sessionId":"cmmc-test","tool":"cmmc.validate_system_boundary","args":{"systemBaseline":{"mfaEnabled":true}}}',
+      agentInstruction:
+        'Call cmmc.validate_system_boundary to audit target environments. Call cmmc.generate_audit_evidence to build signed proof bundles.',
+    },
+  },
 };
