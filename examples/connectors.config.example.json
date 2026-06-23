@@ -24,6 +24,14 @@
       "baseUrl": "http://127.0.0.1:11434",
       "apiKeyEnv": "OLLAMA_API_KEY",
       "defaultModel": "llama3.2"
+    },
+    {
+      "id": "openrouter",
+      "label": "OpenRouter",
+      "kind": "openai_compatible",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "defaultModel": "meta-llama/llama-3.1-70b-instruct"
     }
   ],
   "mcp": [
