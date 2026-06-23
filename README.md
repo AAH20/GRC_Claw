@@ -69,6 +69,7 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 | **Swarm Harness & SoD** | Segregation of Duties checking (e.g. developer vs reviewer role conflicts) and token verification |
 | **Anti-Swarm Defense** | Behavioral Auditing (timing anomalies, reasoning loops, toxicity scaling, and forced Docker sandbox containment) |
 | **Tactical UAS & C-UAS** | MAVLink v2 signature validation, PX4/Ardupilot firmware authentication, and DEW power safety audits |
+| **CMMC & NIST SP 800-171/172** | Programmatic system boundary audits (MFA, session timeouts, encryption) and cryptographically signed C3PAO evidence generation |
 | **Enterprise Connectors** | Native integration with SAP, ServiceNow, and Chronicle SOAR |
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
@@ -96,7 +97,7 @@ GRC_Claw/
 │   ├── gateway/                 # OpenClaw-style control plane
 │   ├── agent-runtime/
 │   │   ├── src/                 # Exec policy, SoD, Anti-Swarm behavioral audit
-│   │   └── scripts/             # test-anti-swarm.ts, test-uas-governance.ts
+│   │   └── scripts/             # test-anti-swarm.ts, test-uas-governance.ts, test-cmmc-compliance.ts
 │   ├── evidence/
 │   ├── frameworks/
 │   ├── aims/                    # ISO/IEC 42001 AIMS (vendor gaps, clauses)
@@ -149,6 +150,7 @@ npm install && npm run build
 | Tests | `npm run test` · `npm run test:skills` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
 | Anti-Swarm Test | `npx tsx scripts/test-anti-swarm.ts` (under packages/agent-runtime) |
 | UAS Swarm Test | `npx tsx scripts/test-uas-governance.ts` (under packages/agent-runtime) |
+| CMMC Compliance Test | `npx tsx scripts/test-cmmc-compliance.ts` (under packages/agent-runtime) |
 
 ---
 
