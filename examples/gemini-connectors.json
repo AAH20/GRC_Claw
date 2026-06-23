@@ -8,6 +8,38 @@
       "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
       "apiKeyEnv": "GEMINI_API_KEY",
       "defaultModel": "gemini-2.5-flash"
+    },
+    {
+      "id": "openrouter",
+      "label": "OpenRouter",
+      "kind": "openai_compatible",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "defaultModel": "meta-llama/llama-3.1-70b-instruct"
+    },
+    {
+      "id": "nvidia-nemotron",
+      "label": "Nvidia Nemotron",
+      "kind": "openai_compatible",
+      "baseUrl": "https://integrate.api.nvidia.com/v1",
+      "apiKeyEnv": "NVIDIA_API_KEY",
+      "defaultModel": "nvidia/nemotron-4-340b-instruct"
+    },
+    {
+      "id": "zhipu-glm",
+      "label": "Zhipu GLM-4",
+      "kind": "openai_compatible",
+      "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+      "apiKeyEnv": "ZHIPU_API_KEY",
+      "defaultModel": "glm-4"
+    },
+    {
+      "id": "moonshot-kimi",
+      "label": "Moonshot Kimi",
+      "kind": "openai_compatible",
+      "baseUrl": "https://api.moonshot.cn/v1",
+      "apiKeyEnv": "MOONSHOT_API_KEY",
+      "defaultModel": "moonshot-v1-128k"
     }
   ]
 }

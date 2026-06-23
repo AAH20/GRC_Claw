@@ -4,6 +4,7 @@ import { HermesProvider, Message } from './hermes-provider.js';
 export interface OrchestratorOptions {
   maxSteps?: number;
   agentRole?: string; // Define the role under which this agent/swarm squad is running
+  llmProviderId?: string; // Define the LLM provider used to route this turn
   onToolCall?: (invocation: ToolInvocation) => Promise<string | Record<string, unknown>>;
 }
 
@@ -65,7 +66,8 @@ export class AgentOrchestrator {
         const invocation: ToolInvocation = {
           tool: toolName,
           args: parsedArgs,
-          agentRole: options?.agentRole // Pass the role to enforce Segregation of Duties
+          agentRole: options?.agentRole, // Pass the role to enforce Segregation of Duties
+          llmProviderId: options?.llmProviderId, // Pass the LLM provider ID for sovereign boundary checks
         };
 
         // Pass invocation to the strict GRC_Claw ExecPolicy

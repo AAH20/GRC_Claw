@@ -19,6 +19,8 @@ export interface ExecPolicyConfig {
   defaultSandbox: 'docker' | 'host';
   canaryTools?: string[];
   sodRules?: SoDRule[];
+  nonSovereignProviders?: string[];
+  sovereignRestrictedTools?: string[];
 }
 
 export interface ToolInvocation {
@@ -27,6 +29,7 @@ export interface ToolInvocation {
   approvalToken?: string;
   idempotencyKey?: string;
   agentRole?: string; // Added for Swarm Harness (SoD checks)
+  llmProviderId?: string; // Added for Sovereign Boundary checks (CMMC/ITAR)
 }
 
 export interface ExecDecision {
@@ -83,11 +86,32 @@ export class ExecPolicy {
         { conflictRoleA: 'developer', conflictRoleB: 'reviewer', ruleName: 'Dev-Review SoD Conflict' },
         { conflictRoleA: 'developer', conflictRoleB: 'deployer', ruleName: 'Dev-Deploy SoD Conflict' }
       ],
+      nonSovereignProviders: ['zhipu-glm', 'moonshot-kimi'],
+      sovereignRestrictedTools: [
+        'grc.list_controls',
+        'grc.get_compliance_score',
+        'evidence.read',
+        'cmmc.validate_system_boundary',
+        'cmmc.generate_audit_evidence'
+      ],
       ...config,
     };
   }
 
   evaluate(inv: ToolInvocation, approvedDestructive = false): ExecDecision {
+    // 0. Check Sovereign Boundary compliance (CMMC / ITAR / ISO 42001)
+    if (inv.llmProviderId && this.config.nonSovereignProviders?.includes(inv.llmProviderId)) {
+      const isRestricted = this.config.sovereignRestrictedTools?.includes(inv.tool) || inv.tool.startsWith('cmmc.');
+      if (isRestricted) {
+        return {
+          allowed: false,
+          reason: `sovereign_boundary_violation: non-sovereign LLM provider ${inv.llmProviderId} is denied access to sensitive GRC/CMMC tool ${inv.tool}`,
+          sandbox: 'denied',
+          requiresApproval: false,
+        };
+      }
+    }
+
     // 1. Check for Canary / Honeypot Tools (Anti-Swarm Defense)
     const isCanary = this.config.canaryTools?.includes(inv.tool) || inv.tool.includes('.canary') || inv.tool.includes('canary_');
     if (isCanary) {
