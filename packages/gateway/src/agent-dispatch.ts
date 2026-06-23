@@ -21,7 +21,8 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('aws.') ||
     tool.startsWith('chronicle.') ||
     tool.startsWith('uas.') ||
-    tool.startsWith('cuas.')
+    tool.startsWith('cuas.') ||
+    tool.startsWith('cmmc.')
   );
 }
 
@@ -131,6 +132,66 @@ export async function dispatchBuiltinGrcTool(
         rfSpectrumStatus,
         complianceStatus: (dewSafeStatus === 'SAFE' && rfSpectrumStatus === 'AUTHORIZED') ? 'COMPLIANT' : 'NON_COMPLIANT',
         auditTimestamp: new Date().toISOString()
+      };
+    }
+    case 'cmmc.validate_system_boundary': {
+      const baseline = (args.systemBaseline as Record<string, any>) ?? {};
+      const passedControls: string[] = [];
+      const failedControls: string[] = [];
+
+      if (baseline.mfaEnabled === true) {
+        passedControls.push('IA.L1-3.5.1 (MFA enabled)');
+      } else {
+        failedControls.push('IA.L1-3.5.1 (MFA disabled)');
+      }
+
+      if (typeof baseline.sessionTimeoutSeconds === 'number' && baseline.sessionTimeoutSeconds <= 900) {
+        passedControls.push('AC.L2-3.1.11 (Session timeout <= 15m)');
+      } else {
+        failedControls.push('AC.L2-3.1.11 (Session timeout exceeds 15m or not configured)');
+      }
+
+      if (baseline.remoteAccessEncrypted === true) {
+        passedControls.push('AC.L2-3.1.13 (Remote access encryption enforced)');
+      } else {
+        failedControls.push('AC.L2-3.1.13 (Remote access encryption disabled)');
+      }
+
+      if (baseline.auditLogsForwarded === true) {
+        passedControls.push('AU.L2-3.3.1 (Audit log forwarding active)');
+      } else {
+        failedControls.push('AU.L2-3.3.1 (Audit log forwarding inactive)');
+      }
+
+      const complianceStatus = failedControls.length === 0 ? 'COMPLIANT' : 'NON_COMPLIANT';
+      return {
+        ok: true,
+        complianceStatus,
+        passedControls,
+        failedControls,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'cmmc.generate_audit_evidence': {
+      const logs = (args.sessionLogs as Array<any>) ?? [];
+      const sods = (args.sodViolations as Array<any>) ?? [];
+      const payloadString = JSON.stringify({ logs, sods });
+      
+      // Simple hash generation for mock purposes
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      const evidenceHash = 'sha256-' + Math.abs(hash).toString(16).padEnd(8, '0') + 'f7b3c2d4a1';
+      const signature = `grc_claw_sig_0x${evidenceHash.slice(7)}889acde1`;
+
+      return {
+        ok: true,
+        evidenceHash,
+        signature,
+        signedAt: new Date().toISOString(),
+        itemsHashed: logs.length + sods.length
       };
     }
     default:

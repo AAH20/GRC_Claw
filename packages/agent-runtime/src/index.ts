@@ -61,6 +61,9 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   // UAS Swarm Governance and C-UAS Audit Tools
   { name: 'uas.validate_telemetry', tier: 'read' },
   { name: 'cuas.audit_hardware_status', tier: 'read' },
+  // CMMC 2.0 & NIST SP 800-171 Compliance Tools
+  { name: 'cmmc.validate_system_boundary', tier: 'read' },
+  { name: 'cmmc.generate_audit_evidence', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
