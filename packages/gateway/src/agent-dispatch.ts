@@ -22,7 +22,8 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('chronicle.') ||
     tool.startsWith('uas.') ||
     tool.startsWith('cuas.') ||
-    tool.startsWith('cmmc.')
+    tool.startsWith('cmmc.') ||
+    tool.startsWith('sovereign.')
   );
 }
 
@@ -192,6 +193,58 @@ export async function dispatchBuiltinGrcTool(
         signature,
         signedAt: new Date().toISOString(),
         itemsHashed: logs.length + sods.length
+      };
+    }
+    case 'sovereign.verify_compute_boundary': {
+      const hostCpu = String(args.hostCpu ?? '');
+      const gpuHardware = String(args.gpuHardware ?? '');
+      const airgapStatus = String(args.airgapStatus ?? '');
+      const modelWeightsSource = String(args.modelWeightsSource ?? '');
+      const nemoGuardrailsActive = !!args.nemoGuardrailsActive;
+
+      const issues: string[] = [];
+
+      // 1. Airgap validation
+      const airgapPassed = airgapStatus === 'FULLY_AIRGAPPED';
+      if (!airgapPassed) {
+        issues.push(`Airgap Audit: System status is "${airgapStatus}", violating zero-export airgap regulations`);
+      }
+
+      // 2. Weights source validation
+      const weightsPassed = modelWeightsSource === 'LOCAL_AUDITED_WEIGHTS';
+      if (!weightsPassed) {
+        issues.push(`Weights Audit: Model weights sourced from "${modelWeightsSource}" (violates compliance: weights must be local and audited)`);
+      }
+
+      // 3. Guardrails validation
+      const guardrailsPassed = nemoGuardrailsActive === true;
+      if (!guardrailsPassed) {
+        issues.push(`Guardrails Audit: NeMo Guardrails layer is inactive or missing`);
+      }
+
+      // 4. Hardware/Silicon validation
+      const cpuOk = (hostCpu.includes('Vera') || hostCpu.includes('Spark') || hostCpu.includes('EPYC') || hostCpu.includes('Xeon')) && !hostCpu.includes('Cloud') && !hostCpu.includes('VM');
+      const gpuOk = (gpuHardware.includes('Blackwell') || gpuHardware.includes('Hopper') || gpuHardware.includes('H100') || gpuHardware.includes('H200') || gpuHardware.includes('Spark')) && !gpuHardware.includes('Cloud') && !gpuHardware.includes('VM');
+      
+      const hardwarePassed = cpuOk && gpuOk;
+      if (!cpuOk) {
+        issues.push(`Silicon Audit: CPU vendor "${hostCpu}" is not certified for sovereign airgap system control plane`);
+      }
+      if (!gpuOk) {
+        issues.push(`Silicon Audit: GPU architecture "${gpuHardware}" is not certified for local parallel swarm inference`);
+      }
+
+      const complianceStatus = (airgapPassed && weightsPassed && guardrailsPassed && hardwarePassed) ? 'COMPLIANT' : 'NON_COMPLIANT';
+
+      return {
+        ok: true,
+        complianceStatus,
+        hardwareAuditPassed: hardwarePassed,
+        airgapAuditPassed: airgapPassed,
+        weightsAuditPassed: weightsPassed,
+        nemoGuardrailsPassed: guardrailsPassed,
+        issues,
+        timestamp: new Date().toISOString()
       };
     }
     default:
