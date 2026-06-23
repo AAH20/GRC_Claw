@@ -542,6 +542,7 @@ Production: strong gateway token, TLS at reverse proxy, scoped **a2z-soc.com** A
 | [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md) | `claw.*` tools, run loop, HTTP examples |
 | [docs/ISO_42001_AIMS.md](docs/ISO_42001_AIMS.md) | ISO/IEC 42001 AIMS architecture + APIs |
 | [integrations/iso-42001/README.md](integrations/iso-42001/README.md) | ISO 42001 integration guide |
+| [docs/SOVEREIGN_LOCAL_AI.md](docs/SOVEREIGN_LOCAL_AI.md) | Sovereign Local AI & Airgapped Architectures (Blackwell, RTX Spark, Vera) |
 | Cursor skill | `.cursor/skills/iso-42001-ai-management-engineering/` |
 
 ---
