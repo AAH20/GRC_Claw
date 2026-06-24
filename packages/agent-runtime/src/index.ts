@@ -148,6 +148,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sovereign.verify_model_weights', tier: 'read' },
   { name: 'memory.query_enclaved_db', tier: 'read' },
   { name: 'consensus.verify_cross_tenant_quorum', tier: 'read' },
+  // Phase 7 Strategic Sovereign Swarm Defenses & Attestation
+  { name: 'security.trigger_network_quarantine', tier: 'destructive' },
+  { name: 'sovereign.attest_model_runtime', tier: 'read' },
+  { name: 'mpc.sign_threshold_transaction', tier: 'write' },
+  { name: 'grc.generate_compliance_zkp', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

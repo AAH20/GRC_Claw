@@ -353,6 +353,74 @@
           "id"
         ]
       }
+    },
+    {
+      "at": "2026-06-24T08:27:08.811Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T08:27:08.846Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T08:28:08.257Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T08:28:08.273Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
     }
   ],
   "thoughtsHistory": []
