@@ -195,6 +195,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'security.detect_sidechannel_anomaly', tier: 'read' },
   { name: 'audit.query_fhe_ledger', tier: 'read' },
   { name: 'sovereign.steer_cognitive_drift_inline', tier: 'write' },
+  // Phase 16 Strategic Zero-Knowledge Policies & Hardware Speculation Barriers
+  { name: 'grc.verify_zk_policy_envelope', tier: 'read' },
+  { name: 'security.trigger_speculative_barrier', tier: 'write' },
+  { name: 'memory.query_multiparty_fhe_vector', tier: 'read' },
+  { name: 'sovereign.apply_dynamic_gradient_patch', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
