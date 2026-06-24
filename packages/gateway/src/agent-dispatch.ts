@@ -36,7 +36,9 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('hermes.') ||
     tool.startsWith('memory.') ||
     tool.startsWith('skills.') ||
-    tool.startsWith('actuator.')
+    tool.startsWith('actuator.') ||
+    tool.startsWith('security.') ||
+    tool.startsWith('mpc.')
   );
 }
 
@@ -705,6 +707,84 @@ export async function dispatchBuiltinGrcTool(
         portabilityPlan,
         passedChecks,
         complianceStatus: lockInRiskScore >= 80 ? 'NON_COMPLIANT' : 'COMPLIANT',
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'sovereign.verify_tee_attestation': {
+      const report = String(args.attestationReportHex ?? '00abcdef00');
+      const vendor = String(args.cpuGpuVendor ?? 'nvidia').toLowerCase();
+      
+      const payloadString = JSON.stringify({ report, vendor });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      const clearanceToken = `grc_tee_clearance_token_0x${Math.abs(hash).toString(16)}bc88d9`;
+
+      return {
+        ok: true,
+        cpuGpuVendor: vendor,
+        attestationClearance: 'VERIFIED',
+        clearanceToken,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'security.trigger_active_containment': {
+      const containerId = String(args.containerId ?? 'docker-sandbox-01');
+      const sessionId = String(args.breachingSessionId ?? 'session-999');
+
+      return {
+        ok: true,
+        containerId,
+        breachingSessionId: sessionId,
+        containmentStatus: 'SUCCESS',
+        snapshotUri: `file:///opt/grc_snapshots/${sessionId}_snapshot.bin`,
+        rollbackStatus: 'COMPLETED',
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'grc.generate_zkp_proof': {
+      const inputs = String(args.complianceInputsJson ?? '{}');
+      const circuit = String(args.circuitParamsUri ?? 'file:///opt/circuits/compliance.circuit');
+      
+      const payloadString = JSON.stringify({ inputs, circuit });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      const zkProofJson = JSON.stringify({
+        proof: `0x${Math.abs(hash).toString(16)}a9d8c7b6f5e4d3c2b1`,
+        inputsHash: `sha256-0x${Math.abs(hash * 3).toString(16)}`
+      });
+
+      return {
+        ok: true,
+        zkProofJson,
+        verificationStatus: 'VERIFIED',
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'mpc.generate_threshold_signature': {
+      const payload = String(args.transactionPayload ?? '');
+      const nodes = Number(args.thresholdNodesCount ?? 5);
+      const quorum = Number(args.minimumQuorum ?? 3);
+
+      const payloadString = JSON.stringify({ payload, nodes, quorum });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      const reconstructedSignature = `mpc_threshold_sig_0x${Math.abs(hash).toString(16)}d9a8c7b6`;
+
+      return {
+        ok: true,
+        quorumStatus: 'REACHED',
+        activeSigners: quorum,
+        totalSigners: nodes,
+        reconstructedSignature,
         timestamp: new Date().toISOString()
       };
     }

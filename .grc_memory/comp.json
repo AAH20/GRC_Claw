@@ -1,6 +1,6 @@
 {
-  "calls": 6,
-  "toxicityScore": 45,
+  "calls": 8,
+  "toxicityScore": 60,
   "callHistory": [
     {
       "tool": "soc.query_events",
@@ -31,6 +31,16 @@
       "tool": "soar.run_playbook",
       "argsString": "{}",
       "timestamp": 1782272740947
+    },
+    {
+      "tool": "soc.query_events",
+      "argsString": "{}",
+      "timestamp": 1782273255410
+    },
+    {
+      "tool": "soar.run_playbook",
+      "argsString": "{}",
+      "timestamp": 1782273255445
     }
   ],
   "audit": [
@@ -128,6 +138,39 @@
           "RAPID_DISCOVERY_ANOMALY"
         ],
         "toxicityScore": 45
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T03:54:15.411Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 45
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T03:54:15.445Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "destructive_requires_approval",
+        "sandbox": "docker",
+        "requiresApproval": true,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 60
       },
       "argsRedacted": {
         "keys": []
