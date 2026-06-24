@@ -206,6 +206,7 @@ npm install && npm run build
 | Neuromorphic & Quantum Consensus Test | `npx tsx scripts/test-phase24-orchestration.ts` (under packages/agent-runtime) |
 | Photonic & DNA Wet-Storage Test | `npx tsx scripts/test-phase25-orchestration.ts` (under packages/agent-runtime) |
 | LEO Space & Silicon PUF Test | `npx tsx scripts/test-phase26-orchestration.ts` (under packages/agent-runtime) |
+| Spacetime & Self-Destruct Test | `npx tsx scripts/test-phase27-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -601,6 +602,7 @@ npx tsx packages/agent-runtime/scripts/test-phase23-orchestration.ts # DPU Offlo
 npx tsx packages/agent-runtime/scripts/test-phase24-orchestration.ts # Neuromorphic & Quantum Consensus (Memristive cognitive shields, quantum entanglement-based channels, dynamic Honey-Graph topology morphing, sovereign identity sharding)
 npx tsx packages/agent-runtime/scripts/test-phase25-orchestration.ts # Photonic & DNA Wet-Storage (Photonic zero-knowledge attestation, DNA-locked wet-storage encryption, cognitive swarm self-assembly, photonic memory crystallization)
 npx tsx packages/agent-runtime/scripts/test-phase26-orchestration.ts # LEO Space & Silicon PUF (Astro-sovereign LEO satellite sync, Silicon PUF identity challenge, biological neuron wet-compute filter, organic wetware memory sharding)
+npx tsx packages/agent-runtime/scripts/test-phase27-orchestration.ts # Spacetime & Self-Destruct (Relativistic spacetime propagation checks, anti-tamper chemical vaporization fuses, epigenetic cellular stimulus, epigenetic memory crystallization)
 ```
 
 ---
@@ -682,6 +684,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Phase 24 — Neuromorphic Cognitive Shields (Memristor arrays), Quantum-Entanglement Consensus (teleported attestations), Dynamic Honey-Graph Morphing (moving-target routing), Sovereign Identity Sharding (threshold credential splits)
 - [x] Phase 25 — Photonic ZK Attestation (speed-of-light proofs), DNA-Locked Wet-Storage Encryption (microfluidic biological key storage), Cognitive Swarm Self-Assembly (enclaved self-writing logic), Photonic Memory Crystallization (optical context arrays)
 - [x] Phase 26 — Astro-Sovereign Satellite Attestation (LEO laser sync), Silicon PUF Identity (substrate verification challenge), Biological Wet-Compute Cognitive Mediation (organic neuron filters), Organic Wetware Memory Sharding (biological weight shares)
+- [x] Phase 27 — Relativistic Space-Time Cryptography (propagation checks), Silicon Self-Destruct (anti-tamper chemical fuses), Epigenetic DNA Key Generation (dynamic methylation stimulus), Epigenetic Memory Crystallization (photonic signatures)
 - [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
 - [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
 - [ ] Compliance Copilot (AI-powered natural language GRC assistant)

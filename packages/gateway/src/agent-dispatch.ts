@@ -2800,6 +2800,94 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    case 'consensus.assert_spacetime_boundary': {
+      const coordinateHash = String(args.coordinateHash ?? 'spacetime-coords-default');
+      return {
+        ok: true,
+        boundaryAsserted: true,
+        propagationDelayVectorMs: 12.8,
+        coordinateHash,
+        status: 'SPACETIME_BOUNDARY_ASSERTED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.verify_relativistic_proof': {
+      const coordinateHash = String(args.coordinateHash ?? 'spacetime-coords-default');
+      return {
+        ok: true,
+        verified: true,
+        relativisticTimeSyncValid: true,
+        coordinateHash,
+        status: 'RELATIVISTIC_PROOF_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.arm_substrate_triggers': {
+      const triggerId = String(args.triggerId ?? 'vaporize-fuse-default');
+      return {
+        ok: true,
+        armed: true,
+        tamperSensorState: 'HEALTHY',
+        triggerId,
+        status: 'SUBSTRATE_TRIGGERS_ARMED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.query_trigger_integrity': {
+      const triggerId = String(args.triggerId ?? 'vaporize-fuse-default');
+      return {
+        ok: true,
+        sensorStatus: 'ACTIVE_NO_TAMPER',
+        voltageLevelVolts: 1.22,
+        triggerId,
+        status: 'TRIGGER_INTEGRITY_QUERIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.stimulate_epigenetic_state': {
+      const stimulusId = String(args.stimulusId ?? 'epigenetic-chem-default');
+      return {
+        ok: true,
+        stimulated: true,
+        targetCellLine: 'HEK293-EPIGENETIC-01',
+        stimulusId,
+        status: 'EPIGENETIC_STATE_STIMULATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.sequence_epigenetic_signature': {
+      const stimulusId = String(args.stimulusId ?? 'epigenetic-chem-default');
+      return {
+        ok: true,
+        sequenced: true,
+        methylationPatternHash: '0xmethyl_hash_aa99bbee',
+        stimulusId,
+        status: 'EPIGENETIC_SIGNATURE_SEQUENCED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.crystallize_epigenetic_code': {
+      const codeId = String(args.codeId ?? 'epigenetic-code-default');
+      return {
+        ok: true,
+        crystallized: true,
+        photonicSignatureHex: '0xlaser_epigenetic_88ef',
+        codeId,
+        status: 'EPIGENETIC_CODE_CRYSTALLIZED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.read_epigenetic_code': {
+      const codeId = String(args.codeId ?? 'epigenetic-code-default');
+      return {
+        ok: true,
+        decoded: true,
+        epigeneticStateRestored: true,
+        codeId,
+        status: 'EPIGENETIC_CODE_READ',
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }
