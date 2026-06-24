@@ -143,6 +143,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'memory.query_homomorphic_graph', tier: 'read' },
   { name: 'consensus.verify_multi_model_quorum', tier: 'read' },
   { name: 'soar.generate_self_healing_playbook', tier: 'write' },
+  // Phase 6 Strategic Sovereign Swarm Defenses
+  { name: 'security.redteam_sandbox_exploit', tier: 'write' },
+  { name: 'sovereign.verify_model_weights', tier: 'read' },
+  { name: 'memory.query_enclaved_db', tier: 'read' },
+  { name: 'consensus.verify_cross_tenant_quorum', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

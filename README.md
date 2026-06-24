@@ -73,6 +73,7 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 | **Advanced Security** | TEE hardware attestation (Intel SGX, AMD SEV, Nvidia), active container network quarantine & rollback, Zero-Knowledge compliance proof generation, and decentralized MPC threshold key co-signing |
 | **Acquisition-Grade Controls** | Kernel-level eBPF sandboxing, Raft-based ZK Audit Ledger replication, TEE hardware enclave-enclosed MPC co-signing, closed-loop IaC compliance drift correction, and federated threat intelligence exchange |
 | **Sovereign Swarm Mastery** | Firecracker MicroVM sandbox isolation, homomorphic query verification on VectorGraphMemory, semantic thought-loop circuit breaker, Byzantine Fault Tolerant (PBFT) model consensus quorum, and self-healing SOAR containment playbooks |
+| **Sovereign Swarm Defenses** | Autonomous red-team exploit simulation (Chaos Compliance), model weights integrity watermark verification inside TEE enclaves, confidential SGX enclaved vector database RAG query execution, and cross-tenant Byzantine Fault Tolerant (BFT) state sync consensus |
 | **Agent Identity Fabric** | DID:GRC decentralized identifiers, Verifiable Credentials per framework, DID-bound tool access, attestation signing, auto-suspend at risk threshold 90+, and federated identity revocation |
 | **Security Graph** | Real-time security graph connecting agents, tools, controls, evidence, and infrastructure. BFS attack path tracing, blast radius analysis, weighted risk scoring (4-factor), and continuous compliance posture scoring (0-100) |
 | **Agentic SOAR** | DAG-based playbook engine with 4 built-in response playbooks (Agent Compromise, Policy Violation, Drift Correction, Credential Rotation), 14 step actions, human-in-the-loop gates, SLA enforcement, and forensic evidence bundle generation |
@@ -179,6 +180,7 @@ npm install && npm run build
 | Vector DB / Memory Test | `npx tsx scripts/test-vector-memory.ts` (under packages/agent-runtime) |
 | Acquisition-Grade Test | `npx tsx scripts/test-acquisition-grade.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Mastery Test | `npx tsx scripts/test-phase5-orchestration.ts` (under packages/agent-runtime) |
+| Sovereign Swarm Defenses Test | `npx tsx scripts/test-phase6-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -553,6 +555,7 @@ npx tsx packages/agent-runtime/scripts/test-vector-memory.ts # Local vector RAG 
 npx tsx packages/agent-runtime/scripts/test-advanced-security.ts # TEE attestation, containment, ZKP, and MPC signing
 npx tsx packages/agent-runtime/scripts/test-acquisition-controls.ts # eBPF sandboxing, ZK ledger replication, TEE MPC, IaC drift correction, and federated threat exchange
 npx tsx packages/agent-runtime/scripts/test-phase5-orchestration.ts # Sovereign Swarm Mastery (MicroVM sandboxing, homomorphic vector RAG, thought-loop breaker, PBFT consensus, self-healing SOAR)
+npx tsx packages/agent-runtime/scripts/test-phase6-orchestration.ts # Sovereign Swarm Defenses (Red-team exploit block, model weight verification, confidential SGX RAG, cross-tenant BFT state sync)
 ```
 
 ---
