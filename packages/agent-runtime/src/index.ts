@@ -169,6 +169,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.exchange_quantum_keys', tier: 'write' },
   { name: 'security.inject_honey_tokens', tier: 'write' },
   { name: 'security.evaluate_homomorphic_policy', tier: 'read' },
+  // Phase 11 Strategic Sovereign Swarm Federation & Autonomous Supply Chain Gating
+  { name: 'sdk.verify_supply_chain_gate', tier: 'write' },
+  { name: 'consensus.verify_zk_rollup', tier: 'read' },
+  { name: 'security.validate_escrow_signature', tier: 'write' },
+  { name: 'security.filter_cognitive_intent', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

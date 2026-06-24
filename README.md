@@ -78,6 +78,7 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 | **Sovereign Swarm Resilience** | Tiered cognitive HITL approval routing, distributed semantic locks (DSLM) for multi-agent grids, cascading poison isolation & rollback checkpoints, and context diff compression (up to 85% token savings) |
 | **Sovereign Swarm Autonomy** | Automated cloud compliance self-healing (GitOps rollback), zero-knowledge federated threat intelligence signature mesh, mathematical ExecPolicy envelope verification (SMT Z3), and post-quantum cryptographic (PQC) Dilithium5 audit signatures |
 | **Sovereign Swarm Choreography** | Ephemeral confidential enclaves (Intel TDX / AMD SEV-SNP TEEs), post-quantum cryptographic (PQC) ML-KEM-1024 / ML-DSA key exchange consensus, active honey-token canary traps, and homomorphic policy execution over encrypted prompts |
+| **Sovereign Swarm Federation** | Continuous AI-BOM supply chain gating & alternative model redirection, recursive ZK-rollup batch proof ledger consensus (Plonky2/Halo2), multi-party smart-contract escrow tool gating, and homomorphic cognitive intent filtering WAF |
 | **Agent Identity Fabric** | DID:GRC decentralized identifiers, Verifiable Credentials per framework, DID-bound tool access, attestation signing, auto-suspend at risk threshold 90+, and federated identity revocation |
 | **Security Graph** | Real-time security graph connecting agents, tools, controls, evidence, and infrastructure. BFS attack path tracing, blast radius analysis, weighted risk scoring (4-factor), and continuous compliance posture scoring (0-100) |
 | **Agentic SOAR** | DAG-based playbook engine with 4 built-in response playbooks (Agent Compromise, Policy Violation, Drift Correction, Credential Rotation), 14 step actions, human-in-the-loop gates, SLA enforcement, and forensic evidence bundle generation |
@@ -189,6 +190,7 @@ npm install && npm run build
 | Sovereign Swarm Resilience Test | `npx tsx scripts/test-phase8-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Autonomy Test | `npx tsx scripts/test-phase9-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Choreography Test | `npx tsx scripts/test-phase10-orchestration.ts` (under packages/agent-runtime) |
+| Sovereign Swarm Federation Test | `npx tsx scripts/test-phase11-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -568,6 +570,7 @@ npx tsx packages/agent-runtime/scripts/test-phase7-orchestration.ts # Sovereign 
 npx tsx packages/agent-runtime/scripts/test-phase8-orchestration.ts # Sovereign Swarm Resilience (Cognitive approval routing, semantic locks DSLM, poison isolation rollback, context compression)
 npx tsx packages/agent-runtime/scripts/test-phase9-orchestration.ts # Sovereign Swarm Autonomy (GitOps self-healing, federated threat mesh, SMT policy verification, and PQC audit credentials)
 npx tsx packages/agent-runtime/scripts/test-phase10-orchestration.ts # Sovereign Swarm Choreography (Dynamic TEE enclaves, PQC key exchanges, active honeypot traps, and homomorphic policy checking)
+npx tsx packages/agent-runtime/scripts/test-phase11-orchestration.ts # Sovereign Swarm Federation (Supply chain gating, recursive ZK-rollups, smart-contract escrows, and cognitive intent filtering)
 ```
 
 ---
