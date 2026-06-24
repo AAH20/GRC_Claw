@@ -70,6 +70,7 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 | **Anti-Swarm Defense** | Behavioral Auditing (timing anomalies, reasoning loops, toxicity scaling, and forced Docker sandbox containment) |
 | **Tactical UAS & C-UAS** | MAVLink v2 signature validation, PX4/Ardupilot firmware authentication, and DEW power safety audits |
 | **CMMC & NIST SP 800-171/172** | Programmatic system boundary audits (MFA, session timeouts, encryption) and cryptographically signed C3PAO evidence generation |
+| **Advanced Security** | TEE hardware attestation (Intel SGX, AMD SEV, Nvidia), active container network quarantine & rollback, Zero-Knowledge compliance proof generation, and decentralized MPC threshold key co-signing |
 | **Enterprise Connectors** | Native integration with SAP, ServiceNow, and Chronicle SOAR |
 | **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
@@ -523,6 +524,7 @@ npx tsx packages/agent-runtime/scripts/test-openrouter-swarm.ts # Swarm harness 
 npx tsx packages/agent-runtime/scripts/test-iso20022.ts # SWIFT active rewrite and settlement
 npx tsx packages/agent-runtime/scripts/test-hermes-wallet.ts # Hermes execution and wallet gating
 npx tsx packages/agent-runtime/scripts/test-vector-memory.ts # Local vector RAG and cloud memory audits
+npx tsx packages/agent-runtime/scripts/test-advanced-security.ts # TEE attestation, containment, ZKP, and MPC signing
 ```
 
 ---
@@ -578,6 +580,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Hardened ISO 20022 SWIFT Clearing Node (MT-to-MX Translation, Signature Healing, Settlement Gating)
 - [x] Local Vector RAG Integration (Pinecone-style) & Cloud Memory Vendor Lock-in Audit (Dreaming V3)
 - [x] Large-scale Swarm Load Auditing (300 concurrent agents)
+- [x] Advanced Enterprise Security (TEE hardware attestation, Active sandbox containment quarantine & rollback, ZKP compliance proofs, and MPC threshold co-signing)
 - [ ] npm publish `@grc-claw/*`
 - [ ] Helm chart
 - [ ] Gateway metrics (Prometheus)
