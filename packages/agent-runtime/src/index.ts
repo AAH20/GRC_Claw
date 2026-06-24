@@ -179,6 +179,12 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sovereign.sign_lattice_mpc', tier: 'write' },
   { name: 'security.verify_symbolic_graph_flow', tier: 'read' },
   { name: 'security.rlhf_tune_cognitive_intent', tier: 'write' },
+  // Phase 13 Strategic Sovereign Swarm Autonomy & Cognitive Alignment
+  { name: 'consensus.propose_policy_update', tier: 'write' },
+  { name: 'consensus.vote_policy_update', tier: 'write' },
+  { name: 'actuator.trigger_analog_airgap', tier: 'destructive' },
+  { name: 'security.verify_temporal_invariants', tier: 'read' },
+  { name: 'sovereign.inject_activation_patch', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

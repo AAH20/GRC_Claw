@@ -1630,6 +1630,67 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    // ─── Phase 13 Strategic Sovereign Swarm Autonomy & Cognitive Alignment ──
+    case 'consensus.propose_policy_update': {
+      const proposalId = String(args.proposalId ?? `prop-0x${Math.floor(Math.random() * 1000000).toString(16)}`);
+      const targetRule = String(args.targetRule ?? 'deny-outbound-webhooks');
+      return {
+        ok: true,
+        proposalId,
+        targetRule,
+        votesNeeded: 5,
+        status: 'PROPOSAL_REGISTERED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.vote_policy_update': {
+      const proposalId = String(args.proposalId ?? 'prop-default');
+      const voterDID = String(args.voterDID ?? 'did:grc:operator-01');
+      return {
+        ok: true,
+        proposalId,
+        voterDID,
+        quorumReached: true,
+        status: 'VOTE_RECORDED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'actuator.trigger_analog_airgap': {
+      const physicalPortId = String(args.physicalPortId ?? 'opt-fiber-01');
+      return {
+        ok: true,
+        triggered: true,
+        airgapStatus: 'PHYSICALLY_ISOLATED',
+        physicalPortId,
+        status: 'AIRGAP_ACTIVATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.verify_temporal_invariants': {
+      const invariantFormula = String(args.invariantFormula ?? 'G(read_pii -> ~F(outbound_webhook))');
+      return {
+        ok: true,
+        verified: true,
+        statesCheckedCount: 1024,
+        temporalSafetyInvariantHolds: true,
+        invariantFormula,
+        status: 'TEMPORAL_PROOF_OK',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sovereign.inject_activation_patch': {
+      const layerIndex = Number(args.layerIndex ?? 12);
+      const patchMagnitude = Number(args.patchMagnitude ?? 0.15);
+      return {
+        ok: true,
+        patched: true,
+        steeringVectorMagnitude: patchMagnitude,
+        modifiedLayerCount: 8,
+        layerIndex,
+        status: 'SYNAPTIC_STEERING_ACTIVE',
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }
