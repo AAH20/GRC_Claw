@@ -200,6 +200,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'security.trigger_speculative_barrier', tier: 'write' },
   { name: 'memory.query_multiparty_fhe_vector', tier: 'read' },
   { name: 'sovereign.apply_dynamic_gradient_patch', tier: 'write' },
+  // Phase 17 Strategic Sovereign Quantum-Safe Attestation & Hardware-Locked Cognitive Shielding
+  { name: 'identity.sign_lattice_credential', tier: 'write' },
+  { name: 'sovereign.sanitize_enclave_weights', tier: 'write' },
+  { name: 'security.evaluate_joint_fhe_threat', tier: 'read' },
+  { name: 'sovereign.steer_cognitive_attention_feedback', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
