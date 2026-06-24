@@ -152,6 +152,9 @@ npm install && npm run build
 | UAS Swarm Test | `npx tsx scripts/test-uas-governance.ts` (under packages/agent-runtime) |
 | CMMC Compliance Test | `npx tsx scripts/test-cmmc-compliance.ts` (under packages/agent-runtime) |
 | OpenRouter Swarm Test | `npx tsx scripts/test-openrouter-swarm.ts` (under packages/agent-runtime) |
+| SWIFT / ISO 20022 Test | `npx tsx scripts/test-iso20022.ts` (under packages/agent-runtime) |
+| Hermes / Wallet Test | `npx tsx scripts/test-hermes-wallet.ts` (under packages/agent-runtime) |
+| Vector DB / Memory Test | `npx tsx scripts/test-vector-memory.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -517,6 +520,9 @@ npm run test:iso42001        # AIMS package + gateway AIMS APIs
 npm run test:cloud           # AWS / Azure / GCP
 ./scripts/test.sh            # Gateway smoke
 npx tsx packages/agent-runtime/scripts/test-openrouter-swarm.ts # Swarm harness + OpenRouter gating
+npx tsx packages/agent-runtime/scripts/test-iso20022.ts # SWIFT active rewrite and settlement
+npx tsx packages/agent-runtime/scripts/test-hermes-wallet.ts # Hermes execution and wallet gating
+npx tsx packages/agent-runtime/scripts/test-vector-memory.ts # Local vector RAG and cloud memory audits
 ```
 
 ---
@@ -567,6 +573,11 @@ npm install && npm run build && npm run test:comprehensive
 
 - [x] Operator console with Gemini + Cursor Auto agent chat
 - [x] Full skill executor (`claw.list_skills`, `claw.get_skill`, `claw.run_skill`)
+- [x] Local Zero-Cost Autonomous Execution (The Hermes Protocol)
+- [x] Multi-Ledger Wallet Gating & Sovereign Compliance (Solana, XRP, Bitcoin)
+- [x] Hardened ISO 20022 SWIFT Clearing Node (MT-to-MX Translation, Signature Healing, Settlement Gating)
+- [x] Local Vector RAG Integration (Pinecone-style) & Cloud Memory Vendor Lock-in Audit (Dreaming V3)
+- [x] Large-scale Swarm Load Auditing (300 concurrent agents)
 - [ ] npm publish `@grc-claw/*`
 - [ ] Helm chart
 - [ ] Gateway metrics (Prometheus)
