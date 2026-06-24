@@ -47,8 +47,13 @@ assert "agent: llm tool allowed by policy" '"allowed":true' "$INV"
 
 ATTACH=$(curl -s -X POST "$BASE/api/agent/invoke" \
   -H "X-GRC-Claw-Token: $TOKEN" -H "Content-Type: application/json" \
-  -d '{"sessionId":"ledger","tool":"evidence.attach","idempotencyKey":"evidence-attach-1","args":{"tenantId":1,"controlId":"AC.1","uri":"test://evidence","content":"test-evidence"}}')
+  -d '{"agentId":"qa-agent","sessionId":"ledger","tool":"evidence.attach","idempotencyKey":"evidence-attach-1","args":{"tenantId":1,"controlId":"AC.1","uri":"test://evidence","content":"test-evidence"}}')
 assert "agent: evidence receipt is recorded" '"executionState":"recorded"' "$ATTACH"
+assert "agent: assurance binds a DID" '"agentDid":"did:grc:' "$ATTACH"
+assert "agent: assurance calculates blast radius" '"blastRadius"' "$ATTACH"
+
+ASSURANCE=$(curl -s "$BASE/api/assurance" -H "X-GRC-Claw-Token: $TOKEN")
+assert "agent: assurance graph tracks actions" '"totalNodes":' "$ASSURANCE"
 
 LEDGER=$(curl -s "$BASE/api/action-ledger?limit=10" -H "X-GRC-Claw-Token: $TOKEN")
 assert "agent: ledger integrity" '"ok":true' "$LEDGER"

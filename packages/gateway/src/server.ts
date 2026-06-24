@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
-import { AgentSession, type ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
+import { AgentSession, BUILTIN_AGENT_TOOLS, type ExecPolicy, PersistentMemoryStore, type ToolTier } from '@grc-claw/agent-runtime';
 import { getConnectorRegistry, isConnectorTool } from '@grc-claw/connectors';
 import { ActionLedger, EvidenceStore } from '@grc-claw/evidence';
 import {
@@ -24,6 +24,7 @@ import { applyCors, tryServeConsoleStatic } from './console-static.js';
 import { discoverCursorSkills } from './cursor-skills.js';
 import { dispatchAgentTool, executionStateFromOutput } from './agent-dispatch.js';
 import { createClawDispatchContext } from './skill-runtime.js';
+import { GatewayAssuranceGraph } from './assurance.js';
 import { getSkillById, listSkills } from '@grc-claw/skill-executor';
 
 export interface GatewayConfig {
@@ -38,6 +39,7 @@ export function createGateway(config: GatewayConfig) {
   const ledger = new ActionLedger(
     process.env.GRC_CLAW_ACTION_LEDGER_PATH?.trim() || join(process.cwd(), '.grc_memory', 'action-ledger.ndjson')
   );
+  const assurance = new GatewayAssuranceGraph();
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
   const connectors = getConnectorRegistry();
   const store = new PersistentMemoryStore(process.env.GRC_CLAW_MEMORY_DIR?.trim() || '.grc_memory');
@@ -146,6 +148,17 @@ export function createGateway(config: GatewayConfig) {
       const limit = Number(new URL(req.url ?? '', 'http://local').searchParams.get('limit') ?? 100);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, events: ledger.list(limit), integrity: ledger.verify() }));
+      return;
+    }
+
+    if (path === '/api/assurance' && req.method === 'GET') {
+      if (!authOk(req)) {
+        res.writeHead(401);
+        res.end(JSON.stringify({ error: 'unauthorized' }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...assurance.summary() }));
       return;
     }
 
@@ -334,6 +347,27 @@ export function createGateway(config: GatewayConfig) {
         args,
         idempotencyKey: idem || undefined,
       });
+      const assuranceSnapshot = assurance.observeIntent(intent, {
+        agentId: typeof body.agentId === 'string' ? body.agentId : undefined,
+        tenantId: intent.tenantId,
+        sessionId,
+        tool,
+        args,
+        toolTier: toolTierFor(tool),
+      });
+      if (!assuranceSnapshot.gate.allowed) {
+        const decision = {
+          allowed: false,
+          reason: assuranceSnapshot.gate.reason ?? 'assurance_denied',
+          sandbox: 'denied' as const,
+          requiresApproval: true,
+        };
+        ledger.recordDecision(intent, decision);
+        const updatedAssurance = assurance.observeDecision(intent, false, decision.reason);
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ decision, assurance: updatedAssurance, action: { id: intent.actionId, executionState: 'approval_required' }, audit: session.getAuditLog() }));
+        return;
+      }
       const decision = await session.invoke({
         tool,
         args,
@@ -341,9 +375,10 @@ export function createGateway(config: GatewayConfig) {
         idempotencyKey: idem || undefined,
       });
       ledger.recordDecision(intent, decision);
+      const updatedAssurance = assurance.observeDecision(intent, decision.allowed, decision.reason);
       if (!decision.allowed) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ decision, action: { id: intent.actionId, executionState: decision.requiresApproval ? 'approval_required' : 'denied' }, audit: session.getAuditLog() }));
+        res.end(JSON.stringify({ decision, assurance: updatedAssurance, action: { id: intent.actionId, executionState: decision.requiresApproval ? 'approval_required' : 'denied' }, audit: session.getAuditLog() }));
         return;
       }
       let output: Record<string, unknown> | undefined;
@@ -362,6 +397,7 @@ export function createGateway(config: GatewayConfig) {
           JSON.stringify({
             decision,
             error: e instanceof Error ? e.message : 'agent_dispatch_failed',
+            assurance: assurance.get(intent.actionId),
             audit: session.getAuditLog(),
           })
         );
@@ -384,6 +420,7 @@ export function createGateway(config: GatewayConfig) {
           decision,
           output,
           action: { id: action.actionId, executionState },
+          assurance: assurance.get(intent.actionId),
           audit: session.getAuditLog(),
         })
       );
@@ -437,6 +474,11 @@ export function createGateway(config: GatewayConfig) {
     a2z,
     refreshExecPolicy,
   };
+}
+
+function toolTierFor(tool: string): ToolTier {
+  return BUILTIN_AGENT_TOOLS.find((definition) => definition.name === tool)?.tier
+    ?? (tool.includes('delete') || tool.includes('destroy') ? 'destructive' : 'read');
 }
 
 function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
