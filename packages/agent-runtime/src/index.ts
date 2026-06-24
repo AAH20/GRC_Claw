@@ -87,6 +87,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   // Multi-Ledger Wallet and Local Hermes Task Execution
   { name: 'wallet.sign_transaction', tier: 'write' },
   { name: 'hermes.execute_autonomous_task', tier: 'write' },
+  // Advanced Enterprise Security Features
+  { name: 'sovereign.verify_tee_attestation', tier: 'read' },
+  { name: 'security.trigger_active_containment', tier: 'destructive' },
+  { name: 'grc.generate_zkp_proof', tier: 'write' },
+  { name: 'mpc.generate_threshold_signature', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
@@ -460,13 +465,21 @@ export class VectorGraphMemory {
       { id: 'wallet-gating', label: 'Multi-Ledger Wallet Gating', type: 'control', properties: { description: 'Enforce limits and screen beneficiaries on Solana, XRP, and Bitcoin transactions.' } },
       { id: 'vector-db-rag', label: 'Pinecone-Like Localized Vector DB RAG', type: 'control', properties: { description: 'Localized vector database integration for secure Retrieval-Augmented Generation.' } },
       { id: 'cloud-api-lockin', label: 'Cloud Memory Vendor Lock-in Audit', type: 'control', properties: { description: 'Audits OpenAI Dreaming V3 and other cloud APIs for lock-in risks and swarm scaling limits.' } },
+      { id: 'tee-attestation', label: 'TEE Hardware Attestation Verification', type: 'control', properties: { description: 'Verifies hardware-bound Trusted Execution Environment attestation reports.' } },
+      { id: 'active-containment', label: 'Autonomous Active Containment Quarantine', type: 'control', properties: { description: 'Triggers isolated container networks and host environment rollbacks upon breach.' } },
+      { id: 'zkp-compliance', label: 'Zero-Knowledge Compliance Attestation', type: 'control', properties: { description: 'Generates private proof structures verifying controls without leaking logs.' } },
+      { id: 'mpc-signing', label: 'Decentralized Multi-Party Threshold Signing', type: 'control', properties: { description: 'Coordinates distributed key co-signing across supervisor nodes.' } },
       { id: 'skill-42001-audit', label: 'Dynamic ISO 42001 Audit Playbook', type: 'skill', properties: { description: 'Queries and validates AI models for compliance.' } },
       { id: 'skill-cmmc-verify', label: 'CMMC Boundary Verification', type: 'skill', properties: { description: 'Validates host firewall and network configuration against CMMC L2.' } },
       { id: 'skill-iso-20022-verify', label: 'ISO 20022 Payment Verification Playbook', type: 'skill', properties: { description: 'Validates SWIFT MX XML messages against standard schema bounds, transaction size thresholds, and sanctions registries.' } },
       { id: 'skill-hermes-run', label: 'Hermes Autonomous Task Playbook', type: 'skill', properties: { description: 'Executes agent tasks inside sandboxes with zero cloud API leakage.' } },
       { id: 'skill-wallet-gate', label: 'Multi-Ledger Compliance Gate Playbook', type: 'skill', properties: { description: 'Validates and co-signs crypto payment payloads.' } },
       { id: 'skill-vector-db', label: 'Local Vector DB RAG Integration Playbook', type: 'skill', properties: { description: 'Integrates and validates localized RAG data pathways.' } },
-      { id: 'skill-cloud-audit', label: 'Cloud API Vendor Lock-in Evaluation Playbook', type: 'skill', properties: { description: 'Audits memory and cost constraints for cloud swarm integrations.' } }
+      { id: 'skill-cloud-audit', label: 'Cloud API Vendor Lock-in Evaluation Playbook', type: 'skill', properties: { description: 'Audits memory and cost constraints for cloud swarm integrations.' } },
+      { id: 'skill-tee', label: 'TEE Hardware Attestation Playbook', type: 'skill', properties: { description: 'Verifies confidential computing TEE reports.' } },
+      { id: 'skill-containment', label: 'Active Container Containment Playbook', type: 'skill', properties: { description: 'Coordinates sandbox quarantine and host rollbacks.' } },
+      { id: 'skill-zkp', label: 'Zero-Knowledge Compliance Proof Playbook', type: 'skill', properties: { description: 'Generates private ZK compliance proofs.' } },
+      { id: 'skill-mpc', label: 'MPC Threshold Signature Playbook', type: 'skill', properties: { description: 'Splits signing keys across threshold supervisor nodes.' } }
     ];
 
     this.edges = [
@@ -480,13 +493,21 @@ export class VectorGraphMemory {
       { source: 'wallet-gating', target: 'iso-20022', relationship: 'part_of' },
       { source: 'vector-db-rag', target: 'iso-42001', relationship: 'part_of' },
       { source: 'cloud-api-lockin', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'tee-attestation', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'active-containment', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'zkp-compliance', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'mpc-signing', target: 'iso-20022', relationship: 'part_of' },
       { source: 'skill-42001-audit', target: 'iso-42001-a6', relationship: 'implements' },
       { source: 'skill-cmmc-verify', target: 'cmmc-ac-3.1.11', relationship: 'verifies' },
       { source: 'skill-iso-20022-verify', target: 'iso-20022-pacs-008', relationship: 'verifies' },
       { source: 'skill-hermes-run', target: 'hermes-execution', relationship: 'implements' },
       { source: 'skill-wallet-gate', target: 'wallet-gating', relationship: 'verifies' },
       { source: 'skill-vector-db', target: 'vector-db-rag', relationship: 'implements' },
-      { source: 'skill-cloud-audit', target: 'cloud-api-lockin', relationship: 'verifies' }
+      { source: 'skill-cloud-audit', target: 'cloud-api-lockin', relationship: 'verifies' },
+      { source: 'skill-tee', target: 'tee-attestation', relationship: 'implements' },
+      { source: 'skill-containment', target: 'active-containment', relationship: 'verifies' },
+      { source: 'skill-zkp', target: 'zkp-compliance', relationship: 'implements' },
+      { source: 'skill-mpc', target: 'mpc-signing', relationship: 'implements' }
     ];
   }
 
@@ -687,6 +708,70 @@ export class SkillsRegistry {
           outputs: ['lockInScore', 'portabilityPlan', 'swarmCostAudit', 'complianceStatus']
         },
         source: 'skills.sh/governance/cloud-memory-audit'
+      },
+      {
+        id: 'tee-hardware-attestation',
+        name: 'TEE Hardware Attestation Verification',
+        category: 'Confidential Computing',
+        description: 'Validates CPU/GPU attestation reports from Intel SGX, AMD SEV, or Nvidia TEE, issuing cryptographic clearance tokens.',
+        playbook: {
+          steps: [
+            'Verify hardware manufacturer attestation signature key',
+            'Analyze measurement hashes and check against reference values',
+            'Issue cryptographic hardware clearance token'
+          ],
+          requiredInputs: ['attestationReportHex', 'cpuGpuVendor'],
+          outputs: ['attestationClearance', 'clearanceToken']
+        },
+        source: 'skills.sh/confidential-compute/tee-attestation'
+      },
+      {
+        id: 'active-containment-recovery',
+        name: 'Active Container Containment and Recovery Quarantining',
+        category: 'Threat Containment',
+        description: 'Coordinates network isolation, session quarantining, and rollback snapshot configurations upon policy violation.',
+        playbook: {
+          steps: [
+            'Trigger virtual network interface quarantine isolation',
+            'Instruct hypervisor to save running state memory snapshot',
+            'Roll back sandbox container to compliant base state'
+          ],
+          requiredInputs: ['containerId', 'breachingSessionId'],
+          outputs: ['containmentStatus', 'snapshotUri', 'rollbackStatus']
+        },
+        source: 'skills.sh/security/active-containment'
+      },
+      {
+        id: 'zero-knowledge-audit',
+        name: 'Zero Knowledge Compliance Attestation Proofs',
+        category: 'AI Governance',
+        description: 'Generates private ZK-SNARK proof structures verifying framework control compliance without leaking system logs.',
+        playbook: {
+          steps: [
+            'Load compliance audit log verification inputs',
+            'Compile ZK arithmetic circuits for evaluated controls',
+            'Generate cryptographic compliance proof representation'
+          ],
+          requiredInputs: ['complianceInputsJson', 'circuitParamsUri'],
+          outputs: ['zkProofJson', 'verificationStatus']
+        },
+        source: 'skills.sh/governance/zk-proof'
+      },
+      {
+        id: 'mpc-threshold-signing',
+        name: 'MPC Threshold Secret Signing Coordination',
+        category: 'Decentralized Security',
+        description: 'Coordinates co-signature segments across threshold nodes in a decentralized MPC supervisor configuration.',
+        playbook: {
+          steps: [
+            'Initiate distributed key generation protocol across active nodes',
+            'Coordinate signature generation phase among threshold members',
+            'Reconstruct absolute co-signature payload'
+          ],
+          requiredInputs: ['transactionPayload', 'thresholdNodesCount', 'minimumQuorum'],
+          outputs: ['reconstructedSignature', 'quorumStatus']
+        },
+        source: 'skills.sh/security/mpc-signing'
       }
     ];
   }
