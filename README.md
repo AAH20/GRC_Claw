@@ -196,6 +196,7 @@ npm install && npm run build
 | Sovereign Swarm Execution Test | `npx tsx scripts/test-phase14-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Monopoly Test | `npx tsx scripts/test-phase15-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Policies Test | `npx tsx scripts/test-phase16-orchestration.ts` (under packages/agent-runtime) |
+| Sovereign Swarm Shielding Test | `npx tsx scripts/test-phase17-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -576,6 +577,12 @@ npx tsx packages/agent-runtime/scripts/test-phase8-orchestration.ts # Sovereign 
 npx tsx packages/agent-runtime/scripts/test-phase9-orchestration.ts # Sovereign Swarm Autonomy (GitOps self-healing, federated threat mesh, SMT policy verification, and PQC audit credentials)
 npx tsx packages/agent-runtime/scripts/test-phase10-orchestration.ts # Sovereign Swarm Choreography (Dynamic TEE enclaves, PQC key exchanges, active honeypot traps, and homomorphic policy checking)
 npx tsx packages/agent-runtime/scripts/test-phase11-orchestration.ts # Sovereign Swarm Federation (Supply chain gating, recursive ZK-rollups, smart-contract escrows, and cognitive intent filtering)
+npx tsx packages/agent-runtime/scripts/test-phase12-orchestration.ts # Sovereign Swarm Validation (Decentralized oracle verification, lattice MPC signing, symbolic graph flow verification, cognitive tuning)
+npx tsx packages/agent-runtime/scripts/test-phase13-orchestration.ts # Sovereign Swarm Autonomy & Alignment (Analog airgap actuator trigger, temporal invariants proof, active activation patches)
+npx tsx packages/agent-runtime/scripts/test-phase14-orchestration.ts # Sovereign Swarm Execution (Session ZK-proof generation, multi-model steering vector, ZK-RAG proof, threat rollup propagation)
+npx tsx packages/agent-runtime/scripts/test-phase15-orchestration.ts # Sovereign Swarm Monopoly (Regulation AST compile, sidechannel hardware counters, FHE ledger audit, inline attention steering)
+npx tsx packages/agent-runtime/scripts/test-phase16-orchestration.ts # Sovereign Swarm Policies (ZK policy envelope, VM speculative barriers, collaborative FHE RAG, synaptic dynamic LoRA patching)
+npx tsx packages/agent-runtime/scripts/test-phase17-orchestration.ts # Sovereign Swarm Shielding (Post-quantum lattice DID attestation, enclaved weights scan, homomorphic joint threat check, attention feedback steering)
 ```
 
 ---
