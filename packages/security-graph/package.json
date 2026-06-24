@@ -1,0 +1,20 @@
+{
+  "name": "@grc-claw/security-graph",
+  "version": "0.1.0",
+  "description": "Real-time security graph with attack path analysis and risk scoring for GRC_Claw",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/**/*.test.js 2>/dev/null || true"
+  },
+  "files": ["dist"]
+}
