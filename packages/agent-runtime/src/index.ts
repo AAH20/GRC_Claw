@@ -92,6 +92,12 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'security.trigger_active_containment', tier: 'destructive' },
   { name: 'grc.generate_zkp_proof', tier: 'write' },
   { name: 'mpc.generate_threshold_signature', tier: 'write' },
+  // Acquisition-Grade Enterprise Security
+  { name: 'security.ebpf_sandbox_rule', tier: 'write' },
+  { name: 'audit.generate_zk_ledger_proof', tier: 'read' },
+  { name: 'mpc.sign_enclave_transaction', tier: 'write' },
+  { name: 'grc.trigger_drift_correction', tier: 'write' },
+  { name: 'intel.sync_federated_reports', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
@@ -479,7 +485,18 @@ export class VectorGraphMemory {
       { id: 'skill-tee', label: 'TEE Hardware Attestation Playbook', type: 'skill', properties: { description: 'Verifies confidential computing TEE reports.' } },
       { id: 'skill-containment', label: 'Active Container Containment Playbook', type: 'skill', properties: { description: 'Coordinates sandbox quarantine and host rollbacks.' } },
       { id: 'skill-zkp', label: 'Zero-Knowledge Compliance Proof Playbook', type: 'skill', properties: { description: 'Generates private ZK compliance proofs.' } },
-      { id: 'skill-mpc', label: 'MPC Threshold Signature Playbook', type: 'skill', properties: { description: 'Splits signing keys across threshold supervisor nodes.' } }
+      { id: 'skill-mpc', label: 'MPC Threshold Signature Playbook', type: 'skill', properties: { description: 'Splits signing keys across threshold supervisor nodes.' } },
+      // Acquisition-Grade Enterprise Security
+      { id: 'ebpf-sandbox', label: 'Kernel-Level eBPF Sandboxing Control', type: 'control', properties: { description: 'Dynamic system call and socket filtering rules at the host kernel level.' } },
+      { id: 'zk-ledger', label: 'Raft-Based ZK Audit Ledger', type: 'control', properties: { description: 'Immutable log replication and ZK compliance proof structures.' } },
+      { id: 'enclave-mpc', label: 'TEE-Enclosed Multi-Party Computation', type: 'control', properties: { description: 'Quorum co-signing inside isolated secure enclaves.' } },
+      { id: 'drift-correction', label: 'Closed-Loop IaC Drift Correction', type: 'control', properties: { description: 'Automatic detection and remediation of infrastructure changes.' } },
+      { id: 'federated-intel', label: 'Federated Differential Privacy Threat Exchange', type: 'control', properties: { description: 'Anonymized threat signature sync using Laplacian noise.' } },
+      { id: 'skill-ebpf', label: 'eBPF Sandbox Policy Playbook', type: 'skill', properties: { description: 'Configures and audits kernel system call hooks.' } },
+      { id: 'skill-zk-ledger', label: 'ZK Audit Ledger Playbook', type: 'skill', properties: { description: 'Coordinates Merkle auditing and ledger proofs.' } },
+      { id: 'skill-enclave-mpc', label: 'TEE MPC Sign Playbook', type: 'skill', properties: { description: 'Invokes enclaved signature schemes.' } },
+      { id: 'skill-drift-correction', label: 'IaC Drift Correction Playbook', type: 'skill', properties: { description: 'Applies Terraform fixes to close compliance loops.' } },
+      { id: 'skill-federated-intel', label: 'Federated Threat Exchange Playbook', type: 'skill', properties: { description: 'Exchanges anonymized threat signals.' } }
     ];
 
     this.edges = [
@@ -507,7 +524,18 @@ export class VectorGraphMemory {
       { source: 'skill-tee', target: 'tee-attestation', relationship: 'implements' },
       { source: 'skill-containment', target: 'active-containment', relationship: 'verifies' },
       { source: 'skill-zkp', target: 'zkp-compliance', relationship: 'implements' },
-      { source: 'skill-mpc', target: 'mpc-signing', relationship: 'implements' }
+      { source: 'skill-mpc', target: 'mpc-signing', relationship: 'implements' },
+      // Acquisition-Grade Enterprise Security
+      { source: 'ebpf-sandbox', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'zk-ledger', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'enclave-mpc', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'drift-correction', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'federated-intel', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'skill-ebpf', target: 'ebpf-sandbox', relationship: 'implements' },
+      { source: 'skill-zk-ledger', target: 'zk-ledger', relationship: 'implements' },
+      { source: 'skill-enclave-mpc', target: 'enclave-mpc', relationship: 'implements' },
+      { source: 'skill-drift-correction', target: 'drift-correction', relationship: 'implements' },
+      { source: 'skill-federated-intel', target: 'federated-intel', relationship: 'implements' }
     ];
   }
 
@@ -772,6 +800,87 @@ export class SkillsRegistry {
           outputs: ['reconstructedSignature', 'quorumStatus']
         },
         source: 'skills.sh/security/mpc-signing'
+      },
+      // Acquisition-Grade Enterprise Security
+      {
+        id: 'ebpf-sandbox-policy',
+        name: 'eBPF Kernel Sandbox Policy Configuration',
+        category: 'Threat Containment',
+        description: 'Deploys dynamic sys-call hooks and socket filter rules to the host kernel from sandboxes.',
+        playbook: {
+          steps: [
+            'Load eBPF program filter parameters',
+            'Compile dynamic sys-call hook restrictions',
+            'Attach filter to target sandboxed process group'
+          ],
+          requiredInputs: ['processGroupId', 'syscallDenylist'],
+          outputs: ['attachStatus', 'activeHookCount']
+        },
+        source: 'skills.sh/security/ebpf-sandbox'
+      },
+      {
+        id: 'zk-audit-ledger',
+        name: 'Raft-Based ZK Audit Ledger Proof',
+        category: 'AI Governance',
+        description: 'Generates verified consensus records and ZK logs of tool execution histories.',
+        playbook: {
+          steps: [
+            'Verify audit log replication across Raft members',
+            'Compute Merkle root signature hash',
+            'Compile ZK compliance proofs for external audits'
+          ],
+          requiredInputs: ['raftSessionId', 'auditLogRootHash'],
+          outputs: ['zkProofHash', 'ledgerStatus']
+        },
+        source: 'skills.sh/governance/zk-ledger'
+      },
+      {
+        id: 'tee-enclave-mpc',
+        name: 'TEE Enclave MPC Co-signing',
+        category: 'Decentralized Security',
+        description: 'Processes threshold signatures within hardware isolated enclaves (Intel SGX/AMD SEV).',
+        playbook: {
+          steps: [
+            'Verify TEE hardware enclave attestation',
+            'Reconstruct private key shares strictly inside enclave memory',
+            'Output enclave-signed transaction payload'
+          ],
+          requiredInputs: ['txPayload', 'enclaveId', 'minimumNodes'],
+          outputs: ['enclaveSignature', 'attestationStatus']
+        },
+        source: 'skills.sh/security/enclave-mpc'
+      },
+      {
+        id: 'iac-drift-correction',
+        name: 'Closed-Loop IaC Compliance Drift Correction',
+        category: 'DevSecOps',
+        description: 'Autogenerates and applies infrastructure fixes based on compliance audit drifts.',
+        playbook: {
+          steps: [
+            'Scan actual environment settings and identify diffs against base target template',
+            'Generate corrective Terraform configuration patch',
+            'Execute IaC apply run to restore compliant state'
+          ],
+          requiredInputs: ['targetTemplateUri', 'activeConfigUri'],
+          outputs: ['driftRemediationStatus', 'appliedPatchHash']
+        },
+        source: 'skills.sh/devops/drift-correction'
+      },
+      {
+        id: 'federated-intel-exchange',
+        name: 'Federated Threat Intel Exchange',
+        category: 'Threat Intelligence',
+        description: 'Redacts metadata and applies differential privacy Laplacian noise to sync threat indicators.',
+        playbook: {
+          steps: [
+            'Identify local threat signature logs and redact sensitive variables',
+            'Inject Laplacian noise to mask metadata frequencies',
+            'Publish federated indicators and download peer updates'
+          ],
+          requiredInputs: ['localLogsJson', 'privacyEpsilon'],
+          outputs: ['sanitizedReportHash', 'peerIntelCount']
+        },
+        source: 'skills.sh/intel/federated-exchange'
       }
     ];
   }

@@ -1,6 +1,6 @@
 {
-  "calls": 8,
-  "toxicityScore": 60,
+  "calls": 10,
+  "toxicityScore": 75,
   "callHistory": [
     {
       "tool": "sentinel.run_playbook",
@@ -41,6 +41,16 @@
       "tool": "sentinel.get_incident",
       "argsString": "{\"id\":\"1\"}",
       "timestamp": 1782273260700
+    },
+    {
+      "tool": "sentinel.run_playbook",
+      "argsString": "{\"playbookId\":\"isolate-vm\"}",
+      "timestamp": 1782274057286
+    },
+    {
+      "tool": "sentinel.get_incident",
+      "argsString": "{\"id\":\"1\"}",
+      "timestamp": 1782274057310
     }
   ],
   "audit": [
@@ -185,6 +195,43 @@
           "RAPID_DISCOVERY_ANOMALY"
         ],
         "toxicityScore": 60
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T04:07:37.286Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "destructive_requires_approval",
+        "sandbox": "docker",
+        "requiresApproval": true,
+        "toxicityScore": 60
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T04:07:37.310Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "high_toxicity_containment: score=75",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 75
       },
       "argsRedacted": {
         "keys": [

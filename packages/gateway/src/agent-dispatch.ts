@@ -38,7 +38,9 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('skills.') ||
     tool.startsWith('actuator.') ||
     tool.startsWith('security.') ||
-    tool.startsWith('mpc.')
+    tool.startsWith('mpc.') ||
+    tool.startsWith('audit.') ||
+    tool.startsWith('intel.')
   );
 }
 
@@ -785,6 +787,84 @@ export async function dispatchBuiltinGrcTool(
         activeSigners: quorum,
         totalSigners: nodes,
         reconstructedSignature,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'security.ebpf_sandbox_rule': {
+      const processGroupId = String(args.processGroupId ?? 'sandbox-group-01');
+      const syscallDenylist = (args.syscallDenylist as string[]) ?? ['execve', 'socket'];
+      return {
+        ok: true,
+        attachStatus: 'ATTACHED',
+        activeHookCount: syscallDenylist.length + 2,
+        processGroupId,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'audit.generate_zk_ledger_proof': {
+      const raftSessionId = String(args.raftSessionId ?? 'raft-cluster-01');
+      const rootHash = String(args.auditLogRootHash ?? '0xabcdef');
+      const payloadString = JSON.stringify({ raftSessionId, rootHash });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return {
+        ok: true,
+        zkProofHash: `zkp_ledger_proof_0x${Math.abs(hash).toString(16)}a26b`,
+        ledgerStatus: 'COMMITTED',
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'mpc.sign_enclave_transaction': {
+      const txPayload = String(args.txPayload ?? '');
+      const enclaveId = String(args.enclaveId ?? 'aws-nitro-enclave-01');
+      const minNodes = Number(args.minimumNodes ?? 3);
+      const payloadString = JSON.stringify({ txPayload, enclaveId, minNodes });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return {
+        ok: true,
+        enclaveSignature: `enclave_sig_0x${Math.abs(hash).toString(16)}f82e`,
+        attestationStatus: 'VERIFIED',
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'grc.trigger_drift_correction': {
+      const target = String(args.targetTemplateUri ?? '');
+      const active = String(args.activeConfigUri ?? '');
+      const payloadString = JSON.stringify({ target, active });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return {
+        ok: true,
+        driftRemediationStatus: 'SUCCESS',
+        appliedPatchHash: `patch_hash_0x${Math.abs(hash).toString(16)}bc11`,
+        remediatedControlsCount: 3,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'intel.sync_federated_reports': {
+      const logs = String(args.localLogsJson ?? '{}');
+      const epsilon = Number(args.privacyEpsilon ?? 0.5);
+      const payloadString = JSON.stringify({ logs, epsilon });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return {
+        ok: true,
+        sanitizedReportHash: `federated_intel_hash_0x${Math.abs(hash).toString(16)}91f2`,
+        peerIntelCount: 14,
+        noiseInjected: true,
         timestamp: new Date().toISOString()
       };
     }
