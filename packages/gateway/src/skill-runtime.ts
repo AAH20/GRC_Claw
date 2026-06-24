@@ -9,7 +9,8 @@ import {
 } from '@grc-claw/skill-executor';
 import { dispatchAgentTool } from './agent-dispatch.js';
 import type { A2ZSocConnector } from '@grc-claw/a2z-connector';
-import type { EvidenceStore } from '@grc-claw/evidence';
+import type { ActionLedger, EvidenceStore } from '@grc-claw/evidence';
+import { executionStateFromOutput } from './agent-dispatch.js';
 
 export function buildToolManifest(extraTools: { name: string; tier: string }[] = []): string {
   const lines = [...BUILTIN_AGENT_TOOLS, ...CLAW_SKILL_TOOLS, ...extraTools].map(
@@ -21,6 +22,7 @@ export function buildToolManifest(extraTools: { name: string; tier: string }[] =
 export function createClawDispatchContext(deps: {
   registry: ConnectorRegistry;
   evidence: EvidenceStore;
+  ledger?: ActionLedger;
   a2z: A2ZSocConnector;
   defaultLlmProviderId: string;
   makeSession: (sessionId: string, policy: ExecPolicy) => AgentSession;
@@ -35,8 +37,16 @@ export function createClawDispatchContext(deps: {
 
   ctx.invokeTool = async (tool, args) => {
     const policy = deps.getPolicy();
-    const session = deps.makeSession(`skill-loop-${Date.now()}`, policy);
+    const sessionId = `skill-loop-${Date.now()}`;
+    const session = deps.makeSession(sessionId, policy);
+    const intent = deps.ledger?.recordIntent({
+      tenantId: Number(args.tenantId ?? 1),
+      sessionId,
+      tool,
+      args,
+    });
     const decision = await session.invoke({ tool, args });
+    if (intent) deps.ledger?.recordDecision(intent, decision);
     if (!decision.allowed) {
       return { output: {}, blocked: true, reason: decision.reason };
     }
@@ -46,6 +56,12 @@ export function createClawDispatchContext(deps: {
       a2z: deps.a2z,
       claw: ctx,
     });
+    if (intent) {
+      deps.ledger?.recordResult(intent, {
+        executionState: executionStateFromOutput(output),
+        output,
+      });
+    }
     return { output };
   };
 

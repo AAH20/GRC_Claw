@@ -35,6 +35,18 @@ Implemented in `@grc-claw/agent-runtime`:
 - Full transcript + tool I/O appended to **audit stream** (gateway).
 - LLM output is **untrusted** until validated against schema (Zod on tool args).
 
+## Action ledger and truthful execution
+
+The gateway records an append-only, hash-chained action ledger at
+`.grc_memory/action-ledger.ndjson` by default. Each agent or direct MCP call emits an intent,
+policy decision, and result event. The ledger stores argument and output hashes plus key names,
+not raw tool payloads. Read it through authenticated `GET /api/action-ledger`; the response also
+verifies chain integrity.
+
+Execution states are explicit: `recorded` means local evidence was stored, `executed` means a
+connector accepted the request, and `verified` requires a target-system receipt. `simulated` and
+`not_configured` are never presented as successful external execution.
+
 ## Hardening checklist (operators)
 
 - [ ] `GRC_CLAW_GATEWAY_TOKEN` from secret manager, not git

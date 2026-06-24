@@ -1,9 +1,10 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
 import { AgentSession, type ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
 import { getConnectorRegistry, isConnectorTool } from '@grc-claw/connectors';
-import { EvidenceStore } from '@grc-claw/evidence';
+import { ActionLedger, EvidenceStore } from '@grc-claw/evidence';
 import {
   AIMS_SCOPE_TEMPLATE,
   listClauseMap,
@@ -21,7 +22,7 @@ import {
 import { IdempotencyCache } from './idempotency.js';
 import { applyCors, tryServeConsoleStatic } from './console-static.js';
 import { discoverCursorSkills } from './cursor-skills.js';
-import { dispatchAgentTool } from './agent-dispatch.js';
+import { dispatchAgentTool, executionStateFromOutput } from './agent-dispatch.js';
 import { createClawDispatchContext } from './skill-runtime.js';
 import { getSkillById, listSkills } from '@grc-claw/skill-executor';
 
@@ -34,9 +35,12 @@ export interface GatewayConfig {
 export function createGateway(config: GatewayConfig) {
   const dedupe = new IdempotencyCache();
   const evidence = new EvidenceStore();
+  const ledger = new ActionLedger(
+    process.env.GRC_CLAW_ACTION_LEDGER_PATH?.trim() || join(process.cwd(), '.grc_memory', 'action-ledger.ndjson')
+  );
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
   const connectors = getConnectorRegistry();
-  const store = new PersistentMemoryStore();
+  const store = new PersistentMemoryStore(process.env.GRC_CLAW_MEMORY_DIR?.trim() || '.grc_memory');
   let execPolicy!: ExecPolicy;
 
   async function refreshExecPolicy(): Promise<ExecPolicy> {
@@ -51,6 +55,7 @@ export function createGateway(config: GatewayConfig) {
     return createClawDispatchContext({
       registry: connectors,
       evidence,
+      ledger,
       a2z,
       defaultLlmProviderId: llmProviders[0]?.id ?? 'gemini',
       getPolicy: () => policy,
@@ -127,9 +132,22 @@ export function createGateway(config: GatewayConfig) {
       async () => execPolicy ?? refreshExecPolicy(),
       async () => {
         await refreshExecPolicy();
-      }
+      },
+      ledger
     );
     if (connectorHandled) return;
+
+    if (path === '/api/action-ledger' && req.method === 'GET') {
+      if (!authOk(req)) {
+        res.writeHead(401);
+        res.end(JSON.stringify({ error: 'unauthorized' }));
+        return;
+      }
+      const limit = Number(new URL(req.url ?? '', 'http://local').searchParams.get('limit') ?? 100);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, events: ledger.list(limit), integrity: ledger.verify() }));
+      return;
+    }
 
     if (path === '/api/frameworks' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -306,17 +324,26 @@ export function createGateway(config: GatewayConfig) {
       }
       const policy = execPolicy ?? (await refreshExecPolicy());
       const session = new AgentSession(String(body.sessionId ?? 'default'), policy, store);
+      const sessionId = session.sessionId;
       const tool = String(body.tool ?? '');
       const args = (body.args as Record<string, unknown>) ?? {};
+      const intent = ledger.recordIntent({
+        tenantId: Number(args.tenantId ?? body.tenantId ?? 1),
+        sessionId,
+        tool,
+        args,
+        idempotencyKey: idem || undefined,
+      });
       const decision = await session.invoke({
         tool,
         args,
         approvalToken: body.approvalToken as string | undefined,
         idempotencyKey: idem || undefined,
       });
+      ledger.recordDecision(intent, decision);
       if (!decision.allowed) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ decision, audit: session.getAuditLog() }));
+        res.end(JSON.stringify({ decision, action: { id: intent.actionId, executionState: decision.requiresApproval ? 'approval_required' : 'denied' }, audit: session.getAuditLog() }));
         return;
       }
       let output: Record<string, unknown> | undefined;
@@ -329,6 +356,7 @@ export function createGateway(config: GatewayConfig) {
           claw,
         });
       } catch (e) {
+        ledger.recordResult(intent, { executionState: 'failed' });
         res.writeHead(502, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
@@ -339,8 +367,26 @@ export function createGateway(config: GatewayConfig) {
         );
         return;
       }
+      const executionState = executionStateFromOutput(output);
+      const action = ledger.recordResult(intent, {
+        executionState,
+        output,
+        evidenceId:
+          typeof output.evidence === 'object' && output.evidence && 'id' in output.evidence
+            ? String((output.evidence as { id: unknown }).id)
+            : undefined,
+        targetReceipt: typeof output.targetReceipt === 'string' ? output.targetReceipt : undefined,
+      });
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, decision, output, audit: session.getAuditLog() }));
+      res.end(
+        JSON.stringify({
+          ok: executionState !== 'failed' && executionState !== 'not_configured',
+          decision,
+          output,
+          action: { id: action.actionId, executionState },
+          audit: session.getAuditLog(),
+        })
+      );
       return;
     }
 

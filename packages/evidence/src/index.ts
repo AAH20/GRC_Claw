@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+export * from './action-ledger.js';
+
 export interface EvidenceRecord {
   id: string;
   controlId: string;
