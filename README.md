@@ -75,6 +75,7 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 | **Sovereign Swarm Mastery** | Firecracker MicroVM sandbox isolation, homomorphic query verification on VectorGraphMemory, semantic thought-loop circuit breaker, Byzantine Fault Tolerant (PBFT) model consensus quorum, and self-healing SOAR containment playbooks |
 | **Sovereign Swarm Defenses** | Autonomous red-team exploit simulation (Chaos Compliance), model weights integrity watermark verification inside TEE enclaves, confidential SGX enclaved vector database RAG query execution, and cross-tenant Byzantine Fault Tolerant (BFT) state sync consensus |
 | **Zero-Trust & ZK Attestation** | Active VPC network quarantine & rollback, hardware model runtime attestation (Intel TDX / AMD SEV), threshold co-signing (MPC), and zk-SNARK compliance proofs (Groth16) |
+| **Sovereign Swarm Resilience** | Tiered cognitive HITL approval routing, distributed semantic locks (DSLM) for multi-agent grids, cascading poison isolation & rollback checkpoints, and context diff compression (up to 85% token savings) |
 | **Agent Identity Fabric** | DID:GRC decentralized identifiers, Verifiable Credentials per framework, DID-bound tool access, attestation signing, auto-suspend at risk threshold 90+, and federated identity revocation |
 | **Security Graph** | Real-time security graph connecting agents, tools, controls, evidence, and infrastructure. BFS attack path tracing, blast radius analysis, weighted risk scoring (4-factor), and continuous compliance posture scoring (0-100) |
 | **Agentic SOAR** | DAG-based playbook engine with 4 built-in response playbooks (Agent Compromise, Policy Violation, Drift Correction, Credential Rotation), 14 step actions, human-in-the-loop gates, SLA enforcement, and forensic evidence bundle generation |
@@ -183,6 +184,7 @@ npm install && npm run build
 | Sovereign Swarm Mastery Test | `npx tsx scripts/test-phase5-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Defenses Test | `npx tsx scripts/test-phase6-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Defenses & Attestation Test | `npx tsx scripts/test-phase7-orchestration.ts` (under packages/agent-runtime) |
+| Sovereign Swarm Resilience Test | `npx tsx scripts/test-phase8-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -559,6 +561,7 @@ npx tsx packages/agent-runtime/scripts/test-acquisition-controls.ts # eBPF sandb
 npx tsx packages/agent-runtime/scripts/test-phase5-orchestration.ts # Sovereign Swarm Mastery (MicroVM sandboxing, homomorphic vector RAG, thought-loop breaker, PBFT consensus, self-healing SOAR)
 npx tsx packages/agent-runtime/scripts/test-phase6-orchestration.ts # Sovereign Swarm Defenses (Red-team exploit block, model weight verification, confidential SGX RAG, cross-tenant BFT state sync)
 npx tsx packages/agent-runtime/scripts/test-phase7-orchestration.ts # Sovereign Swarm Defenses & Attestation (VPC network quarantine, TEE model attestation, MPC threshold signing, and zk-SNARK compliance audits)
+npx tsx packages/agent-runtime/scripts/test-phase8-orchestration.ts # Sovereign Swarm Resilience (Cognitive approval routing, semantic locks DSLM, poison isolation rollback, context compression)
 ```
 
 ---

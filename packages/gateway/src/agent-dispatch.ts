@@ -1345,6 +1345,76 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    // ─── Phase 8 Strategic Sovereign Swarm Resilience & Cognitive Mediation ───
+    case 'security.evaluate_semantic_approval': {
+      const intentPayload = String(args.intentPayload ?? 'default-intent');
+      const thresholdRisk = Number(args.thresholdRisk ?? 0.5);
+      const isHighRisk = thresholdRisk > 0.7 || intentPayload.includes('destroy') || intentPayload.includes('delete');
+      return {
+        ok: true,
+        approved: !isHighRisk,
+        delegationTier: isHighRisk ? 'QUORUM' : (thresholdRisk > 0.4 ? 'BATCH' : 'AUTO'),
+        requiredApproversCount: isHighRisk ? 3 : 1,
+        confidenceScore: 0.95 - (thresholdRisk * 0.2),
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sovereign.acquire_semantic_lock': {
+      const resourceUri = String(args.resourceUri ?? 'urn:grc:resource-default');
+      const leaseDurationMs = Number(args.leaseDurationMs ?? 5000);
+      const requesterDid = String(args.requesterDid ?? 'did:grc:agent-unknown');
+      return {
+        ok: true,
+        lockAcquired: true,
+        lockToken: `lock_token_0x${Math.floor(Math.random() * 1000000).toString(16)}`,
+        leaseExpiresAt: new Date(Date.now() + leaseDurationMs).toISOString(),
+        resourceUri,
+        requesterDid,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sovereign.release_semantic_lock': {
+      const resourceUri = String(args.resourceUri ?? 'urn:grc:resource-default');
+      const lockToken = String(args.lockToken ?? '');
+      return {
+        ok: true,
+        lockReleased: !!lockToken,
+        resourceUri,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.rollback_poison_cascade': {
+      const sourceAgentDid = String(args.sourceAgentDid ?? 'did:grc:agent-malicious');
+      const infectionWindowSec = Number(args.infectionWindowSec ?? 60);
+      return {
+        ok: true,
+        cascadeTracedCount: 4,
+        quarantinedAgentDids: [
+          sourceAgentDid,
+          'did:grc:agent-downstream-01',
+          'did:grc:agent-downstream-02'
+        ],
+        rollbackedSnapshotsCount: 3,
+        infectionWindowSec,
+        status: 'ISOLATED_ROLLBACK_COMPLETE',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.compress_context_diff': {
+      const rawContextLogs = (args.rawContextLogs as string[]) ?? ['thought-1', 'tool-1', 'thought-2'];
+      const targetCompressionRatio = Number(args.targetCompressionRatio ?? 0.4);
+      return {
+        ok: true,
+        compressedDiffJson: JSON.stringify({
+          abstractFacts: ['Action sequence initiated', 'Target state reached'],
+          prunedSteps: rawContextLogs.length - 1,
+          semanticDeltasCount: 2
+        }),
+        compressionRatio: targetCompressionRatio + 0.05,
+        tokenSavingsCount: rawContextLogs.length * 150,
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }

@@ -153,6 +153,12 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sovereign.attest_model_runtime', tier: 'read' },
   { name: 'mpc.sign_threshold_transaction', tier: 'write' },
   { name: 'grc.generate_compliance_zkp', tier: 'write' },
+  // Phase 8 Strategic Sovereign Swarm Resilience & Cognitive Mediation
+  { name: 'security.evaluate_semantic_approval', tier: 'read' },
+  { name: 'sovereign.acquire_semantic_lock', tier: 'write' },
+  { name: 'sovereign.release_semantic_lock', tier: 'write' },
+  { name: 'security.rollback_poison_cascade', tier: 'destructive' },
+  { name: 'memory.compress_context_diff', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
