@@ -68,6 +68,7 @@ export class AgentOrchestrator {
           args: parsedArgs,
           agentRole: options?.agentRole, // Pass the role to enforce Segregation of Duties
           llmProviderId: options?.llmProviderId, // Pass the LLM provider ID for sovereign boundary checks
+          thought: responseMessage.content || undefined, // Pass the thought content if available
         };
 
         // Pass invocation to the strict GRC_Claw ExecPolicy
