@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "mcp": [
+    {
+      "id": "higgsfield",
+      "label": "Higgsfield MCP — approved creative generation",
+      "transport": "http",
+      "url": "https://mcp.higgsfield.ai/mcp",
+      "authMode": "oauth",
+      "defaultTier": "write",
+      "requiresApproval": true,
+      "capabilities": [
+        "image-generation",
+        "video-generation",
+        "video-analysis",
+        "creative-asset-history"
+      ]
+    }
+  ]
+}

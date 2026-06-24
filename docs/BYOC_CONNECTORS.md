@@ -73,6 +73,19 @@ Mark dangerous MCP tools in config:
 
 Those require `approvalToken` like `soar.run_playbook`.
 
+### Higgsfield creative MCP (OAuth + approval gate)
+
+Higgsfield is available as the verified `higgsfield` plugin in the Cursor Marketplace and exposes its remote MCP endpoint at `https://mcp.higgsfield.ai/mcp`. It authenticates with the operator's Higgsfield account; do **not** put a Higgsfield password, browser cookie, or access token in connector JSON.
+
+Use [examples/higgsfield-marketing-connectors.json](../examples/higgsfield-marketing-connectors.json) as the GRC_Claw registration:
+
+```bash
+export GRC_CLAW_CONNECTORS_CONFIG=examples/higgsfield-marketing-connectors.json
+npm run gateway
+```
+
+`requiresApproval: true` deliberately classifies all discovered Higgsfield tools as destructive in the gateway policy. A valid `approvalToken` is therefore required before a generation, analysis, or asset-history call can leave GRC_Claw. This protects creative-credit spend and creates a per-call policy audit trail. Complete the provider's normal account sign-in in your MCP client or a TLS-terminated OAuth-capable MCP proxy; GRC_Claw only stores the endpoint and redacted capability metadata.
+
 ## Gateway API
 
 | Method | Path | Description |

@@ -88,6 +88,32 @@ describe('BYOC connectors (@grc-claw/connectors)', () => {
     assert.equal(query?.tier, 'read');
   });
 
+  it('requires approval for every credit-consuming marketing MCP tool', () => {
+    const reg = new ConnectorRegistry();
+    reg.applyConfig(
+      {
+        version: 1,
+        mcp: [
+          {
+            id: 'higgsfield',
+            label: 'Higgsfield MCP',
+            transport: 'http',
+            url: 'https://mcp.higgsfield.ai/mcp',
+            authMode: 'oauth',
+            requiresApproval: true,
+          },
+        ],
+      },
+      'test'
+    );
+    const tools = buildConnectorToolDefinitions(reg, {
+      higgsfield: [{ name: 'generate_image', gatedName: mcpGatedToolName('higgsfield', 'generate_image') }],
+    });
+    assert.equal(tools[0]?.tier, 'destructive');
+    assert.equal(reg.toPublicSummary().mcp[0]?.authMode, 'oauth');
+    assert.equal(reg.toPublicSummary().mcp[0]?.requiresApproval, true);
+  });
+
   it('isConnectorTool detects BYOC prefixes', () => {
     assert.equal(isConnectorTool('mcp.soc.query'), true);
     assert.equal(isConnectorTool('llm.openai.complete'), true);
