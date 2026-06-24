@@ -340,6 +340,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'memory.verify_mitochondrial_state', tier: 'read' },
   { name: 'identity.initiate_wormhole_link', tier: 'write' },
   { name: 'identity.verify_wormhole_state', tier: 'read' },
+  // Phase 33 Strategic Cosmic Microwave Background Attestation & Dark Matter Enclaves
+  { name: 'consensus.measure_cmb_fluctuations', tier: 'write' },
+  { name: 'consensus.verify_cmb_coherence', tier: 'read' },
+  { name: 'security.initialize_dark_matter_enclave', tier: 'write' },
+  { name: 'security.query_dark_matter_coherence', tier: 'read' },
+  { name: 'memory.synthesize_mrna_policy', tier: 'write' },
+  { name: 'memory.verify_ribosome_translation', tier: 'read' },
+  { name: 'identity.initiate_quantum_gravity_channel', tier: 'write' },
+  { name: 'identity.verify_gravity_loop_state', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

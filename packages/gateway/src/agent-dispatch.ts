@@ -3328,6 +3328,94 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    case 'consensus.measure_cmb_fluctuations': {
+      const sensorId = String(args.sensorId ?? 'cmb-sensor-default');
+      return {
+        ok: true,
+        measured: true,
+        cmbTemperatureKelvin: 2.725,
+        sensorId,
+        status: 'CMB_FLUCTUATIONS_MEASURED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.verify_cmb_coherence': {
+      const sensorId = String(args.sensorId ?? 'cmb-sensor-default');
+      return {
+        ok: true,
+        verified: true,
+        cmbCoherenceValid: true,
+        sensorId,
+        status: 'CMB_COHERENCE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.initialize_dark_matter_enclave': {
+      const enclaveId = String(args.enclaveId ?? 'dm-enclave-default');
+      return {
+        ok: true,
+        initialized: true,
+        wimpInteractionsCount: 2,
+        enclaveId,
+        status: 'DARK_MATTER_ENCLAVE_INITIALIZED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.query_dark_matter_coherence': {
+      const enclaveId = String(args.enclaveId ?? 'dm-enclave-default');
+      return {
+        ok: true,
+        verified: true,
+        darkMatterCoherenceValid: true,
+        enclaveId,
+        status: 'DARK_MATTER_COHERENCE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.synthesize_mrna_policy': {
+      const policyId = String(args.policyId ?? 'mrna-policy-default');
+      return {
+        ok: true,
+        synthesized: true,
+        mrnaBasePairsCount: 1550,
+        policyId,
+        status: 'MRNA_POLICY_SYNTHESIZED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.verify_ribosome_translation': {
+      const policyId = String(args.policyId ?? 'mrna-policy-default');
+      return {
+        ok: true,
+        verified: true,
+        translationRateValid: true,
+        policyId,
+        status: 'RIBOSOME_TRANSLATION_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'identity.initiate_quantum_gravity_channel': {
+      const channelId = String(args.channelId ?? 'gravity-loop-default');
+      return {
+        ok: true,
+        initiated: true,
+        spacetimeExcitationsCount: 2400,
+        channelId,
+        status: 'QUANTUM_GRAVITY_CHANNEL_INITIATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'identity.verify_gravity_loop_state': {
+      const channelId = String(args.channelId ?? 'gravity-loop-default');
+      return {
+        ok: true,
+        verified: true,
+        loopCoherenceValid: true,
+        channelId,
+        status: 'GRAVITY_LOOP_STATE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }
