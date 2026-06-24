@@ -78,6 +78,8 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   // Persistent Memory and Skills Registry Tools
   { name: 'memory.query_vector_graph', tier: 'read' },
   { name: 'memory.persist_session_state', tier: 'write' },
+  { name: 'memory.integrate_vector_db', tier: 'write' },
+  { name: 'memory.audit_cloud_memory', tier: 'read' },
   { name: 'skills.query_repo', tier: 'read' },
   { name: 'skills.load_definition', tier: 'read' },
   // Actuator Simulation and Physical AGI Safety
@@ -456,11 +458,15 @@ export class VectorGraphMemory {
       { id: 'iso-20022-pain-001', label: 'ISO 20022 pain.001 Initiation Verification', type: 'control', properties: { description: 'Verify payment initiation messages against account constraints, authorization limits, and signature.' } },
       { id: 'hermes-execution', label: 'Hermes Local Task Execution', type: 'control', properties: { description: 'Audit local task runtimes, airgap configurations, and resource limits.' } },
       { id: 'wallet-gating', label: 'Multi-Ledger Wallet Gating', type: 'control', properties: { description: 'Enforce limits and screen beneficiaries on Solana, XRP, and Bitcoin transactions.' } },
+      { id: 'vector-db-rag', label: 'Pinecone-Like Localized Vector DB RAG', type: 'control', properties: { description: 'Localized vector database integration for secure Retrieval-Augmented Generation.' } },
+      { id: 'cloud-api-lockin', label: 'Cloud Memory Vendor Lock-in Audit', type: 'control', properties: { description: 'Audits OpenAI Dreaming V3 and other cloud APIs for lock-in risks and swarm scaling limits.' } },
       { id: 'skill-42001-audit', label: 'Dynamic ISO 42001 Audit Playbook', type: 'skill', properties: { description: 'Queries and validates AI models for compliance.' } },
       { id: 'skill-cmmc-verify', label: 'CMMC Boundary Verification', type: 'skill', properties: { description: 'Validates host firewall and network configuration against CMMC L2.' } },
       { id: 'skill-iso-20022-verify', label: 'ISO 20022 Payment Verification Playbook', type: 'skill', properties: { description: 'Validates SWIFT MX XML messages against standard schema bounds, transaction size thresholds, and sanctions registries.' } },
       { id: 'skill-hermes-run', label: 'Hermes Autonomous Task Playbook', type: 'skill', properties: { description: 'Executes agent tasks inside sandboxes with zero cloud API leakage.' } },
-      { id: 'skill-wallet-gate', label: 'Multi-Ledger Compliance Gate Playbook', type: 'skill', properties: { description: 'Validates and co-signs crypto payment payloads.' } }
+      { id: 'skill-wallet-gate', label: 'Multi-Ledger Compliance Gate Playbook', type: 'skill', properties: { description: 'Validates and co-signs crypto payment payloads.' } },
+      { id: 'skill-vector-db', label: 'Local Vector DB RAG Integration Playbook', type: 'skill', properties: { description: 'Integrates and validates localized RAG data pathways.' } },
+      { id: 'skill-cloud-audit', label: 'Cloud API Vendor Lock-in Evaluation Playbook', type: 'skill', properties: { description: 'Audits memory and cost constraints for cloud swarm integrations.' } }
     ];
 
     this.edges = [
@@ -472,11 +478,15 @@ export class VectorGraphMemory {
       { source: 'iso-20022-pain-001', target: 'iso-20022', relationship: 'part_of' },
       { source: 'hermes-execution', target: 'iso-42001', relationship: 'part_of' },
       { source: 'wallet-gating', target: 'iso-20022', relationship: 'part_of' },
+      { source: 'vector-db-rag', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'cloud-api-lockin', target: 'iso-42001', relationship: 'part_of' },
       { source: 'skill-42001-audit', target: 'iso-42001-a6', relationship: 'implements' },
       { source: 'skill-cmmc-verify', target: 'cmmc-ac-3.1.11', relationship: 'verifies' },
       { source: 'skill-iso-20022-verify', target: 'iso-20022-pacs-008', relationship: 'verifies' },
       { source: 'skill-hermes-run', target: 'hermes-execution', relationship: 'implements' },
-      { source: 'skill-wallet-gate', target: 'wallet-gating', relationship: 'verifies' }
+      { source: 'skill-wallet-gate', target: 'wallet-gating', relationship: 'verifies' },
+      { source: 'skill-vector-db', target: 'vector-db-rag', relationship: 'implements' },
+      { source: 'skill-cloud-audit', target: 'cloud-api-lockin', relationship: 'verifies' }
     ];
   }
 
@@ -644,6 +654,39 @@ export class SkillsRegistry {
           outputs: ['isValidLedger', 'isSanctionClear', 'limitStatus', 'coSignature']
         },
         source: 'skills.sh/fintech/wallet-gating'
+      },
+      {
+        id: 'vector-db-integration',
+        name: 'Local Vector Database Integration and RAG Validation',
+        category: 'AI Infrastructure',
+        description: 'Orchestrates and audits local Pinecone-style vector database instances inside secure boundaries for private RAG context injection.',
+        playbook: {
+          steps: [
+            'Validate that vector DB service is running on isolated local network',
+            'Verify index embedding model is certified local-only (e.g. BGE/Llama)',
+            'Audit similarity search queries for unauthorized data exposure'
+          ],
+          requiredInputs: ['vectorDbEndpoint', 'embeddingModelName'],
+          outputs: ['integrationStatus', 'ragSafetyClearance']
+        },
+        source: 'skills.sh/ai-infra/vector-db-rag'
+      },
+      {
+        id: 'cloud-memory-audit',
+        name: 'Cloud Memory Audit and Swarm Scaling Evaluation',
+        category: 'AI Governance',
+        description: 'Audits cloud memory architectures (like OpenAI Dreaming V3), warns on vendor lock-in, and evaluates large-scale swarms (300+ agents).',
+        playbook: {
+          steps: [
+            'Scan integration configurations for OpenAI Dreaming V3 memory endpoints',
+            'Assess vendor lock-in score and identify data portability risks',
+            'Audit agent swarm configuration size and verify token budget allocations',
+            'Evaluate token cost efficiency for large-scale multi-agent deployments'
+          ],
+          requiredInputs: ['cloudProviderName', 'agentCount', 'monthlyTokenBudget'],
+          outputs: ['lockInScore', 'portabilityPlan', 'swarmCostAudit', 'complianceStatus']
+        },
+        source: 'skills.sh/governance/cloud-memory-audit'
       }
     ];
   }
