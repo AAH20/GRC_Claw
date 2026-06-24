@@ -190,6 +190,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sovereign.inject_multimodel_steering_patch', tier: 'write' },
   { name: 'memory.verify_zk_rag_proof', tier: 'read' },
   { name: 'consensus.propagate_threat_rollup', tier: 'write' },
+  // Phase 15 Strategic Absolute Monopoly & Hardware-Locked Sovereign Trust
+  { name: 'sdk.compile_regulation_ast', tier: 'write' },
+  { name: 'security.detect_sidechannel_anomaly', tier: 'read' },
+  { name: 'audit.query_fhe_ledger', tier: 'read' },
+  { name: 'sovereign.steer_cognitive_drift_inline', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
