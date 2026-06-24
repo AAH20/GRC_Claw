@@ -1,6 +1,6 @@
 {
-  "calls": 10,
-  "toxicityScore": 45,
+  "calls": 12,
+  "toxicityScore": 60,
   "callHistory": [
     {
       "tool": "llm.mock.complete",
@@ -51,6 +51,16 @@
       "tool": "mcp.demo.delete",
       "argsString": "{}",
       "timestamp": 1782274049372
+    },
+    {
+      "tool": "llm.mock.complete",
+      "argsString": "{\"prompt\":\"hi\"}",
+      "timestamp": 1782274712762
+    },
+    {
+      "tool": "mcp.demo.delete",
+      "argsString": "{}",
+      "timestamp": 1782274712774
     }
   ],
   "audit": [
@@ -218,6 +228,41 @@
           "RAPID_DISCOVERY_ANOMALY"
         ],
         "toxicityScore": 45
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T04:18:32.762Z",
+      "sessionId": "byoc",
+      "tool": "llm.mock.complete",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 45
+      },
+      "argsRedacted": {
+        "keys": [
+          "prompt"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T04:18:32.774Z",
+      "sessionId": "byoc",
+      "tool": "mcp.demo.delete",
+      "decision": {
+        "allowed": false,
+        "reason": "tool_not_in_allowlist",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 60
       },
       "argsRedacted": {
         "keys": []

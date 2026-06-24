@@ -1,0 +1,6 @@
+apiVersion: v2
+name: grc-claw
+description: A Helm chart for deploying GRC_Claw (OpenClaw for GRC) Gateway and Operator Console
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
