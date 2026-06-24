@@ -268,6 +268,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sandbox.deploy_honey_graph', tier: 'write' },
   { name: 'identity.shard_sovereign_identity', tier: 'write' },
   { name: 'identity.verify_sharded_identity', tier: 'read' },
+  // Phase 25 Strategic Photonic ZK Attestation & DNA-Locked Wet-Storage Encryption
+  { name: 'security.deploy_photonic_gate', tier: 'write' },
+  { name: 'security.verify_photonic_proof', tier: 'read' },
+  { name: 'consensus.generate_dna_key_share', tier: 'write' },
+  { name: 'consensus.auth_dna_signature', tier: 'read' },
+  { name: 'soverign.propose_code_self_assembly', tier: 'write' },
+  { name: 'soverign.verify_self_assembled_logic', tier: 'read' },
+  { name: 'memory.crystallize_photonic_state', tier: 'write' },
+  { name: 'memory.read_photonic_state', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
