@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: aah20/grc-claw
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 18791
+  metricsPort: 9090
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: grc-claw.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+env:
+  A2Z_SOC_MODE: "demo"
+  A2Z_SOC_BASE_URL: "https://a2zsoc.com"
+  A2Z_SOC_TENANT_ID: "1"
+  GRC_CLAW_PORT: "18791"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80

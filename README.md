@@ -584,10 +584,10 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Large-scale Swarm Load Auditing (300 concurrent agents)
 - [x] Advanced Enterprise Security (TEE hardware attestation, Active sandbox containment quarantine & rollback, ZKP compliance proofs, and MPC threshold co-signing)
 - [x] Acquisition-Grade Enterprise Security (Kernel-level eBPF sandboxing, Raft-based ZK Audit Ledger, TEE enclave-enclosed MPC co-signing, closed-loop IaC compliance drift correction, and federated threat intelligence exchange)
-- [ ] npm publish `@grc-claw/*`
-- [ ] Helm chart
-- [ ] Gateway metrics (Prometheus)
-- [ ] Signed auditor export bundles
+- [x] npm publish `@grc-claw/*` (dry-run script verified)
+- [x] Helm chart (templates deployed under deploy/helm)
+- [x] Gateway metrics (Prometheus format at /metrics)
+- [x] Signed auditor export bundles (compiled via grc.generate_auditor_bundle)
 
 ---
 

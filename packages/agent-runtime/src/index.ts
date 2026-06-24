@@ -98,6 +98,7 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'mpc.sign_enclave_transaction', tier: 'write' },
   { name: 'grc.trigger_drift_correction', tier: 'write' },
   { name: 'intel.sync_federated_reports', tier: 'write' },
+  { name: 'grc.generate_auditor_bundle', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
@@ -496,7 +497,9 @@ export class VectorGraphMemory {
       { id: 'skill-zk-ledger', label: 'ZK Audit Ledger Playbook', type: 'skill', properties: { description: 'Coordinates Merkle auditing and ledger proofs.' } },
       { id: 'skill-enclave-mpc', label: 'TEE MPC Sign Playbook', type: 'skill', properties: { description: 'Invokes enclaved signature schemes.' } },
       { id: 'skill-drift-correction', label: 'IaC Drift Correction Playbook', type: 'skill', properties: { description: 'Applies Terraform fixes to close compliance loops.' } },
-      { id: 'skill-federated-intel', label: 'Federated Threat Exchange Playbook', type: 'skill', properties: { description: 'Exchanges anonymized threat signals.' } }
+      { id: 'skill-federated-intel', label: 'Federated Threat Exchange Playbook', type: 'skill', properties: { description: 'Exchanges anonymized threat signals.' } },
+      { id: 'auditor-bundle', label: 'Signed Auditor Export Bundle', type: 'control', properties: { description: 'Generates cryptographically signed compliance and session logs package.' } },
+      { id: 'skill-auditor-bundle', label: 'Auditor Export Playbook', type: 'skill', properties: { description: 'Compiles and signs a secure compliance zip/json package.' } }
     ];
 
     this.edges = [
@@ -535,7 +538,9 @@ export class VectorGraphMemory {
       { source: 'skill-zk-ledger', target: 'zk-ledger', relationship: 'implements' },
       { source: 'skill-enclave-mpc', target: 'enclave-mpc', relationship: 'implements' },
       { source: 'skill-drift-correction', target: 'drift-correction', relationship: 'implements' },
-      { source: 'skill-federated-intel', target: 'federated-intel', relationship: 'implements' }
+      { source: 'skill-federated-intel', target: 'federated-intel', relationship: 'implements' },
+      { source: 'auditor-bundle', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'skill-auditor-bundle', target: 'auditor-bundle', relationship: 'implements' }
     ];
   }
 
@@ -881,6 +886,22 @@ export class SkillsRegistry {
           outputs: ['sanitizedReportHash', 'peerIntelCount']
         },
         source: 'skills.sh/intel/federated-exchange'
+      },
+      {
+        id: 'auditor-export-bundle',
+        name: 'Signed Auditor Export Bundle Compilation',
+        category: 'AI Governance',
+        description: 'Compiles active GRC framework scores, violations, and session logs into a cryptographically signed package.',
+        playbook: {
+          steps: [
+            'Retrieve active GRC compliance frameworks and violation records',
+            'Compute unified Merkle root cryptographic hash over the logs',
+            'Apply GRC Claw auditor digital signature'
+          ],
+          requiredInputs: ['auditorKeyId', 'sessionLogs'],
+          outputs: ['auditorBundleJson', 'bundleDigitalSignature']
+        },
+        source: 'skills.sh/governance/auditor-bundle'
       }
     ];
   }

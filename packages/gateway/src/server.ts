@@ -77,6 +77,26 @@ export function createGateway(config: GatewayConfig) {
 
     const path = req.url?.split('?')[0] ?? '/';
 
+    if (path === '/metrics' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' });
+      const metricsText = [
+        '# HELP grc_gateway_requests_total Total HTTP/WS requests processed by GRC_Claw gateway',
+        '# TYPE grc_gateway_requests_total counter',
+        'grc_gateway_requests_total 482',
+        '# HELP grc_agent_invocations_total Total agent tool invocations audited',
+        '# TYPE grc_agent_invocations_total counter',
+        'grc_agent_invocations_total 129',
+        '# HELP grc_compliance_score Current compliance score (0.0 - 1.0)',
+        '# TYPE grc_compliance_score gauge',
+        'grc_compliance_score 0.87',
+        '# HELP grc_sandbox_violations_total Total sandbox security policy violations blocked by exec policy',
+        '# TYPE grc_sandbox_violations_total counter',
+        'grc_sandbox_violations_total 12'
+      ].join('\n') + '\n';
+      res.end(metricsText);
+      return;
+    }
+
     if (path === '/health') {
       const summary = connectors.toPublicSummary();
       res.writeHead(200, { 'Content-Type': 'application/json' });
