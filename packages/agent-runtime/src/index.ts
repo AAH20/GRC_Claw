@@ -82,6 +82,9 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'skills.load_definition', tier: 'read' },
   // Actuator Simulation and Physical AGI Safety
   { name: 'actuator.simulate_execution', tier: 'write' },
+  // Multi-Ledger Wallet and Local Hermes Task Execution
+  { name: 'wallet.sign_transaction', tier: 'write' },
+  { name: 'hermes.execute_autonomous_task', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
@@ -451,9 +454,13 @@ export class VectorGraphMemory {
       { id: 'cmmc-ia-3.5.1', label: 'IA.L1-3.5.1 MFA Enforce', type: 'control', properties: { description: 'Enforce multi-factor authentication for network and local access.' } },
       { id: 'iso-20022-pacs-008', label: 'ISO 20022 pacs.008 Payment Verification', type: 'control', properties: { description: 'Schema validation, cryptographic signature verification, and sanction check validation for credit transfers.' } },
       { id: 'iso-20022-pain-001', label: 'ISO 20022 pain.001 Initiation Verification', type: 'control', properties: { description: 'Verify payment initiation messages against account constraints, authorization limits, and signature.' } },
+      { id: 'hermes-execution', label: 'Hermes Local Task Execution', type: 'control', properties: { description: 'Audit local task runtimes, airgap configurations, and resource limits.' } },
+      { id: 'wallet-gating', label: 'Multi-Ledger Wallet Gating', type: 'control', properties: { description: 'Enforce limits and screen beneficiaries on Solana, XRP, and Bitcoin transactions.' } },
       { id: 'skill-42001-audit', label: 'Dynamic ISO 42001 Audit Playbook', type: 'skill', properties: { description: 'Queries and validates AI models for compliance.' } },
       { id: 'skill-cmmc-verify', label: 'CMMC Boundary Verification', type: 'skill', properties: { description: 'Validates host firewall and network configuration against CMMC L2.' } },
-      { id: 'skill-iso-20022-verify', label: 'ISO 20022 Payment Verification Playbook', type: 'skill', properties: { description: 'Validates SWIFT MX XML messages against standard schema bounds, transaction size thresholds, and sanctions registries.' } }
+      { id: 'skill-iso-20022-verify', label: 'ISO 20022 Payment Verification Playbook', type: 'skill', properties: { description: 'Validates SWIFT MX XML messages against standard schema bounds, transaction size thresholds, and sanctions registries.' } },
+      { id: 'skill-hermes-run', label: 'Hermes Autonomous Task Playbook', type: 'skill', properties: { description: 'Executes agent tasks inside sandboxes with zero cloud API leakage.' } },
+      { id: 'skill-wallet-gate', label: 'Multi-Ledger Compliance Gate Playbook', type: 'skill', properties: { description: 'Validates and co-signs crypto payment payloads.' } }
     ];
 
     this.edges = [
@@ -463,9 +470,13 @@ export class VectorGraphMemory {
       { source: 'cmmc-ia-3.5.1', target: 'cmmc-l1', relationship: 'part_of' },
       { source: 'iso-20022-pacs-008', target: 'iso-20022', relationship: 'part_of' },
       { source: 'iso-20022-pain-001', target: 'iso-20022', relationship: 'part_of' },
+      { source: 'hermes-execution', target: 'iso-42001', relationship: 'part_of' },
+      { source: 'wallet-gating', target: 'iso-20022', relationship: 'part_of' },
       { source: 'skill-42001-audit', target: 'iso-42001-a6', relationship: 'implements' },
       { source: 'skill-cmmc-verify', target: 'cmmc-ac-3.1.11', relationship: 'verifies' },
-      { source: 'skill-iso-20022-verify', target: 'iso-20022-pacs-008', relationship: 'verifies' }
+      { source: 'skill-iso-20022-verify', target: 'iso-20022-pacs-008', relationship: 'verifies' },
+      { source: 'skill-hermes-run', target: 'hermes-execution', relationship: 'implements' },
+      { source: 'skill-wallet-gate', target: 'wallet-gating', relationship: 'verifies' }
     ];
   }
 
@@ -599,6 +610,40 @@ export class SkillsRegistry {
           outputs: ['isValidSchema', 'isSignatureValid', 'limitStatus', 'sanctionsStatus', 'complianceStatus']
         },
         source: 'skills.sh/fintech/iso-20022-validation'
+      },
+      {
+        id: 'hermes-task-execution',
+        name: 'Hermes Local Task Execution',
+        category: 'Autonomous Execution',
+        description: 'Runs complex automated tasks locally using Llama-3/Mistral in sandboxed containers at zero cloud API cost.',
+        playbook: {
+          steps: [
+            'Verify compute boundaries are fully airgapped',
+            'Retrieve local task requirements and input files',
+            'Invoke local open-weight model inside Docker containment',
+            'Return task execution logs and verified output hash'
+          ],
+          requiredInputs: ['taskId', 'taskDescription'],
+          outputs: ['executionLogs', 'outputHash', 'apiCostEquivalent']
+        },
+        source: 'skills.sh/hermes/task-execution'
+      },
+      {
+        id: 'multi-ledger-wallet-gating',
+        name: 'Multi-Ledger Wallet Gating',
+        category: 'FinTech Compliance',
+        description: 'Validates Solana, XRP, and Bitcoin payment transactions against sanctions SDN registries and limit policies.',
+        playbook: {
+          steps: [
+            'Verify transaction ledger type (Solana, XRP, or Bitcoin only)',
+            'Validate transaction amount against ledger policy thresholds',
+            'Screen beneficiary credentials against active sanctions registry',
+            'Issue cryptographic compliance co-signature upon success'
+          ],
+          requiredInputs: ['ledgerType', 'payload', 'amount', 'beneficiaryName'],
+          outputs: ['isValidLedger', 'isSanctionClear', 'limitStatus', 'coSignature']
+        },
+        source: 'skills.sh/fintech/wallet-gating'
       }
     ];
   }

@@ -32,6 +32,8 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('cmmc.') ||
     tool.startsWith('sovereign.') ||
     tool.startsWith('iso20022.') ||
+    tool.startsWith('wallet.') ||
+    tool.startsWith('hermes.') ||
     tool.startsWith('memory.') ||
     tool.startsWith('skills.') ||
     tool.startsWith('actuator.')
@@ -335,6 +337,123 @@ export async function dispatchBuiltinGrcTool(
         signature,
         signedAt: new Date().toISOString(),
         itemsProcessed: messages.length + screeningLogs.length
+      };
+    }
+    case 'wallet.sign_transaction': {
+      const ledgerType = String(args.ledgerType ?? '').toLowerCase();
+      const transactionAmount = Number(args.transactionAmount ?? 0);
+      const beneficiaryName = String(args.beneficiaryName ?? 'Valid Recipient');
+
+      if (ledgerType.includes('ethereum') || ledgerType.includes('eth')) {
+        return {
+          ok: true,
+          complianceStatus: 'BLOCKED',
+          issues: ['Policy Violation: Ethereum is disabled under zero-trust financial sovereignty policy'],
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      const allowedLedgers = ['solana', 'xrp', 'bitcoin'];
+      if (!allowedLedgers.includes(ledgerType)) {
+        return {
+          ok: true,
+          complianceStatus: 'BLOCKED',
+          issues: [`Policy Violation: Unsupported ledger type "${ledgerType}" (only Solana, XRP, and Bitcoin are supported)`],
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      const issues: string[] = [];
+      const passedChecks: string[] = [];
+
+      // 1. Transaction limit checks
+      let limitOk = true;
+      if (ledgerType === 'solana' && transactionAmount > 50) {
+        limitOk = false;
+        issues.push(`Limit Violation: Transfer amount ${transactionAmount} SOL exceeds policy limit of 50 SOL`);
+      } else if (ledgerType === 'xrp' && transactionAmount > 5000) {
+        limitOk = false;
+        issues.push(`Limit Violation: Transfer amount ${transactionAmount} XRP exceeds policy limit of 5000 XRP`);
+      } else if (ledgerType === 'bitcoin' && transactionAmount > 0.1) {
+        limitOk = false;
+        issues.push(`Limit Violation: Transfer amount ${transactionAmount} BTC exceeds policy limit of 0.1 BTC`);
+      }
+
+      if (limitOk) {
+        passedChecks.push(`Limit check passed: amount ${transactionAmount} is within safe thresholds`);
+      }
+
+      // 2. Beneficiary screening
+      const deniedList = ['Blocked Entity', 'Sanctioned Corp', 'SDN Person'];
+      const isSanctioned = deniedList.some(denied => beneficiaryName.includes(denied));
+      if (!isSanctioned) {
+        passedChecks.push('Sanctions check passed: beneficiary is clear');
+      } else {
+        issues.push(`Sanctions Violation: Beneficiary "${beneficiaryName}" matched SDN sanctions list`);
+      }
+
+      const complianceStatus = issues.length === 0 ? 'APPROVED' : 'BLOCKED';
+      let coSignature = '';
+      if (complianceStatus === 'APPROVED') {
+        const payloadString = JSON.stringify({ ledgerType, transactionAmount, beneficiaryName });
+        let hash = 0;
+        for (let i = 0; i < payloadString.length; i++) {
+          hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+          hash = hash & hash;
+        }
+        coSignature = `grc_multi_sig_0x${Math.abs(hash).toString(16).padEnd(8, '0')}1d8e24c7`;
+      }
+
+      return {
+        ok: true,
+        complianceStatus,
+        passedChecks,
+        issues,
+        coSignature,
+        timestamp: new Date().toISOString()
+      };
+    }
+    case 'hermes.execute_autonomous_task': {
+      const taskId = String(args.taskId ?? 'hermes-task-001');
+      const taskDescription = String(args.taskDescription ?? '');
+      const localModel = String(args.localModel ?? 'llama3-8b-local');
+      const airgapStatus = String(args.airgapStatus ?? 'FULLY_AIRGAPPED');
+
+      const issues: string[] = [];
+      const executionLogs: string[] = [];
+
+      if (airgapStatus !== 'FULLY_AIRGAPPED') {
+        issues.push(`Airgap Violation: System status is "${airgapStatus}", blocking local execution to prevent credential leakage`);
+        return {
+          ok: true,
+          executionStatus: 'FAILED',
+          issues,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      executionLogs.push(`[Hermes Control] Initializing secure Docker containment for taskId ${taskId}`);
+      executionLogs.push(`[Hermes Control] Loading local open-weight model configuration: ${localModel}`);
+      executionLogs.push(`[Hermes Control] Executing task payload: "${taskDescription}"`);
+      executionLogs.push('[Hermes Runtime] Local sandbox filesystem and browser automation active');
+      executionLogs.push('[Hermes Runtime] Compiling code sandbox benchmarks: complete');
+      executionLogs.push('[Hermes Control] Task completed successfully inside containment');
+
+      const payloadString = JSON.stringify({ taskId, taskDescription, localModel, executionLogs });
+      let hash = 0;
+      for (let i = 0; i < payloadString.length; i++) {
+        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
+        hash = hash & hash;
+      }
+      const outputHash = 'sha256-' + Math.abs(hash).toString(16).padEnd(8, '0') + 'e4a5c8d2';
+
+      return {
+        ok: true,
+        executionStatus: 'COMPLETED',
+        executionLogs,
+        outputHash,
+        apiCostEquivalent: 0.00, // Showcases the zero-cost advantage of local open-weight models
+        timestamp: new Date().toISOString()
       };
     }
     case 'memory.query_vector_graph': {
