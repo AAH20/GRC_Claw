@@ -313,6 +313,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.sequence_dna_origami_signature', tier: 'read' },
   { name: 'memory.project_hyperdimensional_photonic_state', tier: 'write' },
   { name: 'memory.verify_photonic_spatial_coherence', tier: 'read' },
+  // Phase 30 Strategic Cosmic Ray Attestation & Solar-Wind Entropy Pools
+  { name: 'consensus.sample_cosmic_entropy', tier: 'write' },
+  { name: 'consensus.verify_cosmic_attestation', tier: 'read' },
+  { name: 'security.initialize_bosonic_enclave', tier: 'write' },
+  { name: 'security.query_bosonic_coherence', tier: 'read' },
+  { name: 'memory.grow_neural_synapse', tier: 'write' },
+  { name: 'memory.read_synaptic_connectivity', tier: 'read' },
+  { name: 'identity.braid_topological_qubits', tier: 'write' },
+  { name: 'identity.verify_topological_braid', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
