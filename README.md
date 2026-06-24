@@ -210,6 +210,7 @@ npm install && npm run build
 | Gravitational & Spin-Lock Test | `npx tsx scripts/test-phase28-orchestration.ts` (under packages/agent-runtime) |
 | Entanglement & Pyrotechnics Test | `npx tsx scripts/test-phase29-orchestration.ts` (under packages/agent-runtime) |
 | Cosmic & Topological Test | `npx tsx scripts/test-phase30-orchestration.ts` (under packages/agent-runtime) |
+| Planck & Gravitational Lensing Test | `npx tsx scripts/test-phase31-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 

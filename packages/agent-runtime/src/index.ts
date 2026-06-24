@@ -322,6 +322,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'memory.read_synaptic_connectivity', tier: 'read' },
   { name: 'identity.braid_topological_qubits', tier: 'write' },
   { name: 'identity.verify_topological_braid', tier: 'read' },
+  // Phase 31 Strategic Planck-Scale Fluctuation Keys & Quark-Gluon Enclaves
+  { name: 'consensus.measure_planck_fluctuations', tier: 'write' },
+  { name: 'consensus.verify_planck_coherence', tier: 'read' },
+  { name: 'security.ignite_plasma_enclave', tier: 'write' },
+  { name: 'security.query_plasma_coherence', tier: 'read' },
+  { name: 'memory.transcribe_rna_policy', tier: 'write' },
+  { name: 'memory.verify_rna_transcription', tier: 'read' },
+  { name: 'identity.assert_lensing_boundary', tier: 'write' },
+  { name: 'identity.verify_lensing_attestation', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
