@@ -523,6 +523,40 @@
           "id"
         ]
       }
+    },
+    {
+      "at": "2026-06-24T09:18:32.163Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:18:32.189Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
     }
   ],
   "thoughtsHistory": []
