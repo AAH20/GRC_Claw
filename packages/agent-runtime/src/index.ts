@@ -159,6 +159,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sovereign.release_semantic_lock', tier: 'write' },
   { name: 'security.rollback_poison_cascade', tier: 'destructive' },
   { name: 'memory.compress_context_diff', tier: 'read' },
+  // Phase 9 Strategic Sovereign Swarm Autonomy & Quantum Trust
+  { name: 'sdk.remediate_compliance_drift', tier: 'write' },
+  { name: 'consensus.propagate_threat_signature', tier: 'write' },
+  { name: 'security.verify_policy_envelope', tier: 'read' },
+  { name: 'evidence.sign_quantum_credential', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
