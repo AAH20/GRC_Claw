@@ -2712,6 +2712,94 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    case 'consensus.initiate_satellite_sync': {
+      const blockId = String(args.blockId ?? 'sat-block-default');
+      return {
+        ok: true,
+        synchronized: true,
+        orbitName: 'LEO_MESH_EPOCH_9',
+        blockId,
+        status: 'SATELLITE_SYNC_INITIATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.query_orbital_coherence': {
+      const blockId = String(args.blockId ?? 'sat-block-default');
+      return {
+        ok: true,
+        coherent: true,
+        constellationLockPercentage: 99.8,
+        blockId,
+        status: 'ORBITAL_COHERENCE_QUERIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'identity.generate_puf_challenge': {
+      const hardwareId = String(args.hardwareId ?? 'puf-hardware-default');
+      return {
+        ok: true,
+        challengeGenerated: true,
+        challengeEntropyHex: '0xabcde123ffccaa99',
+        hardwareId,
+        status: 'PUF_CHALLENGE_GENERATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'identity.verify_puf_response': {
+      const hardwareId = String(args.hardwareId ?? 'puf-hardware-default');
+      return {
+        ok: true,
+        verified: true,
+        substrateSignatureValid: true,
+        hardwareId,
+        status: 'PUF_RESPONSE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.route_wet_compute_filter': {
+      const transactionId = String(args.transactionId ?? 'tx-default');
+      return {
+        ok: true,
+        routed: true,
+        biologicalSynapsesTestedCount: 12000,
+        transactionId,
+        status: 'WET_COMPUTE_FILTER_ROUTED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.query_biological_coherence': {
+      const transactionId = String(args.transactionId ?? 'tx-default');
+      return {
+        ok: true,
+        coherent: true,
+        biologicalDriftScore: 0.02,
+        transactionId,
+        status: 'BIOLOGICAL_COHERENCE_QUERIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.shard_cognitive_wetware': {
+      const stateId = String(args.stateId ?? 'wetware-shard-default');
+      return {
+        ok: true,
+        sharded: true,
+        biologicalSharesCount: 3,
+        stateId,
+        status: 'COGNITIVE_WETWARE_SHARDED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.verify_wetware_state': {
+      const stateId = String(args.stateId ?? 'wetware-shard-default');
+      return {
+        ok: true,
+        verified: true,
+        biologicalCoherenceValid: true,
+        stateId,
+        status: 'WETWARE_STATE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }

@@ -277,6 +277,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'soverign.verify_self_assembled_logic', tier: 'read' },
   { name: 'memory.crystallize_photonic_state', tier: 'write' },
   { name: 'memory.read_photonic_state', tier: 'read' },
+  // Phase 26 Strategic Astro-Sovereign Satellite Attestation & Silicon PUF Identity
+  { name: 'consensus.initiate_satellite_sync', tier: 'write' },
+  { name: 'consensus.query_orbital_coherence', tier: 'read' },
+  { name: 'identity.generate_puf_challenge', tier: 'write' },
+  { name: 'identity.verify_puf_response', tier: 'read' },
+  { name: 'security.route_wet_compute_filter', tier: 'write' },
+  { name: 'security.query_biological_coherence', tier: 'read' },
+  { name: 'memory.shard_cognitive_wetware', tier: 'write' },
+  { name: 'memory.verify_wetware_state', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
