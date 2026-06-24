@@ -1041,6 +1041,36 @@
       "argsRedacted": {
         "keys": []
       }
+    },
+    {
+      "at": "2026-06-24T19:19:44.996Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:19:45.048Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
     }
   ],
   "thoughtsHistory": []
