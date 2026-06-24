@@ -15,6 +15,32 @@ import * as path from 'path';
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
 
+export type ExecutionState =
+  | 'simulated'
+  | 'recorded'
+  | 'executed'
+  | 'verified'
+  | 'not_configured'
+  | 'failed';
+
+/** Treat a connector acknowledgement as executed, never as independently verified. */
+export function executionStateFromOutput(output: Record<string, unknown>): ExecutionState {
+  const explicit = output.executionState;
+  if (
+    explicit === 'simulated' ||
+    explicit === 'recorded' ||
+    explicit === 'executed' ||
+    explicit === 'verified' ||
+    explicit === 'not_configured' ||
+    explicit === 'failed'
+  ) {
+    return explicit;
+  }
+  if (output.ok === false) return 'failed';
+  if (output.targetReceipt || output.verified === true) return 'verified';
+  return 'executed';
+}
+
 
 export function isBuiltinGrcTool(tool: string): boolean {
   return (
@@ -72,10 +98,9 @@ export async function dispatchBuiltinGrcTool(
     case 'grc.get_compliance_score':
       return {
         tenantId,
-        score: 0.86,
-        trend: 'stable',
-        evaluatedAt: new Date().toISOString(),
-        mode: 'demo',
+        score: null,
+        executionState: 'not_configured',
+        message: 'No live compliance-score evaluator is configured for this gateway cell.',
       };
     case 'evidence.read': {
       const evidenceId = String(args.evidenceId ?? '');
@@ -86,24 +111,47 @@ export async function dispatchBuiltinGrcTool(
       return {
         tenantId,
         events: [],
-        note: 'Use POST /api/ingest/normalize or A2Z sync for live events; demo query stub.',
+        executionState: 'not_configured',
+        note: 'Use POST /api/ingest/normalize or A2Z sync for live events.',
         limit: Number(args.limit ?? 10),
       };
     case 'control.update_status':
       return {
-        ok: true,
+        ok: false,
         controlId: args.controlId,
         status: args.status,
         tenantId,
-        mode: 'demo',
+        executionState: 'not_configured',
+        message: 'No live control-status executor is configured for this gateway cell.',
       };
-    case 'evidence.attach':
-      return { ok: true, attached: true, tenantId, mode: 'demo' };
+    case 'evidence.attach': {
+      const controlId = String(args.controlId ?? '');
+      const uri = String(args.uri ?? 'grc-claw://local-evidence');
+      if (!controlId) {
+        return { ok: false, executionState: 'failed', error: 'controlId_required' };
+      }
+      const content = typeof args.content === 'string' ? args.content : undefined;
+      const evidence = deps.evidence.attach({
+        controlId,
+        tenantId,
+        uri,
+        collectedAt: String(args.collectedAt ?? new Date().toISOString()),
+        lineage: { source: String(args.source ?? 'gateway') },
+        content,
+      });
+      return { ok: true, executionState: 'recorded', evidence };
+    }
     case 'soar.run_playbook':
     case 'firewall.apply_rule':
     case 'sentinel.run_playbook':
     case 'chronicle.soar.run_playbook':
-      return { ok: true, executed: true, tool, mode: 'demo', argsKeys: Object.keys(args) };
+      return {
+        ok: false,
+        tool,
+        executionState: 'not_configured',
+        message: 'No live SOAR or firewall executor is configured for this gateway cell.',
+        argsKeys: Object.keys(args),
+      };
     case 'sentinel.get_incident':
       return { incidentId: args.incidentId ?? 'demo', status: 'New', severity: 'High' };
     case 'aws.guardduty.list_findings':

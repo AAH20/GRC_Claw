@@ -431,6 +431,8 @@ Full reference: [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
 | `A2Z_SOC_TENANT_ID` | Tenant scope |
 | `GRC_CLAW_CONNECTORS_JSON` | Inline BYOC registry JSON |
 | `GRC_CLAW_CONNECTORS_CONFIG` | Path to BYOC JSON file (e.g. `examples/gemini-connectors.json`) |
+| `GRC_CLAW_ACTION_LEDGER_PATH` | Append-only action ledger path (default `.grc_memory/action-ledger.ndjson`) |
+| `GRC_CLAW_MEMORY_DIR` | Session-memory directory (default `.grc_memory`) |
 | `GEMINI_API_KEY` | Google Gemini API key (when using `gemini_generate` provider) |
 
 Run `npm run doctor` before production. Never commit `.env` — use `examples/*.env.example` as templates.
@@ -453,6 +455,7 @@ Run `npm run doctor` before production. Never commit `.env` — use `examples/*.
 | `POST` | `/api/skills/run` | Run skill executor loop (BYOC LLM + gated tools) |
 | `GET` | `/api/cursor-skills` | Alias of skill catalog |
 | `GET` | `/api/connectors` | BYOC LLM + MCP registry (redacted) |
+| `GET` | `/api/action-ledger` | Authenticated action events plus hash-chain integrity check |
 | `POST` | `/api/connectors/llm/:id/chat` | LLM chat proxy |
 | `GET` | `/api/connectors/mcp/:id/tools` | Discover MCP tools |
 | `WS` | `/` | `connect` → `hello-ok` |

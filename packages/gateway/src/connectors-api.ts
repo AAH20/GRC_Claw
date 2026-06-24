@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { BUILTIN_AGENT_TOOLS, AgentSession, ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
+import type { ActionLedger } from '@grc-claw/evidence';
 
 const store = new PersistentMemoryStore();
 import { CLAW_SKILL_TOOLS } from '@grc-claw/skill-executor';
@@ -12,6 +13,7 @@ import {
   listMcpTools,
   type ConnectorRegistry,
 } from '@grc-claw/connectors';
+import { executionStateFromOutput } from './agent-dispatch.js';
 
 export type ReadJson = (req: IncomingMessage) => Promise<Record<string, unknown>>;
 
@@ -53,7 +55,8 @@ export async function handleConnectorsRoute(
   authOk: (req: IncomingMessage) => boolean,
   readJson: ReadJson,
   getExecPolicy: () => Promise<ExecPolicy>,
-  reloadPolicy: () => Promise<void>
+  reloadPolicy: () => Promise<void>,
+  ledger?: ActionLedger
 ): Promise<boolean> {
   const route = matchConnectorPath(path);
   if (!route.kind) return false;
@@ -159,13 +162,23 @@ export async function handleConnectorsRoute(
     const args = (body.arguments as Record<string, unknown>) ?? {};
     const gatedTool = toolName.includes('.') ? toolName : `mcp.${route.mcpId}.${toolName}`;
     const execPolicy = await getExecPolicy();
-    const session = new AgentSession(String(body.sessionId ?? 'mcp-call'), execPolicy, store);
+    const sessionId = String(body.sessionId ?? 'mcp-call');
+    const idempotencyKey = body.idempotencyKey as string | undefined;
+    const session = new AgentSession(sessionId, execPolicy, store);
+    const intent = ledger?.recordIntent({
+      tenantId: Number(body.tenantId ?? 1),
+      sessionId,
+      tool: gatedTool,
+      args,
+      idempotencyKey,
+    });
     const decision = await session.invoke({
       tool: gatedTool,
       args,
       approvalToken: body.approvalToken as string | undefined,
-      idempotencyKey: body.idempotencyKey as string | undefined,
+      idempotencyKey,
     });
+    if (intent) ledger?.recordDecision(intent, decision);
     if (!decision.allowed) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: false, decision, audit: session.getAuditLog() }));
@@ -173,16 +186,27 @@ export async function handleConnectorsRoute(
     }
     try {
       const output = await dispatchConnectorTool(registry, gatedTool, args);
+      const connectorOutput = output.output ?? {};
+      const executionState = executionStateFromOutput(connectorOutput);
+      const result = intent
+        ? ledger?.recordResult(intent, {
+            executionState,
+            output: connectorOutput,
+            targetReceipt: typeof connectorOutput.targetReceipt === 'string' ? connectorOutput.targetReceipt : undefined,
+          })
+        : undefined;
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
           ok: true,
           decision,
-          output: output.output,
+          output: connectorOutput,
+          action: result ? { id: result.actionId, executionState } : undefined,
           audit: session.getAuditLog(),
         })
       );
     } catch (e) {
+      if (intent) ledger?.recordResult(intent, { executionState: 'failed' });
       res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
