@@ -286,6 +286,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'security.query_biological_coherence', tier: 'read' },
   { name: 'memory.shard_cognitive_wetware', tier: 'write' },
   { name: 'memory.verify_wetware_state', tier: 'read' },
+  // Phase 27 Strategic Relativistic Space-Time Cryptography & Silicon Substrate Self-Destruct
+  { name: 'consensus.assert_spacetime_boundary', tier: 'write' },
+  { name: 'consensus.verify_relativistic_proof', tier: 'read' },
+  { name: 'security.arm_substrate_triggers', tier: 'write' },
+  { name: 'security.query_trigger_integrity', tier: 'read' },
+  { name: 'consensus.stimulate_epigenetic_state', tier: 'write' },
+  { name: 'consensus.sequence_epigenetic_signature', tier: 'read' },
+  { name: 'memory.crystallize_epigenetic_code', tier: 'write' },
+  { name: 'memory.read_epigenetic_code', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
