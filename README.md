@@ -212,6 +212,7 @@ npm install && npm run build
 | Cosmic & Topological Test | `npx tsx scripts/test-phase30-orchestration.ts` (under packages/agent-runtime) |
 | Planck & Gravitational Lensing Test | `npx tsx scripts/test-phase31-orchestration.ts` (under packages/agent-runtime) |
 | Redshift & Metabolic Test | `npx tsx scripts/test-phase32-orchestration.ts` (under packages/agent-runtime) |
+| CMB & Dark Matter Test | `npx tsx scripts/test-phase33-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
