@@ -75,7 +75,7 @@ Pair the OSS gateway with **[a2z-soc.com](https://a2z-soc.com)** for enterprise 
 | **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
 | **ISO/IEC 42001 AIMS** | Vendor gap matrix (Anthropic, OpenAI, Cursor, OpenClaw), technical controls API |
 | **BYOC connectors** | Bring your own **LLM** (OpenAI, Anthropic, **Google Gemini**, Ollama, **OpenRouter**) and **MCP** servers — gated by exec policy |
-| **[a2z-soc.com](https://a2z-soc.com)** | Optional connector for live SOC + GRC sync |
+| **[a2z-soc.com](https://a2zsoc.com)** | Optional connector for live SOC + GRC sync |
 | **Ship-ready OSS** | Docker Compose, systemd, comprehensive tests |
 | **Operator console** | React UI — dashboard agent chat (Gemini + Cursor Auto), A2Z SOC trust badge, all gateway APIs |
 
