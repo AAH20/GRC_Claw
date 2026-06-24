@@ -164,6 +164,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.propagate_threat_signature', tier: 'write' },
   { name: 'security.verify_policy_envelope', tier: 'read' },
   { name: 'evidence.sign_quantum_credential', tier: 'write' },
+  // Phase 10 Strategic Sovereign Swarm Choreography & Quantum Sovereignty
+  { name: 'sovereign.spawn_ephemeral_enclave', tier: 'write' },
+  { name: 'consensus.exchange_quantum_keys', tier: 'write' },
+  { name: 'security.inject_honey_tokens', tier: 'write' },
+  { name: 'security.evaluate_homomorphic_policy', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
