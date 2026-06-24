@@ -174,6 +174,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.verify_zk_rollup', tier: 'read' },
   { name: 'security.validate_escrow_signature', tier: 'write' },
   { name: 'security.filter_cognitive_intent', tier: 'read' },
+  // Phase 12 Strategic Sovereign Swarm Validation & Quantum-Safe Multi-Party Computation
+  { name: 'consensus.verify_decentralized_oracle', tier: 'read' },
+  { name: 'sovereign.sign_lattice_mpc', tier: 'write' },
+  { name: 'security.verify_symbolic_graph_flow', tier: 'read' },
+  { name: 'security.rlhf_tune_cognitive_intent', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
