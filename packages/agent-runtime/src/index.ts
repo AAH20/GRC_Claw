@@ -295,6 +295,24 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.sequence_epigenetic_signature', tier: 'read' },
   { name: 'memory.crystallize_epigenetic_code', tier: 'write' },
   { name: 'memory.read_epigenetic_code', tier: 'read' },
+  // Phase 28 Strategic Gravitational Wave Attestation & Spin-Locked Key Generation
+  { name: 'consensus.measure_gravitational_wave', tier: 'write' },
+  { name: 'consensus.verify_gravitational_coherence', tier: 'read' },
+  { name: 'identity.initiate_spin_alignment', tier: 'write' },
+  { name: 'identity.verify_spin_coherence', tier: 'read' },
+  { name: 'soverign.trigger_synaptic_sprouting', tier: 'write' },
+  { name: 'soverign.verify_sprouted_code', tier: 'read' },
+  { name: 'memory.shard_subatomic_state', tier: 'write' },
+  { name: 'memory.verify_subatomic_coherence', tier: 'read' },
+  // Phase 29 Strategic Astro-Sovereign Space-Time Entanglement Gates & TPM Pyrotechnics
+  { name: 'consensus.initiate_entangled_space_gate', tier: 'write' },
+  { name: 'consensus.verify_entangled_space_gate', tier: 'read' },
+  { name: 'security.arm_pyrotechnic_fuses', tier: 'write' },
+  { name: 'security.query_fuse_integrity', tier: 'read' },
+  { name: 'consensus.synthesize_dna_origami_state', tier: 'write' },
+  { name: 'consensus.sequence_dna_origami_signature', tier: 'read' },
+  { name: 'memory.project_hyperdimensional_photonic_state', tier: 'write' },
+  { name: 'memory.verify_photonic_spatial_coherence', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
