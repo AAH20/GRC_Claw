@@ -205,6 +205,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'sovereign.sanitize_enclave_weights', tier: 'write' },
   { name: 'security.evaluate_joint_fhe_threat', tier: 'read' },
   { name: 'sovereign.steer_cognitive_attention_feedback', tier: 'write' },
+  // Phase 18 Strategic Structural Monopoly Architecture
+  { name: 'sandbox.spawn_wasm_policy_instance', tier: 'write' },
+  { name: 'sandbox.validate_wasm_boundary', tier: 'read' },
+  { name: 'evidence.notarize_merkle_dag', tier: 'write' },
+  { name: 'evidence.verify_dag_integrity', tier: 'read' },
+  { name: 'security.score_behavioral_graph_embedding', tier: 'read' },
+  { name: 'security.retrain_behavioral_baseline', tier: 'write' },
+  { name: 'attestation.issue_compliance_credential', tier: 'write' },
+  { name: 'attestation.verify_vendor_credential', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

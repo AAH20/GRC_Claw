@@ -557,6 +557,278 @@
           "id"
         ]
       }
+    },
+    {
+      "at": "2026-06-24T09:21:11.038Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:21:11.058Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:22:15.987Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:22:16.014Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:25:25.338Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:25:25.397Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:30:17.768Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T09:30:17.789Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:09:55.991Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:09:56.221Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:13:14.938Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:13:14.986Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:16:24.649Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:16:24.673Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:25:34.445Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T10:25:34.462Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
     }
   ],
   "thoughtsHistory": []
