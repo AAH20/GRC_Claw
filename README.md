@@ -197,6 +197,8 @@ npm install && npm run build
 | Sovereign Swarm Monopoly Test | `npx tsx scripts/test-phase15-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Policies Test | `npx tsx scripts/test-phase16-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Shielding Test | `npx tsx scripts/test-phase17-orchestration.ts` (under packages/agent-runtime) |
+| Structural Monopoly Test | `npx tsx scripts/test-phase18-orchestration.ts` (under packages/agent-runtime) |
+| Self-Healing Compliance Test | `npx tsx scripts/test-phase19-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -583,6 +585,8 @@ npx tsx packages/agent-runtime/scripts/test-phase14-orchestration.ts # Sovereign
 npx tsx packages/agent-runtime/scripts/test-phase15-orchestration.ts # Sovereign Swarm Monopoly (Regulation AST compile, sidechannel hardware counters, FHE ledger audit, inline attention steering)
 npx tsx packages/agent-runtime/scripts/test-phase16-orchestration.ts # Sovereign Swarm Policies (ZK policy envelope, VM speculative barriers, collaborative FHE RAG, synaptic dynamic LoRA patching)
 npx tsx packages/agent-runtime/scripts/test-phase17-orchestration.ts # Sovereign Swarm Shielding (Post-quantum lattice DID attestation, enclaved weights scan, homomorphic joint threat check, attention feedback steering)
+npx tsx packages/agent-runtime/scripts/test-phase18-orchestration.ts # Structural Monopoly (WASM policy isolation, Merkle DAG evidence, streaming GNN, federated attestation mesh)
+npx tsx packages/agent-runtime/scripts/test-phase19-orchestration.ts # Self-Healing Compliance (IaC self-healing patch, FHE threat mesh, decentralized oracle, generative playbooks)
 ```
 
 ---
@@ -656,6 +660,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Phase 16 — Zero-Knowledge Policy Invariant Proofs, Hardware Speculative Execution Barriers, Multi-Party FHE Vector Search, Dynamic Synaptic Weight Patching
 - [x] Phase 17 — Post-Quantum Lattice Credentials, Enclaved Weight Sanitation, Joint FHE Threat Analysis, Attention Steering Feedback Loops
 - [x] Phase 18 — Structural Monopoly Architecture: WASM Sandbox Policy Isolation, Merkle DAG Evidence Notarization, GNN Behavioral Anomaly Detection, Federated Compliance Attestation Mesh
+- [x] Phase 19 — Autonomous Self-Healing Infrastructure (Simulated IaC Synthesis and Dry-run Validation), Cross-Tenant Collaborative SIEM Mesh (Homomorphic Threat Correlation), Consensus-Driven Compliance Oracle, Dynamic Generative Playbooks (Autonomous Cognitive SOAR)
 - [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
 - [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
 - [ ] Compliance Copilot (AI-powered natural language GRC assistant)

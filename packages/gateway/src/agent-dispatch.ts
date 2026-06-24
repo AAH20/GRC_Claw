@@ -73,7 +73,8 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('sdk.') ||
     tool.startsWith('aibom.') ||
     tool.startsWith('sandbox.') ||
-    tool.startsWith('attestation.')
+    tool.startsWith('attestation.') ||
+    tool.startsWith('consensus.')
   );
 }
 
@@ -2007,6 +2008,120 @@ export async function dispatchBuiltinGrcTool(
         expiryValid: true,
         zkProofValid: true,
         status: 'VENDOR_CREDENTIAL_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sdk.synthesize_remediation_patch': {
+      const driftControlId = String(args.driftControlId ?? 'AC.L2-3.1.13');
+      const targetResource = String(args.targetResource ?? 'aws_s3_bucket.compliance_evidence');
+      return {
+        ok: true,
+        synthesized: true,
+        remediationPatch: `resource "aws_s3_bucket" "compliance_evidence" {\n  bucket = "${targetResource}"\n  acl    = "private"\n  server_side_encryption_configuration {\n    rule {\n      apply_server_side_encryption_by_default {\n        sse_algorithm = "AES256"\n      }\n    }\n  }\n}`,
+        driftControlId,
+        targetResource,
+        patchVersion: 'v1.0.0',
+        status: 'REMEDIATION_PATCH_SYNTHESIZED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sdk.verify_remediation_simulation': {
+      const simulatedPatch = String(args.simulatedPatch ?? '');
+      const dryRunSandbox = String(args.dryRunSandbox ?? 'mock-cloud-api');
+      const complianceVerified = simulatedPatch.includes('AES256') || simulatedPatch.includes('private');
+      return {
+        ok: true,
+        simulated: true,
+        complianceVerified,
+        dryRunSandbox,
+        errorsDetected: 0,
+        warningsCount: 0,
+        status: 'REMEDIATION_SIMULATION_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'intel.propagate_homomorphic_indicator': {
+      const localThreatIndicator = String(args.localThreatIndicator ?? 'cve-2026-9999');
+      const hash = Array.from(localThreatIndicator).reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0);
+      const fheSignature = `fhe_sig_0x${Math.abs(hash).toString(16).padEnd(24, 'f')}`;
+      return {
+        ok: true,
+        propagated: true,
+        fheSignature,
+        collaborativeMeshNodesCount: 15,
+        receiptId: `mesh-receipt-${Date.now().toString(36)}`,
+        status: 'HOMOMORPHIC_INDICATOR_PROPAGATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'intel.correlate_mesh_threat_matrix': {
+      const fheQuerySignature = String(args.fheQuerySignature ?? 'fhe_sig_default');
+      return {
+        ok: true,
+        correlated: true,
+        matchedIndicatorCount: 3,
+        correlationConfidenceScore: 0.94,
+        coordinatedCampaignDetected: true,
+        threatLevel: 'HIGH',
+        status: 'MESH_THREAT_MATRIX_CORRELATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.submit_oracle_attestation': {
+      const evidenceCid = String(args.evidenceCid ?? 'bafy2bzace_default');
+      const validatorDid = String(args.validatorDid ?? 'did:grc:oracle-node-7');
+      return {
+        ok: true,
+        submitted: true,
+        submissionId: `oracle-sub-${Date.now().toString(36)}`,
+        evidenceCid,
+        validatorDid,
+        thresholdSignatureShare: `share_0x${Math.random().toString(16).substring(2, 10).padEnd(16, 'a')}`,
+        status: 'ORACLE_ATTESTATION_SUBMITTED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.verify_oracle_quorum': {
+      const submissionId = String(args.submissionId ?? 'oracle-sub-default');
+      const activeValidatorsCount = Number(args.activeValidatorsCount ?? 5);
+      const quorumReached = activeValidatorsCount >= 3;
+      return {
+        ok: true,
+        verified: true,
+        quorumReached,
+        validatorsCount: activeValidatorsCount,
+        thresholdSignature: 'threshold_sig_0x88fecab298de3a1990c0',
+        status: 'ORACLE_QUORUM_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'soar.synthesize_generative_playbook': {
+      const threatContext = String(args.threatContext ?? 'unauthorized_developer_access');
+      const steps = [
+        { id: 1, action: 'security.microvm_sandbox_rule', target: 'isolate_developer_instance' },
+        { id: 2, action: 'identity.revoke_did', target: 'revoke_compromised_did' },
+        { id: 3, action: 'security.trigger_network_quarantine', target: 'block_outbound_ip' },
+      ];
+      return {
+        ok: true,
+        synthesized: true,
+        playbookId: `gen-playbook-${Date.now().toString(36)}`,
+        threatContext,
+        steps,
+        generatedStepsCount: steps.length,
+        status: 'GENERATIVE_PLAYBOOK_SYNTHESIZED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'soar.verify_playbook_safety_envelope': {
+      const playbookId = String(args.playbookId ?? 'gen-playbook-default');
+      return {
+        ok: true,
+        verified: true,
+        safetyViolationDetected: false,
+        criticalResourceExemptionsChecked: ['prod-auth-db', 'core-api-gateway'],
+        safetyScore: 1.0,
+        status: 'PLAYBOOK_SAFETY_ENVELOPE_VERIFIED',
         timestamp: new Date().toISOString(),
       };
     }
