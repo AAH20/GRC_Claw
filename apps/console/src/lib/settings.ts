@@ -15,7 +15,7 @@ const defaults: ConsoleSettings = {
   baseUrl: '',
   token: '',
   tenantId: 1,
-  a2zSocUrl: 'https://a2z-soc.com',
+  a2zSocUrl: 'https://a2zsoc.com',
   a2zTrustTenantId: 'demo',
   trustScore: 87,
   trustTier: 'Gold',

@@ -15,7 +15,7 @@ async function runTests() {
   const policy = new ExecPolicy();
   const store = new PersistentMemoryStore();
   const evidence = new EvidenceStore();
-  const a2z = new A2ZSocConnector({ apiUrl: 'https://a2z-soc.com/api', apiKey: 'mock-key' });
+  const a2z = new A2ZSocConnector({ apiUrl: 'https://a2zsoc.com/api', apiKey: 'mock-key' });
 
   // ==========================================
   // Test 1: Vector Graph Memory Query
