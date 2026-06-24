@@ -1,6 +1,6 @@
 # GRC_Claw
 
-### The OSS chassis for ISO 42001-compliant agentic AI — Swarm Harness, Anti-Swarm WAF, MAVLink & UAS compliance, a2z-soc.com bridge
+### The OSS chassis for ISO 42001-compliant agentic AI — Swarm Harness, Anti-Swarm WAF, MAVLink & UAS compliance, a2zsoc.com bridge
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
