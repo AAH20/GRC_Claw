@@ -741,6 +741,306 @@
       "argsRedacted": {
         "keys": []
       }
+    },
+    {
+      "at": "2026-06-24T18:34:03.979Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:34:03.991Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:39:30.181Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:39:30.197Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:42:40.257Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:42:40.289Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:46:05.895Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:46:05.909Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:51:23.449Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:51:23.467Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:53:54.460Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:53:54.473Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:58:47.279Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T18:58:47.294Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:02:27.053Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:02:27.077Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:06:05.929Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:06:05.945Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:12:51.499Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T19:12:51.512Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "max_calls_exceeded",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 90
+      },
+      "argsRedacted": {
+        "keys": []
+      }
     }
   ],
   "thoughtsHistory": []

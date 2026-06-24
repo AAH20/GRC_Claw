@@ -207,6 +207,8 @@ npm install && npm run build
 | Photonic & DNA Wet-Storage Test | `npx tsx scripts/test-phase25-orchestration.ts` (under packages/agent-runtime) |
 | LEO Space & Silicon PUF Test | `npx tsx scripts/test-phase26-orchestration.ts` (under packages/agent-runtime) |
 | Spacetime & Self-Destruct Test | `npx tsx scripts/test-phase27-orchestration.ts` (under packages/agent-runtime) |
+| Gravitational & Spin-Lock Test | `npx tsx scripts/test-phase28-orchestration.ts` (under packages/agent-runtime) |
+| Entanglement & Pyrotechnics Test | `npx tsx scripts/test-phase29-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
