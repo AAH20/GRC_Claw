@@ -99,6 +99,44 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'grc.trigger_drift_correction', tier: 'write' },
   { name: 'intel.sync_federated_reports', tier: 'write' },
   { name: 'grc.generate_auditor_bundle', tier: 'read' },
+  // Agent Identity Fabric (DID:GRC)
+  { name: 'identity.create_agent_did', tier: 'write' },
+  { name: 'identity.issue_credential', tier: 'write' },
+  { name: 'identity.verify_credential', tier: 'read' },
+  { name: 'identity.authorize_tool_access', tier: 'read' },
+  { name: 'identity.revoke_did', tier: 'destructive' },
+  { name: 'identity.list_agents', tier: 'read' },
+  { name: 'identity.get_stats', tier: 'read' },
+  { name: 'identity.sign_attestation', tier: 'write' },
+  // Security Graph (Attack Paths, Risk Scoring, Blast Radius)
+  { name: 'graph.add_node', tier: 'write' },
+  { name: 'graph.add_edge', tier: 'write' },
+  { name: 'graph.trace_attack_paths', tier: 'read' },
+  { name: 'graph.assess_agent_risk', tier: 'read' },
+  { name: 'graph.calculate_blast_radius', tier: 'read' },
+  { name: 'graph.compliance_posture', tier: 'read' },
+  { name: 'graph.find_uncertified_access', tier: 'read' },
+  { name: 'graph.get_stats', tier: 'read' },
+  // Agentic SOAR (Playbook Engine)
+  { name: 'soar.list_playbooks', tier: 'read' },
+  { name: 'soar.get_playbook', tier: 'read' },
+  { name: 'soar.execute_playbook', tier: 'destructive' },
+  { name: 'soar.get_execution', tier: 'read' },
+  { name: 'soar.generate_incident_report', tier: 'read' },
+  // Observability (OpenTelemetry Agent Tracing)
+  { name: 'observe.start_trace', tier: 'write' },
+  { name: 'observe.get_trace', tier: 'read' },
+  { name: 'observe.get_metrics', tier: 'read' },
+  { name: 'observe.get_stats', tier: 'read' },
+  { name: 'observe.export_otlp', tier: 'read' },
+  // Compliance-as-Code SDK
+  { name: 'sdk.plan', tier: 'read' },
+  { name: 'sdk.apply', tier: 'write' },
+  { name: 'sdk.audit', tier: 'read' },
+  { name: 'sdk.owasp_coverage', tier: 'read' },
+  { name: 'sdk.marketplace_catalog', tier: 'read' },
+  // AI Bill of Materials
+  { name: 'aibom.generate', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

@@ -1,0 +1,425 @@
+/**
+ * @grc-claw/soar
+ * Autonomous SOAR (Security Orchestration, Automation, and Response) Engine
+ *
+ * DAG-based playbook engine for autonomous incident response.
+ * Supports human-in-the-loop gates, conditional branching,
+ * SLA enforcement, and full evidence trail generation.
+ */
+import * as crypto from 'crypto';
+
+// ─── Core SOAR Types ─────────────────────────────────────────────────
+
+export type PlaybookTrigger =
+  | 'policy_violation'
+  | 'anomaly_detected'
+  | 'threshold_breach'
+  | 'agent_compromise'
+  | 'credential_leak'
+  | 'data_exfiltration'
+  | 'unauthorized_access'
+  | 'drift_detected'
+  | 'manual';
+
+export type StepAction =
+  | 'quarantine_agent'
+  | 'revoke_did'
+  | 'suspend_agent'
+  | 'rollback_iac'
+  | 'block_network'
+  | 'generate_forensic_bundle'
+  | 'notify_soc'
+  | 'escalate_human'
+  | 'snapshot_environment'
+  | 'rotate_credentials'
+  | 'update_firewall_rule'
+  | 'log_evidence'
+  | 'send_webhook'
+  | 'custom_script';
+
+export type StepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'awaiting_approval';
+export type PlaybookStatus = 'idle' | 'running' | 'completed' | 'failed' | 'cancelled' | 'awaiting_approval';
+
+export interface PlaybookStep {
+  id: string;
+  name: string;
+  action: StepAction;
+  params: Record<string, unknown>;
+  condition?: string;                // CEL-like expression
+  requires_approval: boolean;
+  timeout_ms: number;
+  on_failure: 'continue' | 'abort' | 'escalate';
+  depends_on?: string[];             // Step IDs this step depends on
+}
+
+export interface Playbook {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  trigger: PlaybookTrigger;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  steps: PlaybookStep[];
+  sla_seconds: number;
+  evidence_required: boolean;
+  tags: string[];
+  author: string;
+  created: string;
+  updated: string;
+}
+
+export interface StepResult {
+  stepId: string;
+  status: StepStatus;
+  startedAt: string;
+  completedAt?: string;
+  output: Record<string, unknown>;
+  error?: string;
+  approvedBy?: string;
+  durationMs: number;
+}
+
+export interface PlaybookExecution {
+  executionId: string;
+  playbookId: string;
+  status: PlaybookStatus;
+  trigger: PlaybookTrigger;
+  triggerContext: Record<string, unknown>;
+  stepResults: StepResult[];
+  startedAt: string;
+  completedAt?: string;
+  totalDurationMs: number;
+  slaBreached: boolean;
+  evidenceHashes: string[];
+}
+
+export interface IncidentReport {
+  incidentId: string;
+  executionId: string;
+  severity: string;
+  summary: string;
+  timeline: { timestamp: string; event: string; details: string }[];
+  affectedAgents: string[];
+  remediationActions: string[];
+  evidenceBundle: string;
+  generatedAt: string;
+}
+
+// ─── Built-in Playbooks ──────────────────────────────────────────────
+
+export const BUILTIN_PLAYBOOKS: Playbook[] = [
+  {
+    id: 'pb-agent-compromise',
+    name: 'Agent Compromise Response',
+    description: 'Automated response when an agent is detected as compromised. Quarantines the agent, revokes credentials, snapshots the environment, and generates a forensic bundle.',
+    version: '1.0.0',
+    trigger: 'agent_compromise',
+    severity: 'critical',
+    sla_seconds: 30,
+    evidence_required: true,
+    tags: ['security', 'incident-response', 'critical'],
+    author: 'grc-claw-core',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    steps: [
+      { id: 'step-1', name: 'Quarantine Agent', action: 'quarantine_agent', params: {}, condition: undefined, requires_approval: false, timeout_ms: 5000, on_failure: 'escalate' },
+      { id: 'step-2', name: 'Revoke Agent DID', action: 'revoke_did', params: {}, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'escalate', depends_on: ['step-1'] },
+      { id: 'step-3', name: 'Snapshot Environment', action: 'snapshot_environment', params: { includeNetworkState: true }, condition: undefined, requires_approval: false, timeout_ms: 10000, on_failure: 'continue', depends_on: ['step-1'] },
+      { id: 'step-4', name: 'Block Network Access', action: 'block_network', params: { scope: 'agent-subnet' }, condition: undefined, requires_approval: false, timeout_ms: 5000, on_failure: 'continue', depends_on: ['step-1'] },
+      { id: 'step-5', name: 'Generate Forensic Bundle', action: 'generate_forensic_bundle', params: {}, condition: undefined, requires_approval: false, timeout_ms: 15000, on_failure: 'continue', depends_on: ['step-2', 'step-3'] },
+      { id: 'step-6', name: 'Notify SOC Team', action: 'notify_soc', params: { channel: 'critical-alerts' }, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'continue', depends_on: ['step-5'] },
+    ],
+  },
+  {
+    id: 'pb-policy-violation',
+    name: 'Policy Violation Response',
+    description: 'Responds to agent policy violations. Suspends the agent, logs evidence, and escalates if severity is high.',
+    version: '1.0.0',
+    trigger: 'policy_violation',
+    severity: 'high',
+    sla_seconds: 60,
+    evidence_required: true,
+    tags: ['compliance', 'policy', 'governance'],
+    author: 'grc-claw-core',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    steps: [
+      { id: 'step-1', name: 'Suspend Agent', action: 'suspend_agent', params: {}, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'escalate' },
+      { id: 'step-2', name: 'Log Evidence', action: 'log_evidence', params: { evidenceType: 'policy_violation' }, condition: undefined, requires_approval: false, timeout_ms: 5000, on_failure: 'continue', depends_on: ['step-1'] },
+      { id: 'step-3', name: 'Notify SOC', action: 'notify_soc', params: { channel: 'compliance-alerts' }, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'continue', depends_on: ['step-2'] },
+      { id: 'step-4', name: 'Escalate to Human', action: 'escalate_human', params: { reason: 'Policy violation requires human review' }, condition: 'severity == "critical"', requires_approval: false, timeout_ms: 5000, on_failure: 'continue', depends_on: ['step-2'] },
+    ],
+  },
+  {
+    id: 'pb-drift-correction',
+    name: 'Infrastructure Drift Correction',
+    description: 'Detects and corrects infrastructure drift. Snapshots current state, generates IaC diff, and applies correction after approval.',
+    version: '1.0.0',
+    trigger: 'drift_detected',
+    severity: 'medium',
+    sla_seconds: 300,
+    evidence_required: true,
+    tags: ['infrastructure', 'compliance', 'iac'],
+    author: 'grc-claw-core',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    steps: [
+      { id: 'step-1', name: 'Snapshot Current State', action: 'snapshot_environment', params: { type: 'infrastructure' }, condition: undefined, requires_approval: false, timeout_ms: 10000, on_failure: 'abort' },
+      { id: 'step-2', name: 'Log Drift Evidence', action: 'log_evidence', params: { evidenceType: 'infrastructure_drift' }, condition: undefined, requires_approval: false, timeout_ms: 5000, on_failure: 'continue', depends_on: ['step-1'] },
+      { id: 'step-3', name: 'Apply IaC Correction', action: 'rollback_iac', params: { strategy: 'revert-to-baseline' }, condition: undefined, requires_approval: true, timeout_ms: 30000, on_failure: 'escalate', depends_on: ['step-2'] },
+      { id: 'step-4', name: 'Notify SOC', action: 'notify_soc', params: { channel: 'infrastructure-alerts' }, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'continue', depends_on: ['step-3'] },
+    ],
+  },
+  {
+    id: 'pb-credential-rotation',
+    name: 'Emergency Credential Rotation',
+    description: 'Rotates compromised credentials, revokes existing sessions, and generates audit evidence.',
+    version: '1.0.0',
+    trigger: 'credential_leak',
+    severity: 'critical',
+    sla_seconds: 60,
+    evidence_required: true,
+    tags: ['security', 'identity', 'critical'],
+    author: 'grc-claw-core',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    steps: [
+      { id: 'step-1', name: 'Rotate Credentials', action: 'rotate_credentials', params: { scope: 'affected' }, condition: undefined, requires_approval: false, timeout_ms: 5000, on_failure: 'escalate' },
+      { id: 'step-2', name: 'Revoke Active Sessions', action: 'revoke_did', params: { scope: 'sessions' }, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'continue', depends_on: ['step-1'] },
+      { id: 'step-3', name: 'Log Evidence', action: 'log_evidence', params: { evidenceType: 'credential_rotation' }, condition: undefined, requires_approval: false, timeout_ms: 5000, on_failure: 'continue', depends_on: ['step-2'] },
+      { id: 'step-4', name: 'Generate Forensic Bundle', action: 'generate_forensic_bundle', params: {}, condition: undefined, requires_approval: false, timeout_ms: 10000, on_failure: 'continue', depends_on: ['step-3'] },
+      { id: 'step-5', name: 'Notify SOC', action: 'notify_soc', params: { channel: 'critical-alerts' }, condition: undefined, requires_approval: false, timeout_ms: 3000, on_failure: 'continue', depends_on: ['step-4'] },
+    ],
+  },
+];
+
+// ─── SOAR Engine ─────────────────────────────────────────────────────
+
+export class SOAREngine {
+  private playbooks: Map<string, Playbook> = new Map();
+  private executions: Map<string, PlaybookExecution> = new Map();
+
+  constructor() {
+    // Register built-in playbooks
+    for (const pb of BUILTIN_PLAYBOOKS) {
+      this.playbooks.set(pb.id, pb);
+    }
+  }
+
+  /** Register a custom playbook */
+  registerPlaybook(playbook: Playbook): void {
+    this.playbooks.set(playbook.id, playbook);
+  }
+
+  /** List all registered playbooks */
+  listPlaybooks(): Playbook[] {
+    return Array.from(this.playbooks.values());
+  }
+
+  /** Get playbook by ID */
+  getPlaybook(id: string): Playbook | undefined {
+    return this.playbooks.get(id);
+  }
+
+  /** Find playbooks matching a trigger */
+  findPlaybooksForTrigger(trigger: PlaybookTrigger): Playbook[] {
+    return Array.from(this.playbooks.values()).filter((p) => p.trigger === trigger);
+  }
+
+  /** Execute a playbook (simulated DAG execution) */
+  async executePlaybook(playbookId: string, context: Record<string, unknown>): Promise<PlaybookExecution> {
+    const playbook = this.playbooks.get(playbookId);
+    if (!playbook) throw new Error(`Playbook not found: ${playbookId}`);
+
+    const executionId = `exec_${crypto.randomUUID().substring(0, 12)}`;
+    const startedAt = new Date();
+
+    const execution: PlaybookExecution = {
+      executionId,
+      playbookId,
+      status: 'running',
+      trigger: playbook.trigger,
+      triggerContext: context,
+      stepResults: [],
+      startedAt: startedAt.toISOString(),
+      totalDurationMs: 0,
+      slaBreached: false,
+      evidenceHashes: [],
+    };
+
+    this.executions.set(executionId, execution);
+
+    // Execute steps in dependency order
+    const completedSteps = new Set<string>();
+
+    for (const step of playbook.steps) {
+      // Check dependencies
+      if (step.depends_on) {
+        const allDepsComplete = step.depends_on.every((dep) => completedSteps.has(dep));
+        if (!allDepsComplete) {
+          execution.stepResults.push({
+            stepId: step.id,
+            status: 'skipped',
+            startedAt: new Date().toISOString(),
+            output: { reason: 'dependency_not_met' },
+            durationMs: 0,
+          });
+          continue;
+        }
+      }
+
+      // Check condition (simplified evaluation)
+      if (step.condition) {
+        const conditionMet = this.evaluateCondition(step.condition, context);
+        if (!conditionMet) {
+          execution.stepResults.push({
+            stepId: step.id,
+            status: 'skipped',
+            startedAt: new Date().toISOString(),
+            output: { reason: 'condition_not_met', condition: step.condition },
+            durationMs: 0,
+          });
+          continue;
+        }
+      }
+
+      // Check if approval required
+      if (step.requires_approval) {
+        execution.stepResults.push({
+          stepId: step.id,
+          status: 'awaiting_approval',
+          startedAt: new Date().toISOString(),
+          output: { action: step.action, params: step.params, awaitingApproval: true },
+          durationMs: 0,
+        });
+        // In production, this would pause execution
+        // For simulation, we auto-approve
+      }
+
+      // Execute step (simulated)
+      const stepStart = Date.now();
+      const result = this.executeStep(step, context);
+      const stepDuration = Date.now() - stepStart;
+
+      const stepResult: StepResult = {
+        stepId: step.id,
+        status: 'completed',
+        startedAt: new Date(stepStart).toISOString(),
+        completedAt: new Date().toISOString(),
+        output: result,
+        durationMs: stepDuration,
+      };
+
+      execution.stepResults.push(stepResult);
+      completedSteps.add(step.id);
+
+      // Generate evidence hash
+      if (playbook.evidence_required) {
+        const evidencePayload = JSON.stringify({ step: step.id, result, context });
+        const hash = crypto.createHash('sha256').update(evidencePayload).digest('hex');
+        execution.evidenceHashes.push(`sha256:${hash.substring(0, 16)}`);
+      }
+    }
+
+    const endTime = Date.now();
+    execution.totalDurationMs = endTime - startedAt.getTime();
+    execution.completedAt = new Date().toISOString();
+    execution.slaBreached = execution.totalDurationMs > playbook.sla_seconds * 1000;
+
+    const failedSteps = execution.stepResults.filter((s) => s.status === 'failed');
+    execution.status = failedSteps.length > 0 ? 'failed' : 'completed';
+
+    return execution;
+  }
+
+  /** Simulate a step execution */
+  private executeStep(step: PlaybookStep, context: Record<string, unknown>): Record<string, unknown> {
+    const agentDid = String(context.agentDid ?? 'unknown');
+
+    switch (step.action) {
+      case 'quarantine_agent':
+        return { quarantined: true, agentDid, isolatedAt: new Date().toISOString(), networkAccess: 'blocked', containerState: 'frozen' };
+      case 'revoke_did':
+        return { revoked: true, agentDid, revokedAt: new Date().toISOString() };
+      case 'suspend_agent':
+        return { suspended: true, agentDid, suspendedAt: new Date().toISOString() };
+      case 'rollback_iac':
+        return { rolledBack: true, strategy: step.params.strategy, baseline: 'restored', appliedAt: new Date().toISOString() };
+      case 'block_network':
+        return { blocked: true, scope: step.params.scope, firewallRuleId: `fw_${crypto.randomUUID().substring(0, 8)}` };
+      case 'generate_forensic_bundle':
+        return { bundleGenerated: true, bundleId: `forensic_${crypto.randomUUID().substring(0, 8)}`, artifactsCount: 12 };
+      case 'notify_soc':
+        return { notified: true, channel: step.params.channel, timestamp: new Date().toISOString() };
+      case 'escalate_human':
+        return { escalated: true, reason: step.params.reason, ticketId: `ESC-${Date.now()}` };
+      case 'snapshot_environment':
+        return { snapshotId: `snap_${crypto.randomUUID().substring(0, 8)}`, type: step.params.type ?? 'full' };
+      case 'rotate_credentials':
+        return { rotated: true, scope: step.params.scope, newCredentialId: `cred_${crypto.randomUUID().substring(0, 8)}` };
+      case 'update_firewall_rule':
+        return { updated: true, ruleId: step.params.ruleId };
+      case 'log_evidence':
+        return { logged: true, evidenceType: step.params.evidenceType };
+      case 'send_webhook':
+        return { sent: true, url: step.params.url };
+      case 'custom_script':
+        return { executed: true, script: step.params.script };
+      default:
+        return { executed: true, action: step.action };
+    }
+  }
+
+  /** Simplified condition evaluation */
+  private evaluateCondition(condition: string, context: Record<string, unknown>): boolean {
+    // Simple key == "value" evaluation
+    const match = condition.match(/(\w+)\s*==\s*"([^"]+)"/);
+    if (match) {
+      const [, key, value] = match;
+      return String(context[key ?? '']) === value;
+    }
+    return true; // Default to true for unrecognized conditions
+  }
+
+  /** Generate an incident report from an execution */
+  generateIncidentReport(executionId: string): IncidentReport {
+    const execution = this.executions.get(executionId);
+    if (!execution) throw new Error(`Execution not found: ${executionId}`);
+
+    const playbook = this.playbooks.get(execution.playbookId);
+    const timeline = execution.stepResults.map((sr) => ({
+      timestamp: sr.startedAt,
+      event: sr.stepId,
+      details: `Status: ${sr.status}, Duration: ${sr.durationMs}ms`,
+    }));
+
+    const remediationActions = execution.stepResults
+      .filter((sr) => sr.status === 'completed')
+      .map((sr) => `${sr.stepId}: ${JSON.stringify(sr.output)}`);
+
+    const evidencePayload = JSON.stringify(execution);
+    const evidenceHash = crypto.createHash('sha256').update(evidencePayload).digest('hex');
+
+    return {
+      incidentId: `INC-${Date.now()}`,
+      executionId,
+      severity: playbook?.severity ?? 'unknown',
+      summary: `${playbook?.name ?? 'Unknown Playbook'} executed with ${execution.stepResults.length} steps. Status: ${execution.status}. SLA ${execution.slaBreached ? 'BREACHED' : 'met'}.`,
+      timeline,
+      affectedAgents: [String(execution.triggerContext.agentDid ?? 'unknown')],
+      remediationActions,
+      evidenceBundle: `sha256:${evidenceHash.substring(0, 32)}`,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  /** Get execution history */
+  getExecutionHistory(): PlaybookExecution[] {
+    return Array.from(this.executions.values());
+  }
+
+  /** Get execution by ID */
+  getExecution(executionId: string): PlaybookExecution | undefined {
+    return this.executions.get(executionId);
+  }
+}

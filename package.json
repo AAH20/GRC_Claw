@@ -15,7 +15,12 @@
     "packages/ingest",
     "packages/aims",
     "packages/connectors",
-    "packages/skill-executor"
+    "packages/skill-executor",
+    "packages/agent-identity",
+    "packages/security-graph",
+    "packages/soar",
+    "packages/observability",
+    "packages/sdk"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
