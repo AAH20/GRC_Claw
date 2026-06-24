@@ -1,0 +1,95 @@
+{
+  "calls": 4,
+  "toxicityScore": 15,
+  "callHistory": [
+    {
+      "tool": "llm.mock.complete",
+      "argsString": "{\"prompt\":\"hi\"}",
+      "timestamp": 1782272170297
+    },
+    {
+      "tool": "mcp.demo.delete",
+      "argsString": "{}",
+      "timestamp": 1782272170308
+    },
+    {
+      "tool": "llm.mock.complete",
+      "argsString": "{\"prompt\":\"hi\"}",
+      "timestamp": 1782272255398
+    },
+    {
+      "tool": "mcp.demo.delete",
+      "argsString": "{}",
+      "timestamp": 1782272255452
+    }
+  ],
+  "audit": [
+    {
+      "at": "2026-06-24T03:36:10.297Z",
+      "sessionId": "byoc",
+      "tool": "llm.mock.complete",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 0
+      },
+      "argsRedacted": {
+        "keys": [
+          "prompt"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T03:36:10.308Z",
+      "sessionId": "byoc",
+      "tool": "mcp.demo.delete",
+      "decision": {
+        "allowed": false,
+        "reason": "tool_not_in_allowlist",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T03:37:35.400Z",
+      "sessionId": "byoc",
+      "tool": "llm.mock.complete",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": [
+          "prompt"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T03:37:35.452Z",
+      "sessionId": "byoc",
+      "tool": "mcp.demo.delete",
+      "decision": {
+        "allowed": false,
+        "reason": "tool_not_in_allowlist",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    }
+  ]
+}

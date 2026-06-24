@@ -1,0 +1,94 @@
+{
+  "calls": 4,
+  "toxicityScore": 30,
+  "callHistory": [
+    {
+      "tool": "soc.query_events",
+      "argsString": "{}",
+      "timestamp": 1782272173510
+    },
+    {
+      "tool": "soar.run_playbook",
+      "argsString": "{}",
+      "timestamp": 1782272173527
+    },
+    {
+      "tool": "soc.query_events",
+      "argsString": "{}",
+      "timestamp": 1782272258835
+    },
+    {
+      "tool": "soar.run_playbook",
+      "argsString": "{}",
+      "timestamp": 1782272258866
+    }
+  ],
+  "audit": [
+    {
+      "at": "2026-06-24T03:36:13.510Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 0
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T03:36:13.527Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "destructive_requires_approval",
+        "sandbox": "denied",
+        "requiresApproval": true,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T03:37:38.836Z",
+      "sessionId": "comp",
+      "tool": "soc.query_events",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    },
+    {
+      "at": "2026-06-24T03:37:38.866Z",
+      "sessionId": "comp",
+      "tool": "soar.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "destructive_requires_approval",
+        "sandbox": "denied",
+        "requiresApproval": true,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 30
+      },
+      "argsRedacted": {
+        "keys": []
+      }
+    }
+  ]
+}

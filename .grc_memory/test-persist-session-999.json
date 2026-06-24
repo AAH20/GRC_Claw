@@ -1,0 +1,134 @@
+{
+  "calls": 10,
+  "toxicityScore": 85,
+  "callHistory": [
+    {
+      "tool": "grc.list_controls",
+      "argsString": "{\"tenantId\":1}",
+      "timestamp": 1782196142280
+    },
+    {
+      "tool": "grc.get_compliance_score",
+      "argsString": "{\"tenantId\":1}",
+      "timestamp": 1782196142281
+    },
+    {
+      "tool": "control.update_status",
+      "argsString": "{\"controlId\":\"CMMC-1\",\"status\":\"Passed\"}",
+      "timestamp": 1782196142281
+    },
+    {
+      "tool": "control.update_status",
+      "argsString": "{\"controlId\":\"CMMC-1\",\"status\":\"Passed\"}",
+      "timestamp": 1782196142281
+    },
+    {
+      "tool": "control.update_status",
+      "argsString": "{\"controlId\":\"CMMC-1\",\"status\":\"Passed\"}",
+      "timestamp": 1782196142281
+    }
+  ],
+  "audit": [
+    {
+      "at": "2026-06-23T06:29:02.280Z",
+      "sessionId": "test-persist-session-999",
+      "tool": "grc.list_controls",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "toxicityScore": 0
+      },
+      "argsRedacted": {
+        "keys": [
+          "tenantId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-23T06:29:02.281Z",
+      "sessionId": "test-persist-session-999",
+      "tool": "grc.get_compliance_score",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": [
+          "tenantId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-23T06:29:02.281Z",
+      "sessionId": "test-persist-session-999",
+      "tool": "control.update_status",
+      "decision": {
+        "allowed": false,
+        "reason": "write_requires_idempotency_key",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 30
+      },
+      "argsRedacted": {
+        "keys": [
+          "controlId",
+          "status"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-23T06:29:02.281Z",
+      "sessionId": "test-persist-session-999",
+      "tool": "control.update_status",
+      "decision": {
+        "allowed": false,
+        "reason": "write_requires_idempotency_key",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 45
+      },
+      "argsRedacted": {
+        "keys": [
+          "controlId",
+          "status"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-23T06:29:02.281Z",
+      "sessionId": "test-persist-session-999",
+      "tool": "control.update_status",
+      "decision": {
+        "allowed": false,
+        "reason": "write_requires_idempotency_key",
+        "sandbox": "denied",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "LOOP_ANOMALY",
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 85
+      },
+      "argsRedacted": {
+        "keys": [
+          "controlId",
+          "status"
+        ]
+      }
+    }
+  ]
+}

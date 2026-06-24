@@ -1,0 +1,102 @@
+{
+  "calls": 4,
+  "toxicityScore": 30,
+  "callHistory": [
+    {
+      "tool": "sentinel.run_playbook",
+      "argsString": "{\"playbookId\":\"isolate-vm\"}",
+      "timestamp": 1782272178261
+    },
+    {
+      "tool": "sentinel.get_incident",
+      "argsString": "{\"id\":\"1\"}",
+      "timestamp": 1782272178279
+    },
+    {
+      "tool": "sentinel.run_playbook",
+      "argsString": "{\"playbookId\":\"isolate-vm\"}",
+      "timestamp": 1782272263886
+    },
+    {
+      "tool": "sentinel.get_incident",
+      "argsString": "{\"id\":\"1\"}",
+      "timestamp": 1782272263902
+    }
+  ],
+  "audit": [
+    {
+      "at": "2026-06-24T03:36:18.261Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "destructive_requires_approval",
+        "sandbox": "denied",
+        "requiresApproval": true,
+        "toxicityScore": 0
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T03:36:18.279Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T03:37:43.886Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.run_playbook",
+      "decision": {
+        "allowed": false,
+        "reason": "destructive_requires_approval",
+        "sandbox": "denied",
+        "requiresApproval": true,
+        "toxicityScore": 15
+      },
+      "argsRedacted": {
+        "keys": [
+          "playbookId"
+        ]
+      }
+    },
+    {
+      "at": "2026-06-24T03:37:43.902Z",
+      "sessionId": "cloud",
+      "tool": "sentinel.get_incident",
+      "decision": {
+        "allowed": true,
+        "reason": "read_allowed",
+        "sandbox": "docker",
+        "requiresApproval": false,
+        "anomaliesDetected": [
+          "RAPID_DISCOVERY_ANOMALY"
+        ],
+        "toxicityScore": 30
+      },
+      "argsRedacted": {
+        "keys": [
+          "id"
+        ]
+      }
+    }
+  ]
+}

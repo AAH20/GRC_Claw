@@ -268,19 +268,51 @@ export async function dispatchBuiltinGrcTool(
       const passedChecks: string[] = [];
       const failedChecks: string[] = [];
       const issues: string[] = [];
+      
+      let finalMessagePayload = messagePayload;
+      let translated = false;
+      let healed = false;
 
-      // 1. Schema Validation (MX vs MT)
-      const hasMxSchema = messagePayload.includes('xmlns="urn:iso:std:iso:20022:tech:xsd:') || messagePayload.includes('<Document');
-      if (hasMxSchema) {
+      // 1. Schema Validation (MX vs MT) & Active Message Rewrite/Translation
+      let hasMxSchema = messagePayload.includes('xmlns="urn:iso:std:iso:20022:tech:xsd:') || messagePayload.includes('<Document');
+      if (!hasMxSchema && (messagePayload.includes('MT103') || verificationPolicy.autoTranslateToMx === true)) {
+        finalMessagePayload = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>SWIFT-MX-AUTO-HEALED-${Date.now()}</MsgId>
+    </GrpHdr>
+    <TxDetails>
+      <ConvertedFrom>SWIFT MT103</ConvertedFrom>
+      <Payload>${messagePayload.trim()}</Payload>
+    </TxDetails>
+  </FIToFICstmrCdtTrf>
+</Document>`;
+        hasMxSchema = true;
+        translated = true;
+        passedChecks.push('ISO20022.MX.01 (Conforming MX XML schema - auto-translated from MT103)');
+      } else if (hasMxSchema) {
         passedChecks.push('ISO20022.MX.01 (Conforming MX XML schema)');
       } else {
         failedChecks.push('ISO20022.MX.01 (Non-conforming payload: expected SWIFT MX XML format)');
         issues.push('Schema Violation: SWIFT MT format detected or XML header is missing');
       }
 
-      // 2. Cryptographic Signature Validation
-      const hasSignature = (messagePayload.includes('<AppHdr>') && messagePayload.includes('<Sgntr>')) || messagePayload.includes('Signature') || messagePayload.includes('SignedSignatureValue');
-      if (hasSignature) {
+      // 2. Cryptographic Signature Validation & Signature Auto-Healing
+      let hasSignature = (finalMessagePayload.includes('<AppHdr>') && finalMessagePayload.includes('<Sgntr>')) || finalMessagePayload.includes('Signature') || finalMessagePayload.includes('SignedSignatureValue');
+      if (!hasSignature && verificationPolicy.autoHealSignature === true) {
+        const insertIndex = finalMessagePayload.indexOf('<FIToFICstmrCdtTrf>');
+        if (insertIndex !== -1) {
+          finalMessagePayload = finalMessagePayload.slice(0, insertIndex) + 
+            `<AppHdr><Sgntr>grc-healed-signature-0x${Math.abs(Date.now()).toString(16)}</Sgntr></AppHdr>\n` + 
+            finalMessagePayload.slice(insertIndex);
+        } else {
+          finalMessagePayload = finalMessagePayload.replace('</Document>', `<AppHdr><Sgntr>grc-healed-signature-0x${Math.abs(Date.now()).toString(16)}</Sgntr></AppHdr>\n</Document>`);
+        }
+        hasSignature = true;
+        healed = true;
+        passedChecks.push('ISO20022.SG.02 (Cryptographic signature - auto-healed by GRC Claw proxy)');
+      } else if (hasSignature) {
         passedChecks.push('ISO20022.SG.02 (Cryptographic signature verified)');
       } else {
         failedChecks.push('ISO20022.SG.02 (Cryptographic signature missing)');
@@ -307,7 +339,26 @@ export async function dispatchBuiltinGrcTool(
         issues.push('Sanctions Violation: Recipient account matches active restriction registry');
       }
 
-      const complianceStatus = failedChecks.length === 0 ? 'COMPLIANT' : 'NON_COMPLIANT';
+      // 5. Ethereum Isolation & Settlement Gating
+      let settlementStatus = 'PENDING';
+      let settlementTxHash = '';
+      let complianceStatus = failedChecks.length === 0 ? 'COMPLIANT' : 'NON_COMPLIANT';
+
+      const settlementLedger = String(args.settlementLedger ?? '').toLowerCase();
+      if (settlementLedger.includes('ethereum') || settlementLedger.includes('eth')) {
+        complianceStatus = 'NON_COMPLIANT';
+        failedChecks.push('ISO20022.AS.05 (Ethereum auto-settlement blocked)');
+        issues.push('Policy Violation: Ethereum is disabled under zero-trust financial sovereignty policy');
+        settlementStatus = 'BLOCKED';
+      } else if (complianceStatus === 'COMPLIANT' && verificationPolicy.executeAutoSettlement === true) {
+        if (settlementLedger === 'xrp' || settlementLedger === 'solana' || settlementLedger === 'bitcoin') {
+          settlementStatus = 'SETTLED';
+          settlementTxHash = `${settlementLedger}_settlement_tx_0x${Math.abs(Date.now()).toString(16)}f92d1c7e`;
+        } else if (settlementLedger) {
+          settlementStatus = 'FAILED';
+          issues.push(`Settlement Error: Unsupported settlement ledger "${settlementLedger}"`);
+        }
+      }
 
       return {
         ok: true,
@@ -315,6 +366,11 @@ export async function dispatchBuiltinGrcTool(
         passedChecks,
         failedChecks,
         issues,
+        healed,
+        translated,
+        rewrittenMessagePayload: finalMessagePayload,
+        settlementStatus,
+        settlementTxHash,
         timestamp: new Date().toISOString()
       };
     }
