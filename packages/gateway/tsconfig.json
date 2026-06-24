@@ -9,12 +9,14 @@
   "references": [
     { "path": "../core" },
     { "path": "../agent-runtime" },
+    { "path": "../agent-identity" },
     { "path": "../evidence" },
     { "path": "../frameworks" },
     { "path": "../a2z-connector" },
     { "path": "../ingest" },
     { "path": "../aims" },
     { "path": "../connectors" },
-    { "path": "../skill-executor" }
+    { "path": "../skill-executor" },
+    { "path": "../security-graph" }
   ]
 }

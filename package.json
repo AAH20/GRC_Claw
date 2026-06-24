@@ -32,6 +32,7 @@
     "test:iso42001": "bash scripts/test-iso-42001.sh",
     "test:byoc": "bash scripts/test-byoc-connectors.sh",
     "test:action-ledger": "npm run build && node scripts/test-action-ledger.mjs",
+    "test:assurance": "npm run build && node scripts/test-assurance.mjs",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
     "test:cloud": "bash scripts/test-cloud-security.sh",
     "test:skills": "npm run test -w @grc-claw/skill-executor"

@@ -47,6 +47,19 @@ Execution states are explicit: `recorded` means local evidence was stored, `exec
 connector accepted the request, and `verified` requires a target-system receipt. `simulated` and
 `not_configured` are never presented as successful external execution.
 
+## Agent assurance graph
+
+Before an authenticated `POST /api/agent/invoke` is evaluated, the gateway records the action in
+an in-memory assurance graph: a gateway-observed DID, tenant scope, tool tier, optional control
+target, current risk assessment, and control blast radius. The invocation response includes this
+`assurance` object, and authenticated `GET /api/assurance` returns aggregate graph and identity
+statistics.
+
+Gateway-observed DIDs are deliberately **provisional**: the gateway does not issue a credential
+or claim an external identity. Set `GRC_CLAW_ASSURANCE_MAX_RISK` to a number from `0` to `100` to
+make the pre-execution gate deny actions at or above that risk; leave it unset for observe-only
+rollout. This is intended to be enabled gradually with a real credential issuance workflow.
+
 ## Hardening checklist (operators)
 
 - [ ] `GRC_CLAW_GATEWAY_TOKEN` from secret manager, not git
@@ -54,6 +67,7 @@ connector accepted the request, and `verified` requires a target-system receipt.
 - [ ] `A2Z_SOC_API_KEY` scoped to ingest + GRC read, not user admin
 - [ ] Docker sandbox image pinned by digest
 - [ ] Approval workflow enabled for Tier Write/Destructive in production
+- [ ] `GRC_CLAW_ASSURANCE_MAX_RISK` calibrated in a staging tenant before enforcement
 - [ ] Weekly `npm run doctor` (config + token smoke test)
 
 ## Differentiator vs generic “AI GRC” bots

@@ -468,6 +468,7 @@ Full reference: [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
 | `GRC_CLAW_CONNECTORS_JSON` | Inline BYOC registry JSON |
 | `GRC_CLAW_CONNECTORS_CONFIG` | Path to BYOC JSON file (e.g. `examples/gemini-connectors.json`) |
 | `GRC_CLAW_ACTION_LEDGER_PATH` | Append-only action ledger path (default `.grc_memory/action-ledger.ndjson`) |
+| `GRC_CLAW_ASSURANCE_MAX_RISK` | Optional 0–100 pre-execution assurance threshold; unset is observe-only |
 | `GRC_CLAW_MEMORY_DIR` | Session-memory directory (default `.grc_memory`) |
 | `GEMINI_API_KEY` | Google Gemini API key (when using `gemini_generate` provider) |
 
@@ -492,6 +493,7 @@ Run `npm run doctor` before production. Never commit `.env` — use `examples/*.
 | `GET` | `/api/cursor-skills` | Alias of skill catalog |
 | `GET` | `/api/connectors` | BYOC LLM + MCP registry (redacted) |
 | `GET` | `/api/action-ledger` | Authenticated action events plus hash-chain integrity check |
+| `GET` | `/api/assurance` | Authenticated graph and provisional-identity assurance summary |
 | `POST` | `/api/connectors/llm/:id/chat` | LLM chat proxy |
 | `GET` | `/api/connectors/mcp/:id/tools` | Discover MCP tools |
 | `WS` | `/` | `connect` → `hello-ok` |
