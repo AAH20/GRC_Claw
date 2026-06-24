@@ -211,6 +211,7 @@ npm install && npm run build
 | Entanglement & Pyrotechnics Test | `npx tsx scripts/test-phase29-orchestration.ts` (under packages/agent-runtime) |
 | Cosmic & Topological Test | `npx tsx scripts/test-phase30-orchestration.ts` (under packages/agent-runtime) |
 | Planck & Gravitational Lensing Test | `npx tsx scripts/test-phase31-orchestration.ts` (under packages/agent-runtime) |
+| Redshift & Metabolic Test | `npx tsx scripts/test-phase32-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 

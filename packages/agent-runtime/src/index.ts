@@ -331,6 +331,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'memory.verify_rna_transcription', tier: 'read' },
   { name: 'identity.assert_lensing_boundary', tier: 'write' },
   { name: 'identity.verify_lensing_attestation', tier: 'read' },
+  // Phase 32 Strategic Redshift Attestation & Neutrino Enclaves
+  { name: 'consensus.sample_redshift_vector', tier: 'write' },
+  { name: 'consensus.verify_redshift_coherence', tier: 'read' },
+  { name: 'security.initialize_neutrino_enclave', tier: 'write' },
+  { name: 'security.query_neutrino_coherence', tier: 'read' },
+  { name: 'memory.grow_mitochondrial_mesh', tier: 'write' },
+  { name: 'memory.verify_mitochondrial_state', tier: 'read' },
+  { name: 'identity.initiate_wormhole_link', tier: 'write' },
+  { name: 'identity.verify_wormhole_state', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
