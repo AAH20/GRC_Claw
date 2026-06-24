@@ -191,6 +191,7 @@ npm install && npm run build
 | Sovereign Swarm Autonomy Test | `npx tsx scripts/test-phase9-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Choreography Test | `npx tsx scripts/test-phase10-orchestration.ts` (under packages/agent-runtime) |
 | Sovereign Swarm Federation Test | `npx tsx scripts/test-phase11-orchestration.ts` (under packages/agent-runtime) |
+| Sovereign Swarm Validation Test | `npx tsx scripts/test-phase12-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
