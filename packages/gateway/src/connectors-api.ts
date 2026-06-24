@@ -1,5 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { BUILTIN_AGENT_TOOLS, AgentSession, ExecPolicy } from '@grc-claw/agent-runtime';
+import { BUILTIN_AGENT_TOOLS, AgentSession, ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
+
+const store = new PersistentMemoryStore();
 import { CLAW_SKILL_TOOLS } from '@grc-claw/skill-executor';
 import {
   buildConnectorToolDefinitions,
@@ -157,7 +159,7 @@ export async function handleConnectorsRoute(
     const args = (body.arguments as Record<string, unknown>) ?? {};
     const gatedTool = toolName.includes('.') ? toolName : `mcp.${route.mcpId}.${toolName}`;
     const execPolicy = await getExecPolicy();
-    const session = new AgentSession(String(body.sessionId ?? 'mcp-call'), execPolicy);
+    const session = new AgentSession(String(body.sessionId ?? 'mcp-call'), execPolicy, store);
     const decision = await session.invoke({
       tool: gatedTool,
       args,

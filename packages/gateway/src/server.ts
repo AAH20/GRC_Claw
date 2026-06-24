@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
-import { AgentSession, type ExecPolicy } from '@grc-claw/agent-runtime';
+import { AgentSession, type ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
 import { getConnectorRegistry, isConnectorTool } from '@grc-claw/connectors';
 import { EvidenceStore } from '@grc-claw/evidence';
 import {
@@ -36,6 +36,7 @@ export function createGateway(config: GatewayConfig) {
   const evidence = new EvidenceStore();
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
   const connectors = getConnectorRegistry();
+  const store = new PersistentMemoryStore();
   let execPolicy!: ExecPolicy;
 
   async function refreshExecPolicy(): Promise<ExecPolicy> {
@@ -53,7 +54,7 @@ export function createGateway(config: GatewayConfig) {
       a2z,
       defaultLlmProviderId: llmProviders[0]?.id ?? 'gemini',
       getPolicy: () => policy,
-      makeSession: (sessionId, pol) => new AgentSession(sessionId, pol),
+      makeSession: (sessionId, pol) => new AgentSession(sessionId, pol, store),
     });
   }
 
@@ -171,7 +172,7 @@ export function createGateway(config: GatewayConfig) {
         return;
       }
       const policy = execPolicy ?? (await refreshExecPolicy());
-      const session = new AgentSession(String(body.sessionId ?? 'skill-run'), policy);
+      const session = new AgentSession(String(body.sessionId ?? 'skill-run'), policy, store);
       const idem = String(body.idempotencyKey ?? `skill-run-${skillId}-${Date.now()}`);
       const decision = await session.invoke({
         tool: 'claw.run_skill',
@@ -284,7 +285,7 @@ export function createGateway(config: GatewayConfig) {
         return;
       }
       const policy = execPolicy ?? (await refreshExecPolicy());
-      const session = new AgentSession(String(body.sessionId ?? 'default'), policy);
+      const session = new AgentSession(String(body.sessionId ?? 'default'), policy, store);
       const tool = String(body.tool ?? '');
       const args = (body.args as Record<string, unknown>) ?? {};
       const decision = await session.invoke({
