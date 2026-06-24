@@ -653,8 +653,11 @@ npm install && npm run build && npm run test:comprehensive
 - [x] AI Bill of Materials (AI-BOM) generator - SPDX/CycloneDX-aligned, extracts models/tools/frameworks from trace data
 - [x] Framework Pack Marketplace - 10+ regional/industry packs (GDPR, HIPAA, PCI DSS, FedRAMP, DORA, NIS2, TISAX, POPIA)
 - [x] Agent Skill Marketplace - Pre-audited, compliance-certified skill packs with trust scoring
+- [x] Phase 16 — Zero-Knowledge Policy Invariant Proofs, Hardware Speculative Execution Barriers, Multi-Party FHE Vector Search, Dynamic Synaptic Weight Patching
+- [x] Phase 17 — Post-Quantum Lattice Credentials, Enclaved Weight Sanitation, Joint FHE Threat Analysis, Attention Steering Feedback Loops
+- [x] Phase 18 — Structural Monopoly Architecture: WASM Sandbox Policy Isolation, Merkle DAG Evidence Notarization, GNN Behavioral Anomaly Detection, Federated Compliance Attestation Mesh
 - [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
-- [ ] Federated Compliance Mesh (multi-org ZK-attested trust network)
+- [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
 - [ ] Compliance Copilot (AI-powered natural language GRC assistant)
 
 ---
