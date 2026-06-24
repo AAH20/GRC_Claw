@@ -241,6 +241,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.verify_bft_signatures', tier: 'read' },
   { name: 'soverign.compile_synaptic_patch', tier: 'write' },
   { name: 'soverign.apply_runtime_synaptic_patch', tier: 'write' },
+  // Phase 22 Strategic MicroVM Guest-Kernel Sandboxing & Recursive ZK-Proof Aggregation
+  { name: 'security.apply_microvm_ebpf_sandbox', tier: 'write' },
+  { name: 'security.verify_microvm_isolation', tier: 'read' },
+  { name: 'audit.evaluate_homomorphic_joint_policy', tier: 'read' },
+  { name: 'audit.verify_joint_policy_proof', tier: 'read' },
+  { name: 'consensus.aggregate_zk_evidence_proofs', tier: 'write' },
+  { name: 'consensus.verify_aggregated_rollup', tier: 'read' },
+  { name: 'soverign.track_attention_entropy', tier: 'read' },
+  { name: 'soverign.steer_attention_redirection', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

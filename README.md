@@ -201,6 +201,7 @@ npm install && npm run build
 | Self-Healing Compliance Test | `npx tsx scripts/test-phase19-orchestration.ts` (under packages/agent-runtime) |
 | Decoy & Syscall Filter Test | `npx tsx scripts/test-phase20-orchestration.ts` (under packages/agent-runtime) |
 | Zero-Trust Synaptic Test | `npx tsx scripts/test-phase21-orchestration.ts` (under packages/agent-runtime) |
+| Guest-Kernel & Recursive ZK Test | `npx tsx scripts/test-phase22-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -591,6 +592,7 @@ npx tsx packages/agent-runtime/scripts/test-phase18-orchestration.ts # Structura
 npx tsx packages/agent-runtime/scripts/test-phase19-orchestration.ts # Self-Healing Compliance (IaC self-healing patch, FHE threat mesh, decentralized oracle, generative playbooks)
 npx tsx packages/agent-runtime/scripts/test-phase20-orchestration.ts # Decoy & Syscall Filter (Honey-enclave sandbox, multi-model ZK quorum consensus, eBPF syscall logs, biometric TPM gate)
 npx tsx packages/agent-runtime/scripts/test-phase21-orchestration.ts # Zero-Trust Synaptic (eBPF socket isolation, homomorphic vector RAG, BFT reasoning quorum, synaptic LoRA patching)
+npx tsx packages/agent-runtime/scripts/test-phase22-orchestration.ts # Guest-Kernel & Recursive ZK (eBPF MicroVM sandbox, homomorphic joint policy audit, recursive Halo2 ZK rollup, GPU attention weight redirection)
 ```
 
 ---
@@ -667,6 +669,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Phase 19 — Autonomous Self-Healing Infrastructure (Simulated IaC Synthesis and Dry-run Validation), Cross-Tenant Collaborative SIEM Mesh (Homomorphic Threat Correlation), Consensus-Driven Compliance Oracle, Dynamic Generative Playbooks (Autonomous Cognitive SOAR)
 - [x] Phase 20 — Cognitive Decoy Sandboxing (Honey-Enclaves), Zero-Knowledge Multi-Model Cross-Validation (Consensus Quorum), Active eBPF-Driven Runtime Control Plane Containment, Biometric & TPM-Bound Agent Authorization
 - [x] Phase 21 — Zero-Trust Synaptic Guardrails (Dynamic LoRA Parameter Patching), Kernel-Level Socket Isolation (eBPF sockops filters), Homomorphic Vector RAG, Byzantine Fault Tolerant (BFT) Model Reasoning Quorum
+- [x] Phase 22 — MicroVM Guest-Kernel Sandboxing (eBPF monitors), Homomorphic Joint-Policy Auditing (FHE), Recursive ZK-Proof Aggregation (Halo2 rollup), GPU Attention-Head Redirection (Dynamic steering)
 - [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
 - [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
 - [ ] Compliance Copilot (AI-powered natural language GRC assistant)
