@@ -14,12 +14,15 @@ export interface LlmProviderConfig {
 }
 
 export type McpTransport = 'http';
+export type McpAuthMode = 'none' | 'api_key' | 'oauth';
 
 export interface McpServerConfig {
   id: string;
   label: string;
   transport: McpTransport;
   url: string;
+  /** Authentication is owned by the MCP provider; credentials stay in the runtime environment. */
+  authMode?: McpAuthMode;
   apiKeyEnv?: string;
   headers?: Record<string, string>;
   enabled?: boolean;
@@ -27,6 +30,10 @@ export interface McpServerConfig {
   defaultTier?: ToolTier;
   /** MCP tool names that require approval (destructive) */
   destructiveTools?: string[];
+  /** Require human approval for every discovered tool (for credit-consuming or external side effects). */
+  requiresApproval?: boolean;
+  /** Redacted capability labels surfaced in the console and API. */
+  capabilities?: string[];
 }
 
 export interface ConnectorsFile {
@@ -50,10 +57,13 @@ export interface McpServerPublic {
   label: string;
   transport: McpTransport;
   url: string;
+  authMode: McpAuthMode;
   enabled: boolean;
   apiKeyConfigured: boolean;
   defaultTier: ToolTier;
   destructiveTools: string[];
+  requiresApproval: boolean;
+  capabilities: string[];
   toolCount?: number;
 }
 

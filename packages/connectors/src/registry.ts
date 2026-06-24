@@ -91,10 +91,13 @@ export class ConnectorRegistry {
         label: s.label,
         transport: s.transport,
         url: s.url,
+        authMode: s.authMode ?? (s.apiKeyEnv ? 'api_key' : 'none'),
         enabled: true,
         apiKeyConfigured: s.apiKeyEnv ? Boolean(this.resolveApiKey(s.apiKeyEnv)) : true,
         defaultTier: s.defaultTier ?? 'read',
         destructiveTools: s.destructiveTools ?? [],
+        requiresApproval: s.requiresApproval === true,
+        capabilities: s.capabilities ?? [],
         toolCount: toolCounts[s.id],
       })),
     };

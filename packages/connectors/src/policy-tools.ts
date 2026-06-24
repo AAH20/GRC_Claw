@@ -21,17 +21,23 @@ export function buildConnectorToolDefinitions(
     const listed = mcpToolsByServer[server.id] ?? [];
     const destructive = new Set(server.destructiveTools ?? []);
     const defaultTier = server.defaultTier ?? 'read';
+    const requiresApproval = server.requiresApproval === true;
 
     if (listed.length === 0) {
       tools.push({
         name: `mcp.${server.id}._discovery`,
-        tier: 'read',
+        tier: requiresApproval ? 'destructive' : 'read',
       });
       continue;
     }
 
     for (const t of listed) {
-      const tier = destructive.has(t.name) ? 'destructive' : defaultTier === 'write' ? 'write' : defaultTier;
+      const tier =
+        requiresApproval || destructive.has(t.name)
+          ? 'destructive'
+          : defaultTier === 'write'
+            ? 'write'
+            : defaultTier;
       tools.push({ name: t.gatedName, tier });
     }
   }

@@ -6,6 +6,7 @@ export type {
   McpServerConfig,
   McpServerPublic,
   McpToolDescriptor,
+  McpAuthMode,
   McpTransport,
 } from './types.js';
 export { ConnectorRegistry, getConnectorRegistry, resetConnectorRegistryForTests } from './registry.js';
