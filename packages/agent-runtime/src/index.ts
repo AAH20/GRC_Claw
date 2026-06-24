@@ -214,6 +214,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'security.retrain_behavioral_baseline', tier: 'write' },
   { name: 'attestation.issue_compliance_credential', tier: 'write' },
   { name: 'attestation.verify_vendor_credential', tier: 'read' },
+  // Phase 19 Strategic Autonomous Self-Healing & Collaborative Security Mesh
+  { name: 'sdk.synthesize_remediation_patch', tier: 'write' },
+  { name: 'sdk.verify_remediation_simulation', tier: 'read' },
+  { name: 'intel.propagate_homomorphic_indicator', tier: 'write' },
+  { name: 'intel.correlate_mesh_threat_matrix', tier: 'read' },
+  { name: 'consensus.submit_oracle_attestation', tier: 'write' },
+  { name: 'consensus.verify_oracle_quorum', tier: 'read' },
+  { name: 'soar.synthesize_generative_playbook', tier: 'write' },
+  { name: 'soar.verify_playbook_safety_envelope', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
