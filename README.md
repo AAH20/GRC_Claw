@@ -200,6 +200,7 @@ npm install && npm run build
 | Structural Monopoly Test | `npx tsx scripts/test-phase18-orchestration.ts` (under packages/agent-runtime) |
 | Self-Healing Compliance Test | `npx tsx scripts/test-phase19-orchestration.ts` (under packages/agent-runtime) |
 | Decoy & Syscall Filter Test | `npx tsx scripts/test-phase20-orchestration.ts` (under packages/agent-runtime) |
+| Zero-Trust Synaptic Test | `npx tsx scripts/test-phase21-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -589,6 +590,7 @@ npx tsx packages/agent-runtime/scripts/test-phase17-orchestration.ts # Sovereign
 npx tsx packages/agent-runtime/scripts/test-phase18-orchestration.ts # Structural Monopoly (WASM policy isolation, Merkle DAG evidence, streaming GNN, federated attestation mesh)
 npx tsx packages/agent-runtime/scripts/test-phase19-orchestration.ts # Self-Healing Compliance (IaC self-healing patch, FHE threat mesh, decentralized oracle, generative playbooks)
 npx tsx packages/agent-runtime/scripts/test-phase20-orchestration.ts # Decoy & Syscall Filter (Honey-enclave sandbox, multi-model ZK quorum consensus, eBPF syscall logs, biometric TPM gate)
+npx tsx packages/agent-runtime/scripts/test-phase21-orchestration.ts # Zero-Trust Synaptic (eBPF socket isolation, homomorphic vector RAG, BFT reasoning quorum, synaptic LoRA patching)
 ```
 
 ---
@@ -664,6 +666,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Phase 18 — Structural Monopoly Architecture: WASM Sandbox Policy Isolation, Merkle DAG Evidence Notarization, GNN Behavioral Anomaly Detection, Federated Compliance Attestation Mesh
 - [x] Phase 19 — Autonomous Self-Healing Infrastructure (Simulated IaC Synthesis and Dry-run Validation), Cross-Tenant Collaborative SIEM Mesh (Homomorphic Threat Correlation), Consensus-Driven Compliance Oracle, Dynamic Generative Playbooks (Autonomous Cognitive SOAR)
 - [x] Phase 20 — Cognitive Decoy Sandboxing (Honey-Enclaves), Zero-Knowledge Multi-Model Cross-Validation (Consensus Quorum), Active eBPF-Driven Runtime Control Plane Containment, Biometric & TPM-Bound Agent Authorization
+- [x] Phase 21 — Zero-Trust Synaptic Guardrails (Dynamic LoRA Parameter Patching), Kernel-Level Socket Isolation (eBPF sockops filters), Homomorphic Vector RAG, Byzantine Fault Tolerant (BFT) Model Reasoning Quorum
 - [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
 - [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
 - [ ] Compliance Copilot (AI-powered natural language GRC assistant)

@@ -232,6 +232,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'security.query_ebpf_session_logs', tier: 'read' },
   { name: 'identity.request_biometric_gate', tier: 'write' },
   { name: 'identity.verify_biometric_signature', tier: 'read' },
+  // Phase 21 Strategic Zero-Trust Synaptic Guardrails & Kernel-Level Socket Isolation
+  { name: 'security.apply_ebpf_socket_block', tier: 'write' },
+  { name: 'security.verify_socket_quarantine', tier: 'read' },
+  { name: 'memory.query_homomorphic_vector', tier: 'read' },
+  { name: 'memory.verify_homomorphic_decryption', tier: 'read' },
+  { name: 'consensus.evaluate_bft_quorum', tier: 'write' },
+  { name: 'consensus.verify_bft_signatures', tier: 'read' },
+  { name: 'soverign.compile_synaptic_patch', tier: 'write' },
+  { name: 'soverign.apply_runtime_synaptic_patch', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */

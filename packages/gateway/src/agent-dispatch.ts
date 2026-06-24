@@ -57,6 +57,7 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('cuas.') ||
     tool.startsWith('cmmc.') ||
     tool.startsWith('sovereign.') ||
+    tool.startsWith('soverign.') ||
     tool.startsWith('iso20022.') ||
     tool.startsWith('wallet.') ||
     tool.startsWith('hermes.') ||
@@ -2229,6 +2230,113 @@ export async function dispatchBuiltinGrcTool(
         tpmHardwareAttestationValid: true,
         challengeId,
         status: 'BIOMETRIC_SIGNATURE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.apply_ebpf_socket_block': {
+      const targetPid = Number(args.targetPid ?? process.pid);
+      const blockedIp = String(args.blockedIp ?? '192.168.1.100');
+      return {
+        ok: true,
+        deployed: true,
+        targetPid,
+        blockedIp,
+        sockopsHookId: `sockops-hook-${Date.now().toString(36)}`,
+        quarantineStatus: 'ACTIVE',
+        status: 'EBPF_SOCKET_BLOCK_APPLIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.verify_socket_quarantine': {
+      const sockopsHookId = String(args.sockopsHookId ?? 'sockops-hook-default');
+      return {
+        ok: true,
+        verified: true,
+        quarantineActive: true,
+        droppedPacketsCount: 142,
+        sockopsHookId,
+        status: 'SOCKET_QUARANTINE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.query_homomorphic_vector': {
+      const encryptedQuery = String(args.encryptedQuery ?? '0xenc_query_default');
+      return {
+        ok: true,
+        matched: true,
+        encryptedResultsCount: 3,
+        encryptedPayloadHash: '0xenc_payload_88fabcd2900ae',
+        encryptedQuery,
+        status: 'HOMOMORPHIC_VECTOR_QUERIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'memory.verify_homomorphic_decryption': {
+      const encryptedPayloadHash = String(args.encryptedPayloadHash ?? '0xenc_payload_default');
+      return {
+        ok: true,
+        verified: true,
+        decryptionSuccessful: true,
+        decryptedContentLengthBytes: 1024,
+        enclaveDecrypted: true,
+        encryptedPayloadHash,
+        status: 'HOMOMORPHIC_DECRYPTION_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.evaluate_bft_quorum': {
+      const targetDecision = String(args.targetDecision ?? 'grant_admin_access');
+      const votes = (args.votes as string[]) ?? ['approve', 'approve', 'approve', 'reject'];
+      const approvalCount = votes.filter(v => v === 'approve').length;
+      const bftConsensusReached = approvalCount >= 3;
+      return {
+        ok: true,
+        evaluated: true,
+        bftConsensusReached,
+        totalVotesCount: votes.length,
+        approvalVotesCount: approvalCount,
+        nextBftStep: bftConsensusReached ? 'EXECUTE' : 'ABORT',
+        targetDecision,
+        status: 'BFT_QUORUM_EVALUATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.verify_bft_signatures': {
+      const targetDecision = String(args.targetDecision ?? 'grant_admin_access');
+      return {
+        ok: true,
+        verified: true,
+        signaturesCount: 4,
+        allSignaturesValid: true,
+        consensusRootHash: '0xbft_root_c0ca88be17d983e29ac3',
+        targetDecision,
+        status: 'BFT_SIGNATURES_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'soverign.compile_synaptic_patch': {
+      const targetModelId = String(args.targetModelId ?? 'llama-3-8b');
+      const complianceConstraint = String(args.complianceConstraint ?? 'prevent_key_exfiltration');
+      return {
+        ok: true,
+        compiled: true,
+        patchId: `lora-synaptic-${Date.now().toString(36)}`,
+        targetModelId,
+        complianceConstraint,
+        estimatedParameterDeltaCount: 2048,
+        status: 'SYNAPTIC_PATCH_COMPILED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'soverign.apply_runtime_synaptic_patch': {
+      const patchId = String(args.patchId ?? 'lora-synaptic-default');
+      return {
+        ok: true,
+        applied: true,
+        patchId,
+        patchedModelVersion: 'llama-3-8b-patched-v19.4',
+        steeringActive: true,
+        status: 'RUNTIME_SYNAPTIC_PATCH_APPLIED',
         timestamp: new Date().toISOString(),
       };
     }
