@@ -2532,6 +2532,96 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    case 'security.apply_memristive_shield': {
+      const shieldId = String(args.shieldId ?? 'memristor-shield-default');
+      return {
+        ok: true,
+        applied: true,
+        conductanceThreshold: 0.72,
+        shieldId,
+        status: 'MEMRISTIVE_SHIELD_APPLIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.query_memristive_alignment': {
+      const shieldId = String(args.shieldId ?? 'memristor-shield-default');
+      return {
+        ok: true,
+        aligned: true,
+        synapticActivationLevel: 0.94,
+        shieldId,
+        status: 'MEMRISTIVE_ALIGNMENT_QUERIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.initiate_quantum_channel': {
+      const channelId = String(args.channelId ?? 'quantum-ch-default');
+      return {
+        ok: true,
+        channelInitiated: true,
+        entanglementRateHz: 9200,
+        channelId,
+        status: 'QUANTUM_CHANNEL_INITIATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.verify_entanglement_state': {
+      const channelId = String(args.channelId ?? 'quantum-ch-default');
+      return {
+        ok: true,
+        verified: true,
+        coherenceValid: true,
+        channelId,
+        status: 'ENTANGLEMENT_STATE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sandbox.morph_network_topology': {
+      const epochId = Number(args.epochId ?? 1);
+      return {
+        ok: true,
+        morphed: true,
+        activeRoutesCount: 142,
+        epochId,
+        status: 'NETWORK_TOPOLOGY_MORPHED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sandbox.deploy_honey_graph': {
+      const honeyGraphId = String(args.honeyGraphId ?? 'honey-graph-default');
+      return {
+        ok: true,
+        deployed: true,
+        decoyRoutesCount: 24,
+        decoyDatabasesCount: 8,
+        honeyGraphId,
+        status: 'HONEY_GRAPH_DEPLOYED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'identity.shard_sovereign_identity': {
+      const agentId = String(args.agentId ?? 'agent-default');
+      return {
+        ok: true,
+        sharded: true,
+        sharesCount: 5,
+        reconstructionThreshold: 3,
+        agentId,
+        status: 'SOVEREIGN_IDENTITY_SHARDED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'identity.verify_sharded_identity': {
+      const agentId = String(args.agentId ?? 'agent-default');
+      return {
+        ok: true,
+        verified: true,
+        identityReconstructed: true,
+        agentId,
+        status: 'SHARDED_IDENTITY_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }

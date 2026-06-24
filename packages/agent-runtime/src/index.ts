@@ -259,6 +259,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'soverign.verify_enclave_quote', tier: 'read' },
   { name: 'sdk.propose_formal_policy_evolution', tier: 'write' },
   { name: 'sdk.verify_policy_formal_proof', tier: 'read' },
+  // Phase 24 Strategic Neuromorphic Cognitive Shields & Moving Target Defenses
+  { name: 'security.apply_memristive_shield', tier: 'write' },
+  { name: 'security.query_memristive_alignment', tier: 'read' },
+  { name: 'consensus.initiate_quantum_channel', tier: 'write' },
+  { name: 'consensus.verify_entanglement_state', tier: 'read' },
+  { name: 'sandbox.morph_network_topology', tier: 'write' },
+  { name: 'sandbox.deploy_honey_graph', tier: 'write' },
+  { name: 'identity.shard_sovereign_identity', tier: 'write' },
+  { name: 'identity.verify_sharded_identity', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
