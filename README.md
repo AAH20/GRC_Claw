@@ -204,6 +204,7 @@ npm install && npm run build
 | Guest-Kernel & Recursive ZK Test | `npx tsx scripts/test-phase22-orchestration.ts` (under packages/agent-runtime) |
 | DPU Offload & Secure Enclave Test | `npx tsx scripts/test-phase23-orchestration.ts` (under packages/agent-runtime) |
 | Neuromorphic & Quantum Consensus Test | `npx tsx scripts/test-phase24-orchestration.ts` (under packages/agent-runtime) |
+| Photonic & DNA Wet-Storage Test | `npx tsx scripts/test-phase25-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -597,6 +598,7 @@ npx tsx packages/agent-runtime/scripts/test-phase21-orchestration.ts # Zero-Trus
 npx tsx packages/agent-runtime/scripts/test-phase22-orchestration.ts # Guest-Kernel & Recursive ZK (eBPF MicroVM sandbox, homomorphic joint policy audit, recursive Halo2 ZK rollup, GPU attention weight redirection)
 npx tsx packages/agent-runtime/scripts/test-phase23-orchestration.ts # DPU Offload & Secure Enclaves (SmartNIC/DPU cognitive filters offloading, CRYSTALS-Dilithium ring signatures, Intel SGX/AMD SEV-SNP secure enclaves, SMT/Coq formal policy proof verification)
 npx tsx packages/agent-runtime/scripts/test-phase24-orchestration.ts # Neuromorphic & Quantum Consensus (Memristive cognitive shields, quantum entanglement-based channels, dynamic Honey-Graph topology morphing, sovereign identity sharding)
+npx tsx packages/agent-runtime/scripts/test-phase25-orchestration.ts # Photonic & DNA Wet-Storage (Photonic zero-knowledge attestation, DNA-locked wet-storage encryption, cognitive swarm self-assembly, photonic memory crystallization)
 ```
 
 ---
@@ -676,6 +678,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Phase 22 — MicroVM Guest-Kernel Sandboxing (eBPF monitors), Homomorphic Joint-Policy Auditing (FHE), Recursive ZK-Proof Aggregation (Halo2 rollup), GPU Attention-Head Redirection (Dynamic steering)
 - [x] Phase 23 — DPU Cognitive Offloading (SmartNIC filter), Post-Quantum Lattice Ring Signatures (Dilithium cohort trust), Hardware-Locked Secure Enclaves (AMD SEV-SNP enclaves), Self-Evolving Formal Consensus (SMT solver verification)
 - [x] Phase 24 — Neuromorphic Cognitive Shields (Memristor arrays), Quantum-Entanglement Consensus (teleported attestations), Dynamic Honey-Graph Morphing (moving-target routing), Sovereign Identity Sharding (threshold credential splits)
+- [x] Phase 25 — Photonic ZK Attestation (speed-of-light proofs), DNA-Locked Wet-Storage Encryption (microfluidic biological key storage), Cognitive Swarm Self-Assembly (enclaved self-writing logic), Photonic Memory Crystallization (optical context arrays)
 - [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
 - [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
 - [ ] Compliance Copilot (AI-powered natural language GRC assistant)
