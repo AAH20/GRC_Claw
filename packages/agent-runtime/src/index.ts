@@ -223,6 +223,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.verify_oracle_quorum', tier: 'read' },
   { name: 'soar.synthesize_generative_playbook', tier: 'write' },
   { name: 'soar.verify_playbook_safety_envelope', tier: 'read' },
+  // Phase 20 Strategic Cognitive Decoy Sandboxing & eBPF Runtime Containment
+  { name: 'sandbox.spawn_honey_enclave', tier: 'write' },
+  { name: 'sandbox.verify_decoy_containment', tier: 'read' },
+  { name: 'consensus.submit_multi_model_quorum', tier: 'write' },
+  { name: 'consensus.verify_multi_model_zk_proof', tier: 'read' },
+  { name: 'security.deploy_ebpf_session_filter', tier: 'write' },
+  { name: 'security.query_ebpf_session_logs', tier: 'read' },
+  { name: 'identity.request_biometric_gate', tier: 'write' },
+  { name: 'identity.verify_biometric_signature', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
