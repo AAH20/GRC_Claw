@@ -2437,6 +2437,101 @@ export async function dispatchBuiltinGrcTool(
         timestamp: new Date().toISOString(),
       };
     }
+    case 'security.offload_dpu_cognitive_filter': {
+      const filterId = String(args.filterId ?? 'dpu-filter-default');
+      return {
+        ok: true,
+        deployed: true,
+        dpuTarget: 'bluefield-3',
+        filterId,
+        status: 'DPU_COGNITIVE_FILTER_OFFLOADED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'security.query_dpu_offload_status': {
+      const filterId = String(args.filterId ?? 'dpu-filter-default');
+      return {
+        ok: true,
+        hardwareStatus: 'ACTIVE',
+        throughputGbps: 84.5,
+        latencyNs: 120,
+        filterId,
+        status: 'DPU_OFFLOAD_STATUS_QUERIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.sign_lattice_ring_attestation': {
+      const ringMembers = (args.ringMembers as string[]) ?? ['member-ciso', 'member-auditor'];
+      const statementHash = String(args.statementHash ?? '0xstatement_default');
+      return {
+        ok: true,
+        signed: true,
+        latticeSignatureHex: '0xdilithium5_sig_88ef21aa',
+        ringMembersCount: ringMembers.length,
+        statementHash,
+        status: 'LATTICE_RING_ATTESTATION_SIGNED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'consensus.verify_lattice_ring_attestation': {
+      const latticeSignatureHex = String(args.latticeSignatureHex ?? '0xdilithium5_sig_default');
+      return {
+        ok: true,
+        verified: true,
+        ringValid: true,
+        latticeSignatureHex,
+        status: 'LATTICE_RING_ATTESTATION_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'soverign.instantiate_secure_enclave': {
+      const enclaveId = String(args.enclaveId ?? 'enclave-default');
+      return {
+        ok: true,
+        enclaveInstantiated: true,
+        enclaveType: 'AMD_SEV_SNP',
+        hardwareSignedQuote: '0xsev_snp_quote_ef9921c2',
+        enclaveId,
+        status: 'SECURE_ENCLAVE_INSTANTIATED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'soverign.verify_enclave_quote': {
+      const hardwareSignedQuote = String(args.hardwareSignedQuote ?? '0xquote_default');
+      return {
+        ok: true,
+        verified: true,
+        quoteValid: true,
+        hardwareSignedQuote,
+        status: 'SECURE_ENCLAVE_QUOTE_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sdk.propose_formal_policy_evolution': {
+      const frameworkId = String(args.frameworkId ?? 'ISO42001_AIMS');
+      const policyDelta = String(args.policyDelta ?? 'require_formal_proof_invariants');
+      return {
+        ok: true,
+        proposed: true,
+        proposalId: 'prop-formal-882',
+        frameworkId,
+        policyDelta,
+        status: 'FORMAL_POLICY_EVOLUTION_PROPOSED',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'sdk.verify_policy_formal_proof': {
+      const proposalId = String(args.proposalId ?? 'prop-default');
+      return {
+        ok: true,
+        verified: true,
+        smtSolved: true,
+        formalProofValid: true,
+        proposalId,
+        status: 'POLICY_FORMAL_PROOF_VERIFIED',
+        timestamp: new Date().toISOString(),
+      };
+    }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }

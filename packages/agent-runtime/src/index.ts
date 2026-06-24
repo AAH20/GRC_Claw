@@ -250,6 +250,15 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'consensus.verify_aggregated_rollup', tier: 'read' },
   { name: 'soverign.track_attention_entropy', tier: 'read' },
   { name: 'soverign.steer_attention_redirection', tier: 'write' },
+  // Phase 23 Strategic DPU Cognitive Offloading & Hardware-Locked Enclaves
+  { name: 'security.offload_dpu_cognitive_filter', tier: 'write' },
+  { name: 'security.query_dpu_offload_status', tier: 'read' },
+  { name: 'consensus.sign_lattice_ring_attestation', tier: 'write' },
+  { name: 'consensus.verify_lattice_ring_attestation', tier: 'read' },
+  { name: 'soverign.instantiate_secure_enclave', tier: 'write' },
+  { name: 'soverign.verify_enclave_quote', tier: 'read' },
+  { name: 'sdk.propose_formal_policy_evolution', tier: 'write' },
+  { name: 'sdk.verify_policy_formal_proof', tier: 'read' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
