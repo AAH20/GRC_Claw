@@ -185,6 +185,11 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'actuator.trigger_analog_airgap', tier: 'destructive' },
   { name: 'security.verify_temporal_invariants', tier: 'read' },
   { name: 'sovereign.inject_activation_patch', tier: 'write' },
+  // Phase 14 Strategic Zero-Knowledge Swarm Execution & Cross-Topology Alignment
+  { name: 'grc.generate_session_zk_proof', tier: 'write' },
+  { name: 'sovereign.inject_multimodel_steering_patch', tier: 'write' },
+  { name: 'memory.verify_zk_rag_proof', tier: 'read' },
+  { name: 'consensus.propagate_threat_rollup', tier: 'write' },
 ];
 
 /** Three-phase exec policy: allowlist → approval → sandbox + Swarm Harness checks */
