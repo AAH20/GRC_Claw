@@ -10,7 +10,7 @@ async function runTests() {
   console.log('=== RUNNING COMPREHENSIVE VECTOR DB & CLOUD MEMORY TESTS ===\n');
 
   const evidence = new EvidenceStore();
-  const a2z = new A2ZSocConnector({ apiUrl: 'https://a2z-soc.com/api', apiKey: 'mock-key' });
+  const a2z = new A2ZSocConnector({ apiUrl: 'https://a2zsoc.com/api', apiKey: 'mock-key' });
 
   // ==========================================
   // Test 1: Vector Graph Memory Query
