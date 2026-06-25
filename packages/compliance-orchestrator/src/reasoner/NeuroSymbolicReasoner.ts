@@ -162,7 +162,7 @@ export class NeuroSymbolicReasoner {
             type: 'policy',
             before: prevStatus.status,
             after: result.decision,
-            severity: control.severity,
+            severity: control.severity ?? 'MEDIUM',
             autoRemediated: false,
           });
         }
@@ -439,7 +439,7 @@ export class NeuroSymbolicReasoner {
 
   private assessRisk(control: ASTControlNode, result: ReasoningResult, context: ReasoningContext): RiskAssessment {
     const severityMap = { LOW: 1, MEDIUM: 3, HIGH: 7, CRITICAL: 10 };
-    const baseRisk = severityMap[control.severity] ?? 3;
+    const baseRisk = severityMap[control.severity as keyof typeof severityMap] ?? 3;
 
     const complianceRisk = result.decision === 'compliant' ? 0 : result.decision === 'partial' ? 3 : 7;
     const likelihood = complianceRisk / 10;

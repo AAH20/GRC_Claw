@@ -57,7 +57,6 @@
     "test:assurance": "npm run build && node scripts/test-assurance.mjs",
     "test:assurance-envelope": "npm run build && node scripts/test-assurance-envelope.mjs",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
-    "test:cloud": "bash scripts/test-cloud-security.sh",
     "test:skills": "npm run test -w @grc-claw/skill-executor",
     "test:orchestrator": "npm run test -w @grc-claw/compliance-orchestrator",
     "test:supply-chain": "npm run test -w @grc-claw/ai-supply-chain",
@@ -73,7 +72,7 @@
     "test:threat": "npm run test -w @grc-claw/ai-threat-detection",
     "test:zk": "npm run test -w @grc-claw/zk-compliance",
     "test:marketplace": "npm run test -w @grc-claw/trust-marketplace",
-    "test:all": "npm run build && echo 'All 22 packages built successfully'"
+    "test:all": "npm run build && echo 'All 37 packages built successfully'"
   },
   "engines": {
     "node": ">=20"

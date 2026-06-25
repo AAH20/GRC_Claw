@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
@@ -26,6 +27,11 @@ import { dispatchAgentTool, executionStateFromOutput } from './agent-dispatch.js
 import { createClawDispatchContext } from './skill-runtime.js';
 import { GatewayAssuranceGraph } from './assurance.js';
 import { getSkillById, listSkills } from '@grc-claw/skill-executor';
+import { createRateLimiter } from './rate-limiter.js';
+import { applySecurityHeaders } from './security-headers.js';
+
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_BODY_BYTES = 1 * 1024 * 1024;
 
 export interface GatewayConfig {
   host: string;
@@ -43,6 +49,7 @@ export function createGateway(config: GatewayConfig) {
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
   const connectors = getConnectorRegistry();
   const store = new PersistentMemoryStore(process.env.GRC_CLAW_MEMORY_DIR?.trim() || '.grc_memory');
+  const rateLimiter = createRateLimiter();
   let execPolicy!: ExecPolicy;
 
   async function persistAssuranceEnvelope(
@@ -101,16 +108,59 @@ export function createGateway(config: GatewayConfig) {
       typeof header === 'string' && header.startsWith('Bearer ')
         ? header.slice(7)
         : String(header ?? '');
-    return token === config.token;
+
+    const secretBuf = Buffer.from(config.token, 'utf8');
+    const tokenBuf = Buffer.from(token, 'utf8');
+
+    if (secretBuf.length !== tokenBuf.length) {
+      logAuthFailure(req, 'length_mismatch');
+      return false;
+    }
+
+    const match = timingSafeEqual(secretBuf, tokenBuf);
+    if (!match) {
+      logAuthFailure(req, 'token_mismatch');
+    }
+    return match;
+  }
+
+  function logAuthFailure(req: IncomingMessage, reason: string): void {
+    const ip = req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? 'unknown';
+    const endpoint = req.url ?? '/';
+    console.warn(
+      `[SECURITY] auth_failure ip=${ip} reason=${reason} endpoint=${endpoint} timestamp=${new Date().toISOString()}`
+    );
   }
 
   const httpServer = createServer(async (req, res) => {
+    applySecurityHeaders(res);
     applyCors(res);
+
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      try {
+        if (!res.headersSent) {
+          res.writeHead(508, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'request_timeout' }));
+        }
+      } catch {}
+    }, REQUEST_TIMEOUT_MS);
+    const clearTimer = () => clearTimeout(timeout);
+    res.on('finish', clearTimer);
+    res.on('close', clearTimer);
+
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
       return;
     }
+
+    if (timedOut) return;
+
+    if (!rateLimiter.middleware(req, res, req.method ?? 'GET')) return;
+
+    if (timedOut) return;
 
     const path = req.url?.split('?')[0] ?? '/';
 
@@ -244,14 +294,24 @@ export function createGateway(config: GatewayConfig) {
         res.end(JSON.stringify({ error: 'unauthorized' }));
         return;
       }
-      const body = await readJson(req);
-      const skillId = String(body.skillId ?? '');
-      const task = String(body.task ?? '');
-      if (!skillId || !task) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'skillId_and_task_required' }));
+      let body: Record<string, unknown>;
+      try {
+        body = await readJson(req);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'invalid_body';
+        const status = msg === 'request_body_too_large' ? 413 : 400;
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
         return;
       }
+      const validation = validateBody(body, ['skillId', 'task']);
+      if (!validation.valid) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'missing_required_field', field: validation.missing }));
+        return;
+      }
+      const skillId = String(body.skillId ?? '');
+      const task = String(body.task ?? '');
       const policy = execPolicy ?? (await refreshExecPolicy());
       const session = new AgentSession(String(body.sessionId ?? 'skill-run'), policy, store);
       const idem = String(body.idempotencyKey ?? `skill-run-${skillId}-${Date.now()}`);
@@ -316,7 +376,22 @@ export function createGateway(config: GatewayConfig) {
         res.end(JSON.stringify({ error: 'unauthorized' }));
         return;
       }
-      const body = await readJson(req);
+      let body: Record<string, unknown>;
+      try {
+        body = await readJson(req);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'invalid_body';
+        const status = msg === 'request_body_too_large' ? 413 : 400;
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+        return;
+      }
+      const validation = validateBody(body, ['source']);
+      if (!validation.valid) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'missing_required_field', field: validation.missing }));
+        return;
+      }
       const source = String(body.source ?? '') as IngestSource;
       const tenantId = Number(body.tenantId ?? 1);
       const payload = body.payload;
@@ -358,7 +433,22 @@ export function createGateway(config: GatewayConfig) {
         res.end(JSON.stringify({ error: 'unauthorized' }));
         return;
       }
-      const body = await readJson(req);
+      let body: Record<string, unknown>;
+      try {
+        body = await readJson(req);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'invalid_body';
+        const status = msg === 'request_body_too_large' ? 413 : 400;
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+        return;
+      }
+      const validation = validateBody(body, ['tool']);
+      if (!validation.valid) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'missing_required_field', field: validation.missing }));
+        return;
+      }
       const idem = String(body.idempotencyKey ?? '');
       if (idem && dedupe.seen(idem)) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -480,7 +570,14 @@ export function createGateway(config: GatewayConfig) {
         };
         if (!connected && frame.type === 'connect') {
           const token = frame.params?.auth?.token ?? '';
-          if (token !== config.token) {
+          const secretBuf = Buffer.from(config.token, 'utf8');
+          const tokenBuf = Buffer.from(token, 'utf8');
+          const tokenValid = secretBuf.length === tokenBuf.length && timingSafeEqual(secretBuf, tokenBuf);
+          if (!tokenValid) {
+            const wsIp = (socket as unknown as { _socket?: { remoteAddress?: string } })._socket?.remoteAddress ?? 'unknown';
+            console.warn(
+              `[SECURITY] auth_failure ip=${wsIp} reason=ws_token_mismatch endpoint=/ws timestamp=${new Date().toISOString()}`
+            );
             socket.close(4001, 'unauthorized');
             return;
           }
@@ -520,7 +617,16 @@ function toolTierFor(tool: string): ToolTier {
 function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c) => chunks.push(c));
+    let totalBytes = 0;
+    req.on('data', (c: Buffer) => {
+      totalBytes += c.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        req.destroy();
+        reject(new Error('request_body_too_large'));
+        return;
+      }
+      chunks.push(c);
+    });
     req.on('end', () => {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
@@ -528,5 +634,18 @@ function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
         reject(e);
       }
     });
+    req.on('error', reject);
   });
+}
+
+function validateBody(
+  body: Record<string, unknown>,
+  requiredFields: string[]
+): { valid: boolean; missing?: string } {
+  for (const field of requiredFields) {
+    if (!(field in body)) {
+      return { valid: false, missing: field };
+    }
+  }
+  return { valid: true };
 }

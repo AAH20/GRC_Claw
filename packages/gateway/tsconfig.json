@@ -17,6 +17,9 @@
     { "path": "../aims" },
     { "path": "../connectors" },
     { "path": "../skill-executor" },
-    { "path": "../security-graph" }
+    { "path": "../security-graph" },
+    { "path": "../soar" },
+    { "path": "../audit-management" },
+    { "path": "../cloud-connectors" }
   ]
 }

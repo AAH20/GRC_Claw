@@ -2,7 +2,8 @@ import { RegulationASTCompiler } from './compiler/RegulationASTCompiler.js';
 import { NeuroSymbolicReasoner } from './reasoner/NeuroSymbolicReasoner.js';
 import { UnifiedComplianceGraph } from './graph/UnifiedComplianceGraph.js';
 import { ComplianceSuperOrchestrator } from './index.js';
-import type { FrameworkCode, ReasoningContext } from './types.js';
+import type { FrameworkCode } from './types.js';
+import type { ReasoningContext } from './reasoner/NeuroSymbolicReasoner.js';
 
 async function testRegulationASTCompiler() {
   console.log('\n=== Testing Regulation AST Compiler ===');
