@@ -23,7 +23,11 @@
     "packages/sdk",
     "packages/compliance-orchestrator",
     "packages/ai-supply-chain",
-    "packages/compliance-copilot"
+    "packages/compliance-copilot",
+    "packages/continuous-compliance",
+    "packages/federated-compliance-mesh",
+    "packages/agent-trust-score",
+    "packages/regulatory-intelligence"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
@@ -43,7 +47,11 @@
     "test:orchestrator": "npm run test -w @grc-claw/compliance-orchestrator",
     "test:supply-chain": "npm run test -w @grc-claw/ai-supply-chain",
     "test:copilot": "npm run test -w @grc-claw/compliance-copilot",
-    "test:strategic": "npm run build && echo 'Strategic packages built successfully'"
+    "test:continuous": "npm run test -w @grc-claw/continuous-compliance",
+    "test:mesh": "npm run test -w @grc-claw/federated-compliance-mesh",
+    "test:trust": "npm run test -w @grc-claw/agent-trust-score",
+    "test:regulatory": "npm run test -w @grc-claw/regulatory-intelligence",
+    "test:strategic": "npm run build && echo 'All 7 strategic packages built successfully'"
   },
   "engines": {
     "node": ">=20"
