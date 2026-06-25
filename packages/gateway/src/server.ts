@@ -4,7 +4,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { A2ZSocConnector, loadA2ZConfigFromEnv } from '@grc-claw/a2z-connector';
 import { AgentSession, BUILTIN_AGENT_TOOLS, type ExecPolicy, PersistentMemoryStore, type ToolTier } from '@grc-claw/agent-runtime';
 import { getConnectorRegistry, isConnectorTool } from '@grc-claw/connectors';
-import { ActionLedger, EvidenceStore } from '@grc-claw/evidence';
+import { ActionLedger, createAssuranceEnvelope, EvidenceStore, type ActionLedgerEvent } from '@grc-claw/evidence';
 import {
   AIMS_SCOPE_TEMPLATE,
   listClauseMap,
@@ -44,6 +44,36 @@ export function createGateway(config: GatewayConfig) {
   const connectors = getConnectorRegistry();
   const store = new PersistentMemoryStore(process.env.GRC_CLAW_MEMORY_DIR?.trim() || '.grc_memory');
   let execPolicy!: ExecPolicy;
+
+  async function persistAssuranceEnvelope(
+    intent: ActionLedgerEvent,
+    decision: ActionLedgerEvent,
+    result: ActionLedgerEvent | undefined,
+    snapshot: ReturnType<GatewayAssuranceGraph['get']>
+  ): Promise<{ envelopeId?: string; actionId: string; executionState: 'recorded' | 'not_configured' | 'failed' }> {
+    const envelope = createAssuranceEnvelope({
+      intent,
+      decision,
+      result,
+      identity: snapshot ? { agentDid: snapshot.agentDid, status: snapshot.identityStatus } : undefined,
+      assurance: snapshot
+        ? {
+            riskScore: snapshot.risk.overallRisk,
+            blastRadiusImpact: snapshot.blastRadius?.impactScore,
+            controlId: snapshot.blastRadius?.controlId,
+          }
+        : undefined,
+    });
+    try {
+      return await a2z.recordAssuranceEnvelope(
+        intent.tenantId,
+        envelope,
+        `assurance-${intent.actionId}`
+      );
+    } catch {
+      return { actionId: intent.actionId, executionState: 'failed' };
+    }
+  }
 
   async function refreshExecPolicy(): Promise<ExecPolicy> {
     execPolicy = await buildExecPolicyWithConnectors(connectors);
@@ -362,10 +392,11 @@ export function createGateway(config: GatewayConfig) {
           sandbox: 'denied' as const,
           requiresApproval: true,
         };
-        ledger.recordDecision(intent, decision);
+        const decisionEvent = ledger.recordDecision(intent, decision);
         const updatedAssurance = assurance.observeDecision(intent, false, decision.reason);
+        const assuranceReceipt = await persistAssuranceEnvelope(intent, decisionEvent, undefined, updatedAssurance);
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ decision, assurance: updatedAssurance, action: { id: intent.actionId, executionState: 'approval_required' }, audit: session.getAuditLog() }));
+        res.end(JSON.stringify({ decision, assurance: updatedAssurance, assuranceReceipt, action: { id: intent.actionId, executionState: 'approval_required' }, audit: session.getAuditLog() }));
         return;
       }
       const decision = await session.invoke({
@@ -374,11 +405,12 @@ export function createGateway(config: GatewayConfig) {
         approvalToken: body.approvalToken as string | undefined,
         idempotencyKey: idem || undefined,
       });
-      ledger.recordDecision(intent, decision);
+      const decisionEvent = ledger.recordDecision(intent, decision);
       const updatedAssurance = assurance.observeDecision(intent, decision.allowed, decision.reason);
       if (!decision.allowed) {
+        const assuranceReceipt = await persistAssuranceEnvelope(intent, decisionEvent, undefined, updatedAssurance);
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ decision, assurance: updatedAssurance, action: { id: intent.actionId, executionState: decision.requiresApproval ? 'approval_required' : 'denied' }, audit: session.getAuditLog() }));
+        res.end(JSON.stringify({ decision, assurance: updatedAssurance, assuranceReceipt, action: { id: intent.actionId, executionState: decision.requiresApproval ? 'approval_required' : 'denied' }, audit: session.getAuditLog() }));
         return;
       }
       let output: Record<string, unknown> | undefined;
@@ -391,13 +423,15 @@ export function createGateway(config: GatewayConfig) {
           claw,
         });
       } catch (e) {
-        ledger.recordResult(intent, { executionState: 'failed' });
+        const resultEvent = ledger.recordResult(intent, { executionState: 'failed' });
+        const assuranceReceipt = await persistAssuranceEnvelope(intent, decisionEvent, resultEvent, assurance.get(intent.actionId));
         res.writeHead(502, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
             decision,
             error: e instanceof Error ? e.message : 'agent_dispatch_failed',
             assurance: assurance.get(intent.actionId),
+            assuranceReceipt,
             audit: session.getAuditLog(),
           })
         );
@@ -413,6 +447,7 @@ export function createGateway(config: GatewayConfig) {
             : undefined,
         targetReceipt: typeof output.targetReceipt === 'string' ? output.targetReceipt : undefined,
       });
+      const assuranceReceipt = await persistAssuranceEnvelope(intent, decisionEvent, action, assurance.get(intent.actionId));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
@@ -421,6 +456,7 @@ export function createGateway(config: GatewayConfig) {
           output,
           action: { id: action.actionId, executionState },
           assurance: assurance.get(intent.actionId),
+          assuranceReceipt,
           audit: session.getAuditLog(),
         })
       );

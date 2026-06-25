@@ -131,6 +131,25 @@ export class A2ZSocConnector implements GRCEngineFacade {
     return res.json() as Promise<{ evidenceId: string }>;
   }
 
+  /** Persist a redacted, tenant-scoped agent-action receipt in the hosted assurance plane. */
+  async recordAssuranceEnvelope(
+    tenantId: number,
+    envelope: { actionId: string },
+    idempotencyKey: string
+  ): Promise<{ envelopeId?: string; actionId: string; executionState: 'recorded' | 'not_configured' }> {
+    const actionId = envelope.actionId;
+    if (this.cfg.mode === 'demo') {
+      return { actionId, executionState: 'not_configured' };
+    }
+    const res = await fetch(this.url('/api/grc/assurance'), {
+      method: 'POST',
+      headers: this.headers(idempotencyKey),
+      body: JSON.stringify({ tenant_id: tenantId, envelope }),
+    });
+    if (!res.ok) throw new Error(`A2Z SOC assurance envelope: ${res.status}`);
+    return res.json() as Promise<{ envelopeId?: string; actionId: string; executionState: 'recorded' }>;
+  }
+
   async mapSecurityEventToControls(event: SecurityEventCanonical): Promise<ComplianceImpact> {
     if (event.complianceImpact) return event.complianceImpact;
     const mapping: Record<string, string[]> = {

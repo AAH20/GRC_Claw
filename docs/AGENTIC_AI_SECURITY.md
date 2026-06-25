@@ -60,6 +60,14 @@ or claim an external identity. Set `GRC_CLAW_ASSURANCE_MAX_RISK` to a number fro
 make the pre-execution gate deny actions at or above that risk; leave it unset for observe-only
 rollout. This is intended to be enabled gradually with a real credential issuance workflow.
 
+## Assurance envelopes
+
+Every completed gateway invocation now compiles its ledger intent, policy decision, final result,
+identity context, and assurance assessment into a redacted `v1` assurance envelope. It carries
+hashes, receipts, and identifiers—not raw arguments or outputs. In private A2Z SOC mode the
+gateway posts the final envelope to `POST /api/grc/assurance` under the bridge tenant; in demo
+mode the response truthfully reports `not_configured` for hosted persistence.
+
 ## Hardening checklist (operators)
 
 - [ ] `GRC_CLAW_GATEWAY_TOKEN` from secret manager, not git
