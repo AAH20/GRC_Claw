@@ -51,6 +51,7 @@ ATTACH=$(curl -s -X POST "$BASE/api/agent/invoke" \
 assert "agent: evidence receipt is recorded" '"executionState":"recorded"' "$ATTACH"
 assert "agent: assurance binds a DID" '"agentDid":"did:grc:' "$ATTACH"
 assert "agent: assurance calculates blast radius" '"blastRadius"' "$ATTACH"
+assert "agent: assurance envelope is honest in demo mode" '"assuranceReceipt":{"actionId"' "$ATTACH"
 
 ASSURANCE=$(curl -s "$BASE/api/assurance" -H "X-GRC-Claw-Token: $TOKEN")
 assert "agent: assurance graph tracks actions" '"totalNodes":' "$ASSURANCE"
