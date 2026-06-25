@@ -27,7 +27,14 @@
     "packages/continuous-compliance",
     "packages/federated-compliance-mesh",
     "packages/agent-trust-score",
-    "packages/regulatory-intelligence"
+    "packages/regulatory-intelligence",
+    "packages/persistence",
+    "packages/cloud-connectors",
+    "packages/dev-compliance",
+    "packages/business-impact",
+    "packages/ai-threat-detection",
+    "packages/zk-compliance",
+    "packages/trust-marketplace"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
@@ -51,7 +58,14 @@
     "test:mesh": "npm run test -w @grc-claw/federated-compliance-mesh",
     "test:trust": "npm run test -w @grc-claw/agent-trust-score",
     "test:regulatory": "npm run test -w @grc-claw/regulatory-intelligence",
-    "test:strategic": "npm run build && echo 'All 7 strategic packages built successfully'"
+    "test:persistence": "npm run test -w @grc-claw/persistence",
+    "test:cloud": "npm run test -w @grc-claw/cloud-connectors",
+    "test:dev": "npm run test -w @grc-claw/dev-compliance",
+    "test:business": "npm run test -w @grc-claw/business-impact",
+    "test:threat": "npm run test -w @grc-claw/ai-threat-detection",
+    "test:zk": "npm run test -w @grc-claw/zk-compliance",
+    "test:marketplace": "npm run test -w @grc-claw/trust-marketplace",
+    "test:all": "npm run build && echo 'All 22 packages built successfully'"
   },
   "engines": {
     "node": ">=20"
