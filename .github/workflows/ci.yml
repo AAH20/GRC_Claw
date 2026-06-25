@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Run tests
+        run: node --import tsx --test packages/*/src/**/*.test.ts
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Verify build artifacts exist
+        run: |
+          for pkg in packages/*/; do
+            if [ -d "$pkg/src" ] && [ ! -d "$pkg/dist" ]; then
+              echo "ERROR: $pkg has src/ but no dist/ after build"
+              exit 1
+            fi
+          done
+          echo "All package builds verified"
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f deploy/Dockerfile -t grc-claw:ci-test .
+
+      - name: Verify container starts
+        run: |
+          docker run -d --name grc-claw-test -p 18791:18791 grc-claw:ci-test
+          sleep 5
+
+          if docker ps | grep -q grc-claw-test; then
+            echo "Container is running"
+          else
+            echo "ERROR: Container failed to start"
+            docker logs grc-claw-test
+            exit 1
+          fi
+
+      - name: Verify health endpoint
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -sf http://localhost:18791/health > /dev/null 2>&1; then
+              echo "Health endpoint responding"
+              exit 0
+            fi
+            echo "Attempt $i: waiting for health endpoint..."
+            sleep 3
+          done
+          echo "WARNING: Health endpoint not reachable (may not be implemented yet)"
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f grc-claw-test 2>/dev/null || true

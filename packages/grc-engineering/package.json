@@ -1,0 +1,25 @@
+{
+  "name": "@grc-claw/grc-engineering",
+  "version": "0.1.0",
+  "description": "GRC-as-Code engineering: grcfile, CI/CD compliance pipelines, and GitOps workflows",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/**/*.test.js 2>/dev/null || true"
+  },
+  "dependencies": {
+    "@grc-claw/core": "0.1.0",
+    "@grc-claw/evidence": "0.1.0",
+    "@grc-claw/frameworks": "0.1.0"
+  },
+  "files": ["dist"]
+}

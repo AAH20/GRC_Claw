@@ -42,7 +42,9 @@
     "packages/incident-response",
     "packages/board-reporting",
     "packages/auto-evidence",
-    "packages/questionnaire-automation"
+    "packages/questionnaire-automation",
+    "packages/grc-engineering",
+    "packages/sdk-client"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
