@@ -8,12 +8,28 @@ import {
   type ConnectorRegistry,
 } from '@grc-claw/connectors';
 import { dispatchClawTool, isClawTool, type ClawDispatchContext } from '@grc-claw/skill-executor';
-import { VectorGraphMemory, SkillsRegistry } from '@grc-claw/agent-runtime';
+import { VectorGraphMemory, SkillsRegistry, AgentSession, ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
+import { normalizeBySource, CLOUD_INGEST_SOURCES } from '@grc-claw/ingest';
+import type { IngestSource } from '@grc-claw/ingest';
+import { createAssuranceEnvelope, ActionLedger } from '@grc-claw/evidence';
+import { SecurityGraph } from '@grc-claw/security-graph';
+import { SOAREngine } from '@grc-claw/soar';
+import type { Playbook } from '@grc-claw/soar';
+import { CloudConnectorRegistry } from '@grc-claw/cloud-connectors';
+import { AuditManager } from '@grc-claw/audit-management';
+import type { Audit, Finding } from '@grc-claw/audit-management';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
+const securityGraph = new SecurityGraph();
+const soarEngine = new SOAREngine();
+const auditManager = new AuditManager();
+const cloudRegistry = new CloudConnectorRegistry();
+const actionLedger = new ActionLedger();
+const memoryStore = new PersistentMemoryStore();
+const agentSessions = new Map<string, AgentSession>();
 
 export type ExecutionState =
   | 'simulated'
@@ -1053,15 +1069,20 @@ export async function dispatchBuiltinGrcTool(
     }
     // ─── Agentic SOAR (Playbook Engine) ───────────────────────────────
     case 'soar.list_playbooks': {
+      const playbooks = soarEngine.listPlaybooks();
       return {
         ok: true,
-        playbooks: [
-          { id: 'pb-agent-compromise', name: 'Agent Compromise Response', trigger: 'agent_compromise', severity: 'critical', steps: 6 },
-          { id: 'pb-policy-violation', name: 'Policy Violation Response', trigger: 'policy_violation', severity: 'high', steps: 4 },
-          { id: 'pb-drift-correction', name: 'Infrastructure Drift Correction', trigger: 'drift_detected', severity: 'medium', steps: 4 },
-          { id: 'pb-credential-rotation', name: 'Emergency Credential Rotation', trigger: 'credential_leak', severity: 'critical', steps: 5 },
-        ],
-        count: 4
+        playbooks: playbooks.map((pb: Playbook) => ({
+          id: pb.id,
+          name: pb.name,
+          trigger: pb.trigger,
+          severity: pb.severity,
+          steps: pb.steps.length,
+          description: pb.description,
+          sla_seconds: pb.sla_seconds,
+          tags: pb.tags,
+        })),
+        count: playbooks.length,
       };
     }
     case 'soar.get_playbook': {
@@ -1070,8 +1091,23 @@ export async function dispatchBuiltinGrcTool(
     }
     case 'soar.execute_playbook': {
       const playbookId = String(args.playbookId ?? '');
-      const executionId = `exec_${Date.now().toString(36)}`;
-      return { ok: true, executionId, playbookId, status: 'completed', stepsExecuted: 6, totalDurationMs: 47, slaBreached: false, timestamp: new Date().toISOString() };
+      const context = (args.context as Record<string, unknown>) ?? {};
+      try {
+        const execution = await soarEngine.executePlaybook(playbookId, context);
+        return {
+          ok: true,
+          executionId: execution.executionId,
+          playbookId: execution.playbookId,
+          status: execution.status,
+          stepsExecuted: execution.stepResults.length,
+          totalDurationMs: execution.totalDurationMs,
+          slaBreached: execution.slaBreached,
+          evidenceHashes: execution.evidenceHashes,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, tool, error: err.message ?? 'playbook_execution_failed', timestamp: new Date().toISOString() };
+      }
     }
     case 'soar.get_execution': {
       return { ok: true, executionId: String(args.executionId ?? ''), status: 'completed', stepResults: [] };
@@ -3415,6 +3451,509 @@ export async function dispatchBuiltinGrcTool(
         status: 'GRAVITY_LOOP_STATE_VERIFIED',
         timestamp: new Date().toISOString(),
       };
+    }
+    // ─── Ingest Tools ──────────────────────────────────────────────
+    case 'ingest.normalize_event': {
+      const source = String(args.source ?? '') as IngestSource;
+      const payload = args.payload;
+      try {
+        const event = normalizeBySource(source, payload, tenantId);
+        if (!event) {
+          return { ok: false, error: `unsupported_source: ${source}`, tool, timestamp: new Date().toISOString() };
+        }
+        return { ok: true, event, source, tenantId, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'normalize_failed', source, timestamp: new Date().toISOString() };
+      }
+    }
+    case 'ingest.list_sources': {
+      const ossSources: string[] = ['wazuh', 'suricata', 'snort', 'elastic', 'ufw'];
+      const cloudSources: string[] = [...CLOUD_INGEST_SOURCES];
+      return {
+        ok: true,
+        ossSources,
+        cloudSources,
+        totalSources: ossSources.length + cloudSources.length,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    // ─── Evidence Tools ─────────────────────────────────────────────
+    case 'evidence.store': {
+      const controlId = String(args.controlId ?? '');
+      const uri = String(args.uri ?? 'grc-claw://local-evidence');
+      if (!controlId) {
+        return { ok: false, error: 'controlId_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const content = typeof args.content === 'string' ? args.content : undefined;
+        const record = deps.evidence.attach({
+          controlId,
+          tenantId,
+          uri,
+          collectedAt: String(args.collectedAt ?? new Date().toISOString()),
+          lineage: { source: String(args.source ?? 'gateway') },
+          content,
+        });
+        return { ok: true, evidence: record, stored: true, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'evidence_store_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'evidence.hash_chain_verify': {
+      try {
+        const result = actionLedger.verify();
+        const recentEvents = actionLedger.list(10);
+        return {
+          ok: result.ok,
+          checked: result.checked,
+          error: result.error,
+          recentEventsCount: recentEvents.length,
+          ledgerIntegrity: result.ok ? 'VALID' : 'COMPROMISED',
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'hash_chain_verify_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'evidence.generate_assurance_envelope': {
+      try {
+        const intentEventId = String(args.intentEventId ?? '');
+        const decisionEventId = String(args.decisionEventId ?? '');
+        const resultEventId = String(args.resultEventId ?? '');
+
+        const allEvents = actionLedger.list(500);
+        const intent = allEvents.find(e => e.actionId === intentEventId && e.kind === 'intent');
+        const decision = allEvents.find(e => e.actionId === decisionEventId && e.kind === 'decision');
+        const result = allEvents.find(e => e.actionId === resultEventId && e.kind === 'result');
+
+        if (!intent) {
+          return { ok: false, error: 'intent_event_not_found', intentEventId, timestamp: new Date().toISOString() };
+        }
+
+        const envelope = createAssuranceEnvelope({
+          intent,
+          decision: decision ?? undefined,
+          result: result ?? undefined,
+          identity: args.agentDid ? { agentDid: String(args.agentDid), status: 'verified' as const } : undefined,
+          assurance: typeof args.riskScore === 'number' ? { riskScore: Number(args.riskScore) } : undefined,
+        });
+
+        return { ok: true, envelope, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'assurance_envelope_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Framework Tools ────────────────────────────────────────────
+    case 'frameworks.list_packs': {
+      try {
+        const packs = listFrameworkPacks();
+        return {
+          ok: true,
+          packs: packs.map(p => ({
+            code: p.code,
+            name: p.name,
+            version: p.version,
+            controlCount: p.controls.length,
+            controls: p.controls.map(c => ({
+              id: c.id,
+              controlCode: c.controlCode,
+              title: c.title,
+              domain: c.domain,
+            })),
+          })),
+          totalCount: packs.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'list_packs_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'frameworks.check_control': {
+      const controlCode = String(args.controlCode ?? '');
+      const frameworkCode = String(args.frameworkCode ?? '');
+      try {
+        const packs = listFrameworkPacks();
+        const matchingControls: Array<{ packCode: string; packName: string; controlId: string; controlCode: string; title: string; domain: string }> = [];
+
+        for (const pack of packs) {
+          if (frameworkCode && pack.code !== frameworkCode) continue;
+          for (const ctrl of pack.controls) {
+            if (!controlCode || ctrl.controlCode === controlCode || ctrl.id.includes(controlCode)) {
+              matchingControls.push({
+                packCode: pack.code,
+                packName: pack.name,
+                controlId: ctrl.id,
+                controlCode: ctrl.controlCode,
+                title: ctrl.title,
+                domain: ctrl.domain ?? 'unknown',
+              });
+            }
+          }
+        }
+
+        return {
+          ok: true,
+          controlCode,
+          frameworkCode: frameworkCode || 'all',
+          found: matchingControls.length > 0,
+          matches: matchingControls,
+          matchCount: matchingControls.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'check_control_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Compliance Tools ───────────────────────────────────────────
+    case 'compliance.run_scan': {
+      const frameworkFilter = String(args.frameworkCode ?? '');
+      try {
+        const packs = listFrameworkPacks();
+        const scanResults: Array<{
+          framework: string;
+          frameworkName: string;
+          controls: Array<{ id: string; controlCode: string; title: string; hasEvidence: boolean; status: 'pass' | 'fail' | 'no_evidence' }>;
+          passRate: number;
+        }> = [];
+
+        for (const pack of packs) {
+          if (frameworkFilter && pack.code !== frameworkFilter) continue;
+          const controlResults = pack.controls.map(ctrl => {
+            const evidenceItems = deps.evidence.listByControl(ctrl.id);
+            return {
+              id: ctrl.id,
+              controlCode: ctrl.controlCode,
+              title: ctrl.title,
+              hasEvidence: evidenceItems.length > 0,
+              status: (evidenceItems.length > 0 ? 'pass' : 'no_evidence') as 'pass' | 'fail' | 'no_evidence',
+            };
+          });
+
+          const passCount = controlResults.filter(c => c.status === 'pass').length;
+          scanResults.push({
+            framework: pack.code,
+            frameworkName: pack.name,
+            controls: controlResults,
+            passRate: controlResults.length > 0 ? Math.round((passCount / controlResults.length) * 100) : 0,
+          });
+        }
+
+        const totalControls = scanResults.reduce((sum, f) => sum + f.controls.length, 0);
+        const totalPassed = scanResults.reduce((sum, f) => sum + f.controls.filter(c => c.status === 'pass').length, 0);
+
+        return {
+          ok: true,
+          scanResults,
+          summary: {
+            frameworksScanned: scanResults.length,
+            totalControls,
+            totalPassed,
+            totalFailed: totalControls - totalPassed,
+            overallScore: totalControls > 0 ? Math.round((totalPassed / totalControls) * 100) : 0,
+          },
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'compliance_scan_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'compliance.get_posture': {
+      const framework = String(args.framework ?? 'iso27001');
+      try {
+        const posture = securityGraph.calculateCompliancePosture(String(tenantId), framework);
+        return {
+          ok: true,
+          tenantId,
+          framework,
+          overallScore: posture.overallScore,
+          controlScores: posture.controlScores,
+          trend: posture.trend,
+          lastEvaluated: posture.lastEvaluated,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_posture_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Agent Tools ────────────────────────────────────────────────
+    case 'agent.invoke': {
+      const sessionId = String(args.sessionId ?? `session_${Date.now().toString(36)}`);
+      const toolName = String(args.tool ?? '');
+      const toolArgs = (args.args as Record<string, unknown>) ?? {};
+      const agentRole = String(args.agentRole ?? 'operator');
+
+      if (!toolName) {
+        return { ok: false, error: 'tool_name_required', timestamp: new Date().toISOString() };
+      }
+
+      try {
+        let session = agentSessions.get(sessionId);
+        if (!session) {
+          const policy = new ExecPolicy();
+          session = new AgentSession(sessionId, policy, memoryStore);
+          agentSessions.set(sessionId, session);
+        }
+
+        const invocation = {
+          tool: toolName,
+          args: toolArgs,
+          agentRole,
+          idempotencyKey: String(args.idempotencyKey ?? `idem_${Date.now().toString(36)}`),
+        };
+
+        const decision = await session.invoke(invocation);
+
+        return {
+          ok: decision.allowed,
+          sessionId,
+          tool: toolName,
+          decision: {
+            allowed: decision.allowed,
+            reason: decision.reason,
+            sandbox: decision.sandbox,
+            requiresApproval: decision.requiresApproval,
+            toxicityScore: decision.toxicityScore,
+            anomaliesDetected: decision.anomaliesDetected,
+          },
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'agent_invoke_failed', sessionId, timestamp: new Date().toISOString() };
+      }
+    }
+    case 'agent.get_session': {
+      const sessionId = String(args.sessionId ?? '');
+      if (!sessionId) {
+        return { ok: false, error: 'sessionId_required', timestamp: new Date().toISOString() };
+      }
+
+      try {
+        let session = agentSessions.get(sessionId);
+        if (!session) {
+          const policy = new ExecPolicy();
+          session = new AgentSession(sessionId, policy, memoryStore);
+          agentSessions.set(sessionId, session);
+        }
+
+        const state = session.getState();
+        return {
+          ok: true,
+          sessionId,
+          state: {
+            calls: state.calls,
+            toxicityScore: state.toxicityScore,
+            auditCount: state.audit.length,
+            callHistoryCount: state.callHistory.length,
+            recentAudit: state.audit.slice(-5),
+          },
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_session_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Graph Tools ────────────────────────────────────────────────
+    case 'graph.attack_path': {
+      const startNodeId = String(args.startNodeId ?? '');
+      const maxDepth = Number(args.maxDepth ?? 5);
+      try {
+        const paths = securityGraph.traceAttackPaths(startNodeId, maxDepth);
+        return {
+          ok: true,
+          startNodeId,
+          paths: paths.map(p => ({
+            id: p.id,
+            startNode: p.startNode,
+            endNode: p.endNode,
+            totalRisk: p.totalRisk,
+            segmentCount: p.segments.length,
+            segments: p.segments.map(s => ({
+              nodeId: s.node.id,
+              nodeName: s.node.name,
+              nodeType: s.node.type,
+              riskContribution: s.riskContribution,
+            })),
+          })),
+          pathCount: paths.length,
+          maxDepth,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'attack_path_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'graph.blast_radius': {
+      const controlId = String(args.controlId ?? '');
+      const maxDepth = Number(args.maxDepth ?? 4);
+      try {
+        const radius = securityGraph.calculateBlastRadius(controlId, maxDepth);
+        return {
+          ok: true,
+          controlId,
+          affectedNodesCount: radius.affectedNodes.length,
+          affectedEdgesCount: radius.affectedEdges.length,
+          impactScore: radius.impactScore,
+          cascadeDepth: radius.cascadeDepth,
+          affectedNodes: radius.affectedNodes.map(n => ({
+            id: n.id,
+            name: n.name,
+            type: n.type,
+            riskScore: n.riskScore,
+          })),
+          assessedAt: radius.assessedAt,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'blast_radius_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'graph.risk_score': {
+      const agentDid = String(args.agentDid ?? '');
+      try {
+        const assessment = securityGraph.assessAgentRisk(agentDid);
+        return {
+          ok: true,
+          agentDid: assessment.agentDid,
+          overallRisk: assessment.overallRisk,
+          riskFactors: assessment.riskFactors,
+          recommendedActions: assessment.recommendedActions,
+          assessedAt: assessment.assessedAt,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'risk_score_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── A2Z Bridge Tools ──────────────────────────────────────────
+    case 'a2z.sync_to_private': {
+      const sinceIso = String(args.sinceIso ?? new Date(Date.now() - 3600000).toISOString());
+      try {
+        const result = await deps.a2z.syncInbound(sinceIso);
+        return {
+          ok: true,
+          processed: result.processed,
+          impacts: result.impacts,
+          sinceIso,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'sync_to_private_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'a2z.get_trust_score': {
+      const frameworkCode = String(args.frameworkCode ?? 'iso27001');
+      try {
+        const score = await deps.a2z.getComplianceScore(tenantId, frameworkCode);
+        return {
+          ok: true,
+          tenantId: score.tenantId,
+          frameworkCode: score.frameworkCode,
+          scorePercent: score.scorePercent,
+          failingControls: score.failingControls,
+          totalControls: score.totalControls,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_trust_score_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Cloud Tools ───────────────────────────────────────────────
+    case 'cloud.list_connectors': {
+      try {
+        const connectors = cloudRegistry.list();
+        return {
+          ok: true,
+          connectors: connectors.map(c => ({
+            provider: c.provider,
+          })),
+          totalCount: connectors.length,
+          supportedProviders: ['aws', 'azure', 'gcp'],
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'list_connectors_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'cloud.fetch_findings': {
+      try {
+        const findings = await cloudRegistry.fetchAllFindings();
+        return {
+          ok: true,
+          findings,
+          count: findings.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'fetch_findings_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Audit Tools ───────────────────────────────────────────────
+    case 'audit.create_audit': {
+      const auditName = String(args.name ?? `Audit-${Date.now()}`);
+      const auditType = String(args.type ?? 'internal') as any;
+      const scope = (args.scope as string[]) ?? [];
+      const framework = String(args.framework ?? 'iso27001');
+      const leadAuditor = String(args.leadAuditor ?? 'system');
+      const team = (args.team as string[]) ?? [];
+      const startDate = String(args.startDate ?? new Date().toISOString());
+      const endDate = String(args.endDate ?? new Date(Date.now() + 30 * 86400000).toISOString());
+
+      try {
+        const audit = auditManager.createAudit({
+          name: auditName,
+          type: auditType,
+          scope,
+          framework,
+          leadAuditor,
+          team,
+          startDate,
+          endDate,
+        });
+        return {
+          ok: true,
+          audit: {
+            id: audit.id,
+            name: audit.name,
+            type: audit.type,
+            status: audit.status,
+            framework: audit.framework,
+            scope: audit.scope,
+            createdAt: audit.createdAt,
+          },
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'create_audit_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'audit.list_findings': {
+      try {
+        const audits = auditManager.listAudits();
+        const allFindings = audits.flatMap((audit: Audit) =>
+          audit.findings.map((f: Finding) => ({
+            ...f,
+            auditId: audit.id,
+            auditName: audit.name,
+            framework: audit.framework,
+          }))
+        );
+
+        const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+        for (const f of allFindings) {
+          severityCounts[f.severity]++;
+        }
+
+        return {
+          ok: true,
+          findings: allFindings,
+          totalCount: allFindings.length,
+          severityCounts,
+          auditsScanned: audits.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'list_findings_failed', timestamp: new Date().toISOString() };
+      }
     }
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };

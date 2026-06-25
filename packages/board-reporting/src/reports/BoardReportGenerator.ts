@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { BoardReport, ReportType, ReportSection, Metric, RiskHeatmap, ComplianceTrend, RiskHeatmapCell, ComplianceTrendPoint, ExecutiveDashboard } from "../types.js";
+import type { BoardReport, ReportType, ReportSection, Metric, RiskHeatmap, ComplianceTrend, RiskHeatmapCell, ComplianceTrendPoint, ExecutiveDashboard, RiskLevel } from "../types.js";
 
 export class BoardReportGenerator {
   private reports: Map<string, BoardReport> = new Map();

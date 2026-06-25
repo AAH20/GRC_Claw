@@ -1,5 +1,5 @@
-import { Database, type DatabaseConfig, type TenantContext } from "./database.js";
-import { TenantIsolation } from "./tenant-isolation.js";
+import { Database, type DatabaseConfig, type TenantContext } from './database.js';
+import { TenantIsolation } from './tenant-isolation.js';
 
 export interface PersistenceConfig extends DatabaseConfig {
   tenantIsolation?: {
@@ -16,6 +16,7 @@ export class PersistenceLayer {
   constructor(config: PersistenceConfig) {
     this.db = new Database(config);
     this.isolation = new TenantIsolation(config.tenantIsolation);
+    this.isolation.setDatabase(this.db);
   }
 
   get database() { return this.db; }
@@ -36,7 +37,9 @@ export class PersistenceLayer {
   }
 }
 
-export { Database } from "./database.js";
-export { TenantIsolation } from "./tenant-isolation.js";
-export type { DatabaseConfig, TenantContext } from "./database.js";
-export * from "./schema/index.js";
+export { Database } from './database.js';
+export { TenantIsolation } from './tenant-isolation.js';
+export { Migrator } from './migrator.js';
+export type { DatabaseConfig, TenantContext } from './database.js';
+export type { Migration, MigrationStatus } from './migrator.js';
+export * from './schema/index.js';

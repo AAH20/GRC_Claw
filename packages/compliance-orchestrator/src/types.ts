@@ -18,7 +18,7 @@ export interface ControlNode {
 }
 
 export interface EvidenceRequirement {
-  type: 'screenshot' | 'log' | 'config' | 'certificate' | 'policy' | 'attestation' | 'scan' | 'automated';
+  type: 'screenshot' | 'log' | 'config' | 'certificate' | 'policy' | 'attestation' | 'scan' | 'automated' | 'document';
   source: string;
   freshness: string;
   cryptographic?: boolean;
@@ -62,6 +62,7 @@ export interface ASTControlNode {
   id: string;
   code: string;
   title: string;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   ast: PolicyAST;
   crossRefs: string[];
   evidenceChain: EvidenceChain;
