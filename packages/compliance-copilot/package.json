@@ -16,7 +16,7 @@
     "@grc-claw/ai-supply-chain": "^0.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "typescript": "^6.0.3",
     "vitest": "^1.6.0",
     "@types/node": "^20.14.0"
   }
