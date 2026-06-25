@@ -34,7 +34,15 @@
     "packages/business-impact",
     "packages/ai-threat-detection",
     "packages/zk-compliance",
-    "packages/trust-marketplace"
+    "packages/trust-marketplace",
+    "packages/third-party-risk",
+    "packages/trust-center",
+    "packages/audit-management",
+    "packages/policy-management",
+    "packages/incident-response",
+    "packages/board-reporting",
+    "packages/auto-evidence",
+    "packages/questionnaire-automation"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
