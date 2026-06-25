@@ -20,7 +20,10 @@
     "packages/security-graph",
     "packages/soar",
     "packages/observability",
-    "packages/sdk"
+    "packages/sdk",
+    "packages/compliance-orchestrator",
+    "packages/ai-supply-chain",
+    "packages/compliance-copilot"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
@@ -36,7 +39,11 @@
     "test:assurance-envelope": "npm run build && node scripts/test-assurance-envelope.mjs",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
     "test:cloud": "bash scripts/test-cloud-security.sh",
-    "test:skills": "npm run test -w @grc-claw/skill-executor"
+    "test:skills": "npm run test -w @grc-claw/skill-executor",
+    "test:orchestrator": "npm run test -w @grc-claw/compliance-orchestrator",
+    "test:supply-chain": "npm run test -w @grc-claw/ai-supply-chain",
+    "test:copilot": "npm run test -w @grc-claw/compliance-copilot",
+    "test:strategic": "npm run build && echo 'Strategic packages built successfully'"
   },
   "engines": {
     "node": ">=20"
