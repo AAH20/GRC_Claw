@@ -1,0 +1,22 @@
+{
+  "name": "@grc-claw/compliance-copilot",
+  "version": "0.1.0",
+  "description": "Compliance Copilot — IDE Integration, PR Gates, CLI, and Chat Bot",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@grc-claw/core": "^0.1.0",
+    "@grc-claw/compliance-orchestrator": "^0.1.0",
+    "@grc-claw/ai-supply-chain": "^0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.14.0"
+  }
+}
