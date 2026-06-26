@@ -231,20 +231,19 @@ export class BrowserEvidenceCollector {
   }
 
   private async elementExists(selector: string): Promise<boolean> {
-    const content = await this.adapter.getContent();
-    return content.includes(selector.replace('#', '').replace('.', ''));
+    return this.adapter.elementExists(selector);
   }
 
-  private async typeIntoSelector(_selector: string, _text: string): Promise<void> {
-    // Type via adapter (future: extend BrowserAdapter)
+  private async typeIntoSelector(selector: string, text: string): Promise<void> {
+    await this.adapter.fillInput(selector, text);
   }
 
-  private async clickElement(_selector: string): Promise<void> {
-    // Click via adapter (future: extend BrowserAdapter)
+  private async clickElement(selector: string): Promise<void> {
+    await this.adapter.click(selector);
   }
 
-  private async extractTextBySelector(_selector: string): Promise<string | null> {
-    return null;
+  private async extractTextBySelector(selector: string): Promise<string | null> {
+    return this.adapter.getText(selector);
   }
 
   private async safeClose(): Promise<void> {
