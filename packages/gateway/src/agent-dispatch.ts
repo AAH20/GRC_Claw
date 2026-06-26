@@ -22,6 +22,7 @@ import { AuditManager } from '@grc-claw/audit-management';
 import type { Audit, Finding } from '@grc-claw/audit-management';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type GapDetector } from '@grc-claw/accm';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
@@ -99,7 +100,8 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('aibom.') ||
     tool.startsWith('sandbox.') ||
     tool.startsWith('attestation.') ||
-    tool.startsWith('consensus.')
+    tool.startsWith('consensus.') ||
+    tool.startsWith('accm.')
   );
 }
 
@@ -4114,6 +4116,63 @@ export async function dispatchBuiltinGrcTool(
       }
     }
 
+    // --- ACCM Tools ---
+    case 'accm.detect_gaps': {
+      try {
+        const fw = String(args.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const detector = makeAccmGapDetector(fw, deps.evidence);
+        const engine = new ACCMEngine(detector);
+        const gaps = await engine.detectGaps(fw);
+        return { ok: true, frameworkCode: fw, gapsDetected: gaps.length, gaps, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'accm_detect_gaps_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'accm.remediate': {
+      try {
+        const fw = String(args.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const detector = makeAccmGapDetector(fw, deps.evidence);
+        const engine = new ACCMEngine(detector);
+        const gaps = await engine.detectGaps(fw);
+        const results = [];
+        for (const gap of gaps) {
+          const workflow = engine.createRemediationPlan(gap);
+          const result = await engine.executeRemediation(workflow);
+          results.push({ gapId: gap.id, controlCode: gap.controlCode, workflowId: workflow.id, success: result.success, message: result.message });
+        }
+        return { ok: true, frameworkCode: fw, remediations: results, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'accm_remediate_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'accm.verify': {
+      try {
+        const workflowId = String(args.workflowId ?? '');
+        const fw = String(args.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const detector = makeAccmGapDetector(fw, deps.evidence);
+        const engine = new ACCMEngine(detector);
+        const workflow = engine.getWorkflow(workflowId);
+        if (!workflow) {
+          return { ok: false, error: 'workflow_not_found', workflowId, timestamp: new Date().toISOString() };
+        }
+        const verification = await engine.verifyRemediation(workflow);
+        return { ok: true, verification, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'accm_verify_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'accm.full_cycle': {
+      try {
+        const fw = String(args.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const detector = makeAccmGapDetector(fw, deps.evidence);
+        const engine = new ACCMEngine(detector);
+        const report = await engine.fullCycle(fw);
+        return { ok: true, report, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'accm_full_cycle_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }
@@ -4152,4 +4211,33 @@ export async function dispatchAgentTool(
     return dispatchBuiltinGrcTool(tool, args, deps);
   }
   return { ok: false, error: 'unknown_tool', tool };
+}
+
+function makeAccmGapDetector(
+  frameworkCode: ACCMFrameworkCode,
+  evidenceStore: EvidenceStore,
+): GapDetector {
+  return {
+    async getControls(fw: ACCMFrameworkCode) {
+      const packs = listFrameworkPacks();
+      const records: import('@grc-claw/accm').ControlRecord[] = [];
+      for (const pack of packs) {
+        if (pack.code !== fw) continue;
+        for (const ctrl of pack.controls) {
+          const items = evidenceStore.listByControl(ctrl.id);
+          records.push({
+            controlId: ctrl.id,
+            controlCode: ctrl.controlCode,
+            title: ctrl.title,
+            frameworkCode: fw,
+            implemented: items.length > 0,
+            evidenceHashes: items.map((e) => e.sha256),
+            lastVerifiedAt: new Date().toISOString(),
+            owner: 'system',
+          });
+        }
+      }
+      return records;
+    },
+  };
 }

@@ -184,34 +184,73 @@ async function handleToolCall(name: string, args: Record<string, unknown> | unde
         result = await gatewayFetch(config, "/api/frameworks");
         break;
       case "grc_check_control":
-        result = await gatewayFetch(config, `/api/controls/${args?.controlId}${args?.framework ? `?framework=${args.framework}` : ""}`);
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({
+            tool: "frameworks.check_control",
+            args: {
+              controlCode: args?.controlId,
+              frameworkCode: args?.framework,
+            },
+          }),
+        });
         break;
       case "grc_list_evidence":
-        result = await gatewayFetch(config, `/api/evidence?controlId=${args?.controlId}`);
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({
+            tool: "evidence.read",
+            args: { evidenceId: args?.controlId },
+          }),
+        });
         break;
       case "grc_get_posture":
-        result = await gatewayFetch(config, `/api/posture${args?.framework ? `?framework=${args.framework}` : ""}`);
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({
+            tool: "compliance.get_posture",
+            args: { framework: args?.framework },
+          }),
+        });
         break;
       case "grc_list_vendors":
-        result = await gatewayFetch(config, "/api/vendors");
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({ tool: "cloud.list_connectors", args: {} }),
+        });
         break;
       case "grc_get_risk_score":
-        result = await gatewayFetch(config, "/api/risk/score");
+        result = await gatewayFetch(config, "/api/risk/register");
         break;
       case "grc_list_incidents":
-        result = await gatewayFetch(config, `/api/incidents${args?.status ? `?status=${args.status}` : ""}`);
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({
+            tool: "audit.list_findings",
+            args: { severity: args?.status },
+          }),
+        });
         break;
       case "grc_list_findings":
-        result = await gatewayFetch(config, `/api/findings${args?.severity ? `?severity=${args.severity}` : ""}`);
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({
+            tool: "audit.list_findings",
+            args: { severity: args?.severity },
+          }),
+        });
         break;
       case "grc_run_scan":
-        result = await gatewayFetch(config, `/api/scan`, {
+        result = await gatewayFetch(config, "/api/agent/invoke", {
           method: "POST",
-          body: JSON.stringify({ framework: args?.framework }),
+          body: JSON.stringify({
+            tool: "compliance.run_scan",
+            args: { frameworkCode: args?.framework },
+          }),
         });
         break;
       case "grc_get_entity_report":
-        result = await gatewayFetch(config, `/api/entities/${args?.entityId}/report`);
+        result = await gatewayFetch(config, `/api/entities/${args?.entityId}/compliance`);
         break;
       default:
         return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
@@ -228,7 +267,10 @@ async function handleResourceRead(uri: string, config: MCPServerConfig): Promise
     return JSON.stringify(data, null, 2);
   }
   if (uri === "grc://posture") {
-    const data = await gatewayFetch(config, "/api/posture");
+    const data = await gatewayFetch(config, "/api/agent/invoke", {
+      method: "POST",
+      body: JSON.stringify({ tool: "compliance.get_posture", args: {} }),
+    });
     return JSON.stringify(data, null, 2);
   }
   if (uri === "grc://risk-register") {
@@ -242,7 +284,10 @@ async function handleResourceRead(uri: string, config: MCPServerConfig): Promise
   }
   const evidenceMatch = uri.match(/^grc:\/\/evidence\/(.+)$/);
   if (evidenceMatch) {
-    const data = await gatewayFetch(config, `/api/evidence?controlId=${evidenceMatch[1]}`);
+    const data = await gatewayFetch(config, "/api/agent/invoke", {
+      method: "POST",
+      body: JSON.stringify({ tool: "evidence.read", args: { evidenceId: evidenceMatch[1] } }),
+    });
     return JSON.stringify(data, null, 2);
   }
   throw new Error(`Unknown resource: ${uri}`);

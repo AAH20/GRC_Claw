@@ -50,7 +50,9 @@
     "packages/mcp-server",
     "packages/cli",
     "packages/accm",
-    "packages/agent-builder"
+    "packages/agent-builder",
+    "packages/device-agent",
+    "packages/browser-evidence"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",

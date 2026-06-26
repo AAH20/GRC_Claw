@@ -22,6 +22,7 @@
     { "path": "../audit-management" },
     { "path": "../cloud-connectors" },
     { "path": "../risk-quantification" },
-    { "path": "../entity-management" }
+    { "path": "../entity-management" },
+    { "path": "../accm" }
   ]
 }
