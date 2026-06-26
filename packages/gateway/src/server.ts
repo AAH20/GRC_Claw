@@ -35,9 +35,28 @@ import { initPersistence, getPersistence, isPersistenceEnabled, closePersistence
 import type { PersistenceLayer } from '@grc-claw/persistence';
 import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-quantification';
 import { EntityManager } from '@grc-claw/entity-management';
+import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type ControlRecord as ACCMControlRecord, type GapDetector } from '@grc-claw/accm';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
+
+// SOC event broadcaster — pushes normalized events to all subscribed WS clients
+const socClients = new Set<WebSocket>();
+
+function broadcastSocEvent(event: unknown): void {
+  const msg = JSON.stringify({ type: 'soc_event', data: event, ts: new Date().toISOString() });
+  for (const client of socClients) {
+    try {
+      if (client.readyState === 1 /* OPEN */) {
+        client.send(msg);
+      } else {
+        socClients.delete(client);
+      }
+    } catch {
+      socClients.delete(client);
+    }
+  }
+}
 
 export interface GatewayConfig {
   host: string;
@@ -62,6 +81,33 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const rateLimiter = createRateLimiter();
   const riskRegister = new RiskRegister();
   const entityManager = new EntityManager(pg?.database);
+
+  // ACCM GapDetector: bridges framework packs + evidence store to ACCMEngine
+  const accmGapDetector: GapDetector = {
+    async getControls(frameworkCode: ACCMFrameworkCode): Promise<ACCMControlRecord[]> {
+      const packs = listFrameworkPacks();
+      const records: ACCMControlRecord[] = [];
+      for (const pack of packs) {
+        if (pack.code !== frameworkCode) continue;
+        for (const ctrl of pack.controls) {
+          const evidenceItems = evidence.listByControl(ctrl.id);
+          records.push({
+            controlId: ctrl.id,
+            controlCode: ctrl.controlCode,
+            title: ctrl.title,
+            frameworkCode: frameworkCode as ACCMFrameworkCode,
+            implemented: evidenceItems.length > 0,
+            evidenceHashes: evidenceItems.map((e) => e.sha256),
+            lastVerifiedAt: new Date().toISOString(),
+            owner: 'system',
+          });
+        }
+      }
+      return records;
+    },
+  };
+  const accmEngine = new ACCMEngine(accmGapDetector, { tenantId: 'default', autoRemediate: true });
+
   let execPolicy!: ExecPolicy;
 
   async function persistAssuranceEnvelope(
@@ -217,6 +263,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           mcp_servers: summary.mcp.length,
           cloud_sources: CLOUD_INGEST_SOURCES,
           persistence: isPersistenceEnabled() ? 'postgresql' : 'demo',
+          soc_stream: 'ws://host/ws — subscribe with {"type":"subscribe","channel":"soc_events","token":"<token>"} to receive real-time normalized SOC events',
           marketing: 'The OSS chassis for ISO 42001-compliant agentic AI — pairs with a2zsoc.com',
         })
       );
@@ -458,6 +505,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         res.end(JSON.stringify({ error: 'normalize_failed', source }));
         return;
       }
+      // Broadcast normalized event to all subscribed SOC WebSocket clients
+      broadcastSocEvent(event);
       const impact = await a2z.mapSecurityEventToControls({
         eventUuid: event.eventUuid,
         eventType: event.eventType,
@@ -732,6 +781,75 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
 
     if (tryServeConsoleStatic(req, res, path)) return;
 
+    // --- ACCM Endpoints ---
+    if (req.method === 'POST' && path === '/api/accm/detect-gaps') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const frameworkCode = String(body.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const gaps = await accmEngine.detectGaps(frameworkCode);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, frameworkCode, gapsDetected: gaps.length, gaps }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/accm/remediate') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const frameworkCode = String(body.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const gaps = await accmEngine.detectGaps(frameworkCode);
+        const results = [];
+        for (const gap of gaps) {
+          const workflow = accmEngine.createRemediationPlan(gap);
+          const result = await accmEngine.executeRemediation(workflow);
+          results.push({ gapId: gap.id, controlCode: gap.controlCode, workflowId: workflow.id, result });
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, frameworkCode, remediations: results }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/accm/verify') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const workflowId = String(body.workflowId ?? '');
+        const workflow = accmEngine.getWorkflow(workflowId);
+        if (!workflow) {
+          res.writeHead(404); res.end(JSON.stringify({ error: 'workflow_not_found', workflowId }));
+          return;
+        }
+        const verification = await accmEngine.verifyRemediation(workflow);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, verification }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/accm/full-cycle') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const frameworkCode = String(body.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
+        const report = await accmEngine.fullCycle(frameworkCode);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, report }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'not_found' }));
   });
@@ -743,6 +861,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       try {
         const frame = JSON.parse(String(raw)) as {
           type: string;
+          channel?: string;
+          token?: string;
           params?: { auth?: { token?: string }; role?: string };
         };
         if (!connected && frame.type === 'connect') {
@@ -762,6 +882,19 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           socket.send(JSON.stringify({ type: 'hello-ok', role: frame.params?.role ?? 'operator' }));
           return;
         }
+        if (frame.type === 'subscribe' && frame.channel === 'soc_events') {
+          const token = frame.token ?? '';
+          const secretBuf = Buffer.from(config.token, 'utf8');
+          const tokenBuf = Buffer.from(token, 'utf8');
+          const authed = secretBuf.length === tokenBuf.length && timingSafeEqual(secretBuf, tokenBuf);
+          if (authed) {
+            socClients.add(socket);
+            socket.send(JSON.stringify({ type: 'subscribed', channel: 'soc_events', message: 'Streaming normalized SOC events' }));
+          } else {
+            socket.send(JSON.stringify({ type: 'error', message: 'unauthorized' }));
+          }
+          return;
+        }
         if (!connected) {
           socket.close(4000, 'connect_required');
         }
@@ -769,6 +902,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         socket.close(4002, 'invalid_frame');
       }
     });
+    socket.on('close', () => socClients.delete(socket));
+    socket.on('error', () => socClients.delete(socket));
   });
 
   return {

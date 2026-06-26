@@ -13,7 +13,7 @@ import type {
 } from './types.js';
 
 export * from './types.js';
-export { RegulationASTCompiler } from './compiler/RegulationASTCompiler.js';
+export { RegulationASTCompiler, getEvidenceDeduplicationMap } from './compiler/RegulationASTCompiler.js';
 export { NeuroSymbolicReasoner } from './reasoner/NeuroSymbolicReasoner.js';
 export { UnifiedComplianceGraph } from './graph/UnifiedComplianceGraph.js';
 export type { ReasoningResult, ReasoningContext, ReasoningContext as NeuroSymbolicContext } from './reasoner/NeuroSymbolicReasoner.js';
