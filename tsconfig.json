@@ -40,6 +40,10 @@
     { "path": "./packages/mcp-server" },
     { "path": "./packages/grc-engineering" },
     { "path": "./packages/sdk-client" },
+    { "path": "./packages/browser-evidence" },
+    { "path": "./packages/device-agent" },
+    { "path": "./packages/chat-grc" },
+    { "path": "./packages/framework-crosswalk" },
     { "path": "./packages/gateway" },
     { "path": "./packages/accm" },
     { "path": "./packages/agent-builder" }
