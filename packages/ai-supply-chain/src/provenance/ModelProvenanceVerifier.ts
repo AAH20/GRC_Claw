@@ -82,7 +82,7 @@ export class ModelProvenanceVerifier {
     const licenseCheck = this.verifyLicensing(model);
     details.push(licenseCheck);
     if (licenseCheck.status === 'warning') {
-      issues.push({ id: 'license', severity: 'medium', category: 'compliance', description: 'License compatibility issues detected', evidence: model.supplyChain.license ?? 'unknown' });
+      issues.push({ id: 'license', severity: 'medium', category: 'compliance', description: 'License compatibility issues detected', evidence: 'unknown' });
     }
 
     const reproducibilityCheck = this.verifyReproducibility(model);
