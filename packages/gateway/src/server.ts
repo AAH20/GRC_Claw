@@ -44,6 +44,7 @@ import { VendorRegistry } from '@grc-claw/third-party-risk';
 import { QuestionnaireAutomation, QuestionnaireAnswerEngine } from '@grc-claw/questionnaire-automation';
 import { ComplianceProver } from '@grc-claw/zk-compliance';
 import { AgentTracer } from '@grc-claw/observability';
+import { ComplianceAutopilot } from '@grc-claw/compliance-autopilot';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -160,6 +161,12 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const questionnaireAutomation = new QuestionnaireAutomation();
   const questionnaireAnswerEngine = new QuestionnaireAnswerEngine();
   const complianceProver = new ComplianceProver();
+  const autopilot = new ComplianceAutopilot({
+    frameworks: ['iso27001', 'soc2', 'nist_csf', 'cis_controls'],
+    evidenceDb: pg?.database,
+    autoRemediate: true,
+    tenantId: 1,
+  });
 
   let execPolicy!: ExecPolicy;
 
@@ -289,7 +296,16 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       for (const pack of packs) {
         for (const ctrl of pack.controls) {
           totalControls++;
-          if (evidence.listByControl(ctrl.id).length > 0) controlsWithEvidence++;
+          if (pg) {
+            try {
+              const items = await evidence.listByControlFromDb(ctrl.id);
+              if (items.length > 0) controlsWithEvidence++;
+            } catch {
+              if (evidence.listByControl(ctrl.id).length > 0) controlsWithEvidence++;
+            }
+          } else {
+            if (evidence.listByControl(ctrl.id).length > 0) controlsWithEvidence++;
+          }
         }
       }
       const realScore = totalControls > 0 ? controlsWithEvidence / totalControls : 0;
@@ -701,6 +717,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           persistence: pg,
           agentBuilder,
           chatGrc: chatGRC,
+          tracer,
         });
         tracer.endSpan(traceSpan.spanId, 'OK');
         metricsCollector.incCounter('grc_agent_invocations_total');
@@ -894,7 +911,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           results.push({ gapId: gap.id, controlCode: gap.controlCode, workflowId: workflow.id, result });
         }
         // Broadcast compliance update after remediation
-        const updatedPosture = computeCompliancePosture();
+        const updatedPosture = await computeCompliancePosture();
         const overallScore = Object.values(updatedPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(updatedPosture).length);
         broadcastComplianceUpdate({
           overall_score: Math.round(overallScore * 10) / 10,
@@ -937,7 +954,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         const frameworkCode = String(body.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
         const report = await accmEngine.fullCycle(frameworkCode);
         // Broadcast compliance update to all subscribed clients
-        const updatedPosture = computeCompliancePosture();
+        const updatedPosture = await computeCompliancePosture();
         const overallScore = Object.values(updatedPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(updatedPosture).length);
         broadcastComplianceUpdate({
           overall_score: Math.round(overallScore * 10) / 10,
@@ -1244,6 +1261,71 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       return;
     }
 
+    // ─── Compliance Autopilot Endpoints ───────────────────────────────────
+    if (path === '/api/autopilot/run-cycle' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const cycle = await autopilot.runCycle();
+        broadcastComplianceUpdate({
+          overall_score: cycle.report?.complianceScore ?? 0,
+          frameworks: { autopilot: { compliance_pct: cycle.report?.complianceScore ?? 0, drift_detected: cycle.monitor.gapsFound > 0, last_scan: new Date().toISOString() } },
+          trigger: 'autopilot_cycle',
+          cycleId: cycle.cycleId,
+          gapsFound: cycle.monitor.gapsFound,
+          remediations: cycle.remediations.length,
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, cycle }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (path === '/api/autopilot/status' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const controls = autopilot.getControls();
+      const gaps = autopilot.getGaps();
+      const remediations = autopilot.getRemediations();
+      const compliant = controls.filter(c => c.status === 'compliant').length;
+      const total = controls.length;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        complianceScore: total > 0 ? Math.round((compliant / total) * 10000) / 100 : 0,
+        totalControls: total,
+        compliantControls: compliant,
+        gapsCount: gaps.length,
+        remediationsCount: remediations.length,
+        frameworks: autopilot.getConfig().frameworks,
+        controls: controls.map(c => ({ id: c.id, controlId: c.controlId, framework: c.framework, status: c.status, title: c.title })),
+        gaps,
+      }));
+      return;
+    }
+    const autopilotReportMatch = path.match(/^\/api\/autopilot\/report\/([^/]+)$/);
+    if (autopilotReportMatch && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const framework = decodeURIComponent(autopilotReportMatch[1]!);
+      try {
+        const report = await autopilot.generateReport(framework);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, report }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (path === '/api/autopilot/audit-trail' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const auditTrail = autopilot.getAuditTrail();
+      const verified = autopilot.verifyAuditTrail();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, auditTrail, verified, count: auditTrail.length }));
+      return;
+    }
+
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'not_found' }));
   });
@@ -1297,13 +1379,14 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           if (authed) {
             complianceClients.add(socket);
             // Send initial compliance posture immediately on subscription
-            const initialPosture = computeCompliancePosture();
-            const overallScore = Object.values(initialPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(initialPosture).length);
-            socket.send(JSON.stringify({
-              type: 'compliance_update',
-              data: { overall_score: Math.round(overallScore * 10) / 10, frameworks: initialPosture, ts: new Date().toISOString() },
-              ts: new Date().toISOString(),
-            }));
+            computeCompliancePosture().then((initialPosture) => {
+              const overallScore = Object.values(initialPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(initialPosture).length);
+              socket.send(JSON.stringify({
+                type: 'compliance_update',
+                data: { overall_score: Math.round(overallScore * 10) / 10, frameworks: initialPosture, ts: new Date().toISOString() },
+                ts: new Date().toISOString(),
+              }));
+            }).catch(() => {});
             socket.send(JSON.stringify({ type: 'subscribed', channel: 'compliance_updates', message: 'Streaming real-time compliance updates' }));
           } else {
             socket.send(JSON.stringify({ type: 'error', message: 'unauthorized' }));
@@ -1322,7 +1405,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   });
 
   // ─── Periodic SOC heartbeat — broadcast real compliance posture to subscribers ───
-  function computeCompliancePosture(): Record<string, { compliance_pct: number; drift_detected: boolean; last_scan: string }> {
+  async function computeCompliancePosture(): Promise<Record<string, { compliance_pct: number; drift_detected: boolean; last_scan: string }>> {
     const packs = listFrameworkPacks();
     const frameworks: Record<string, { compliance_pct: number; drift_detected: boolean; last_scan: string }> = {};
     for (const pack of packs) {
@@ -1330,7 +1413,18 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       let withEvidence = 0;
       for (const ctrl of pack.controls) {
         total++;
-        if (evidence.listByControl(ctrl.id).length > 0) withEvidence++;
+        let hasEvidence = false;
+        if (pg) {
+          try {
+            const items = await evidence.listByControlFromDb(ctrl.id);
+            hasEvidence = items.length > 0;
+          } catch {
+            hasEvidence = evidence.listByControl(ctrl.id).length > 0;
+          }
+        } else {
+          hasEvidence = evidence.listByControl(ctrl.id).length > 0;
+        }
+        if (hasEvidence) withEvidence++;
       }
       frameworks[pack.code] = {
         compliance_pct: total > 0 ? Math.round((withEvidence / total) * 1000) / 10 : 0,
@@ -1353,9 +1447,9 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   }, 60_000);
 
   // ─── Compliance posture summary — broadcast every 5 minutes ─────────────────
-  const postureInterval = setInterval(() => {
+  const postureInterval = setInterval(async () => {
     if (socClients.size === 0 && complianceClients.size === 0) return;
-    const posture = computeCompliancePosture();
+    const posture = await computeCompliancePosture();
     const overallScore = Object.values(posture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(posture).length);
     const complianceUpdate = {
       type: 'posture_update',
