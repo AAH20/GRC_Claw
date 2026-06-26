@@ -1,0 +1,29 @@
+{
+  "name": "@grc-claw/framework-crosswalk",
+  "version": "1.0.0",
+  "description": "Automated cross-mapping between compliance frameworks",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@grc-claw/core": "^0.1.0",
+    "@grc-claw/frameworks": "^0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^20.14.0"
+  },
+  "files": ["dist"]
+}

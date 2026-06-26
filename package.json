@@ -52,7 +52,9 @@
     "packages/accm",
     "packages/agent-builder",
     "packages/device-agent",
-    "packages/browser-evidence"
+    "packages/browser-evidence",
+    "packages/chat-grc",
+    "packages/framework-crosswalk"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",

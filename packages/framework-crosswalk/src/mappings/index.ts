@@ -1,0 +1,10 @@
+export { SOC2_ISO27001_MAPPINGS } from './soc2-iso27001.js';
+export { NISTCSF_ISO27001_MAPPINGS } from './nist-csf-iso27001.js';
+export { SOC2_NISTCSF_MAPPINGS } from './soc2-nist-csf.js';
+export { ISO27001_ISO42001_MAPPINGS } from './iso27001-iso42001.js';
+export { HIPAA_NISTCSF_MAPPINGS } from './hipaa-nist-csf.js';
+export { PCIDSS_ISO27001_MAPPINGS } from './pci-dss-iso27001.js';
+export { GDPR_ISO27701_MAPPINGS } from './gdpr-iso27701.js';
+export { FEDRAMP_NIST80053_MAPPINGS } from './fedramp-nist80053.js';
+export { CMMC_NIST800171_MAPPINGS } from './cmmc-nist800171.js';
+export { DORA_NISTCSF_MAPPINGS } from './dora-nist-csf.js';

@@ -30,6 +30,7 @@
     "@grc-claw/persistence": "0.1.0",
     "@grc-claw/risk-quantification": "0.1.0",
     "@grc-claw/entity-management": "0.1.0",
+    "@grc-claw/agent-builder": "0.1.0",
     "@grc-claw/accm": "0.1.0",
     "ws": "^8.18.0"
   },

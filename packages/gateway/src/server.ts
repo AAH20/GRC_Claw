@@ -36,6 +36,7 @@ import type { PersistenceLayer } from '@grc-claw/persistence';
 import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-quantification';
 import { EntityManager } from '@grc-claw/entity-management';
 import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type ControlRecord as ACCMControlRecord, type GapDetector } from '@grc-claw/accm';
+import { AgentBuilder, PREBUILT_AGENTS, type AgentDefinition } from '@grc-claw/agent-builder';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -81,6 +82,17 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const rateLimiter = createRateLimiter();
   const riskRegister = new RiskRegister();
   const entityManager = new EntityManager(pg?.database);
+  const agentBuilder = new AgentBuilder();
+
+  // Load persisted data from database into in-memory stores on startup
+  if (pg?.database) {
+    evidence.loadFromDatabase().catch((err) => {
+      console.warn('[STARTUP] evidence.loadFromDatabase failed:', err instanceof Error ? err.message : err);
+    });
+    entityManager.loadFromDatabase().catch((err) => {
+      console.warn('[STARTUP] entityManager.loadFromDatabase failed:', err instanceof Error ? err.message : err);
+    });
+  }
 
   // ACCM GapDetector: bridges framework packs + evidence store to ACCMEngine
   const accmGapDetector: GapDetector = {
@@ -618,6 +630,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           a2z,
           claw,
           persistence: pg,
+          agentBuilder,
         });
         metricsCollector.incCounter('grc_agent_invocations_total');
       } catch (e) {
@@ -846,6 +859,53 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    // --- Agent Builder Endpoints ---
+    if (req.method === 'GET' && path === '/api/agents') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const agents = agentBuilder.listAgents();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, agents, count: agents.length }));
+      return;
+    }
+    if (req.method === 'GET' && /^\/api\/agents\/[^/]+$/.test(path)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const agentId = decodeURIComponent(path.split('/').pop()!);
+      const agent = agentBuilder.getAgent(agentId);
+      if (!agent) { res.writeHead(404); res.end(JSON.stringify({ ok: false, error: 'agent_not_found', agentId })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, agent }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/agents') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const definition = body as unknown as AgentDefinition;
+        const agent = agentBuilder.createAgent(definition);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, agent }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ ok: false, error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && /^\/api\/agents\/[^/]+\/trigger$/.test(path)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const agentId = decodeURIComponent(path.split('/')[3]!);
+      try {
+        let body: Record<string, unknown> = {};
+        try { body = await readJson(req); } catch { /* empty context is fine */ }
+        const run = await agentBuilder.triggerAgent(agentId, body);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, run }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ ok: false, error: msg }));
       }
       return;
     }
