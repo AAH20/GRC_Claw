@@ -13,6 +13,8 @@ import { normalizeBySource, CLOUD_INGEST_SOURCES } from '@grc-claw/ingest';
 import type { IngestSource } from '@grc-claw/ingest';
 import { createAssuranceEnvelope, ActionLedger } from '@grc-claw/evidence';
 import { SecurityGraph } from '@grc-claw/security-graph';
+import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-quantification';
+import { EntityManager } from '@grc-claw/entity-management';
 import { SOAREngine } from '@grc-claw/soar';
 import type { Playbook } from '@grc-claw/soar';
 import { CloudConnectorRegistry } from '@grc-claw/cloud-connectors';
@@ -30,6 +32,8 @@ const cloudRegistry = new CloudConnectorRegistry();
 const actionLedger = new ActionLedger();
 const memoryStore = new PersistentMemoryStore();
 const agentSessions = new Map<string, AgentSession>();
+const riskRegister = new RiskRegister();
+const entityManager = new EntityManager();
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
@@ -4038,6 +4042,78 @@ export async function dispatchBuiltinGrcTool(
         return { ok: false, error: err.message ?? 'list_findings_failed', timestamp: new Date().toISOString() };
       }
     }
+
+    // --- Risk Quantification Tools ---
+    case 'risk.run_monte_carlo': {
+      try {
+        const engine = new MonteCarloEngine(args.scenario as unknown as import('@grc-claw/risk-quantification').RiskScenario, { iterations: args.iterations as number, seed: args.seed as number });
+        const result = engine.run();
+        return { ok: true, result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'monte_carlo_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'risk.run_fair_analysis': {
+      try {
+        const calc = new FAIRCalculator(args.scenario as unknown as import('@grc-claw/risk-quantification').RiskScenario, { iterations: args.iterations as number, seed: args.seed as number });
+        const result = calc.calculate();
+        return { ok: true, result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'fair_analysis_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'risk.add_scenario': {
+      try {
+        const entry = riskRegister.addScenario(args as unknown as import('@grc-claw/risk-quantification').RiskScenario);
+        return { ok: true, entry, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'add_scenario_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'risk.get_register': {
+      try {
+        const entries = riskRegister.getAllEntries();
+        const metrics = riskRegister.portfolioMetrics();
+        return { ok: true, entries, metrics, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_register_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // --- Entity Management Tools ---
+    case 'entity.create': {
+      try {
+        const entity = entityManager.createEntity(args as Parameters<typeof entityManager.createEntity>[0]);
+        return { ok: true, entity, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'entity_create_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'entity.list': {
+      try {
+        const entities = entityManager.listEntities();
+        return { ok: true, entities, totalCount: entities.length, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'entity_list_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'entity.get_compliance_rollup': {
+      try {
+        const statuses = entityManager.getComplianceStatuses(args.entityId as string);
+        return { ok: true, entityId: args.entityId, statuses, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'entity_compliance_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'entity.get_consolidated_report': {
+      try {
+        const report = entityManager.getConsolidatedReport();
+        return { ok: true, report, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'entity_report_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
   }

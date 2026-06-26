@@ -87,7 +87,7 @@ export { iso42001StarterPack } from './iso42001.js';
 export { EXPANDED_FRAMEWORK_PACKS } from './expanded-packs.js';
 
 export function listFrameworkPacks(): FrameworkPack[] {
-  return [iso27001StarterPack, nistCsfStarterPack, soc2StarterPack, iso42001StarterPack];
+  return [iso27001StarterPack, nistCsfStarterPack, soc2StarterPack, iso42001StarterPack, ...EXPANDED_FRAMEWORK_PACKS];
 }
 
 export {
@@ -99,5 +99,5 @@ export {
 } from './expanded-packs.js';
 
 export function listAllFrameworkPacks(): FrameworkPack[] {
-  return [...listFrameworkPacks(), ...EXPANDED_FRAMEWORK_PACKS];
+  return listFrameworkPacks();
 }

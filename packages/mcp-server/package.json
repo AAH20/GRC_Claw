@@ -1,0 +1,28 @@
+{
+  "name": "@grc-claw/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP (Model Context Protocol) server for GRC_Claw — enables AI assistants to query compliance data via stdio JSON-RPC",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "grc-claw-mcp": "./dist/cli.js" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "test": "npm run build && node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@grc-claw/core": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
+  },
+  "files": ["dist"]
+}

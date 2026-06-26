@@ -33,6 +33,8 @@ import { applySecurityHeaders } from './security-headers.js';
 import { metricsCollector } from './metrics.js';
 import { initPersistence, getPersistence, isPersistenceEnabled, closePersistence } from './persistence-init.js';
 import type { PersistenceLayer } from '@grc-claw/persistence';
+import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-quantification';
+import { EntityManager } from '@grc-claw/entity-management';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -58,6 +60,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const connectors = getConnectorRegistry();
   const store = new PersistentMemoryStore(process.env.GRC_CLAW_MEMORY_DIR?.trim() || '.grc_memory');
   const rateLimiter = createRateLimiter();
+  const riskRegister = new RiskRegister();
+  const entityManager = new EntityManager();
   let execPolicy!: ExecPolicy;
 
   async function persistAssuranceEnvelope(
@@ -180,7 +184,17 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     const path = req.url?.split('?')[0] ?? '/';
 
     if (path === '/metrics' && req.method === 'GET') {
-      metricsCollector.setGauge('grc_compliance_score', 0.87);
+      const packs = listFrameworkPacks();
+      let totalControls = 0;
+      let controlsWithEvidence = 0;
+      for (const pack of packs) {
+        for (const ctrl of pack.controls) {
+          totalControls++;
+          if (evidence.listByControl(ctrl.id).length > 0) controlsWithEvidence++;
+        }
+      }
+      const realScore = totalControls > 0 ? controlsWithEvidence / totalControls : 0;
+      metricsCollector.setGauge('grc_compliance_score', Math.round(realScore * 100) / 100);
       const metricsText = metricsCollector.getPrometheusFormat();
       res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' });
       res.end(metricsText);
@@ -595,6 +609,124 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           audit: session.getAuditLog(),
         })
       );
+      return;
+    }
+
+    // --- Risk Quantification Endpoints ---
+    if (req.method === 'POST' && path === '/api/risk/monte-carlo') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const engine = new MonteCarloEngine(body.scenario as unknown as import('@grc-claw/risk-quantification').RiskScenario, { iterations: body.iterations as number, seed: body.seed as number });
+        const result = engine.run();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, result }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/risk/fair') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const calc = new FAIRCalculator(body.scenario as unknown as import('@grc-claw/risk-quantification').RiskScenario, { iterations: body.iterations as number, seed: body.seed as number });
+        const result = calc.calculate();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, result }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/risk/register') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const entries = riskRegister.getAllEntries();
+      const metrics = riskRegister.portfolioMetrics();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, entries, metrics }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/risk/scenarios') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const entry = riskRegister.addScenario(body as unknown as import('@grc-claw/risk-quantification').RiskScenario);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, entry }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/risk/heatmap') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const heatmap = riskRegister.generateHeatMap(5);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...heatmap }));
+      return;
+    }
+
+    // --- Entity Management Endpoints ---
+    if (req.method === 'POST' && path === '/api/entities') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const entity = entityManager.createEntity(body as Parameters<typeof entityManager.createEntity>[0]);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, entity }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && /^\/api\/entities\/?$/.test(path)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const entities = entityManager.listEntities();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, entities }));
+      return;
+    }
+    if (req.method === 'GET' && /^\/api\/entities\/[^/]+$/.test(path)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = path.split('/').pop()!;
+      const entity = entityManager.getEntity(id);
+      if (!entity) { res.writeHead(404); res.end(JSON.stringify({ error: 'not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, entity }));
+      return;
+    }
+    if (req.method === 'POST' && /^\/api\/entities\/[^/]+\/relationships$/.test(path)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const entityId = path.split('/')[3];
+        const body = await readJson(req);
+        const rel = entityManager.addRelationship(entityId, body.childEntityId as string, body.relationshipType as 'ownership' | 'subsidiary' | 'division' | 'branch' | 'joint_venture' | 'franchise');
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, relationship: rel }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && /^\/api\/entities\/[^/]+\/compliance$/.test(path)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const entityId = path.split('/')[3];
+      const statuses = entityManager.getComplianceStatuses(entityId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, statuses }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/entities/consolidated-report') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const report = entityManager.getConsolidatedReport();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, report }));
       return;
     }
 

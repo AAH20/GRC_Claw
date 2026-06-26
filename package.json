@@ -46,7 +46,8 @@
     "packages/grc-engineering",
     "packages/sdk-client",
     "packages/risk-quantification",
-    "packages/entity-management"
+    "packages/entity-management",
+    "packages/mcp-server"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
@@ -76,7 +77,8 @@
     "test:threat": "npm run test -w @grc-claw/ai-threat-detection",
     "test:zk": "npm run test -w @grc-claw/zk-compliance",
     "test:marketplace": "npm run test -w @grc-claw/trust-marketplace",
-    "test:all": "npm run build && echo 'All 37 packages built successfully'"
+    "test:mcp": "npm run test -w @grc-claw/mcp-server",
+    "test:all": "npm run build && echo 'All 38 packages built successfully'"
   },
   "engines": {
     "node": ">=20"
