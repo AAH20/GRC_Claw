@@ -36,6 +36,7 @@ import { ComplianceSuperOrchestrator } from '@grc-claw/compliance-orchestrator';
 import { ContinuousComplianceEngine } from '@grc-claw/continuous-compliance';
 import { AnomalyDetector } from '@grc-claw/ai-threat-detection';
 import { AISupplyChainSovereignty } from '@grc-claw/ai-supply-chain';
+import { FederatedComplianceMesh } from '@grc-claw/federated-compliance-mesh';
 import { AutoEvidenceCollector } from '@grc-claw/auto-evidence';
 import { BrowserEvidenceCollector } from '@grc-claw/browser-evidence';
 import { IncidentManager } from '@grc-claw/incident-response';
@@ -44,6 +45,8 @@ import { CompliancePipeline, GitOpsWorkflow } from '@grc-claw/grc-engineering';
 import { AgentTrustScoreEngine } from '@grc-claw/agent-trust-score';
 
 import { BoardReportGenerator } from '@grc-claw/board-reporting';
+import { AgentAuditTrail } from '@grc-claw/agent-audit-trail';
+import { createHash } from 'node:crypto';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
@@ -146,16 +149,51 @@ const policyManager = new PolicyManager();
 const regulatoryEngine = new RegulatoryIntelligenceEngine();
 const supplyChain = new AISupplyChainSovereignty({
   orgId: 'grc-claw',
-  enableTEE: false,
-  enableZK: false,
-  enableFederatedConsensus: false,
-  minSafetyRating: 0.5,
-  requireReproducibleBuilds: false,
+  enableTEE: true,
+  enableZK: true,
+  enableFederatedConsensus: true,
+  minSafetyRating: 0.7,
+  requireReproducibleBuilds: true,
 });
+
+const complianceMesh = new FederatedComplianceMesh();
+
+const complianceOrchestrator = new ComplianceSuperOrchestrator({
+  orgId: 'grc-claw',
+  enabledFrameworks: ['iso27001'],
+  riskTolerance: 'medium',
+  autoRemediate: false,
+  continuousScanInterval: 3600000,
+});
+const continuousEngine = new ContinuousComplianceEngine(
+  {
+    async verifyEvidence() { return true; },
+    async getCurrentEvidence() { return []; },
+  },
+  {
+    async execute(_script: string, _context: Record<string, unknown>) { return { success: true, message: 'no-op', actionsTaken: [] as string[] }; },
+  },
+);
+const anomalyDetector = new AnomalyDetector();
+const autoEvidence = new AutoEvidenceCollector();
+const incidentManager = new IncidentManager();
+const boardReporter = new BoardReportGenerator();
+const trustScoreEngine = new AgentTrustScoreEngine({
+  issuerId: 'grc-claw-gateway',
+  credentialStore: {
+    async store(_credential: import('@grc-claw/agent-trust-score').TrustCredential) {},
+    async get(_id: string) { return undefined; },
+    async listByAgent(_agentDid: string) { return []; },
+    async revoke(_id: string) { return false; },
+  },
+});
+const agentAuditTrail = new AgentAuditTrail();
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
 }
+
+export { agentAuditTrail };
 
 export type ExecutionState =
   | 'simulated'
@@ -246,7 +284,9 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('incident.') ||
     tool.startsWith('dev_compliance.') ||
     tool.startsWith('engineering.') ||
-    tool.startsWith('trust_score.')
+    tool.startsWith('trust_score.') ||
+    tool.startsWith('audit_trail.') ||
+    tool.startsWith('federated.')
   );
 }
 
@@ -613,14 +653,8 @@ export async function dispatchBuiltinGrcTool(
       const sods = (args.sodViolations as Array<any>) ?? [];
       const payloadString = JSON.stringify({ logs, sods });
       
-      // Simple hash generation for mock purposes
-      let hash = 0;
-      for (let i = 0; i < payloadString.length; i++) {
-        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
-        hash = hash & hash;
-      }
-      const evidenceHash = 'sha256-' + Math.abs(hash).toString(16).padEnd(8, '0') + 'f7b3c2d4a1';
-      const signature = `grc_claw_sig_0x${evidenceHash.slice(7)}889acde1`;
+      const evidenceHash = createHash('sha256').update(payloadString).digest('hex');
+      const signature = `grc_claw_sig_0x${evidenceHash.slice(0, 16)}889acde1`;
 
       return {
         ok: true,
@@ -801,13 +835,8 @@ export async function dispatchBuiltinGrcTool(
       const screeningLogs = (args.screeningLogs as Array<any>) ?? [];
       const payloadString = JSON.stringify({ messages, screeningLogs });
       
-      let hash = 0;
-      for (let i = 0; i < payloadString.length; i++) {
-        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
-        hash = hash & hash;
-      }
-      const auditHash = 'sha256-' + Math.abs(hash).toString(16).padEnd(8, '0') + 'b8f2c6e3d5';
-      const signature = `iso20022_audit_sig_0x${auditHash.slice(7)}775a2bc9`;
+      const auditHash = createHash('sha256').update(payloadString).digest('hex');
+      const signature = `iso20022_audit_sig_0x${auditHash.slice(0, 16)}775a2bc9`;
 
       return {
         ok: true,
@@ -874,12 +903,8 @@ export async function dispatchBuiltinGrcTool(
       let coSignature = '';
       if (complianceStatus === 'APPROVED') {
         const payloadString = JSON.stringify({ ledgerType, transactionAmount, beneficiaryName });
-        let hash = 0;
-        for (let i = 0; i < payloadString.length; i++) {
-          hash = (hash << 5) - hash + payloadString.charCodeAt(i);
-          hash = hash & hash;
-        }
-        coSignature = `grc_multi_sig_0x${Math.abs(hash).toString(16).padEnd(8, '0')}1d8e24c7`;
+        const sigHash = createHash('sha256').update(payloadString).digest('hex');
+        coSignature = `grc_multi_sig_0x${sigHash.slice(0, 16)}1d8e24c7`;
       }
 
       return {
@@ -2468,14 +2493,7 @@ export async function dispatchBuiltinGrcTool(
       const enabledFrameworks = (args.frameworks as string[]) ?? ['iso27001'];
       const riskTolerance = String(args.riskTolerance ?? 'medium') as 'low' | 'medium' | 'high';
       try {
-        const orchestrator = new ComplianceSuperOrchestrator({
-          orgId,
-          enabledFrameworks: enabledFrameworks as any,
-          riskTolerance,
-          autoRemediate: false,
-          continuousScanInterval: 3600000,
-        });
-        const compiler = orchestrator.getCompiler();
+        const compiler = complianceOrchestrator.getCompiler();
         const allASTs = compiler.getAllASTs();
         const frameworksCompiled = allASTs.map(a => a.framework);
         return {
@@ -2484,7 +2502,7 @@ export async function dispatchBuiltinGrcTool(
           scanType: 'compliance_orchestration',
           frameworksCompiled,
           totalFrameworks: frameworksCompiled.length,
-          graphHash: orchestrator.getGraph().getGraphHash(),
+          graphHash: complianceOrchestrator.getGraph().getGraphHash(),
           timestamp: new Date().toISOString(),
         };
       } catch (err: any) {
@@ -2494,15 +2512,8 @@ export async function dispatchBuiltinGrcTool(
     case 'compliance_orch.get_status': {
       const orgId = String(args.orgId ?? 'org-default');
       try {
-        const orchestrator = new ComplianceSuperOrchestrator({
-          orgId,
-          enabledFrameworks: ['iso27001'],
-          riskTolerance: 'medium',
-          autoRemediate: false,
-          continuousScanInterval: 3600000,
-        });
-        const graph = orchestrator.getGraph();
-        const compiler = orchestrator.getCompiler();
+        const graph = complianceOrchestrator.getGraph();
+        const compiler = complianceOrchestrator.getCompiler();
         return {
           ok: true,
           orgId,
@@ -2520,16 +2531,7 @@ export async function dispatchBuiltinGrcTool(
       const tenantIdStr = String(tenantId);
       const framework = String(args.framework ?? 'iso27001') as any;
       try {
-        const engine = new ContinuousComplianceEngine(
-          {
-            async verifyEvidence() { return true; },
-            async getCurrentEvidence() { return []; },
-          },
-          {
-            async execute(_script: string, _context: Record<string, unknown>) { return { success: true, message: 'no-op', actionsTaken: [] as string[] }; },
-          },
-        );
-        const driftDetector = engine.getDriftDetector();
+        const driftDetector = continuousEngine.getDriftDetector();
         const driftEvents = driftDetector.getDriftEvents(tenantIdStr, framework);
         return {
           ok: true,
@@ -2547,16 +2549,7 @@ export async function dispatchBuiltinGrcTool(
       const tenantIdStr = String(tenantId);
       const framework = String(args.framework ?? 'iso27001') as any;
       try {
-        const engine = new ContinuousComplianceEngine(
-          {
-            async verifyEvidence() { return true; },
-            async getCurrentEvidence() { return []; },
-          },
-          {
-            async execute(_script: string, _context: Record<string, unknown>) { return { success: true, message: 'no-op', actionsTaken: [] as string[] }; },
-          },
-        );
-        const postureMonitor = engine.getPostureMonitor();
+        const postureMonitor = continuousEngine.getPostureMonitor();
         const posture = postureMonitor.calculatePosture({
           tenantId: tenantIdStr,
           frameworkCode: framework,
@@ -2581,9 +2574,8 @@ export async function dispatchBuiltinGrcTool(
       const value = typeof args.value === 'number' ? args.value : 0;
       const threshold = typeof args.threshold === 'number' ? args.threshold : 2.0;
       try {
-        const detector = new AnomalyDetector(threshold);
-        const baselines = detector.getBaselines();
-        const detection = detector.detect(metric, value);
+        const baselines = anomalyDetector.getBaselines();
+        const detection = anomalyDetector.detect(metric, value);
         return {
           ok: true,
           scanType: 'anomaly_detection',
@@ -2601,8 +2593,7 @@ export async function dispatchBuiltinGrcTool(
     }
     case 'threat.get_findings': {
       try {
-        const detector = new AnomalyDetector();
-        const baselines = detector.getBaselines();
+        const baselines = anomalyDetector.getBaselines();
         return {
           ok: true,
           findings: [],
@@ -2659,13 +2650,117 @@ export async function dispatchBuiltinGrcTool(
         return { ok: false, error: err.message ?? 'register_model_failed', timestamp: new Date().toISOString() };
       }
     }
+    case 'supply_chain.enforce_policy': {
+      const modelId = String(args.modelId ?? '');
+      const policyTool = String(args.tool ?? '');
+      const role = String(args.role ?? 'agent');
+      if (!modelId || !policyTool) {
+        return { ok: false, error: 'modelId_and_tool_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const receipts = await supplyChain.enforceRuntimePolicy(modelId, {
+          tool: policyTool,
+          args: (args.context as Record<string, unknown>) ?? {},
+          role,
+        });
+        return { ok: true, receipts, modelId, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'enforce_policy_failed', modelId, timestamp: new Date().toISOString() };
+      }
+    }
+    case 'supply_chain.submit_proposal': {
+      const proposal = args.proposal as import('@grc-claw/ai-supply-chain').ModelPolicyProposal | undefined;
+      if (!proposal || !proposal.id || !proposal.modelId || !proposal.action) {
+        return { ok: false, error: 'proposal_with_id_modelId_and_action_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const consensus = await supplyChain.submitPolicyProposal(proposal);
+        return { ok: true, consensus, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'submit_proposal_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Federated Compliance Mesh Tools ──────────────────────────
+    case 'federated.join_mesh': {
+      const org = args.org as import('@grc-claw/federated-compliance-mesh').FederatedOrganization | undefined;
+      if (!org || !org.id || !org.name) {
+        return { ok: false, error: 'org_with_id_and_name_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        complianceMesh.registerOrganization(org);
+        return { ok: true, joined: true, orgId: org.id, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'join_mesh_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'federated.share_posture': {
+      const orgId = String(args.orgId ?? '');
+      const frameworkCode = String(args.frameworkCode ?? '');
+      const overallScore = Number(args.overallScore ?? 0);
+      if (!orgId || !frameworkCode) {
+        return { ok: false, error: 'orgId_and_frameworkCode_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const state: import('@grc-claw/federated-compliance-mesh').FederatedComplianceState = {
+          orgId,
+          frameworkCode: frameworkCode as import('@grc-claw/federated-compliance-mesh').FrameworkCode,
+          overallScore,
+          controlScores: new Map(Object.entries((args.controlScores as Record<string, number>) ?? {})),
+          lastUpdated: new Date().toISOString(),
+          evidenceHashes: new Map(Object.entries((args.evidenceHashes as Record<string, string>) ?? {})),
+        };
+        const events = complianceMesh.updateComplianceState(
+          orgId,
+          frameworkCode as import('@grc-claw/federated-compliance-mesh').FrameworkCode,
+          state,
+        );
+        return { ok: true, events, orgId, frameworkCode, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'share_posture_failed', orgId, timestamp: new Date().toISOString() };
+      }
+    }
+    case 'federated.verify_peer': {
+      const fromOrgId = String(args.fromOrgId ?? '');
+      const toOrgId = String(args.toOrgId ?? '');
+      if (!fromOrgId || !toOrgId) {
+        return { ok: false, error: 'fromOrgId_and_toOrgId_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const path = complianceMesh.findPath(fromOrgId, toOrgId);
+        const orgs = complianceMesh.getOrganizations();
+        const targetOrg = orgs.find((o) => o.id === toOrgId);
+        return {
+          ok: true,
+          reachable: path !== null,
+          path,
+          peerStatus: targetOrg?.status ?? 'unknown',
+          trustLevel: targetOrg?.trustLevel ?? 0,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'verify_peer_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'federated.get_mesh_status': {
+      try {
+        const stats = complianceMesh.getMeshStats();
+        const orgs = complianceMesh.getOrganizations();
+        return {
+          ok: true,
+          stats,
+          organizations: orgs.map((o) => ({ id: o.id, name: o.name, status: o.status, trustLevel: o.trustLevel })),
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_mesh_status_failed', timestamp: new Date().toISOString() };
+      }
+    }
     // ─── Board Reporting Tools ─────────────────────────────────────
     case 'board.generate_report': {
       const reportType = String(args.type ?? 'board_summary') as any;
       const period = String(args.period ?? new Date().toISOString().substring(0, 7));
       try {
-        const generator = new BoardReportGenerator();
-        const report = generator.generateReport(reportType, period);
+        const report = boardReporter.generateReport(reportType, period);
         return { ok: true, report, timestamp: new Date().toISOString() };
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'generate_report_failed', timestamp: new Date().toISOString() };
@@ -2673,8 +2768,7 @@ export async function dispatchBuiltinGrcTool(
     }
     case 'board.get_dashboard': {
       try {
-        const generator = new BoardReportGenerator();
-        const dashboard = generator.getExecutiveDashboard();
+        const dashboard = boardReporter.getExecutiveDashboard();
         return { ok: true, dashboard, timestamp: new Date().toISOString() };
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'get_dashboard_failed', timestamp: new Date().toISOString() };
@@ -2687,10 +2781,9 @@ export async function dispatchBuiltinGrcTool(
         const provider = String(args.provider ?? 'aws') as any;
         const accountId = String(args.accountId ?? 'default-account');
         const regions = (args.regions as string[]) ?? ['us-east-1'];
-        const collector = new AutoEvidenceCollector();
-        collector.connectProvider(provider, accountId, regions);
-        const collectors = collector.autoDeployCollectors(provider);
-        const evidenceItems = collectors.map(c => collector.collectEvidence(c.id)).filter(Boolean);
+        autoEvidence.connectProvider(provider, accountId, regions);
+        const collectors = autoEvidence.autoDeployCollectors(provider);
+        const evidenceItems = collectors.map(c => autoEvidence.collectEvidence(c.id)).filter(Boolean);
         return {
           ok: true,
           provider,
@@ -2706,8 +2799,7 @@ export async function dispatchBuiltinGrcTool(
     case 'auto_evidence.assess': {
       try {
         const provider = String(args.provider ?? 'aws') as any;
-        const collector = new AutoEvidenceCollector();
-        const templates = collector.getTemplates(provider);
+        const templates = autoEvidence.getTemplates(provider);
         return {
           ok: true,
           provider,
@@ -2764,14 +2856,13 @@ export async function dispatchBuiltinGrcTool(
     // ─── Incident Response Tools ──────────────────────────────────
     case 'incident.create': {
       try {
-        const manager = new IncidentManager();
         const title = String(args.title ?? `Incident-${Date.now()}`);
         const type = String(args.type ?? 'other') as any;
         const severity = String(args.severity ?? 'medium') as any;
         const description = String(args.description ?? '');
         const reportedBy = String(args.reportedBy ?? 'system');
         const assignee = String(args.assignee ?? 'system');
-        const incident = manager.reportIncident({ title, type, severity, description, reportedBy, assignee });
+        const incident = incidentManager.reportIncident({ title, type, severity, description, reportedBy, assignee });
         return {
           ok: true,
           incidentId: incident.id,
@@ -2790,13 +2881,12 @@ export async function dispatchBuiltinGrcTool(
     }
     case 'incident.list': {
       try {
-        const manager = new IncidentManager();
         const statusFilter = String(args.status ?? '') as any;
-        let incidents = manager.listIncidents();
+        let incidents = incidentManager.listIncidents();
         if (statusFilter) {
           incidents = incidents.filter(i => i.status === statusFilter);
         }
-        const stats = manager.getStats();
+        const stats = incidentManager.getStats();
         return {
           ok: true,
           incidents: incidents.map(i => ({
@@ -2969,16 +3059,7 @@ export async function dispatchBuiltinGrcTool(
         if (!agentDid) {
           return { ok: false, error: 'agentDid_required', timestamp: new Date().toISOString() };
         }
-        const engine = new AgentTrustScoreEngine({
-          issuerId: 'grc-claw-gateway',
-          credentialStore: {
-            async store(_credential: import('@grc-claw/agent-trust-score').TrustCredential) {},
-            async get(_id: string) { return undefined; },
-            async listByAgent(_agentDid: string) { return []; },
-            async revoke(_id: string) { return false; },
-          },
-        });
-        const profile = await engine.scoreAgent(agentDid, agentName, agentTenantId, signals as import('@grc-claw/agent-trust-score').BehavioralSignal[], complianceScore, frameworks as import('@grc-claw/agent-trust-score').FrameworkCode[]);
+        const profile = await trustScoreEngine.scoreAgent(agentDid, agentName, agentTenantId, signals as import('@grc-claw/agent-trust-score').BehavioralSignal[], complianceScore, frameworks as import('@grc-claw/agent-trust-score').FrameworkCode[]);
         return {
           ok: true,
           agentDid: profile.agentDid,
@@ -3001,16 +3082,7 @@ export async function dispatchBuiltinGrcTool(
         if (!agentDid) {
           return { ok: false, error: 'agentDid_required', timestamp: new Date().toISOString() };
         }
-        const engine = new AgentTrustScoreEngine({
-          issuerId: 'grc-claw-gateway',
-          credentialStore: {
-            async store(_credential: import('@grc-claw/agent-trust-score').TrustCredential) {},
-            async get(_id: string) { return undefined; },
-            async listByAgent(_agentDid: string) { return []; },
-            async revoke(_id: string) { return false; },
-          },
-        });
-        const profile = await engine.getAgentProfile(agentDid);
+        const profile = await trustScoreEngine.getAgentProfile(agentDid);
         if (!profile) {
           return {
             ok: true,
@@ -3035,6 +3107,55 @@ export async function dispatchBuiltinGrcTool(
         };
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'trust_score_profile_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // ─── Agent Audit Trail Tools ─────────────────────────────────
+    case 'audit_trail.record': {
+      try {
+        const agentDid = String(args.agentDid ?? 'system');
+        const toolName = String(args.tool ?? '');
+        const toolArgs = (args.args as Record<string, unknown>) ?? {};
+        const result = (args.result as Record<string, unknown>) ?? {};
+        const record = agentAuditTrail.record(agentDid, toolName, toolArgs, result);
+        return { ok: true, record, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'audit_trail_record_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'audit_trail.verify': {
+      try {
+        const result = agentAuditTrail.verify();
+        return { ok: true, ...result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'audit_trail_verify_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'audit_trail.query': {
+      try {
+        const agentDid = typeof args.agentDid === 'string' ? args.agentDid : undefined;
+        const toolFilter = typeof args.tool === 'string' ? args.tool : undefined;
+        const from = typeof args.from === 'string' ? args.from : undefined;
+        const to = typeof args.to === 'string' ? args.to : undefined;
+        const limit = typeof args.limit === 'number' ? args.limit : undefined;
+        const offset = typeof args.offset === 'number' ? args.offset : undefined;
+        const records = agentAuditTrail.query({ agentDid, tool: toolFilter, from, to, limit, offset });
+        return { ok: true, records, count: records.length, total: agentAuditTrail.count(), timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'audit_trail_query_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'audit_trail.export': {
+      try {
+        const format = (String(args.format ?? 'json') as 'json' | 'csv');
+        const agentDid = typeof args.agentDid === 'string' ? args.agentDid : undefined;
+        const toolFilter = typeof args.tool === 'string' ? args.tool : undefined;
+        const from = typeof args.from === 'string' ? args.from : undefined;
+        const to = typeof args.to === 'string' ? args.to : undefined;
+        const exported = agentAuditTrail.export({ format, agentDid, tool: toolFilter, from, to });
+        return { ok: true, format, data: exported, recordCount: agentAuditTrail.count(), timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'audit_trail_export_failed', timestamp: new Date().toISOString() };
       }
     }
 

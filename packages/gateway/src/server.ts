@@ -23,7 +23,7 @@ import {
 import { IdempotencyCache } from './idempotency.js';
 import { applyCors, tryServeConsoleStatic } from './console-static.js';
 import { discoverCursorSkills } from './cursor-skills.js';
-import { dispatchAgentTool, executionStateFromOutput, setSecurityGraph, identityManager } from './agent-dispatch.js';
+import { dispatchAgentTool, executionStateFromOutput, setSecurityGraph, identityManager, agentAuditTrail } from './agent-dispatch.js';
 import { createClawDispatchContext } from './skill-runtime.js';
 import { GatewayAssuranceGraph } from './assurance.js';
 import { initSecurityGraph } from './graph-init.js';
@@ -862,6 +862,12 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         });
         tracer.endSpan(traceSpan.spanId, 'OK');
         metricsCollector.incCounter('grc_agent_invocations_total');
+        agentAuditTrail.record(
+          typeof body.agentId === 'string' ? body.agentId : 'system',
+          tool,
+          args,
+          output ?? {},
+        );
       } catch (e) {
         tracer.endSpan(traceSpan.spanId, 'ERROR', e instanceof Error ? e.message : 'dispatch_failed');
         const resultEvent = ledger.recordResult(intent, { executionState: 'failed' });
@@ -1551,6 +1557,52 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const summary = evidenceCollector.getComplianceSummary(framework);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, framework, summary }));
+      return;
+    }
+
+    // ─── Agent Audit Trail Endpoints ─────────────────────────────
+    if (path === '/api/audit-trail' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const url = new URL(req.url ?? '', 'http://local');
+      const limit = Number(url.searchParams.get('limit') ?? 100);
+      const records = agentAuditTrail.list(limit);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, records, count: records.length, total: agentAuditTrail.count() }));
+      return;
+    }
+    if (path === '/api/audit-trail/verify' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const result = agentAuditTrail.verify();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...result }));
+      return;
+    }
+    if (path === '/api/audit-trail/export' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const url = new URL(req.url ?? '', 'http://local');
+      const format = (url.searchParams.get('format') ?? 'json') as 'json' | 'csv';
+      const agentDid = url.searchParams.get('agentDid') ?? undefined;
+      const toolFilter = url.searchParams.get('tool') ?? undefined;
+      const from = url.searchParams.get('from') ?? undefined;
+      const to = url.searchParams.get('to') ?? undefined;
+      const exported = agentAuditTrail.export({ format, agentDid, tool: toolFilter, from, to });
+      if (format === 'csv') {
+        res.writeHead(200, { 'Content-Type': 'text/csv' });
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+      }
+      res.end(exported);
+      return;
+    }
+    const auditTrailDetailMatch = path.match(/^\/api\/audit-trail\/([^/]+)$/);
+    if (auditTrailDetailMatch && req.method === 'GET' && !path.includes('verify') && !path.includes('export')) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const recordId = decodeURIComponent(auditTrailDetailMatch[1]!);
+      const records = agentAuditTrail.list();
+      const record = records.find(r => r.id === recordId);
+      if (!record) { res.writeHead(404); res.end(JSON.stringify({ ok: false, error: 'record_not_found', recordId })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, record }));
       return;
     }
 
