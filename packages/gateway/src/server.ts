@@ -84,7 +84,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const rateLimiter = createRateLimiter();
   const riskRegister = new RiskRegister();
   const entityManager = new EntityManager(pg?.database);
-  const agentBuilder = new AgentBuilder();
+  const agentBuilder = new AgentBuilder(pg?.database ? { database: pg.database } : undefined);
   const frameworkCrosswalk = new FrameworkCrosswalk();
   const chatGRC = new ChatGRC();
 
@@ -95,6 +95,9 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     });
     entityManager.loadFromDatabase().catch((err) => {
       console.warn('[STARTUP] entityManager.loadFromDatabase failed:', err instanceof Error ? err.message : err);
+    });
+    agentBuilder.initializeStore().catch((err) => {
+      console.warn('[STARTUP] agentBuilder.initializeStore failed:', err instanceof Error ? err.message : err);
     });
   }
 
@@ -635,6 +638,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           claw,
           persistence: pg,
           agentBuilder,
+          chatGrc: chatGRC,
         });
         metricsCollector.incCounter('grc_agent_invocations_total');
       } catch (e) {

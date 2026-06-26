@@ -12,8 +12,17 @@
   "dependencies": {
     "@grc-claw/core": "*"
   },
+  "peerDependencies": {
+    "playwright": "^1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "typescript": "^5.7.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "playwright": "^1.40.0"
   }
 }

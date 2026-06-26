@@ -110,6 +110,80 @@ const TOOLS: MCPTool[] = [
       required: ["entityId"],
     },
   },
+  // v2.0 tools
+  {
+    name: "grc_scan_repo",
+    description: "Run a compliance and PQC scan against a local repository path",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory path to scan (default: current directory)" },
+        framework: { type: "string", description: "Framework to check against (iso27001, soc2, nist-csf, iso42001)" },
+        pqc: { type: "boolean", description: "Also scan for deprecated cryptography (PQC readiness)" },
+      },
+    },
+  },
+  {
+    name: "grc_create_evidence",
+    description: "Store a new evidence artifact linked to a compliance control",
+    inputSchema: {
+      type: "object",
+      properties: {
+        controlId: { type: "string", description: "Control identifier (e.g. A.9.4.2)" },
+        framework: { type: "string", description: "Framework code (iso27001, soc2, nist-csf)" },
+        evidenceType: { type: "string", description: "Type: configuration, policy, log, certificate, screenshot" },
+        content: { type: "string", description: "Evidence content or description" },
+        source: { type: "string", description: "Evidence source (e.g. aws-iam, github, okta)" },
+      },
+      required: ["controlId", "content"],
+    },
+  },
+  {
+    name: "grc_get_regulatory_alerts",
+    description: "Get latest regulatory change alerts affecting your compliance frameworks",
+    inputSchema: {
+      type: "object",
+      properties: {
+        framework: { type: "string", description: "Filter by framework (eu-ai-act, dora, nis2, gdpr, nist-csf, iso42001)" },
+        impact: { type: "string", description: "Filter by impact level (critical, significant, moderate)" },
+        action_required: { type: "boolean", description: "Only return alerts requiring action" },
+      },
+    },
+  },
+  {
+    name: "grc_pqc_scan",
+    description: "Scan code for deprecated cryptographic patterns that must be migrated before NIST PQC mandates (FedRAMP 2027)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory to scan (default: current directory)" },
+        severity: { type: "string", description: "Filter by severity: critical, high, medium" },
+      },
+    },
+  },
+  {
+    name: "grc_verify_zk_proof",
+    description: "Verify a Zero-Knowledge compliance attestation proof for an organization",
+    inputSchema: {
+      type: "object",
+      properties: {
+        orgSlug: { type: "string", description: "Organization slug" },
+        framework: { type: "string", description: "Framework to verify (soc2, iso27001, nist-csf, iso42001)" },
+      },
+      required: ["orgSlug", "framework"],
+    },
+  },
+  {
+    name: "grc_get_trust_score",
+    description: "Get the behavioral trust score for an AI agent",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agentId: { type: "string", description: "Agent identifier (DID or name)" },
+      },
+      required: ["agentId"],
+    },
+  },
 ];
 
 const RESOURCES: MCPResource[] = [
@@ -251,6 +325,39 @@ async function handleToolCall(name: string, args: Record<string, unknown> | unde
         break;
       case "grc_get_entity_report":
         result = await gatewayFetch(config, `/api/entities/${args?.entityId}/compliance`);
+        break;
+      // v2.0 tools — call A2Z SOC platform API
+      case "grc_scan_repo":
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({ tool: "compliance.run_scan", args: { frameworkCode: args?.framework ?? "iso27001", path: args?.path ?? ".", includePqc: args?.pqc ?? false } }),
+        });
+        break;
+      case "grc_create_evidence":
+        result = await gatewayFetch(config, "/api/agent/invoke", {
+          method: "POST",
+          body: JSON.stringify({ tool: "evidence.attach", args: { controlId: args?.controlId, framework: args?.framework ?? "iso27001", type: args?.evidenceType ?? "configuration", content: args?.content, source: args?.source ?? "mcp" } }),
+        });
+        break;
+      case "grc_get_regulatory_alerts": {
+        const params = new URLSearchParams();
+        if (args?.framework) params.set("framework", String(args.framework));
+        if (args?.impact) params.set("impact", String(args.impact));
+        if (args?.action_required) params.set("action_required", "true");
+        result = await fetch(`https://a2zsoc.com/api/platform/regulatory-intelligence/alerts?${params}`, { headers: { "Content-Type": "application/json" } }).then(r => r.json());
+        break;
+      }
+      case "grc_pqc_scan": {
+        const pqcParams = new URLSearchParams();
+        if (args?.severity) pqcParams.set("severity", String(args.severity));
+        result = await fetch(`https://a2zsoc.com/api/platform/pqc-scan?${pqcParams}`, { headers: { "Content-Type": "application/json" } }).then(r => r.json());
+        break;
+      }
+      case "grc_verify_zk_proof":
+        result = await fetch(`https://a2zsoc.com/api/platform/verify/${encodeURIComponent(String(args?.orgSlug))}/${encodeURIComponent(String(args?.framework))}`, { headers: { "Content-Type": "application/json" } }).then(r => r.json());
+        break;
+      case "grc_get_trust_score":
+        result = await fetch(`https://a2zsoc.com/api/platform/agent-trust/score/${encodeURIComponent(String(args?.agentId))}`, { headers: { "Content-Type": "application/json" } }).then(r => r.json());
         break;
       default:
         return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };

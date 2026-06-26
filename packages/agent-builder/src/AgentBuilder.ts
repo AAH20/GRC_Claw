@@ -17,6 +17,13 @@ import type {
 } from "./types.js";
 import { PREBUILT_AGENTS } from "./prebuilt/index.js";
 
+// ─── Database Interface (matches @grc-claw/persistence Database) ─────
+
+export interface AgentBuilderDatabase {
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
+  execute(sql: string, params?: unknown[]): Promise<void>;
+}
+
 // ─── Built-in Task Executors ──────────────────────────────────────────
 
 export class ScanControlsExecutor implements TaskExecutor {
@@ -354,12 +361,78 @@ class InMemoryAgentStore implements AgentStore {
   }
 }
 
+// ─── PostgreSQL Agent Store ──────────────────────────────────────────
+
+class PostgresAgentStore implements AgentStore {
+  private db: AgentBuilderDatabase;
+  private cache: Map<string, AgentDefinition> = new Map();
+
+  constructor(db: AgentBuilderDatabase) {
+    this.db = db;
+  }
+
+  async initialize(): Promise<void> {
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS agent_definitions (
+        id TEXT PRIMARY KEY,
+        definition JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await this.loadAll();
+  }
+
+  private async loadAll(): Promise<void> {
+    try {
+      const { rows } = await this.db.query<{ id: string; definition: AgentDefinition }>(
+        'SELECT id, definition FROM agent_definitions'
+      );
+      for (const row of rows) {
+        this.cache.set(row.id, row.definition);
+      }
+    } catch {
+      // fall back to empty cache
+    }
+  }
+
+  save(agent: AgentDefinition): void {
+    this.cache.set(agent.id, agent);
+    const db = this.db;
+    void db.execute(
+      `INSERT INTO agent_definitions (id, definition, updated_at) VALUES ($1, $2, NOW())
+       ON CONFLICT (id) DO UPDATE SET definition = $2, updated_at = NOW()`,
+      [agent.id, JSON.stringify(agent)]
+    ).catch(() => {
+      // fall back to in-memory only
+    });
+  }
+
+  get(id: string): AgentDefinition | undefined {
+    return this.cache.get(id);
+  }
+
+  list(): AgentDefinition[] {
+    return Array.from(this.cache.values());
+  }
+
+  delete(id: string): boolean {
+    const deleted = this.cache.delete(id);
+    if (deleted) {
+      const db = this.db;
+      void db.execute('DELETE FROM agent_definitions WHERE id = $1', [id]).catch(() => {});
+    }
+    return deleted;
+  }
+}
+
 // ─── Agent Builder ────────────────────────────────────────────────────
 
 export interface AgentBuilderConfig {
   defaultTimeoutMs: number;
   maxConcurrentRuns: number;
   evidenceRequired: boolean;
+  database?: AgentBuilderDatabase;
 }
 
 const DEFAULT_BUILDER_CONFIG: AgentBuilderConfig = {
@@ -377,16 +450,31 @@ export class AgentBuilder {
   private config: AgentBuilderConfig;
   private findings: Finding[] = [];
   private tickets: Ticket[] = [];
+  private pgStore?: PostgresAgentStore;
 
   constructor(config: Partial<AgentBuilderConfig> = {}) {
     this.config = { ...DEFAULT_BUILDER_CONFIG, ...config };
-    this.store = new InMemoryAgentStore();
+
+    if (config.database) {
+      this.pgStore = new PostgresAgentStore(config.database);
+      this.store = this.pgStore;
+    } else {
+      this.store = new InMemoryAgentStore();
+    }
+
     this.taskExecutors = new Map(Object.entries(DEFAULT_TASK_EXECUTORS));
     this.actionExecutors = new Map(Object.entries(DEFAULT_ACTION_EXECUTORS));
 
     // Register pre-built agents
     for (const agent of PREBUILT_AGENTS) {
       this.store.save(agent);
+    }
+  }
+
+  /** Initialize PostgreSQL store (creates table, loads data). Call after construction. */
+  async initializeStore(): Promise<void> {
+    if (this.pgStore) {
+      await this.pgStore.initialize();
     }
   }
 

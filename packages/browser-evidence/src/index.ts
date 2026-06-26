@@ -8,6 +8,8 @@ export type {
 } from './types.js';
 export { generateId, hashData } from './types.js';
 export { BrowserEvidenceCollector } from './BrowserEvidenceCollector.js';
+export { PlaywrightAdapter } from './adapters/PlaywrightAdapter.js';
+export type { PlaywrightAdapterOptions } from './adapters/PlaywrightAdapter.js';
 export {
   AWS_CONSOLE,
   AZURE_PORTAL,
