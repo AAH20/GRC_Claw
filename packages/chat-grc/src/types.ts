@@ -21,6 +21,25 @@ export interface ChatContext {
   controls: string[];
   evidence: string[];
   risks: string[];
+  riskRegister?: {
+    topRisks(count?: number): Array<{
+      scenario: { id: string; name: string };
+      riskScore: number;
+      riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'negligible';
+      fairModel: { annualizedLossExpectancy: number };
+    }>;
+    portfolioMetrics(): {
+      totalALE: number;
+      meanRiskScore: number;
+      criticalCount: number;
+      highCount: number;
+      scenarioCount: number;
+    };
+  };
+  evidenceStore?: {
+    listByControl(controlId: string): Array<{ id: string; controlId: string }>;
+  };
+  frameworkControls?: Record<string, Array<{ id: string; controlCode: string; title: string; domain?: string }>>;
 }
 
 export interface ChatResponse {

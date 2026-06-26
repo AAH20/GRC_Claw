@@ -154,6 +154,55 @@ export class AgentTrustScoreEngine {
     return "active";
   }
 
+  // ─── Behavioral runtime integration (#5) ──────────────────────────────────
+  // Called by agent-runtime after each ExecDecision to feed real behavioral data.
+  // Accumulates signals and re-scores the agent incrementally.
+
+  async recordExecDecision(
+    agentDid: string,
+    agentName: string,
+    tenantId: string,
+    decision: { allowed: boolean; sandbox: string; requiresApproval: boolean; tool: string; tier: string; reason: string }
+  ): Promise<void> {
+    const signal: BehavioralSignal = {
+      type: decision.allowed ? "normal_operation" : "suspicious_pattern",
+      timestamp: new Date().toISOString(),
+      confidence: decision.sandbox === "denied" ? 0.9 : decision.requiresApproval ? 0.6 : 0.3,
+      details: `Tool: ${decision.tool} | Tier: ${decision.tier} | Decision: ${decision.sandbox} | ${decision.reason}`,
+      impact: decision.sandbox === "denied" ? -5 : decision.requiresApproval ? -1 : +1,
+    };
+
+    const existing = this.profiles.get(agentDid);
+    if (existing) {
+      await this.updateAgentSignals(agentDid, [signal]);
+    } else {
+      await this.scoreAgent(agentDid, agentName, tenantId, [signal]);
+    }
+
+    // Publish to A2Z SOC agent trust API if env var set
+    const a2zApiKey = process.env.A2Z_SOC_API_KEY;
+    const a2zEndpoint = process.env.A2Z_SOC_ENDPOINT ?? "https://a2zsoc.com";
+    if (a2zApiKey) {
+      fetch(`${a2zEndpoint}/api/platform/agent-trust/record`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${a2zApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: agentDid, decision: decision.sandbox, tool: decision.tool, tier: decision.tier, reason: decision.reason }),
+      }).catch(() => { /* non-fatal */ });
+    }
+  }
+
+  getCurrentTrustScore(agentDid: string): number {
+    return this.profiles.get(agentDid)?.overallTrustScore ?? 50;
+  }
+
+  isToolAccessGranted(agentDid: string, toolTier: "read" | "write" | "destructive"): boolean {
+    const score = this.getCurrentTrustScore(agentDid);
+    if (toolTier === "read") return score >= 30;
+    if (toolTier === "write") return score >= 60;
+    if (toolTier === "destructive") return score >= 80;
+    return false;
+  }
+
   getTrustScoreCalculator(): TrustScoreCalculator {
     return this.calculator;
   }

@@ -778,7 +778,149 @@ async function cmdAiBom(args: string[]) {
   }
 
   log(`\n${dim('EU AI Act Article 53 compliance data captured')}`);
-  log(`${dim('Submit to your compliance platform:')} grc report --attach-bom ${outputPath ?? 'ai-bom.json'}\n`);
+  log(`${dim('Publish to registry:')} grc ai-bom publish --file ${outputPath ?? 'ai-bom.json'}\n`);
+}
+
+async function cmdAiBomPublish(args: string[]) {
+  const filePath = args[args.indexOf('--file') + 1] ?? args[args.indexOf('-f') + 1] ?? 'ai-bom.json';
+  const modelId = args[args.indexOf('--model-id') + 1];
+  const a2zApiKey = process.env.A2Z_SOC_API_KEY;
+
+  if (!existsSync(filePath)) { error(`AI-BOM file not found: ${filePath}`); process.exit(1); }
+  const bomContent = readFileSync(filePath, 'utf8');
+  let bom: Record<string, unknown>;
+  try { bom = JSON.parse(bomContent) as Record<string, unknown>; } catch { error('Invalid JSON in AI-BOM file'); process.exit(1); }
+
+  const metadata = bom['metadata'] as Record<string, unknown> ?? {};
+  const resolvedModelId = modelId ?? (metadata['model_id'] as string) ?? 'unknown/model';
+  const vendor = (metadata['vendor'] as string) ?? resolvedModelId.split('/')[0] ?? 'unknown';
+  const version = (metadata['version'] as string) ?? '0.0.0';
+
+  log(`\n${bold('AI-BOM Registry Publish')} ${dim(`v${VERSION}`)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+  info(`Publishing ${resolvedModelId} to A2Z SOC AI-BOM Registry...`);
+
+  const endpoint = 'https://a2zsoc.com/api/platform/ai-bom-registry/publish';
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (a2zApiKey) headers['Authorization'] = `Bearer ${a2zApiKey}`;
+
+  try {
+    const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify({ model_id: resolvedModelId, vendor, version, bom_content: bomContent }) });
+    const data = await res.json() as Record<string, unknown>;
+    if (res.ok) {
+      success(`Published! BOM hash: ${data['bom_hash']}`);
+      log(`  Verify: ${data['verify_url']}`);
+    } else {
+      error(`Publish failed: ${JSON.stringify(data)}`);
+      process.exit(1);
+    }
+  } catch (e) { error(`Network error: ${e instanceof Error ? e.message : String(e)}`); process.exit(1); }
+}
+
+// ─── PQC Scan (#8) — Post-Quantum Cryptography migration scanner ─────────────
+interface PqcFinding {
+  file: string; line: number; pattern: string; severity: 'critical' | 'high' | 'medium';
+  match: string; replacement: string; nist_ref: string;
+}
+
+const PQC_PATTERNS: Array<{ pattern: string; re: RegExp; severity: PqcFinding['severity']; replacement: string; nist_ref: string }> = [
+  { pattern: 'RSA key generation', re: /generateKeyPair\s*\(\s*['"]rsa['"]/gi, severity: 'critical', replacement: 'ML-KEM-768 (FIPS 203)', nist_ref: 'SP 800-208' },
+  { pattern: 'RSA-2048 key size', re: /modulusLength\s*:\s*2048/gi, severity: 'critical', replacement: 'ML-KEM or RSA-3072 minimum (transitional)', nist_ref: 'SP 800-57' },
+  { pattern: 'ECDSA signing', re: /createSign\s*\(\s*['"]SHA-256['"]\)|new\s+ECDSA|createECDH/gi, severity: 'critical', replacement: 'ML-DSA-65 (FIPS 204)', nist_ref: 'FIPS 204' },
+  { pattern: 'ECDH key exchange', re: /createDiffieHellman|diffieHellman|\.computeSecret\(/gi, severity: 'high', replacement: 'ML-KEM-1024 (FIPS 203)', nist_ref: 'SP 800-227' },
+  { pattern: 'MD5 hashing', re: /createHash\s*\(\s*['"]md5['"]\)/gi, severity: 'high', replacement: 'SHA-3 / SHAKE-256 (FIPS 202)', nist_ref: 'FIPS 202' },
+  { pattern: 'SHA-1 hashing', re: /createHash\s*\(\s*['"]sha1['"]\)/gi, severity: 'medium', replacement: 'SHA-256 or SHA-3 (FIPS 202)', nist_ref: 'FIPS 202' },
+];
+
+const SCANNABLE_EXTS = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.py', '.go', '.java', '.cs', '.rb', '.rs']);
+function scanFileForPqc(filePath: string): PqcFinding[] {
+  const findings: PqcFinding[] = [];
+  try {
+    const content = readFileSync(filePath, 'utf8');
+    const lines = content.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i] ?? '';
+      for (const p of PQC_PATTERNS) {
+        p.re.lastIndex = 0;
+        const m = p.re.exec(line);
+        if (m) {
+          findings.push({ file: filePath, line: i + 1, pattern: p.pattern, severity: p.severity, match: m[0].trim(), replacement: p.replacement, nist_ref: p.nist_ref });
+        }
+      }
+    }
+  } catch { /* skip unreadable files */ }
+  return findings;
+}
+
+function walkDirForPqc(dir: string, findings: PqcFinding[]) {
+  let entries: string[] = [];
+  try { entries = readdirSync(dir); } catch { return; }
+  for (const entry of entries) {
+    if (SKIP_DIRS.has(entry)) continue;
+    const full = join(dir, entry);
+    try {
+      const stat = statSync(full);
+      if (stat.isDirectory()) walkDirForPqc(full, findings);
+      else if (SCANNABLE_EXTS.has(extname(entry))) findings.push(...scanFileForPqc(full));
+    } catch { /* skip */ }
+  }
+}
+
+async function cmdPqcScan(args: string[]) {
+  const targetDir = resolve(args.find(a => !a.startsWith('-')) ?? '.');
+  const jsonMode = args.includes('--json');
+  const outputPath = args[args.indexOf('--output') + 1];
+  const a2zApiKey = process.env.A2Z_SOC_API_KEY;
+
+  if (!jsonMode) {
+    log(`\n${bold('PQC Migration Scanner')} ${dim(`v${VERSION}`)}`);
+    log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    info(`Scanning ${targetDir} for deprecated cryptography...`);
+  }
+
+  const findings: PqcFinding[] = [];
+  walkDirForPqc(targetDir, findings);
+
+  const critical = findings.filter(f => f.severity === 'critical');
+  const high = findings.filter(f => f.severity === 'high');
+  const medium = findings.filter(f => f.severity === 'medium');
+
+  const report = {
+    schema: 'https://a2zsoc.com/schemas/pqc-scan/v1.0',
+    scanned_at: new Date().toISOString(),
+    target_dir: targetDir,
+    summary: { total: findings.length, critical: critical.length, high: high.length, medium: medium.length },
+    findings: findings.map(f => ({ ...f, file: relative(targetDir, f.file) })),
+    migration_timeline: { '2026-Q2': 'Inventory complete', '2026-Q4': 'Hybrid PQC deployed', '2027-Q1': 'FedRAMP mandate — migration required' },
+    standards: ['FIPS 203 (ML-KEM)', 'FIPS 204 (ML-DSA)', 'FIPS 205 (SLH-DSA)', 'NIST SP 800-208'],
+  };
+
+  if (jsonMode || outputPath) {
+    const json = JSON.stringify(report, null, 2);
+    if (outputPath) { writeFileSync(outputPath, json); if (!jsonMode) success(`Report written to ${outputPath}`); }
+    else process.stdout.write(json + '\n');
+  } else {
+    log('');
+    if (findings.length === 0) {
+      success('No deprecated cryptographic patterns found. PQC-ready!');
+    } else {
+      if (critical.length) { log(`${c.red}${bold(`✗ CRITICAL (${critical.length}):`)}${c.reset} Must migrate before FedRAMP 2027 deadline`); for (const f of critical) log(`  ${c.dim}${relative(targetDir, f.file)}:${f.line}${c.reset}  ${c.red}${f.match}${c.reset}  →  ${c.green}${f.replacement}${c.reset} [${f.nist_ref}]`); }
+      if (high.length) { log(`\n${c.yellow}${bold(`⚠ HIGH (${high.length}):`)}${c.reset}`); for (const f of high) log(`  ${c.dim}${relative(targetDir, f.file)}:${f.line}${c.reset}  ${c.yellow}${f.match}${c.reset}  →  ${c.green}${f.replacement}${c.reset} [${f.nist_ref}]`); }
+      if (medium.length) { log(`\n${c.blue}${bold(`ℹ MEDIUM (${medium.length}):`)}${c.reset}`); for (const f of medium) log(`  ${c.dim}${relative(targetDir, f.file)}:${f.line}${c.reset}  ${c.blue}${f.match}${c.reset}  →  ${c.green}${f.replacement}${c.reset} [${f.nist_ref}]`); }
+      log(`\n${c.dim}Standards: FIPS 203 (ML-KEM) · FIPS 204 (ML-DSA) · FIPS 205 (SLH-DSA)${c.reset}`);
+    }
+    log('');
+  }
+
+  // Publish scan result to A2Z SOC if API key present
+  if (a2zApiKey && findings.length > 0) {
+    try {
+      await fetch('https://a2zsoc.com/api/platform/pqc-scan', { method: 'POST', headers: { 'Authorization': `Bearer ${a2zApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ summary: report.summary, scanned_at: report.scanned_at }) });
+      if (!jsonMode) info('PQC scan result uploaded to A2Z SOC dashboard');
+    } catch { /* non-fatal */ }
+  }
+
+  if (critical.length > 0) process.exit(1);
 }
 
 function cmdVersion() {
@@ -816,6 +958,15 @@ ${bold('COMMANDS')}
     --model-card <path>       Parse a model_card.json file
     --scan-deps               Scan package.json for AI/ML dependencies
     --output <file>           Write BOM to file (default: stdout)
+
+  ${c.cyan}ai-bom publish${c.reset}                Publish AI-BOM to A2Z SOC public registry
+    --file <path>             AI-BOM JSON file to publish (default: ai-bom.json)
+    --model-id <id>           Override model identifier
+
+  ${c.cyan}pqc-scan${c.reset} [path]               Scan for deprecated cryptography (RSA/ECDSA/ECDH)
+    --output <file>           Write report to file
+    --json                    JSON output for CI/CD gates
+    Exits 1 if critical findings detected (FedRAMP 2027 gate)
 
   ${c.cyan}frameworks${c.reset} list               List available framework packs
 
@@ -873,7 +1024,11 @@ switch (cmd) {
     if (rest.includes('--fix')) { await cmdDoctorFix(rest); }
     else { await cmdDoctor(); }
     break;
-  case 'ai-bom':     await cmdAiBom(rest); break;
+  case 'ai-bom':
+    if (rest[0] === 'publish') { await cmdAiBomPublish(rest.slice(1)); }
+    else { await cmdAiBom(rest); }
+    break;
+  case 'pqc-scan':   await cmdPqcScan(rest); break;
   case 'frameworks': cmdFrameworks(rest); break;
   case 'version':    cmdVersion(); break;
   case 'help':

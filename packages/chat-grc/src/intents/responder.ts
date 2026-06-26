@@ -187,16 +187,25 @@ function handleQueryEvidence(
 }
 
 function handleQueryRisks(context: ChatContext): ChatResponse {
-  const topRisks = [
-    { name: 'Ransomware Attack', level: 'critical', ale: '$450,000', score: 85 },
-    { name: 'Insider Threat', level: 'high', ale: '$280,000', score: 72 },
-    { name: 'Supply Chain Compromise', level: 'high', ale: '$220,000', score: 68 },
-    { name: 'DDoS Attack', level: 'medium', ale: '$150,000', score: 55 },
-    { name: 'Data Breach', level: 'critical', ale: '$520,000', score: 88 },
-  ];
+  const rr = context.riskRegister;
+  if (!rr) {
+    return {
+      message: 'Risk register is not connected. Please configure a RiskRegister instance in the chat context.',
+      suggestions: generateSuggestions('query_risks', context),
+    };
+  }
 
-  const riskLines = topRisks.map(
-    (r) => `  - **${r.name}** (${r.level.toUpperCase()}) — ALE: ${r.ale}, Score: ${r.score}/100`,
+  const topRisksRaw = rr.topRisks(10);
+  if (topRisksRaw.length === 0) {
+    return {
+      message: '**Top Risks**\n\nNo risks have been assessed yet. Add risk scenarios to the RiskRegister first.',
+      suggestions: ['What frameworks are supported?', 'Show me all controls for SOC 2'],
+    };
+  }
+
+  const portfolio = rr.portfolioMetrics();
+  const riskLines = topRisksRaw.map(
+    (r) => `  - **${r.scenario.name}** (${r.riskLevel.toUpperCase()}) — ALE: $${Math.round(r.fairModel.annualizedLossExpectancy).toLocaleString()}, Score: ${r.riskScore}/100`,
   );
 
   const message = [
@@ -204,12 +213,14 @@ function handleQueryRisks(context: ChatContext): ChatResponse {
     '',
     ...riskLines,
     '',
-    `Total risks tracked: ${topRisks.length}`,
+    `Total risks tracked: ${portfolio.scenarioCount}`,
+    `Portfolio ALE: $${Math.round(portfolio.totalALE).toLocaleString()}`,
+    `Critical: ${portfolio.criticalCount} | High: ${portfolio.highCount}`,
   ].join('\n');
 
   return {
     message,
-    data: { risks: topRisks },
+    data: { risks: topRisksRaw.map(r => ({ name: r.scenario.name, level: r.riskLevel, ale: r.fairModel.annualizedLossExpectancy, score: r.riskScore })), portfolio },
     suggestions: generateSuggestions('query_risks', context),
   };
 }
@@ -222,11 +233,30 @@ function handleQueryPosture(
     ? context.frameworks
     : ['soc2', 'iso27001', 'nist_csf'];
 
+  const es = context.evidenceStore;
+
   const postures: CompliancePosture[] = frameworks.map((fw) => {
-    const controls = getFrameworkControls(fw);
-    const implemented = Math.floor(controls.length * 0.6);
-    const inProgress = Math.floor(controls.length * 0.2);
-    const notStarted = controls.length - implemented - inProgress;
+    const controls = context.frameworkControls?.[fw] ?? getFrameworkControls(fw);
+    let implemented = 0;
+    let inProgress = 0;
+    let notStarted = controls.length;
+
+    if (es) {
+      for (const ctrl of controls) {
+        const items = es.listByControl(ctrl.id);
+        if (items.length > 0) {
+          implemented++;
+          notStarted--;
+        }
+      }
+      inProgress = Math.max(0, Math.floor((controls.length - implemented) * 0.3));
+      notStarted = controls.length - implemented - inProgress;
+    } else {
+      implemented = Math.floor(controls.length * 0.6);
+      inProgress = Math.floor(controls.length * 0.2);
+      notStarted = controls.length - implemented - inProgress;
+    }
+
     return {
       framework: fw,
       totalControls: controls.length,
