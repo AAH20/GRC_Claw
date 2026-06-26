@@ -35,6 +35,13 @@ import { PolicyManager } from '@grc-claw/policy-management';
 import { ComplianceSuperOrchestrator } from '@grc-claw/compliance-orchestrator';
 import { ContinuousComplianceEngine } from '@grc-claw/continuous-compliance';
 import { AnomalyDetector } from '@grc-claw/ai-threat-detection';
+import { AISupplyChainSovereignty } from '@grc-claw/ai-supply-chain';
+import { AutoEvidenceCollector } from '@grc-claw/auto-evidence';
+import { BrowserEvidenceCollector } from '@grc-claw/browser-evidence';
+import { IncidentManager } from '@grc-claw/incident-response';
+import { GitHubPRReviewer, CICDComplianceGate } from '@grc-claw/dev-compliance';
+import { CompliancePipeline, GitOpsWorkflow } from '@grc-claw/grc-engineering';
+import { AgentTrustScoreEngine } from '@grc-claw/agent-trust-score';
 
 import { BoardReportGenerator } from '@grc-claw/board-reporting';
 
@@ -133,6 +140,18 @@ const memoryStore = new PersistentMemoryStore();
 const agentSessions = new Map<string, AgentSession>();
 const riskRegister = new RiskRegister();
 const entityManager = new EntityManager();
+const vendorRegistry = new VendorRegistry();
+const trustCenter = new TrustCenter();
+const policyManager = new PolicyManager();
+const regulatoryEngine = new RegulatoryIntelligenceEngine();
+const supplyChain = new AISupplyChainSovereignty({
+  orgId: 'grc-claw',
+  enableTEE: false,
+  enableZK: false,
+  enableFederatedConsensus: false,
+  minSafetyRating: 0.5,
+  requireReproducibleBuilds: false,
+});
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
@@ -221,7 +240,13 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('continuous.') ||
     tool.startsWith('threat.') ||
     tool.startsWith('supply_chain.') ||
-    tool.startsWith('board.')
+    tool.startsWith('board.') ||
+    tool.startsWith('auto_evidence.') ||
+    tool.startsWith('browser_evidence.') ||
+    tool.startsWith('incident.') ||
+    tool.startsWith('dev_compliance.') ||
+    tool.startsWith('engineering.') ||
+    tool.startsWith('trust_score.')
   );
 }
 
@@ -2276,7 +2301,6 @@ export async function dispatchBuiltinGrcTool(
 
     // ─── Third-Party Risk Management Tools ─────────────────────────
     case 'tprm.create_vendor': {
-      const vendorRegistry = new VendorRegistry();
       const name = String(args.name ?? '');
       const domain = String(args.domain ?? '');
       const categories = (args.categories as string[]) ?? [];
@@ -2293,12 +2317,10 @@ export async function dispatchBuiltinGrcTool(
       }
     }
     case 'tprm.list_vendors': {
-      const vendorRegistry = new VendorRegistry();
       const vendors = vendorRegistry.listVendors();
       return { ok: true, vendors, totalCount: vendors.length, timestamp: new Date().toISOString() };
     }
     case 'tprm.get_risk_score': {
-      const vendorRegistry = new VendorRegistry();
       const vendorId = String(args.vendorId ?? '');
       if (!vendorId) {
         return { ok: false, error: 'vendorId_required', timestamp: new Date().toISOString() };
@@ -2315,7 +2337,6 @@ export async function dispatchBuiltinGrcTool(
     }
     // ─── Trust Center Tools ────────────────────────────────────────
     case 'trust.create_page': {
-      const trustCenter = new TrustCenter();
       const slug = String(args.slug ?? '');
       const companyName = String(args.companyName ?? '');
       if (!slug || !companyName) {
@@ -2329,7 +2350,6 @@ export async function dispatchBuiltinGrcTool(
       }
     }
     case 'trust.publish_page': {
-      const trustCenter = new TrustCenter();
       const pageId = String(args.pageId ?? '');
       if (!pageId) {
         return { ok: false, error: 'pageId_required', timestamp: new Date().toISOString() };
@@ -2346,7 +2366,6 @@ export async function dispatchBuiltinGrcTool(
       }
     }
     case 'trust.get_page': {
-      const trustCenter = new TrustCenter();
       const pageId = String(args.pageId ?? '');
       const slug = String(args.slug ?? '');
       if (!pageId && !slug) {
@@ -2364,7 +2383,6 @@ export async function dispatchBuiltinGrcTool(
     }
     // ─── Regulatory Intelligence Tools ─────────────────────────────
     case 'regulatory.list_alerts': {
-      const regulatoryEngine = new RegulatoryIntelligenceEngine();
       const framework = String(args.framework ?? '') as any;
       const impact = String(args.impact ?? '') as any;
       try {
@@ -2386,7 +2404,6 @@ export async function dispatchBuiltinGrcTool(
       }
     }
     case 'regulatory.check_regulation': {
-      const regulatoryEngine = new RegulatoryIntelligenceEngine();
       const sourceId = String(args.sourceId ?? '');
       const jurisdiction = String(args.jurisdiction ?? '');
       try {
@@ -2409,7 +2426,6 @@ export async function dispatchBuiltinGrcTool(
     }
     // ─── Policy Management Tools ──────────────────────────────────
     case 'policy.create_policy': {
-      const policyManager = new PolicyManager();
       const title = String(args.title ?? '');
       const category = String(args.category ?? 'security') as any;
       const owner = String(args.owner ?? 'system');
@@ -2427,13 +2443,11 @@ export async function dispatchBuiltinGrcTool(
       }
     }
     case 'policy.list_policies': {
-      const policyManager = new PolicyManager();
       const policies = policyManager.listPolicies();
       const stats = policyManager.getStats();
       return { ok: true, policies, totalCount: policies.length, stats, timestamp: new Date().toISOString() };
     }
     case 'policy.get_policy': {
-      const policyManager = new PolicyManager();
       const policyId = String(args.policyId ?? '');
       if (!policyId) {
         return { ok: false, error: 'policyId_required', timestamp: new Date().toISOString() };
@@ -2610,23 +2624,40 @@ export async function dispatchBuiltinGrcTool(
     // ─── AI Supply Chain Tools ────────────────────────────────────
     case 'supply_chain.verify_model': {
       const modelId = String(args.modelId ?? '');
-      return {
-        ok: false,
-        executionState: 'not_configured',
-        message: 'AI supply chain model provenance verification is not configured. Build and deploy @grc-claw/ai-supply-chain to enable model provenance, TEE attestation, and federated governance.',
-        modelId,
-        timestamp: new Date().toISOString(),
-      };
+      if (!modelId) {
+        return { ok: false, error: 'modelId_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const result = await supplyChain.verifyModelProvenance(modelId);
+        return { ok: true, result, modelId, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'verify_model_failed', modelId, timestamp: new Date().toISOString() };
+      }
     }
     case 'supply_chain.list_models': {
-      return {
-        ok: true,
-        models: [],
-        totalCount: 0,
-        executionState: 'not_configured',
-        message: 'AI supply chain model registry is not configured. Build and deploy @grc-claw/ai-supply-chain to enable model governance and registry.',
-        timestamp: new Date().toISOString(),
-      };
+      try {
+        const models = supplyChain.listModels();
+        return {
+          ok: true,
+          models,
+          totalCount: models.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'list_models_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'supply_chain.register_model': {
+      const identity = args.identity as import('@grc-claw/ai-supply-chain').ModelIdentity | undefined;
+      if (!identity || !identity.id || !identity.name) {
+        return { ok: false, error: 'identity_with_id_and_name_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const entry = await supplyChain.registerModel(identity);
+        return { ok: true, entry, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'register_model_failed', timestamp: new Date().toISOString() };
+      }
     }
     // ─── Board Reporting Tools ─────────────────────────────────────
     case 'board.generate_report': {
@@ -2647,6 +2678,363 @@ export async function dispatchBuiltinGrcTool(
         return { ok: true, dashboard, timestamp: new Date().toISOString() };
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'get_dashboard_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // ─── Auto Evidence Tools ──────────────────────────────────────
+    case 'auto_evidence.collect': {
+      try {
+        const provider = String(args.provider ?? 'aws') as any;
+        const accountId = String(args.accountId ?? 'default-account');
+        const regions = (args.regions as string[]) ?? ['us-east-1'];
+        const collector = new AutoEvidenceCollector();
+        collector.connectProvider(provider, accountId, regions);
+        const collectors = collector.autoDeployCollectors(provider);
+        const evidenceItems = collectors.map(c => collector.collectEvidence(c.id)).filter(Boolean);
+        return {
+          ok: true,
+          provider,
+          collectorsDeployed: collectors.length,
+          evidenceCollected: evidenceItems.length,
+          evidence: evidenceItems,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'auto_evidence_collect_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'auto_evidence.assess': {
+      try {
+        const provider = String(args.provider ?? 'aws') as any;
+        const collector = new AutoEvidenceCollector();
+        const templates = collector.getTemplates(provider);
+        return {
+          ok: true,
+          provider,
+          availableTemplates: templates.length,
+          templates: templates.map(t => ({
+            provider: t.provider,
+            resourceType: t.resourceType,
+            controlId: t.controlId,
+            name: t.name,
+            description: t.description,
+          })),
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'auto_evidence_assess_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Browser Evidence Tools ────────────────────────────────────
+    case 'browser_evidence.collect': {
+      try {
+        const portalName = String(args.portalName ?? 'unknown');
+        const portalUrl = String(args.portalUrl ?? '');
+        const username = String(args.username ?? '');
+        const password = String(args.password ?? '');
+        if (!portalUrl) {
+          return { ok: false, error: 'portalUrl_required', timestamp: new Date().toISOString() };
+        }
+        return {
+          ok: false,
+          executionState: 'not_configured',
+          message: `Browser evidence collection for portal "${portalName}" requires a browser adapter (e.g., Playwright). Configure a headless browser environment to enable portal evidence collection.`,
+          portalName,
+          portalUrl,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'browser_evidence_collect_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'browser_evidence.screenshot': {
+      try {
+        const portalName = String(args.portalName ?? 'unknown');
+        return {
+          ok: false,
+          executionState: 'not_configured',
+          message: `Browser screenshot for portal "${portalName}" requires a browser adapter (e.g., Playwright). Configure a headless browser environment to enable screenshot capture.`,
+          portalName,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'browser_evidence_screenshot_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Incident Response Tools ──────────────────────────────────
+    case 'incident.create': {
+      try {
+        const manager = new IncidentManager();
+        const title = String(args.title ?? `Incident-${Date.now()}`);
+        const type = String(args.type ?? 'other') as any;
+        const severity = String(args.severity ?? 'medium') as any;
+        const description = String(args.description ?? '');
+        const reportedBy = String(args.reportedBy ?? 'system');
+        const assignee = String(args.assignee ?? 'system');
+        const incident = manager.reportIncident({ title, type, severity, description, reportedBy, assignee });
+        return {
+          ok: true,
+          incidentId: incident.id,
+          title: incident.title,
+          type: incident.type,
+          severity: incident.severity,
+          status: incident.status,
+          reportedBy,
+          assignee,
+          detectedAt: incident.detectedAt,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'incident_create_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'incident.list': {
+      try {
+        const manager = new IncidentManager();
+        const statusFilter = String(args.status ?? '') as any;
+        let incidents = manager.listIncidents();
+        if (statusFilter) {
+          incidents = incidents.filter(i => i.status === statusFilter);
+        }
+        const stats = manager.getStats();
+        return {
+          ok: true,
+          incidents: incidents.map(i => ({
+            id: i.id,
+            title: i.title,
+            type: i.type,
+            severity: i.severity,
+            status: i.status,
+            detectedAt: i.detectedAt,
+            assignee: i.assignee,
+          })),
+          totalCount: incidents.length,
+          stats,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'incident_list_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Dev Compliance Tools ──────────────────────────────────────
+    case 'dev_compliance.scan_pr': {
+      try {
+        const frameworks = (args.frameworks as import('@grc-claw/dev-compliance').FrameworkCode[]) ?? ['iso27001', 'soc2'];
+        const reviewer = new GitHubPRReviewer(frameworks);
+        const prNumber = Number(args.prNumber ?? 0);
+        const repo = String(args.repo ?? '');
+        const title = String(args.prTitle ?? '');
+        const body = String(args.prBody ?? '');
+        const files = (args.files as { filename: string; patch: string; additions: number; deletions: number }[]) ?? [];
+        if (!repo || files.length === 0) {
+          return { ok: false, error: 'repo_and_files_required', timestamp: new Date().toISOString() };
+        }
+        const result = await reviewer.reviewPR({ number: prNumber, repo, title, body, files });
+        return {
+          ok: true,
+          prNumber,
+          repo,
+          findings: result.findings,
+          summary: result.summary,
+          status: result.status,
+          findingsCount: result.findings.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'dev_compliance_scan_pr_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'dev_compliance.check_ci': {
+      try {
+        const framework = String(args.framework ?? 'iso27001') as any;
+        const failOnSeverity = String(args.failOnSeverity ?? 'critical') as any;
+        const gate = new CICDComplianceGate({ framework, failOnSeverity, maxScore: 100 });
+        const files = (args.files as string[]) ?? [];
+        const contentMap = new Map<string, string>();
+        const contentArg = args.content as Record<string, string> | undefined;
+        if (contentArg) {
+          for (const [k, v] of Object.entries(contentArg)) {
+            contentMap.set(k, String(v));
+          }
+        }
+        const result = await gate.evaluate({ files, content: contentMap });
+        return {
+          ok: true,
+          passed: result.passed,
+          score: result.score,
+          findings: result.findings,
+          gateName: result.gateName,
+          framework,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'dev_compliance_check_ci_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── GRC Engineering Tools ────────────────────────────────────
+    case 'engineering.pipeline': {
+      try {
+        const triggeredBy = String(args.triggeredBy ?? 'system');
+        const pipeline = new CompliancePipeline();
+        const enabledStages = pipeline.getEnabledStages();
+        const config = args.config as import('@grc-claw/grc-engineering').GrcConfig | undefined;
+        if (config) {
+          const run = await pipeline.run(config, triggeredBy);
+          return {
+            ok: true,
+            runId: run.id,
+            status: run.status,
+            stagesCompleted: run.stages.length,
+            evidenceCollected: run.evidence.length,
+            startedAt: run.startedAt,
+            completedAt: run.completedAt,
+            triggeredBy,
+            timestamp: new Date().toISOString(),
+          };
+        }
+        return {
+          ok: true,
+          enabledStages,
+          message: 'Pipeline ready. Provide a config argument to execute the pipeline run.',
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'engineering_pipeline_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'engineering.gitops': {
+      try {
+        const workflow = new GitOpsWorkflow();
+        const branch = String(args.branch ?? 'main');
+        const action = String(args.action ?? 'status') as 'init' | 'commit' | 'status' | 'drift';
+        if (action === 'init') {
+          const state = workflow.initRepo(branch);
+          return {
+            ok: true,
+            action: 'init',
+            commitSha: state.commitSha,
+            branch,
+            configHash: state.configHash,
+            timestamp: new Date().toISOString(),
+          };
+        }
+        if (action === 'commit') {
+          const config = args.config as import('@grc-claw/grc-engineering').GrcConfig;
+          const author = String(args.author ?? 'system');
+          const message = String(args.message ?? 'compliance config update');
+          if (!config) {
+            return { ok: false, error: 'config_required_for_commit', timestamp: new Date().toISOString() };
+          }
+          const commit = workflow.commit(config, author, message, branch);
+          return {
+            ok: true,
+            action: 'commit',
+            sha: commit.sha,
+            author,
+            message,
+            configHash: commit.configHash,
+            timestamp: new Date().toISOString(),
+          };
+        }
+        if (action === 'drift') {
+          const report = workflow.getDriftHistory();
+          return {
+            ok: true,
+            action: 'drift',
+            driftReportsCount: report.length,
+            timestamp: new Date().toISOString(),
+          };
+        }
+        const history = workflow.getCommitHistory();
+        return {
+          ok: true,
+          action: 'status',
+          commitsCount: history.length,
+          branchProtections: workflow.getBranchProtections().size,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'engineering_gitops_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Agent Trust Score Tools ──────────────────────────────────
+    case 'trust_score.calculate': {
+      try {
+        const agentDid = String(args.agentDid ?? '');
+        const agentName = String(args.agentName ?? 'unknown');
+        const agentTenantId = String(args.tenantId ?? String(tenantId));
+        const complianceScore = typeof args.complianceScore === 'number' ? args.complianceScore : 70;
+        const frameworks = (args.frameworks as string[]) ?? [] as any;
+        const signals = (args.signals as { type: string; timestamp: string; confidence: number; details: string; impact: number }[]) ?? [];
+        if (!agentDid) {
+          return { ok: false, error: 'agentDid_required', timestamp: new Date().toISOString() };
+        }
+        const engine = new AgentTrustScoreEngine({
+          issuerId: 'grc-claw-gateway',
+          credentialStore: {
+            async store(_credential: import('@grc-claw/agent-trust-score').TrustCredential) {},
+            async get(_id: string) { return undefined; },
+            async listByAgent(_agentDid: string) { return []; },
+            async revoke(_id: string) { return false; },
+          },
+        });
+        const profile = await engine.scoreAgent(agentDid, agentName, agentTenantId, signals as import('@grc-claw/agent-trust-score').BehavioralSignal[], complianceScore, frameworks as import('@grc-claw/agent-trust-score').FrameworkCode[]);
+        return {
+          ok: true,
+          agentDid: profile.agentDid,
+          agentName: profile.agentName,
+          overallTrustScore: profile.overallTrustScore,
+          riskLevel: profile.riskLevel,
+          status: profile.status,
+          dimensions: profile.dimensions,
+          riskFactorsCount: profile.riskFactors.length,
+          signalCount: profile.behavioralSignals.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'trust_score_calculate_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'trust_score.profile': {
+      try {
+        const agentDid = String(args.agentDid ?? '');
+        if (!agentDid) {
+          return { ok: false, error: 'agentDid_required', timestamp: new Date().toISOString() };
+        }
+        const engine = new AgentTrustScoreEngine({
+          issuerId: 'grc-claw-gateway',
+          credentialStore: {
+            async store(_credential: import('@grc-claw/agent-trust-score').TrustCredential) {},
+            async get(_id: string) { return undefined; },
+            async listByAgent(_agentDid: string) { return []; },
+            async revoke(_id: string) { return false; },
+          },
+        });
+        const profile = await engine.getAgentProfile(agentDid);
+        if (!profile) {
+          return {
+            ok: true,
+            agentDid,
+            found: false,
+            message: 'No trust profile found for this agent. Use trust_score.calculate to generate one.',
+            timestamp: new Date().toISOString(),
+          };
+        }
+        return {
+          ok: true,
+          agentDid: profile.agentDid,
+          agentName: profile.agentName,
+          overallTrustScore: profile.overallTrustScore,
+          riskLevel: profile.riskLevel,
+          status: profile.status,
+          dimensions: profile.dimensions,
+          complianceScore: profile.compliancePosture.overallScore,
+          scoreHistoryCount: profile.scoreHistory.length,
+          lastScoredAt: profile.lastScoredAt,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'trust_score_profile_failed', timestamp: new Date().toISOString() };
       }
     }
 
