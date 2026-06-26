@@ -1,8 +1,10 @@
 {
   "name": "@grc-claw/cli",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "GRC_Claw CLI — grc scan, grc apply, grc report, grc diff",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "bin": {
     "grc": "./dist/index.js"
