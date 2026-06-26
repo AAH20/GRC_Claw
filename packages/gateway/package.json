@@ -42,6 +42,9 @@
     "@grc-claw/questionnaire-automation": "*",
     "@grc-claw/zk-compliance": "*",
     "@grc-claw/observability": "*",
+    "@grc-claw/drift-detector": "*",
+    "@grc-claw/evidence-collector": "*",
+    "@grc-claw/compliance-autopilot": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

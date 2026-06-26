@@ -118,6 +118,7 @@ export class ComplianceAutopilot {
   private controls: Map<string, Control> = new Map();
   private gaps: ComplianceGap[] = [];
   private remediations: RemediationPlan[] = [];
+  private monitoringIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: AutopilotConfig) {
     this.config = {
@@ -601,6 +602,34 @@ export class ComplianceAutopilot {
       report,
       auditTrail: [...this.auditTrail],
     };
+  }
+
+  // ─── Periodic Monitoring ─────────────────────────────────────────────
+
+  startMonitoring(intervalMs: number): void {
+    if (this.monitoringIntervalId !== null) {
+      this.stopMonitoring();
+    }
+    this.monitoringIntervalId = setInterval(async () => {
+      try {
+        await this.runCycle();
+      } catch (err) {
+        console.error('[COMPLIANCE-AUTOPILOT] Monitoring cycle failed:', err instanceof Error ? err.message : err);
+      }
+    }, intervalMs);
+    console.log(`[COMPLIANCE-AUTOPILOT] Started periodic monitoring every ${intervalMs}ms`);
+  }
+
+  stopMonitoring(): void {
+    if (this.monitoringIntervalId !== null) {
+      clearInterval(this.monitoringIntervalId);
+      this.monitoringIntervalId = null;
+      console.log('[COMPLIANCE-AUTOPILOT] Stopped periodic monitoring');
+    }
+  }
+
+  isMonitoring(): boolean {
+    return this.monitoringIntervalId !== null;
   }
 
   // ─── Accessors ─────────────────────────────────────────────────────
