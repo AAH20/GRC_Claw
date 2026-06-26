@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/agent-identity",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "DID-based agent identity fabric with Verifiable Credentials for GRC_Claw",
   "license": "MIT",
   "type": "module",
@@ -16,6 +16,10 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test dist/**/*.test.js 2>/dev/null || true"
   },
-  "files": ["dist"],
-  "publishConfig": { "access": "public" }
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
