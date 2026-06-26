@@ -23,7 +23,7 @@ import {
 import { IdempotencyCache } from './idempotency.js';
 import { applyCors, tryServeConsoleStatic } from './console-static.js';
 import { discoverCursorSkills } from './cursor-skills.js';
-import { dispatchAgentTool, executionStateFromOutput, setSecurityGraph } from './agent-dispatch.js';
+import { dispatchAgentTool, executionStateFromOutput, setSecurityGraph, identityManager } from './agent-dispatch.js';
 import { createClawDispatchContext } from './skill-runtime.js';
 import { GatewayAssuranceGraph } from './assurance.js';
 import { initSecurityGraph } from './graph-init.js';
@@ -130,6 +130,13 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     });
     agentBuilder.initializeStore().catch((err) => {
       console.warn('[STARTUP] agentBuilder.initializeStore failed:', err instanceof Error ? err.message : err);
+    });
+    identityManager.setDatabase(pg.database);
+    identityManager.initializeDatabase().catch((err) => {
+      console.warn('[STARTUP] identityManager.initializeDatabase failed:', err instanceof Error ? err.message : err);
+    });
+    identityManager.loadFromDatabase().catch((err) => {
+      console.warn('[STARTUP] identityManager.loadFromDatabase failed:', err instanceof Error ? err.message : err);
     });
   }
 

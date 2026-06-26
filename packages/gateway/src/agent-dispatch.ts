@@ -28,10 +28,19 @@ import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type GapDetector }
 import { FrameworkCrosswalk } from '@grc-claw/framework-crosswalk';
 import { ChatGRC } from '@grc-claw/chat-grc';
 import { AgentIdentityManager } from '@grc-claw/agent-identity';
+import { VendorRegistry } from '@grc-claw/third-party-risk';
+import { TrustCenter } from '@grc-claw/trust-center';
+import { RegulatoryIntelligenceEngine } from '@grc-claw/regulatory-intelligence';
+import { PolicyManager } from '@grc-claw/policy-management';
+import { ComplianceSuperOrchestrator } from '@grc-claw/compliance-orchestrator';
+import { ContinuousComplianceEngine } from '@grc-claw/continuous-compliance';
+import { AnomalyDetector } from '@grc-claw/ai-threat-detection';
+
+import { BoardReportGenerator } from '@grc-claw/board-reporting';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
-const identityManager = new AgentIdentityManager();
+export const identityManager = new AgentIdentityManager();
 let securityGraph = new SecurityGraph();
 const soarContext: SOARContext = {
   quarantineAgent: async (agentDid: string, params: Record<string, unknown>) => {
@@ -203,7 +212,16 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('cloud.') ||
     tool.startsWith('risk.') ||
     tool.startsWith('entity.') ||
-    tool.startsWith('drift.')
+    tool.startsWith('drift.') ||
+    tool.startsWith('tprm.') ||
+    tool.startsWith('trust.') ||
+    tool.startsWith('regulatory.') ||
+    tool.startsWith('policy.') ||
+    tool.startsWith('compliance_orch.') ||
+    tool.startsWith('continuous.') ||
+    tool.startsWith('threat.') ||
+    tool.startsWith('supply_chain.') ||
+    tool.startsWith('board.')
   );
 }
 
@@ -270,26 +288,111 @@ export async function dispatchBuiltinGrcTool(
       }
       return { evidenceId, items, count: items.length, source };
     }
-    case 'soc.query_events':
+    case 'soc.query_events': {
+      const limit = Number(args.limit ?? 10);
+      const since = typeof args.since === 'string' ? args.since : undefined;
+      const until = typeof args.until === 'string' ? args.until : undefined;
+      const eventType = typeof args.eventType === 'string' ? args.eventType : undefined;
+      if (deps.persistence) {
+        try {
+          const conditions: string[] = ['tenant_id = $1'];
+          const params: unknown[] = [String(tenantId)];
+          let paramIdx = 2;
+          if (since) {
+            conditions.push(`created_at >= $${paramIdx}`);
+            params.push(since);
+            paramIdx++;
+          }
+          if (until) {
+            conditions.push(`created_at <= $${paramIdx}`);
+            params.push(until);
+            paramIdx++;
+          }
+          if (eventType) {
+            conditions.push(`event_type = $${paramIdx}`);
+            params.push(eventType);
+            paramIdx++;
+          }
+          params.push(limit);
+          const whereClause = conditions.join(' AND ');
+          const { rows } = await deps.persistence.database.query(
+            `SELECT id, tenant_id, event_type, severity, source_system, event_data, created_at
+             FROM security_events
+             WHERE ${whereClause}
+             ORDER BY created_at DESC
+             LIMIT $${paramIdx}`,
+            params
+          );
+          return {
+            tenantId,
+            events: rows,
+            count: rows.length,
+            source: 'postgresql',
+            executionState: 'executed',
+            limit,
+            ...(since ? { since } : {}),
+            ...(until ? { until } : {}),
+            ...(eventType ? { eventType } : {}),
+          };
+        } catch (dbErr) {
+          console.warn('[PERSISTENCE] soc.query_events query failed:', dbErr instanceof Error ? dbErr.message : dbErr);
+          return {
+            tenantId,
+            events: [],
+            count: 0,
+            source: 'postgresql_error',
+            executionState: 'failed',
+            note: `Database query failed: ${dbErr instanceof Error ? dbErr.message : 'unknown_error'}. Use POST /api/ingest/normalize or A2Z sync for live events.`,
+            limit,
+          };
+        }
+      }
       return {
         tenantId,
         events: [],
         executionState: 'not_configured',
-        note: 'Use POST /api/ingest/normalize or A2Z sync for live events.',
-        limit: Number(args.limit ?? 10),
+        note: 'No persistence configured. Use POST /api/ingest/normalize or A2Z sync for live events.',
+        limit,
       };
+    }
     case 'control.update_status': {
       const controlId = String(args.controlId ?? '');
       const status = String(args.status ?? 'unknown');
       console.log(`[CONTROL] update_status: controlId=${controlId} status=${status} tenant=${tenantId}`);
+      let persisted = false;
+      if (deps.persistence) {
+        try {
+          await deps.persistence.database.execute(
+            `CREATE TABLE IF NOT EXISTS control_status (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              tenant_id VARCHAR(50) NOT NULL,
+              control_id VARCHAR(200) NOT NULL,
+              status VARCHAR(50) NOT NULL,
+              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              UNIQUE(tenant_id, control_id)
+            )`
+          );
+          await deps.persistence.database.execute(
+            `INSERT INTO control_status (tenant_id, control_id, status, updated_at)
+             VALUES ($1, $2, $3, NOW())
+             ON CONFLICT (tenant_id, control_id)
+             DO UPDATE SET status = $3, updated_at = NOW()`,
+            [String(tenantId), controlId, status]
+          );
+          persisted = true;
+        } catch (dbErr) {
+          console.warn('[PERSISTENCE] control.update_status write failed (in-memory fallback used):', dbErr instanceof Error ? dbErr.message : dbErr);
+        }
+      }
       return {
         ok: true,
         controlId,
         status,
         tenantId,
-        executionState: 'recorded',
-        message: `Control ${controlId} status recorded as ${status}.`,
+        executionState: persisted ? 'executed' as const : 'recorded' as const,
+        message: `Control ${controlId} status recorded as ${status}.${persisted ? ' Persisted to PostgreSQL.' : ''}`,
         updatedAt: new Date().toISOString(),
+        persisted,
       };
     }
     case 'evidence.attach': {
@@ -764,46 +867,11 @@ export async function dispatchBuiltinGrcTool(
       };
     }
     case 'hermes.execute_autonomous_task': {
-      const taskId = String(args.taskId ?? 'hermes-task-001');
-      const taskDescription = String(args.taskDescription ?? '');
-      const localModel = String(args.localModel ?? 'llama3-8b-local');
-      const airgapStatus = String(args.airgapStatus ?? 'FULLY_AIRGAPPED');
-
-      const issues: string[] = [];
-      const executionLogs: string[] = [];
-
-      if (airgapStatus !== 'FULLY_AIRGAPPED') {
-        issues.push(`Airgap Violation: System status is "${airgapStatus}", blocking local execution to prevent credential leakage`);
-        return {
-          ok: true,
-          executionStatus: 'FAILED',
-          issues,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      executionLogs.push(`[Hermes Control] Initializing secure Docker containment for taskId ${taskId}`);
-      executionLogs.push(`[Hermes Control] Loading local open-weight model configuration: ${localModel}`);
-      executionLogs.push(`[Hermes Control] Executing task payload: "${taskDescription}"`);
-      executionLogs.push('[Hermes Runtime] Local sandbox filesystem and browser automation active');
-      executionLogs.push('[Hermes Runtime] Compiling code sandbox benchmarks: complete');
-      executionLogs.push('[Hermes Control] Task completed successfully inside containment');
-
-      const payloadString = JSON.stringify({ taskId, taskDescription, localModel, executionLogs });
-      let hash = 0;
-      for (let i = 0; i < payloadString.length; i++) {
-        hash = (hash << 5) - hash + payloadString.charCodeAt(i);
-        hash = hash & hash;
-      }
-      const outputHash = 'sha256-' + Math.abs(hash).toString(16).padEnd(8, '0') + 'e4a5c8d2';
-
       return {
-        ok: true,
-        executionStatus: 'COMPLETED',
-        executionLogs,
-        outputHash,
-        apiCostEquivalent: 0.00, // Showcases the zero-cost advantage of local open-weight models
-        timestamp: new Date().toISOString()
+        ok: false,
+        executionState: 'not_configured',
+        message: 'Hermes autonomous task execution is not configured. The Hermes runtime requires a local open-weight model endpoint and a Docker containment sandbox to be deployed. Configure the Hermes runtime environment to enable autonomous task execution.',
+        timestamp: new Date().toISOString(),
       };
     }
     case 'memory.query_vector_graph': {
@@ -935,71 +1003,19 @@ export async function dispatchBuiltinGrcTool(
       };
     }
     case 'memory.integrate_vector_db': {
-      const provider = String(args.vectorDbProvider ?? 'pinecone').toLowerCase();
-      const endpoint = String(args.vectorDbEndpoint ?? 'http://localhost:8081');
-      const isLocal = args.isLocalOnly !== false;
-      const indexName = String(args.indexName ?? 'grc-claw-rag');
-
-      const issues: string[] = [];
-      let ragSafetyClearance = 'GRANTED';
-
-      if (!isLocal) {
-        ragSafetyClearance = 'FLAGGED_WARNING';
-        issues.push(`Data Sovereignty Warning: Vector DB endpoint "${endpoint}" is hosted externally, potentially leaking RAG context chunks`);
-      }
-
       return {
-        ok: true,
-        integrationStatus: 'ACTIVE',
-        ragSafetyClearance,
-        vectorDbProvider: provider,
-        indexName,
-        isLocalOnly: isLocal,
-        issues,
-        timestamp: new Date().toISOString()
+        ok: false,
+        executionState: 'not_configured',
+        message: 'Vector DB integration is not configured. Connect a supported vector database provider (Pinecone, Weaviate, Qdrant, or local Milvus) and set the vectorDbEndpoint and vectorDbProvider arguments to enable RAG integration.',
+        timestamp: new Date().toISOString(),
       };
     }
     case 'memory.audit_cloud_memory': {
-      const provider = String(args.cloudProviderName ?? 'openai-dreaming-v3').toLowerCase();
-      const agentCount = Number(args.agentCount ?? 1);
-      const budget = Number(args.monthlyTokenBudget ?? 5000);
-
-      const passedChecks: string[] = [];
-      const warnings: string[] = [];
-      const lockInIssues: string[] = [];
-
-      let lockInRiskScore = 0;
-      let costAuditNotes = '';
-      let portabilityPlan = 'Standard memory exports.';
-
-      if (provider.includes('dreaming') || provider.includes('openai')) {
-        lockInRiskScore = 88;
-        lockInIssues.push('Proprietary memory graph serialization format detected, creating high vendor lock-in risk.');
-        costAuditNotes = 'Dreaming V3 memory synchronization namespaces create significant token cost overhead for state propagation.';
-        portabilityPlan = 'Migrate memory graph to open standards like GraphML and cache locally using GRC Claw VectorGraphMemory.';
-      } else {
-        passedChecks.push('Open standard local memory format verified.');
-      }
-
-      // Swarm scaling audit (300 agents)
-      if (agentCount >= 300) {
-        costAuditNotes += ` Swarm Analysis: Orchestrating a swarm of ${agentCount} concurrent agents, matching the advanced operational scale utilized by 99% of Anthropic's engineering teams and Kimi 2.7 Agent Swarm architectures. GRC Claw enforces compliance policy controls locally without incurring token cost overhead.`;
-        passedChecks.push(`Swarm scaling validation passed: ${agentCount} agents coordinated under zero-trust local gateway.`);
-      } else {
-        passedChecks.push(`Swarm size (${agentCount} agents) is within standard limits.`);
-      }
-
       return {
-        ok: true,
-        cloudProviderName: provider,
-        lockInRiskScore,
-        warnings,
-        lockInIssues,
-        costAuditNotes,
-        portabilityPlan,
-        passedChecks,
-        complianceStatus: lockInRiskScore >= 80 ? 'NON_COMPLIANT' : 'COMPLIANT',
-        timestamp: new Date().toISOString()
+        ok: false,
+        executionState: 'not_configured',
+        message: 'Cloud memory audit is not configured. No external cloud memory provider is connected. GRC Claw uses local VectorGraphMemory for agent state by default. Connect a cloud memory provider (e.g., OpenAI, Pinecone) to enable cloud memory auditing and lock-in risk analysis.',
+        timestamp: new Date().toISOString(),
       };
     }
     // sovereign.verify_tee_attestation, security.trigger_active_containment, grc.generate_zkp_proof,
@@ -2256,6 +2272,382 @@ export async function dispatchBuiltinGrcTool(
       const framework = String(args.framework ?? 'SOC2');
       const summary = deps.evidenceCollector.getComplianceSummary(framework as any);
       return { ok: true, framework, summary, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Third-Party Risk Management Tools ─────────────────────────
+    case 'tprm.create_vendor': {
+      const vendorRegistry = new VendorRegistry();
+      const name = String(args.name ?? '');
+      const domain = String(args.domain ?? '');
+      const categories = (args.categories as string[]) ?? [];
+      const frameworks = (args.frameworks as string[]) ?? [];
+      const contacts = (args.contacts as { name: string; email: string; role: string; isPrimary: boolean }[]) ?? [];
+      if (!name || !domain) {
+        return { ok: false, error: 'name_and_domain_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const vendor = vendorRegistry.registerVendor({ name, domain, categories, frameworks: frameworks as any, contacts });
+        return { ok: true, vendor, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'create_vendor_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'tprm.list_vendors': {
+      const vendorRegistry = new VendorRegistry();
+      const vendors = vendorRegistry.listVendors();
+      return { ok: true, vendors, totalCount: vendors.length, timestamp: new Date().toISOString() };
+    }
+    case 'tprm.get_risk_score': {
+      const vendorRegistry = new VendorRegistry();
+      const vendorId = String(args.vendorId ?? '');
+      if (!vendorId) {
+        return { ok: false, error: 'vendorId_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const score = vendorRegistry.calculateRiskScore(vendorId);
+        if (!score) {
+          return { ok: false, error: `vendor_not_found: ${vendorId}`, timestamp: new Date().toISOString() };
+        }
+        return { ok: true, score, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_risk_score_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Trust Center Tools ────────────────────────────────────────
+    case 'trust.create_page': {
+      const trustCenter = new TrustCenter();
+      const slug = String(args.slug ?? '');
+      const companyName = String(args.companyName ?? '');
+      if (!slug || !companyName) {
+        return { ok: false, error: 'slug_and_companyName_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const page = trustCenter.createPage(slug, companyName);
+        return { ok: true, page, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'create_page_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'trust.publish_page': {
+      const trustCenter = new TrustCenter();
+      const pageId = String(args.pageId ?? '');
+      if (!pageId) {
+        return { ok: false, error: 'pageId_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const published = trustCenter.publishPage(pageId);
+        if (!published) {
+          return { ok: false, error: `page_not_found: ${pageId}`, timestamp: new Date().toISOString() };
+        }
+        const publicJson = trustCenter.generatePublicJson(pageId);
+        return { ok: true, published: true, pageId, publicJson, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'publish_page_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'trust.get_page': {
+      const trustCenter = new TrustCenter();
+      const pageId = String(args.pageId ?? '');
+      const slug = String(args.slug ?? '');
+      if (!pageId && !slug) {
+        return { ok: false, error: 'pageId_or_slug_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const page = pageId ? trustCenter.getPage(pageId) : trustCenter.getPageBySlug(slug);
+        if (!page) {
+          return { ok: false, error: 'page_not_found', timestamp: new Date().toISOString() };
+        }
+        return { ok: true, page, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_page_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Regulatory Intelligence Tools ─────────────────────────────
+    case 'regulatory.list_alerts': {
+      const regulatoryEngine = new RegulatoryIntelligenceEngine();
+      const framework = String(args.framework ?? '') as any;
+      const impact = String(args.impact ?? '') as any;
+      try {
+        let changes = framework ? regulatoryEngine.getChangesByFramework(framework) : [];
+        if (impact) {
+          changes = changes.length > 0 ? changes.filter(c => c.impactLevel === impact) : regulatoryEngine.getChangesByImpact(impact);
+        }
+        const criticalChanges = regulatoryEngine.getCriticalChanges();
+        const stats = regulatoryEngine.getStats();
+        return {
+          ok: true,
+          alerts: changes.length > 0 ? changes : criticalChanges,
+          totalCount: changes.length || criticalChanges.length,
+          stats,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'list_alerts_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'regulatory.check_regulation': {
+      const regulatoryEngine = new RegulatoryIntelligenceEngine();
+      const sourceId = String(args.sourceId ?? '');
+      const jurisdiction = String(args.jurisdiction ?? '');
+      try {
+        const stats = regulatoryEngine.getStats();
+        const sources = regulatoryEngine.getSources();
+        const digests = jurisdiction ? regulatoryEngine.getDigests(jurisdiction) : regulatoryEngine.getDigests();
+        return {
+          ok: true,
+          sourceId,
+          jurisdiction,
+          sourcesRegistered: sources.length,
+          totalChangesDetected: stats.totalChanges,
+          criticalChanges: stats.criticalChanges,
+          digestsCount: digests.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'check_regulation_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Policy Management Tools ──────────────────────────────────
+    case 'policy.create_policy': {
+      const policyManager = new PolicyManager();
+      const title = String(args.title ?? '');
+      const category = String(args.category ?? 'security') as any;
+      const owner = String(args.owner ?? 'system');
+      const approver = String(args.approver ?? 'system');
+      const content = String(args.content ?? '');
+      const framework = String(args.framework ?? 'iso27001');
+      if (!title) {
+        return { ok: false, error: 'title_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const policy = policyManager.createPolicy({ title, category, owner, approver, content, framework });
+        return { ok: true, policy, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'create_policy_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'policy.list_policies': {
+      const policyManager = new PolicyManager();
+      const policies = policyManager.listPolicies();
+      const stats = policyManager.getStats();
+      return { ok: true, policies, totalCount: policies.length, stats, timestamp: new Date().toISOString() };
+    }
+    case 'policy.get_policy': {
+      const policyManager = new PolicyManager();
+      const policyId = String(args.policyId ?? '');
+      if (!policyId) {
+        return { ok: false, error: 'policyId_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const policy = policyManager.getPolicy(policyId);
+        if (!policy) {
+          return { ok: false, error: `policy_not_found: ${policyId}`, timestamp: new Date().toISOString() };
+        }
+        return { ok: true, policy, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_policy_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Compliance Orchestrator Tools ─────────────────────────────
+    case 'compliance_orch.run_scan': {
+      const orgId = String(args.orgId ?? 'org-default');
+      const enabledFrameworks = (args.frameworks as string[]) ?? ['iso27001'];
+      const riskTolerance = String(args.riskTolerance ?? 'medium') as 'low' | 'medium' | 'high';
+      try {
+        const orchestrator = new ComplianceSuperOrchestrator({
+          orgId,
+          enabledFrameworks: enabledFrameworks as any,
+          riskTolerance,
+          autoRemediate: false,
+          continuousScanInterval: 3600000,
+        });
+        const compiler = orchestrator.getCompiler();
+        const allASTs = compiler.getAllASTs();
+        const frameworksCompiled = allASTs.map(a => a.framework);
+        return {
+          ok: true,
+          orgId,
+          scanType: 'compliance_orchestration',
+          frameworksCompiled,
+          totalFrameworks: frameworksCompiled.length,
+          graphHash: orchestrator.getGraph().getGraphHash(),
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'compliance_orch_scan_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'compliance_orch.get_status': {
+      const orgId = String(args.orgId ?? 'org-default');
+      try {
+        const orchestrator = new ComplianceSuperOrchestrator({
+          orgId,
+          enabledFrameworks: ['iso27001'],
+          riskTolerance: 'medium',
+          autoRemediate: false,
+          continuousScanInterval: 3600000,
+        });
+        const graph = orchestrator.getGraph();
+        const compiler = orchestrator.getCompiler();
+        return {
+          ok: true,
+          orgId,
+          orchestratorStatus: 'initialized',
+          frameworksAvailable: compiler.getAllASTs().map(a => a.framework),
+          graphHash: graph.getGraphHash(),
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'compliance_orch_status_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── Continuous Compliance Tools ──────────────────────────────
+    case 'continuous.check_drift': {
+      const tenantIdStr = String(tenantId);
+      const framework = String(args.framework ?? 'iso27001') as any;
+      try {
+        const engine = new ContinuousComplianceEngine(
+          {
+            async verifyEvidence() { return true; },
+            async getCurrentEvidence() { return []; },
+          },
+          {
+            async execute(_script: string, _context: Record<string, unknown>) { return { success: true, message: 'no-op', actionsTaken: [] as string[] }; },
+          },
+        );
+        const driftDetector = engine.getDriftDetector();
+        const driftEvents = driftDetector.getDriftEvents(tenantIdStr, framework);
+        return {
+          ok: true,
+          tenantId,
+          framework,
+          driftEventsDetected: driftEvents.length,
+          driftEvents,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'check_drift_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'continuous.get_posture': {
+      const tenantIdStr = String(tenantId);
+      const framework = String(args.framework ?? 'iso27001') as any;
+      try {
+        const engine = new ContinuousComplianceEngine(
+          {
+            async verifyEvidence() { return true; },
+            async getCurrentEvidence() { return []; },
+          },
+          {
+            async execute(_script: string, _context: Record<string, unknown>) { return { success: true, message: 'no-op', actionsTaken: [] as string[] }; },
+          },
+        );
+        const postureMonitor = engine.getPostureMonitor();
+        const posture = postureMonitor.calculatePosture({
+          tenantId: tenantIdStr,
+          frameworkCode: framework,
+          controlStatuses: new Map(),
+          driftEvents: [],
+        });
+        return {
+          ok: true,
+          tenantId,
+          framework,
+          overallScore: posture.overallScore,
+          controlScores: Object.fromEntries(posture.controlScores),
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_posture_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── AI Threat Detection Tools ────────────────────────────────
+    case 'threat.scan': {
+      const metric = String(args.metric ?? 'api_error_rate');
+      const value = typeof args.value === 'number' ? args.value : 0;
+      const threshold = typeof args.threshold === 'number' ? args.threshold : 2.0;
+      try {
+        const detector = new AnomalyDetector(threshold);
+        const baselines = detector.getBaselines();
+        const detection = detector.detect(metric, value);
+        return {
+          ok: true,
+          scanType: 'anomaly_detection',
+          metric,
+          value,
+          threshold,
+          baselinesLoaded: baselines.length,
+          detection,
+          hasFinding: detection !== null,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'threat_scan_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'threat.get_findings': {
+      try {
+        const detector = new AnomalyDetector();
+        const baselines = detector.getBaselines();
+        return {
+          ok: true,
+          findings: [],
+          baselines: baselines.map(b => ({
+            metric: b.metric,
+            mean: b.mean,
+            stdDev: b.stdDev,
+            sampleCount: b.sampleCount,
+            lastUpdated: b.lastUpdated,
+          })),
+          totalCount: 0,
+          message: 'No active threat findings. Update baselines with real metrics to enable anomaly detection.',
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_findings_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    // ─── AI Supply Chain Tools ────────────────────────────────────
+    case 'supply_chain.verify_model': {
+      const modelId = String(args.modelId ?? '');
+      return {
+        ok: false,
+        executionState: 'not_configured',
+        message: 'AI supply chain model provenance verification is not configured. Build and deploy @grc-claw/ai-supply-chain to enable model provenance, TEE attestation, and federated governance.',
+        modelId,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'supply_chain.list_models': {
+      return {
+        ok: true,
+        models: [],
+        totalCount: 0,
+        executionState: 'not_configured',
+        message: 'AI supply chain model registry is not configured. Build and deploy @grc-claw/ai-supply-chain to enable model governance and registry.',
+        timestamp: new Date().toISOString(),
+      };
+    }
+    // ─── Board Reporting Tools ─────────────────────────────────────
+    case 'board.generate_report': {
+      const reportType = String(args.type ?? 'board_summary') as any;
+      const period = String(args.period ?? new Date().toISOString().substring(0, 7));
+      try {
+        const generator = new BoardReportGenerator();
+        const report = generator.generateReport(reportType, period);
+        return { ok: true, report, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'generate_report_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'board.get_dashboard': {
+      try {
+        const generator = new BoardReportGenerator();
+        const dashboard = generator.getExecutiveDashboard();
+        return { ok: true, dashboard, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'get_dashboard_failed', timestamp: new Date().toISOString() };
+      }
     }
 
     default:

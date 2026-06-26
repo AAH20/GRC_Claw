@@ -39,6 +39,118 @@ const SCAN_RULES: Array<{
   { id: "ecdh-usage", controlId: "PQC-FIPS203", pattern: /\b(?:ECDH|ecdh)\b/i, severity: "low", message: "ECDH is quantum-vulnerable — plan migration to ML-KEM (FIPS 203)", fix: "Plan ML-KEM migration per NIST PQC timeline (harvest-now-decrypt-later risk)" },
 ];
 
+// ─── IaC Compliance Rules (Terraform / CloudFormation / Kubernetes YAML) ──────
+
+interface IaCFinding extends ComplianceFinding {
+  resource?: string;
+}
+
+const IAC_RULES: Array<{
+  id: string;
+  controlId: string;
+  pattern: RegExp;
+  fileTypes: string[];
+  severity: "critical" | "high" | "medium" | "low";
+  message: string;
+  fix: string;
+}> = [
+  {
+    id: "iac-public-s3-bucket",
+    controlId: "A.13.1.3",
+    pattern: /acl\s*=\s*["']public-read(-write)?["']/i,
+    fileTypes: [".tf"],
+    severity: "critical",
+    message: "S3 bucket ACL is public — violates ISO 27001 A.13.1.3 (data in transit protection)",
+    fix: 'Set acl = "private" and enable S3 Block Public Access on the bucket resource',
+  },
+  {
+    id: "iac-no-encryption-s3",
+    controlId: "A.10.1.1",
+    pattern: /resource\s+"aws_s3_bucket"\s+"[^"]+"\s*\{(?:(?!server_side_encryption_configuration)[\s\S]){0,600}\}/,
+    fileTypes: [".tf"],
+    severity: "high",
+    message: "aws_s3_bucket missing server_side_encryption_configuration — ISO 27001 A.10.1.1",
+    fix: "Add server_side_encryption_configuration block with AES-256 or aws:kms",
+  },
+  {
+    id: "iac-rds-no-encryption",
+    controlId: "A.10.1.1",
+    pattern: /storage_encrypted\s*=\s*false/i,
+    fileTypes: [".tf"],
+    severity: "critical",
+    message: "RDS/database storage encryption disabled — SOC 2 CC6.1 / ISO 27001 A.10.1.1",
+    fix: "Set storage_encrypted = true on all aws_db_instance resources",
+  },
+  {
+    id: "iac-security-group-open",
+    controlId: "A.13.1.1",
+    pattern: /cidr_blocks\s*=\s*\["0\.0\.0\.0\/0"\]/,
+    fileTypes: [".tf"],
+    severity: "high",
+    message: "Security group open to 0.0.0.0/0 — violates ISO 27001 A.13.1.1 (network controls)",
+    fix: "Restrict cidr_blocks to specific IP ranges; use security group references instead of open CIDRs",
+  },
+  {
+    id: "iac-cf-no-https",
+    controlId: "A.13.2.3",
+    pattern: /Protocol\s*:\s*HTTP(?!S)/,
+    fileTypes: [".yaml", ".yml", ".json"],
+    severity: "high",
+    message: "CloudFormation resource using HTTP (not HTTPS) — ISO 27001 A.13.2.3",
+    fix: "Change Protocol to HTTPS and configure SSL certificate",
+  },
+  {
+    id: "iac-k8s-privileged-container",
+    controlId: "A.9.4.1",
+    pattern: /privileged\s*:\s*true/i,
+    fileTypes: [".yaml", ".yml"],
+    severity: "critical",
+    message: "Kubernetes container running as privileged — SOC 2 CC6.1 / ISO 27001 A.9.4.1",
+    fix: "Set privileged: false and use least-privilege security context",
+  },
+  {
+    id: "iac-k8s-no-resource-limits",
+    controlId: "A.12.1.3",
+    pattern: /containers:[\s\S]{0,300}image:\s*\S+(?:(?!resources:)[\s\S]){0,200}(?=\s+-\s+name:|$)/,
+    fileTypes: [".yaml", ".yml"],
+    severity: "medium",
+    message: "Kubernetes container missing resource limits — ISO 27001 A.12.1.3 (capacity management)",
+    fix: "Add resources.limits.cpu and resources.limits.memory to all container specs",
+  },
+  {
+    id: "iac-terraform-no-state-encryption",
+    controlId: "A.10.1.1",
+    pattern: /backend\s+"s3"\s*\{(?:(?!encrypt\s*=\s*true)[\s\S]){0,400}\}/,
+    fileTypes: [".tf"],
+    severity: "high",
+    message: "Terraform S3 backend missing encrypt = true — ISO 27001 A.10.1.1",
+    fix: "Add encrypt = true to the terraform S3 backend configuration block",
+  },
+];
+
+function scanIaC(text: string, fileExt: string): IaCFinding[] {
+  const lines = text.split("\n");
+  const findings: IaCFinding[] = [];
+  for (const rule of IAC_RULES) {
+    if (!rule.fileTypes.includes(fileExt)) continue;
+    // Line-by-line scan for simple patterns
+    for (let i = 0; i < lines.length; i++) {
+      if (rule.pattern.test(lines[i])) {
+        findings.push({
+          line: i,
+          col: 0,
+          severity: rule.severity,
+          ruleId: rule.id,
+          controlId: rule.controlId,
+          message: rule.message,
+          fix: rule.fix,
+        });
+      }
+    }
+  }
+  return findings;
+}
+
 function scanText(text: string): ComplianceFinding[] {
   const lines = text.split("\n");
   const findings: ComplianceFinding[] = [];
