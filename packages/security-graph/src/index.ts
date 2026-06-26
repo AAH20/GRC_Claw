@@ -446,3 +446,5 @@ export class SecurityGraph {
     };
   }
 }
+
+export { SecurityGraphSeeder } from './seeder.js';

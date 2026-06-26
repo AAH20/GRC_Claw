@@ -23,12 +23,16 @@ import {
 import { IdempotencyCache } from './idempotency.js';
 import { applyCors, tryServeConsoleStatic } from './console-static.js';
 import { discoverCursorSkills } from './cursor-skills.js';
-import { dispatchAgentTool, executionStateFromOutput } from './agent-dispatch.js';
+import { dispatchAgentTool, executionStateFromOutput, setSecurityGraph } from './agent-dispatch.js';
 import { createClawDispatchContext } from './skill-runtime.js';
 import { GatewayAssuranceGraph } from './assurance.js';
+import { initSecurityGraph } from './graph-init.js';
 import { getSkillById, listSkills } from '@grc-claw/skill-executor';
 import { createRateLimiter } from './rate-limiter.js';
 import { applySecurityHeaders } from './security-headers.js';
+import { metricsCollector } from './metrics.js';
+import { initPersistence, getPersistence, isPersistenceEnabled, closePersistence } from './persistence-init.js';
+import type { PersistenceLayer } from '@grc-claw/persistence';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -39,12 +43,16 @@ export interface GatewayConfig {
   token: string;
 }
 
-export function createGateway(config: GatewayConfig) {
+export function createGateway(config: GatewayConfig, persistence?: PersistenceLayer | null) {
+  const seededGraph = initSecurityGraph();
+  setSecurityGraph(seededGraph);
+
   const dedupe = new IdempotencyCache();
   const evidence = new EvidenceStore();
   const ledger = new ActionLedger(
     process.env.GRC_CLAW_ACTION_LEDGER_PATH?.trim() || join(process.cwd(), '.grc_memory', 'action-ledger.ndjson')
   );
+  const pg = persistence ?? getPersistence();
   const assurance = new GatewayAssuranceGraph();
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
   const connectors = getConnectorRegistry();
@@ -136,6 +144,9 @@ export function createGateway(config: GatewayConfig) {
     applySecurityHeaders(res);
     applyCors(res);
 
+    const requestStart = Date.now();
+    metricsCollector.incCounter('grc_gateway_requests_total');
+
     let timedOut = false;
     const timeout = setTimeout(() => {
       timedOut = true;
@@ -146,7 +157,11 @@ export function createGateway(config: GatewayConfig) {
         }
       } catch {}
     }, REQUEST_TIMEOUT_MS);
-    const clearTimer = () => clearTimeout(timeout);
+    const clearTimer = () => {
+      clearTimeout(timeout);
+      const duration = Date.now() - requestStart;
+      metricsCollector.observeHistogram('grc_request_duration_ms', duration);
+    };
     res.on('finish', clearTimer);
     res.on('close', clearTimer);
 
@@ -165,21 +180,9 @@ export function createGateway(config: GatewayConfig) {
     const path = req.url?.split('?')[0] ?? '/';
 
     if (path === '/metrics' && req.method === 'GET') {
+      metricsCollector.setGauge('grc_compliance_score', 0.87);
+      const metricsText = metricsCollector.getPrometheusFormat();
       res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' });
-      const metricsText = [
-        '# HELP grc_gateway_requests_total Total HTTP/WS requests processed by GRC_Claw gateway',
-        '# TYPE grc_gateway_requests_total counter',
-        'grc_gateway_requests_total 482',
-        '# HELP grc_agent_invocations_total Total agent tool invocations audited',
-        '# TYPE grc_agent_invocations_total counter',
-        'grc_agent_invocations_total 129',
-        '# HELP grc_compliance_score Current compliance score (0.0 - 1.0)',
-        '# TYPE grc_compliance_score gauge',
-        'grc_compliance_score 0.87',
-        '# HELP grc_sandbox_violations_total Total sandbox security policy violations blocked by exec policy',
-        '# TYPE grc_sandbox_violations_total counter',
-        'grc_sandbox_violations_total 12'
-      ].join('\n') + '\n';
       res.end(metricsText);
       return;
     }
@@ -199,9 +202,32 @@ export function createGateway(config: GatewayConfig) {
           llm_providers: summary.llm.length,
           mcp_servers: summary.mcp.length,
           cloud_sources: CLOUD_INGEST_SOURCES,
+          persistence: isPersistenceEnabled() ? 'postgresql' : 'demo',
           marketing: 'The OSS chassis for ISO 42001-compliant agentic AI — pairs with a2zsoc.com',
         })
       );
+      return;
+    }
+
+    if (path === '/api/db/health') {
+      if (!authOk(req)) {
+        res.writeHead(401);
+        res.end(JSON.stringify({ error: 'unauthorized' }));
+        return;
+      }
+      if (!pg) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, mode: 'demo', postgresql: false, message: 'No DATABASE_URL — running in demo mode' }));
+        return;
+      }
+      try {
+        const healthy = await pg.database.healthCheck();
+        res.writeHead(healthy ? 200 : 503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: healthy, mode: 'production', postgresql: true }));
+      } catch {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, mode: 'production', postgresql: true, error: 'health_check_failed' }));
+      }
       return;
     }
 
@@ -226,8 +252,24 @@ export function createGateway(config: GatewayConfig) {
         return;
       }
       const limit = Number(new URL(req.url ?? '', 'http://local').searchParams.get('limit') ?? 100);
+      let events: unknown[] = ledger.list(limit);
+      let source = 'in-memory';
+      if (pg) {
+        try {
+          const { rows } = await pg.database.query(
+            'SELECT * FROM action_ledger ORDER BY created_at DESC LIMIT $1',
+            [limit]
+          );
+          if (rows.length > 0) {
+            events = rows;
+            source = 'postgresql';
+          }
+        } catch {
+          // fall back to in-memory
+        }
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, events: ledger.list(limit), integrity: ledger.verify() }));
+      res.end(JSON.stringify({ ok: true, source, events, integrity: ledger.verify() }));
       return;
     }
 
@@ -333,6 +375,7 @@ export function createGateway(config: GatewayConfig) {
         maxSteps: typeof body.maxSteps === 'number' ? body.maxSteps : undefined,
         readOnlyTools: body.readOnlyTools !== false,
       });
+      metricsCollector.incCounter('grc_agent_invocations_total');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
@@ -511,7 +554,9 @@ export function createGateway(config: GatewayConfig) {
           evidence,
           a2z,
           claw,
+          persistence: pg,
         });
+        metricsCollector.incCounter('grc_agent_invocations_total');
       } catch (e) {
         const resultEvent = ledger.recordResult(intent, { executionState: 'failed' });
         const assuranceReceipt = await persistAssuranceEnvelope(intent, decisionEvent, resultEvent, assurance.get(intent.actionId));
@@ -599,13 +644,16 @@ export function createGateway(config: GatewayConfig) {
       new Promise<void>((resolve) => {
         httpServer.listen(config.port, config.host, () => resolve());
       }),
-    close: () =>
-      new Promise<void>((resolve, reject) => {
+    close: async () => {
+      await closePersistence();
+      return new Promise<void>((resolve, reject) => {
         wss.close(() => httpServer.close((e) => (e ? reject(e) : resolve())));
-      }),
+      });
+    },
     evidence,
     a2z,
     refreshExecPolicy,
+    persistence: pg,
   };
 }
 

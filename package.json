@@ -44,7 +44,9 @@
     "packages/auto-evidence",
     "packages/questionnaire-automation",
     "packages/grc-engineering",
-    "packages/sdk-client"
+    "packages/sdk-client",
+    "packages/risk-quantification",
+    "packages/entity-management"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
