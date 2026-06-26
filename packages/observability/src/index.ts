@@ -435,7 +435,189 @@ export interface AIBOM {
   vulnerabilities: { id: string; source: string; description: string; severity: string }[];
 }
 
+// ─── SPDX 2.3 AI-BOM ────────────────────────────────────────────────
+
+export interface SPDXDocument {
+  spdxVersion: 'SPDX-2.3';
+  dataLicense: 'CC0-1.0';
+  SPDXID: 'SPDXRef-DOCUMENT';
+  name: string;
+  documentNamespace: string;
+  creationInfo: { created: string; creators: string[] };
+  packages: Array<{
+    SPDXID: string;
+    name: string;
+    versionInfo: string;
+    supplier: string;
+    downloadLocation: string;
+    filesAnalyzed: boolean;
+    licenseConcluded: string;
+    licenseDeclared: string;
+    externalRefs: Array<{ referenceCategory: string; referenceType: string; referenceLocator: string }>;
+    comment?: string;
+  }>;
+  relationships: Array<{ spdxElementId: string; relationshipType: string; relatedSpdxElement: string }>;
+}
+
+// ─── CycloneDX 1.5 AI-BOM ───────────────────────────────────────────
+
+export interface CycloneDXDocument {
+  bomFormat: 'CycloneDX';
+  specVersion: '1.5';
+  serialNumber: string;
+  version: number;
+  metadata: {
+    timestamp: string;
+    tools: Array<{ vendor: string; name: string; version: string }>;
+    component: { type: string; name: string; version: string };
+  };
+  components: Array<{
+    type: string;
+    'bom-ref': string;
+    name: string;
+    version?: string;
+    supplier?: { name: string };
+    licenses?: Array<{ license: { id: string } }>;
+    properties: Array<{ name: string; value: string }>;
+    externalReferences?: Array<{ type: string; url: string }>;
+  }>;
+  dependencies: Array<{ ref: string; dependsOn: string[] }>;
+}
+
 export class AIBOMGenerator {
+  /** Generate an AI-BOM in SPDX 2.3 format (EU AI Act Art.11 compliant) */
+  generateSPDX(traces: Span[], agentName: string): SPDXDocument {
+    const packages: SPDXDocument['packages'] = [];
+    const relationships: SPDXDocument['relationships'] = [];
+    const seen = new Set<string>();
+
+    for (const span of traces) {
+      if (span.attributes['llm.provider'] && span.attributes['llm.model']) {
+        const model = String(span.attributes['llm.model']);
+        const provider = String(span.attributes['llm.provider']);
+        const spdxId = `SPDXRef-model-${model.replace(/[^a-zA-Z0-9]/g, '-')}`;
+        if (!seen.has(spdxId)) {
+          seen.add(spdxId);
+          packages.push({
+            SPDXID: spdxId,
+            name: model,
+            versionInfo: model,
+            supplier: `Organization: ${provider}`,
+            downloadLocation: `https://api.${provider.toLowerCase()}.com`,
+            filesAnalyzed: false,
+            licenseConcluded: 'LicenseRef-Commercial',
+            licenseDeclared: 'NOASSERTION',
+            externalRefs: [
+              { referenceCategory: 'OTHER', referenceType: 'eu-ai-act-gpai-class', referenceLocator: 'GPAI' },
+              { referenceCategory: 'SECURITY', referenceType: 'advisory', referenceLocator: `https://a2zsoc.com/api/platform/ai-bom-registry/${encodeURIComponent(provider.toLowerCase())}%2F${encodeURIComponent(model)}` },
+            ],
+            comment: `LLM invoked via GRC_Claw gateway. Tokens in: ${span.attributes['llm.tokens_in'] ?? 0}, out: ${span.attributes['llm.tokens_out'] ?? 0}`,
+          });
+          relationships.push({ spdxElementId: 'SPDXRef-DOCUMENT', relationshipType: 'DESCRIBES', relatedSpdxElement: spdxId });
+        }
+      }
+      if (span.attributes['tool.name']) {
+        const tool = String(span.attributes['tool.name']);
+        const spdxId = `SPDXRef-tool-${tool.replace(/[^a-zA-Z0-9]/g, '-')}`;
+        if (!seen.has(spdxId)) {
+          seen.add(spdxId);
+          packages.push({
+            SPDXID: spdxId,
+            name: tool,
+            versionInfo: 'NOASSERTION',
+            supplier: 'Organization: GRC_Claw',
+            downloadLocation: 'https://github.com/AAH20/GRC_Claw',
+            filesAnalyzed: false,
+            licenseConcluded: 'MIT',
+            licenseDeclared: 'MIT',
+            externalRefs: [
+              { referenceCategory: 'OTHER', referenceType: 'tool-tier', referenceLocator: String(span.attributes['tool.tier'] ?? 'read') },
+            ],
+          });
+          relationships.push({ spdxElementId: 'SPDXRef-DOCUMENT', relationshipType: 'CONTAINS', relatedSpdxElement: spdxId });
+        }
+      }
+    }
+
+    return {
+      spdxVersion: 'SPDX-2.3',
+      dataLicense: 'CC0-1.0',
+      SPDXID: 'SPDXRef-DOCUMENT',
+      name: `AI-BOM for ${agentName}`,
+      documentNamespace: `https://a2zsoc.com/ai-bom/${agentName}-${Date.now()}`,
+      creationInfo: {
+        created: new Date().toISOString(),
+        creators: ['Tool: GRC_Claw AI-BOM Generator', 'Organization: A2Z SOC'],
+      },
+      packages,
+      relationships,
+    };
+  }
+
+  /** Generate an AI-BOM in CycloneDX 1.5 format */
+  generateCycloneDX(traces: Span[], agentName: string): CycloneDXDocument {
+    const components: CycloneDXDocument['components'] = [];
+    const seen = new Set<string>();
+
+    for (const span of traces) {
+      if (span.attributes['llm.provider'] && span.attributes['llm.model']) {
+        const model = String(span.attributes['llm.model']);
+        const provider = String(span.attributes['llm.provider']);
+        const ref = `model-${model.replace(/[^a-zA-Z0-9]/g, '-')}`;
+        if (!seen.has(ref)) {
+          seen.add(ref);
+          components.push({
+            type: 'machine-learning-model',
+            'bom-ref': ref,
+            name: model,
+            version: model,
+            supplier: { name: provider },
+            licenses: [{ license: { id: 'LicenseRef-Commercial' } }],
+            properties: [
+              { name: 'grc:eu-ai-act-class', value: 'GPAI' },
+              { name: 'grc:provider', value: provider },
+              { name: 'grc:tokens-consumed', value: String((span.attributes['llm.tokens_in'] ?? 0) as number + (span.attributes['llm.tokens_out'] as number ?? 0)) },
+              { name: 'grc:cost-usd', value: String(span.attributes['llm.cost_usd'] ?? 0) },
+            ],
+            externalReferences: [
+              { type: 'website', url: `https://a2zsoc.com/api/platform/ai-bom-registry/${encodeURIComponent(provider.toLowerCase())}%2F${encodeURIComponent(model)}` },
+            ],
+          });
+        }
+      }
+      if (span.attributes['tool.name']) {
+        const tool = String(span.attributes['tool.name']);
+        const ref = `tool-${tool.replace(/[^a-zA-Z0-9]/g, '-')}`;
+        if (!seen.has(ref)) {
+          seen.add(ref);
+          components.push({
+            type: 'library',
+            'bom-ref': ref,
+            name: tool,
+            properties: [
+              { name: 'grc:tool-tier', value: String(span.attributes['tool.tier'] ?? 'read') },
+              { name: 'grc:policy-result', value: String(span.attributes['policy.result'] ?? 'unknown') },
+            ],
+          });
+        }
+      }
+    }
+
+    return {
+      bomFormat: 'CycloneDX',
+      specVersion: '1.5',
+      serialNumber: `urn:uuid:${crypto.randomUUID()}`,
+      version: 1,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        tools: [{ vendor: 'A2Z SOC', name: 'GRC_Claw AI-BOM Generator', version: '1.0.0' }],
+        component: { type: 'application', name: agentName, version: '1.0.0' },
+      },
+      components,
+      dependencies: [{ ref: agentName, dependsOn: components.map(c => c['bom-ref']) }],
+    };
+  }
+
   /** Generate an AI Bill of Materials from trace data */
   generateFromTraces(traces: Span[], agentName: string): AIBOM {
     const components: AIBOMEntry[] = [];

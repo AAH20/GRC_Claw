@@ -45,6 +45,13 @@
     "@grc-claw/drift-detector": "*",
     "@grc-claw/evidence-collector": "*",
     "@grc-claw/compliance-autopilot": "*",
+    "@grc-claw/trust-center": "*",
+    "@grc-claw/regulatory-intelligence": "*",
+    "@grc-claw/policy-management": "*",
+    "@grc-claw/compliance-orchestrator": "*",
+    "@grc-claw/continuous-compliance": "*",
+    "@grc-claw/ai-threat-detection": "*",
+    "@grc-claw/ai-supply-chain": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

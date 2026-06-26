@@ -26,6 +26,14 @@
     { "path": "../risk-quantification" },
     { "path": "../entity-management" },
     { "path": "../accm" },
-    { "path": "../agent-builder" }
+    { "path": "../agent-builder" },
+    { "path": "../trust-center" },
+    { "path": "../regulatory-intelligence" },
+    { "path": "../policy-management" },
+    { "path": "../compliance-orchestrator" },
+    { "path": "../continuous-compliance" },
+    { "path": "../ai-threat-detection" },
+    { "path": "../board-reporting" },
+    { "path": "../third-party-risk" }
   ]
 }

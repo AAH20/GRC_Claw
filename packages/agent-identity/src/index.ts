@@ -91,6 +91,10 @@ export class AgentIdentityManager {
     this.db = database;
   }
 
+  setDatabase(database?: IdentityDatabase): void {
+    this.db = database;
+  }
+
   async initializeDatabase(): Promise<void> {
     if (!this.db) return;
     await this.db.execute(`

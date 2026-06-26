@@ -409,3 +409,281 @@ export class GRCClawSDK {
     return this.config;
   }
 }
+
+// ─── Policy-as-Code Engine ────────────────────────────────────────────
+// Write TypeScript GRC policies, run them against your evidence store.
+// Publish passing policies as compliance pack entries.
+
+export type PolicyDecision = 'pass' | 'fail' | 'partial' | 'skip';
+export type PolicySeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+export interface PolicyContext {
+  /** Files in the scanned directory, relative paths */
+  files: string[];
+  /** Key-value env metadata (CLOUD_PROVIDER, REGION, etc.) */
+  env: Record<string, string>;
+  /** Evidence items already in the store for this control */
+  evidence: Array<{ type: string; content: string; hash: string; collectedAt: string }>;
+  /** Custom data the caller passes in */
+  data: Record<string, unknown>;
+}
+
+export interface PolicyResult {
+  policyId: string;
+  controlId: string;
+  framework: string;
+  decision: PolicyDecision;
+  severity: PolicySeverity;
+  message: string;
+  /** Specific findings that triggered fail/partial */
+  findings: Array<{ location: string; detail: string }>;
+  /** Auto-generated remediation steps */
+  remediationSteps: string[];
+  evaluatedAt: string;
+  durationMs: number;
+}
+
+export interface GRCPolicy {
+  id: string;
+  name: string;
+  description: string;
+  controlId: string;
+  framework: string;
+  severity: PolicySeverity;
+  tags: string[];
+  /** The evaluation function — return pass/fail/partial + findings */
+  evaluate(ctx: PolicyContext): Promise<{ decision: PolicyDecision; findings: Array<{ location: string; detail: string }>; remediationSteps: string[] }>;
+}
+
+// ─── Built-in policies (mirrors VS Code / CLI scan rules) ─────────────
+
+const BUILTIN_POLICIES: GRCPolicy[] = [
+  {
+    id: 'grc-policy-no-hardcoded-secrets',
+    name: 'No Hardcoded Secrets',
+    description: 'Detects hardcoded credentials in source files',
+    controlId: 'A.9.4.3',
+    framework: 'iso27001',
+    severity: 'critical',
+    tags: ['secrets', 'credentials', 'iso27001'],
+    async evaluate(ctx) {
+      const pattern = /(?:password|secret|api_?key|token)\s*=\s*["'][^"']{8,}["']/i;
+      const findings: Array<{ location: string; detail: string }> = [];
+      for (const file of ctx.files) {
+        const content = String(ctx.data[file] ?? '');
+        const lines = content.split('\n');
+        lines.forEach((line, i) => {
+          if (pattern.test(line)) findings.push({ location: `${file}:${i + 1}`, detail: line.trim().slice(0, 80) });
+        });
+      }
+      return {
+        decision: findings.length > 0 ? 'fail' : 'pass',
+        findings,
+        remediationSteps: findings.length > 0 ? [
+          'Move secrets to environment variables or a secrets manager (AWS Secrets Manager, HashiCorp Vault)',
+          'Rotate any exposed credentials immediately',
+          'Add pre-commit hook: `grc scan --rule no-hardcoded-secrets`',
+        ] : [],
+      };
+    },
+  },
+  {
+    id: 'grc-policy-mfa-enforced',
+    name: 'MFA Enforcement',
+    description: 'Verifies MFA is not bypassed in auth flows',
+    controlId: 'A.9.4.2',
+    framework: 'iso27001',
+    severity: 'critical',
+    tags: ['mfa', 'authentication', 'iso27001'],
+    async evaluate(ctx) {
+      const bypassPattern = /skip.*mfa|bypass.*auth|mfa.*disabled|auth.*skip/i;
+      const findings: Array<{ location: string; detail: string }> = [];
+      for (const file of ctx.files) {
+        const content = String(ctx.data[file] ?? '');
+        const lines = content.split('\n');
+        lines.forEach((line, i) => {
+          if (bypassPattern.test(line)) findings.push({ location: `${file}:${i + 1}`, detail: line.trim().slice(0, 80) });
+        });
+      }
+      return {
+        decision: findings.length > 0 ? 'fail' : 'pass',
+        findings,
+        remediationSteps: findings.length > 0 ? [
+          'Remove all MFA bypass patterns from code',
+          'Enforce MFA on every authentication path per ISO 27001 A.9.4.2',
+          'Add integration test: verify MFA cannot be skipped via API parameters',
+        ] : [],
+      };
+    },
+  },
+  {
+    id: 'grc-policy-no-weak-crypto',
+    name: 'No Weak Cryptography',
+    description: 'Detects MD5, SHA-1, DES, RC4, ECB usage',
+    controlId: 'A.10.1.1',
+    framework: 'iso27001',
+    severity: 'high',
+    tags: ['crypto', 'pqc', 'iso27001', 'pci-dss'],
+    async evaluate(ctx) {
+      const pattern = /\b(?:md5|sha1|des|rc4|ecb)\b(?!\w)/gi;
+      const findings: Array<{ location: string; detail: string }> = [];
+      for (const file of ctx.files) {
+        const content = String(ctx.data[file] ?? '');
+        const lines = content.split('\n');
+        lines.forEach((line, i) => {
+          if (pattern.test(line)) findings.push({ location: `${file}:${i + 1}`, detail: line.trim().slice(0, 80) });
+        });
+      }
+      return {
+        decision: findings.length > 0 ? 'fail' : 'pass',
+        findings,
+        remediationSteps: findings.length > 0 ? [
+          'Replace MD5/SHA-1 with SHA-256 or SHA-3 for all hashing',
+          'Replace DES/RC4 with AES-256-GCM or ChaCha20-Poly1305',
+          'Avoid ECB mode — use GCM or CTR with authenticated encryption',
+          'Plan PQC migration per NIST FIPS 203/204/205 before 2027 FedRAMP deadline',
+        ] : [],
+      };
+    },
+  },
+  {
+    id: 'grc-policy-iac-open-storage',
+    name: 'IaC: No Public Storage Buckets',
+    description: 'Detects publicly accessible S3/GCS/Azure blob configs',
+    controlId: 'A.13.1.3',
+    framework: 'iso27001',
+    severity: 'critical',
+    tags: ['iac', 'terraform', 'cloud', 'iso27001'],
+    async evaluate(ctx) {
+      const pattern = /acl\s*=\s*["']public-read|public_access_prevention\s*=\s*["']unspecified|allow_blob_public_access\s*=\s*true/gi;
+      const findings: Array<{ location: string; detail: string }> = [];
+      for (const file of ctx.files.filter(f => f.endsWith('.tf') || f.endsWith('.yaml') || f.endsWith('.yml'))) {
+        const content = String(ctx.data[file] ?? '');
+        const lines = content.split('\n');
+        lines.forEach((line, i) => {
+          if (pattern.test(line)) findings.push({ location: `${file}:${i + 1}`, detail: line.trim().slice(0, 80) });
+        });
+      }
+      return {
+        decision: findings.length > 0 ? 'fail' : 'pass',
+        findings,
+        remediationSteps: findings.length > 0 ? [
+          'Set S3 bucket ACL to private: acl = "private"',
+          'Enable S3 Block Public Access: block_public_acls = true',
+          'For GCS: set public_access_prevention = "enforced"',
+          'For Azure Blob: set allow_blob_public_access = false',
+        ] : [],
+      };
+    },
+  },
+  {
+    id: 'grc-policy-iac-encryption-at-rest',
+    name: 'IaC: Encryption at Rest',
+    description: 'Ensures storage resources have encryption enabled',
+    controlId: 'A.10.1.1',
+    framework: 'iso27001',
+    severity: 'high',
+    tags: ['iac', 'terraform', 'encryption', 'iso27001', 'soc2'],
+    async evaluate(ctx) {
+      const tfFiles = ctx.files.filter(f => f.endsWith('.tf'));
+      const findings: Array<{ location: string; detail: string }> = [];
+      for (const file of tfFiles) {
+        const content = String(ctx.data[file] ?? '');
+        if (/resource\s+"aws_s3_bucket"/.test(content) && !/server_side_encryption_configuration/.test(content)) {
+          findings.push({ location: file, detail: 'aws_s3_bucket missing server_side_encryption_configuration block' });
+        }
+        if (/resource\s+"aws_db_instance"/.test(content) && !/storage_encrypted\s*=\s*true/.test(content)) {
+          findings.push({ location: file, detail: 'aws_db_instance: storage_encrypted is not set to true' });
+        }
+        if (/resource\s+"google_storage_bucket"/.test(content) && !/encryption\s*\{/.test(content)) {
+          findings.push({ location: file, detail: 'google_storage_bucket missing encryption block' });
+        }
+      }
+      return {
+        decision: findings.length > 0 ? 'fail' : tfFiles.length === 0 ? 'skip' : 'pass',
+        findings,
+        remediationSteps: findings.length > 0 ? [
+          'Add server_side_encryption_configuration to aws_s3_bucket with AES-256 or aws:kms',
+          'Set storage_encrypted = true on aws_db_instance',
+          'Add encryption block to google_storage_bucket pointing to a KMS key',
+        ] : [],
+      };
+    },
+  },
+];
+
+export class GRCPolicyEngine {
+  private policies: Map<string, GRCPolicy> = new Map();
+
+  constructor() {
+    for (const p of BUILTIN_POLICIES) this.policies.set(p.id, p);
+  }
+
+  /** Register a custom policy */
+  register(policy: GRCPolicy): void {
+    this.policies.set(policy.id, policy);
+  }
+
+  /** Unregister a policy by ID */
+  unregister(id: string): boolean {
+    return this.policies.delete(id);
+  }
+
+  /** List all registered policies */
+  list(filters?: { framework?: string; severity?: PolicySeverity; tags?: string[] }): GRCPolicy[] {
+    let policies = Array.from(this.policies.values());
+    if (filters?.framework) policies = policies.filter(p => p.framework === filters.framework);
+    if (filters?.severity) policies = policies.filter(p => p.severity === filters.severity);
+    if (filters?.tags?.length) policies = policies.filter(p => filters.tags!.some(t => p.tags.includes(t)));
+    return policies;
+  }
+
+  /** Run a single policy */
+  async run(policyId: string, ctx: PolicyContext): Promise<PolicyResult> {
+    const policy = this.policies.get(policyId);
+    if (!policy) throw new Error(`Policy not found: ${policyId}`);
+
+    const start = Date.now();
+    const { decision, findings, remediationSteps } = await policy.evaluate(ctx);
+
+    return {
+      policyId: policy.id,
+      controlId: policy.controlId,
+      framework: policy.framework,
+      decision,
+      severity: policy.severity,
+      message: findings.length > 0
+        ? `${findings.length} finding(s): ${findings[0].detail}`
+        : `Control ${policy.controlId} is satisfied`,
+      findings,
+      remediationSteps,
+      evaluatedAt: new Date().toISOString(),
+      durationMs: Date.now() - start,
+    };
+  }
+
+  /** Run all policies (or filtered subset) against a context */
+  async runAll(ctx: PolicyContext, filters?: Parameters<GRCPolicyEngine['list']>[0]): Promise<{
+    results: PolicyResult[];
+    summary: { total: number; pass: number; fail: number; partial: number; skip: number };
+    overallDecision: 'pass' | 'fail' | 'partial';
+    policyHash: string;
+    runAt: string;
+  }> {
+    const policies = this.list(filters);
+    const results = await Promise.all(policies.map(p => this.run(p.id, ctx)));
+
+    const summary = { total: results.length, pass: 0, fail: 0, partial: 0, skip: 0 };
+    for (const r of results) summary[r.decision]++;
+
+    const overallDecision: 'pass' | 'fail' | 'partial' =
+      summary.fail > 0 ? 'fail' : summary.partial > 0 ? 'partial' : 'pass';
+
+    const policyHash = crypto.createHash('sha256')
+      .update(JSON.stringify(results.map(r => ({ id: r.policyId, decision: r.decision }))))
+      .digest('hex')
+      .slice(0, 16);
+
+    return { results, summary, overallDecision, policyHash, runAt: new Date().toISOString() };
+  }
+}
