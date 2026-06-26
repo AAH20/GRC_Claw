@@ -160,22 +160,41 @@ function handleQueryEvidence(
     };
   }
 
+  const es = context.evidenceStore;
   const controls = getFrameworkControls(framework);
-  const coveredCount = Math.floor(controls.length * 0.65);
+
+  if (!es) {
+    return {
+      message: `**Evidence Coverage for ${framework.toUpperCase()}**\n\nEvidence store not connected. Connect an evidence store to view real coverage data.`,
+      data: { framework, totalControls: controls.length, coveredCount: 0, missingCount: controls.length, executionState: 'not_configured' },
+      suggestions: generateSuggestions('query_evidence', context),
+    };
+  }
+
+  let coveredCount = 0;
+  for (const ctrl of controls) {
+    const items = es.listByControl(ctrl.id);
+    if (items.length > 0) coveredCount++;
+  }
   const missingCount = controls.length - coveredCount;
 
-  const missingControls = controls.slice(0, Math.min(5, missingCount));
-  const missingList = missingControls.map((c) => `  - ${c.controlCode}: ${c.title}`).join('\n');
+  const missingControls: string[] = [];
+  for (const ctrl of controls) {
+    if (es.listByControl(ctrl.id).length === 0) {
+      missingControls.push(`  - ${ctrl.controlCode}: ${ctrl.title}`);
+    }
+    if (missingControls.length >= 5) break;
+  }
 
   const message = [
     `**Evidence Coverage for ${framework.toUpperCase()}**`,
     '',
     `- Total controls: ${controls.length}`,
-    `- Evidence attached: ${coveredCount} (${Math.round((coveredCount / controls.length) * 100)}%)`,
-    `- Evidence missing: ${missingCount} (${Math.round((missingCount / controls.length) * 100)}%)`,
+    `- Evidence attached: ${coveredCount} (${controls.length > 0 ? Math.round((coveredCount / controls.length) * 100) : 0}%)`,
+    `- Evidence missing: ${missingCount} (${controls.length > 0 ? Math.round((missingCount / controls.length) * 100) : 0}%)`,
     '',
     '**Missing evidence for:**',
-    missingList,
+    ...missingControls,
     missingCount > 5 ? `  ... and ${missingCount - 5} more` : '',
   ].join('\n');
 
@@ -235,27 +254,29 @@ function handleQueryPosture(
 
   const es = context.evidenceStore;
 
+  if (!es) {
+    return {
+      message: '**Compliance Posture Overview**\n\nEvidence store not connected. Connect an evidence store to view real compliance posture.',
+      data: { postures: [] as CompliancePosture[], executionState: 'not_configured' },
+      suggestions: generateSuggestions('query_posture', context),
+    };
+  }
+
   const postures: CompliancePosture[] = frameworks.map((fw) => {
     const controls = context.frameworkControls?.[fw] ?? getFrameworkControls(fw);
     let implemented = 0;
     let inProgress = 0;
     let notStarted = controls.length;
 
-    if (es) {
-      for (const ctrl of controls) {
-        const items = es.listByControl(ctrl.id);
-        if (items.length > 0) {
-          implemented++;
-          notStarted--;
-        }
+    for (const ctrl of controls) {
+      const items = es.listByControl(ctrl.id);
+      if (items.length > 0) {
+        implemented++;
+        notStarted--;
       }
-      inProgress = Math.max(0, Math.floor((controls.length - implemented) * 0.3));
-      notStarted = controls.length - implemented - inProgress;
-    } else {
-      implemented = Math.floor(controls.length * 0.6);
-      inProgress = Math.floor(controls.length * 0.2);
-      notStarted = controls.length - implemented - inProgress;
     }
+    inProgress = Math.max(0, Math.floor((controls.length - implemented) * 0.3));
+    notStarted = controls.length - implemented - inProgress;
 
     return {
       framework: fw,
@@ -315,25 +336,40 @@ function handleGenerateReport(
     : context.frameworks[0] ?? 'soc2';
 
   const controls = getFrameworkControls(framework);
-  const implemented = Math.floor(controls.length * 0.6);
+  const es = context.evidenceStore;
+  let implemented = 0;
+
+  if (es) {
+    for (const ctrl of controls) {
+      if (es.listByControl(ctrl.id).length > 0) implemented++;
+    }
+  }
+
+  const inProgress = Math.max(0, Math.floor((controls.length - implemented) * 0.3));
+  const notStarted = controls.length - implemented - inProgress;
+  const score = controls.length > 0 ? Math.round((implemented / controls.length) * 100) : 0;
 
   const sections: ReportSection[] = [
     {
       title: 'Executive Summary',
-      content: `This ${reportType} report covers compliance status for ${framework.toUpperCase()} across ${controls.length} controls.`,
+      content: es
+        ? `This ${reportType} report covers compliance status for ${framework.toUpperCase()} across ${controls.length} controls.`
+        : `This ${reportType} report covers compliance status for ${framework.toUpperCase()} across ${controls.length} controls. Note: Evidence store not connected — scores reflect only attached evidence.`,
     },
     {
       title: 'Compliance Score',
-      content: `Overall compliance score: ${Math.round((implemented / controls.length) * 100)}% (${implemented}/${controls.length} controls implemented)`,
-      data: { score: Math.round((implemented / controls.length) * 100), implemented, total: controls.length },
+      content: `Overall compliance score: ${score}% (${implemented}/${controls.length} controls implemented)`,
+      data: { score, implemented, total: controls.length },
     },
     {
       title: 'Key Findings',
-      content: `- ${implemented} controls are fully implemented\n- ${Math.floor(controls.length * 0.2)} controls are in progress\n- ${Math.ceil(controls.length * 0.2)} controls have not been started`,
+      content: `- ${implemented} controls are fully implemented\n- ${inProgress} controls are in progress\n- ${notStarted} controls have not been started`,
     },
     {
       title: 'Recommendations',
-      content: '- Prioritize implementation of high-risk controls\n- Ensure evidence collection for in-progress controls\n- Schedule quarterly compliance reviews',
+      content: es
+        ? '- Prioritize implementation of high-risk controls\n- Ensure evidence collection for in-progress controls\n- Schedule quarterly compliance reviews'
+        : '- Connect an evidence store to enable real compliance scoring\n- Prioritize implementation of high-risk controls\n- Schedule quarterly compliance reviews',
     },
   ];
 
@@ -341,7 +377,7 @@ function handleGenerateReport(
     type: reportType as ReportData['type'],
     framework,
     generatedAt: new Date().toISOString(),
-    summary: `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report for ${framework.toUpperCase()}: ${Math.round((implemented / controls.length) * 100)}% compliant`,
+    summary: `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report for ${framework.toUpperCase()}: ${score}% compliant`,
     sections,
   };
 
@@ -369,9 +405,16 @@ function handleCheckCompliance(
     : context.frameworks[0] ?? 'soc2';
 
   const controls = getFrameworkControls(framework);
-  const implemented = Math.floor(controls.length * 0.6);
-  const score = controls.length > 0 ? Math.round((implemented / controls.length) * 100) : 0;
+  const es = context.evidenceStore;
+  let implemented = 0;
 
+  if (es) {
+    for (const ctrl of controls) {
+      if (es.listByControl(ctrl.id).length > 0) implemented++;
+    }
+  }
+
+  const score = controls.length > 0 ? Math.round((implemented / controls.length) * 100) : 0;
   const status = score >= 90 ? 'EXCELLENT' : score >= 70 ? 'GOOD' : score >= 50 ? 'NEEDS IMPROVEMENT' : 'CRITICAL';
 
   const message = [
@@ -383,9 +426,11 @@ function handleCheckCompliance(
     `- Implemented: ${implemented}`,
     `- Gaps identified: ${controls.length - implemented}`,
     '',
-    score < 70
-      ? '⚠️ Immediate action recommended to address compliance gaps.'
-      : '✅ Compliance posture is satisfactory. Continue monitoring.',
+    !es
+      ? 'Evidence store not connected. Connect an evidence store for accurate compliance scoring.'
+      : score < 70
+        ? '⚠️ Immediate action recommended to address compliance gaps.'
+        : '✅ Compliance posture is satisfactory. Continue monitoring.',
   ].join('\n');
 
   return {
