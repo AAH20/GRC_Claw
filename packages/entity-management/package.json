@@ -1,6 +1,7 @@
 {
   "name": "@grc-claw/entity-management",
   "version": "1.0.0",
+  "private": true,
   "description": "Multi-entity and subsidiary architecture for cross-entity compliance, hierarchy management, and consolidated reporting",
   "type": "module",
   "main": "dist/index.js",

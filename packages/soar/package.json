@@ -16,5 +16,10 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test dist/**/*.test.js 2>/dev/null || true"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

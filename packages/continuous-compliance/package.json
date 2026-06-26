@@ -1,6 +1,7 @@
 {
   "name": "@grc-claw/continuous-compliance",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

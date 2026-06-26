@@ -1,7 +1,8 @@
 {
   "name": "@grc-claw/connectors",
   "version": "1.0.0",
-  "description": "Bring Your Own Connector — LLM providers and MCP servers for GRC_Claw",
+  "private": true,
+  "description": "Bring Your Own Connector \u2014 LLM providers and MCP servers for GRC_Claw",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

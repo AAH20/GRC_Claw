@@ -1,6 +1,7 @@
 {
   "name": "@grc-claw/framework-crosswalk",
   "version": "1.0.0",
+  "private": true,
   "description": "Automated cross-mapping between compliance frameworks",
   "license": "MIT",
   "type": "module",

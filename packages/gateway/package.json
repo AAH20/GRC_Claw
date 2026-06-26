@@ -1,6 +1,7 @@
 {
   "name": "@grc-claw/gateway",
   "version": "1.0.0",
+  "private": true,
   "description": "GRC_Claw supervised control-plane gateway daemon",
   "license": "MIT",
   "type": "module",

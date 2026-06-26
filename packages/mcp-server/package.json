@@ -1,7 +1,8 @@
 {
   "name": "@grc-claw/mcp-server",
   "version": "1.0.0",
-  "description": "MCP (Model Context Protocol) server for GRC_Claw — enables AI assistants to query compliance data via stdio JSON-RPC",
+  "private": true,
+  "description": "MCP (Model Context Protocol) server for GRC_Claw \u2014 enables AI assistants to query compliance data via stdio JSON-RPC",
   "license": "MIT",
   "type": "module",
   "bin": {

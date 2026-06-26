@@ -7,26 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "grc-claw",
-    "@grc-claw/console",
-    "@grc-claw/a2z-connector",
-    "@grc-claw/gateway",
-    "@grc-claw/agent-runtime",
-    "@grc-claw/skill-executor",
-    "@grc-claw/connectors",
-    "@grc-claw/core",
-    "@grc-claw/aims",
-    "@grc-claw/persistence",
-    "@grc-claw/trust-center",
-    "@grc-claw/trust-marketplace",
-    "@grc-claw/chat-grc",
-    "@grc-claw/mcp-server",
-    "@grc-claw/sdk-client",
-    "@grc-claw/accm",
-    "@grc-claw/agent-builder",
-    "@grc-claw/grc-engineering",
-    "@grc-claw/registry",
-    "@grc-claw/regulatory-intelligence"
-  ]
+  "ignore": []
 }
