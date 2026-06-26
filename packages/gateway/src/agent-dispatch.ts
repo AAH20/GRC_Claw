@@ -23,6 +23,8 @@ import type { Audit, Finding } from '@grc-claw/audit-management';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type GapDetector } from '@grc-claw/accm';
+import { FrameworkCrosswalk } from '@grc-claw/framework-crosswalk';
+import { ChatGRC } from '@grc-claw/chat-grc';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
@@ -102,7 +104,9 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('attestation.') ||
     tool.startsWith('consensus.') ||
     tool.startsWith('accm.') ||
-    tool.startsWith('agent_builder.')
+    tool.startsWith('agent_builder.') ||
+    tool.startsWith('crosswalk.') ||
+    tool.startsWith('chat.')
   );
 }
 
@@ -4215,6 +4219,70 @@ export async function dispatchBuiltinGrcTool(
         return { ok: true, run, timestamp: new Date().toISOString() };
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'trigger_agent_failed' };
+      }
+    }
+
+    // --- Framework Crosswalk Tools ---
+    case 'crosswalk.generate': {
+      try {
+        const crosswalk = new FrameworkCrosswalk();
+        const source = String(args.source ?? 'soc2');
+        const target = String(args.target ?? 'iso27001');
+        const report = crosswalk.generateCrosswalk(source, target);
+        return { ok: true, report, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'crosswalk_generate_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'crosswalk.overlaps': {
+      try {
+        const crosswalk = new FrameworkCrosswalk();
+        const framework1 = String(args.framework1 ?? 'soc2');
+        const framework2 = String(args.framework2 ?? 'iso27001');
+        const overlaps = crosswalk.findOverlaps(framework1, framework2);
+        return { ok: true, overlaps, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'crosswalk_overlaps_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'crosswalk.coverage': {
+      try {
+        const crosswalk = new FrameworkCrosswalk();
+        const controlIds = (args.controlIds as string[]) ?? [];
+        const frameworks = (args.frameworks as string[]) ?? ['soc2', 'iso27001'];
+        const coverage = crosswalk.calculateMultiFrameworkCoverage(controlIds, frameworks);
+        return { ok: true, coverage, frameworks, controlIds, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'crosswalk_coverage_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // --- Chat GRC Tools ---
+    case 'chat.process_message': {
+      try {
+        const chat = new ChatGRC();
+        const message = String(args.message ?? '');
+        const context = (args.context as Record<string, unknown>) ?? {};
+        const chatContext = {
+          frameworks: (context.frameworks as string[]) ?? [],
+          controls: (context.controls as string[]) ?? [],
+          evidence: (context.evidence as string[]) ?? [],
+          risks: (context.risks as string[]) ?? [],
+        };
+        const sessionId = typeof args.sessionId === 'string' ? args.sessionId : undefined;
+        const response = await chat.processMessage(message, chatContext, sessionId);
+        return { ok: true, response, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'chat_process_message_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'chat.list_sessions': {
+      try {
+        const chat = new ChatGRC();
+        const sessions = chat.listSessions();
+        return { ok: true, sessions, count: sessions.length, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'chat_list_sessions_failed', timestamp: new Date().toISOString() };
       }
     }
 

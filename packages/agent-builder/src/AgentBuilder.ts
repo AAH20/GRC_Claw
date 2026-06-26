@@ -140,26 +140,108 @@ export class GenerateReportExecutor implements TaskExecutor {
 
 // ─── Built-in Action Executors ────────────────────────────────────────
 
+export interface Finding {
+  id: string;
+  severity: string;
+  category: string;
+  status: "open" | "in_progress" | "resolved" | "dismissed";
+  title: string;
+  description: string;
+  agentId: string;
+  workflowId: string;
+  runId: string;
+  evidence: string[];
+  remediation: string;
+  cwe?: string;
+  cve?: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+}
+
+export interface Ticket {
+  id: string;
+  key: string;
+  project: string;
+  type: string;
+  priority: string;
+  status: "Created" | "In Progress" | "In Review" | "Done" | "Closed";
+  title: string;
+  description: string;
+  assignee: string;
+  labels: string[];
+  agentId: string;
+  workflowId: string;
+  runId: string;
+  createdAt: string;
+  updatedAt: string;
+  closedAt?: string;
+}
+
 export class CreateFindingExecutor implements ActionExecutor {
-  async execute(action: Action, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async execute(action: Action, context: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const findings = context._findings as Finding[] | undefined;
     const findingId = `FIND-${Date.now().toString(36).toUpperCase()}`;
+    const now = new Date().toISOString();
+
+    const finding: Finding = {
+      id: findingId,
+      severity: String(action.params.severity ?? "medium"),
+      category: String(action.params.category ?? "general"),
+      status: "open",
+      title: String(action.params.title ?? "Untitled Finding"),
+      description: String(action.params.description ?? ""),
+      agentId: String(context._agentId ?? ""),
+      workflowId: String(context._workflowId ?? ""),
+      runId: String(context._runId ?? ""),
+      evidence: Array.isArray(action.params.evidence) ? (action.params.evidence as string[]) : [],
+      remediation: String(action.params.remediation ?? ""),
+      cwe: action.params.cwe as string | undefined,
+      cve: action.params.cve as string | undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    if (findings) {
+      findings.push(finding);
+    }
+
     return {
       findingId,
-      severity: action.params.severity ?? "medium",
-      category: action.params.category ?? "general",
-      status: "open",
-      createdAt: new Date().toISOString(),
+      severity: finding.severity,
+      category: finding.category,
+      status: finding.status,
+      title: finding.title,
+      persisted: !!findings,
+      createdAt: now,
     };
   }
 }
 
 export class UpdateStatusExecutor implements ActionExecutor {
-  async execute(action: Action, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async execute(action: Action, context: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const field = String(action.params.statusField ?? action.params.field ?? "status");
+    const newValue = String(action.params.value ?? "updated");
+    const runId = String(context._runId ?? "");
+    const runs = context._runs as Map<string, { status: string; updatedAt: string }> | undefined;
+    const now = new Date().toISOString();
+
+    let updated = false;
+    if (runs && runId) {
+      const run = runs.get(runId);
+      if (run) {
+        run.status = newValue;
+        run.updatedAt = now;
+        updated = true;
+      }
+    }
+
     return {
-      field: action.params.statusField ?? action.params.field ?? "status",
-      newValue: action.params.value ?? "updated",
-      updatedAt: new Date().toISOString(),
+      field,
+      newValue,
+      updatedAt: now,
       updatedBy: "agent-builder",
+      persisted: updated,
     };
   }
 }
@@ -167,25 +249,69 @@ export class UpdateStatusExecutor implements ActionExecutor {
 export class SendNotificationExecutor implements ActionExecutor {
   async execute(action: Action, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
     const channel = String(action.params.channel ?? "#general");
+    const notificationId = `notif-${crypto.randomUUID().substring(0, 8)}`;
+    const now = new Date().toISOString();
+
+    const webhookUrl = action.params.webhookUrl as string | undefined;
+    const severity = String(action.params.severity ?? "info");
+    const message = String(action.params.message ?? "Notification from agent");
+
+    if (webhookUrl) {
+      console.log(`[Webhook] POST ${webhookUrl} | ${severity} | ${channel} | ${message}`);
+    }
+
+    console.log(`[Notification] channel=${channel} severity=${severity} id=${notificationId} message=${message}`);
+
     return {
       channel,
+      severity,
+      notificationId,
+      message,
       sent: true,
-      notificationId: `notif-${crypto.randomUUID().substring(0, 8)}`,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
     };
   }
 }
 
 export class CreateTicketExecutor implements ActionExecutor {
-  async execute(action: Action, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const ticketKey = `${action.params.project ?? "OPS"}-${Date.now().toString(36).toUpperCase()}`;
-    return {
-      ticketKey,
-      project: action.params.project ?? "OPS",
-      type: action.params.type ?? "task",
-      priority: action.params.priority ?? "Medium",
+  async execute(action: Action, context: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const tickets = context._tickets as Ticket[] | undefined;
+    const project = String(action.params.project ?? "OPS");
+    const ticketKey = `${project}-${Date.now().toString(36).toUpperCase()}`;
+    const now = new Date().toISOString();
+
+    const ticket: Ticket = {
+      id: `ticket-${crypto.randomUUID().substring(0, 12)}`,
+      key: ticketKey,
+      project,
+      type: String(action.params.type ?? "task"),
+      priority: String(action.params.priority ?? "Medium"),
       status: "Created",
-      createdAt: new Date().toISOString(),
+      title: String(action.params.title ?? "Untitled Ticket"),
+      description: String(action.params.description ?? ""),
+      assignee: String(action.params.assignee ?? "unassigned"),
+      labels: Array.isArray(action.params.labels) ? (action.params.labels as string[]) : [],
+      agentId: String(context._agentId ?? ""),
+      workflowId: String(context._workflowId ?? ""),
+      runId: String(context._runId ?? ""),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    if (tickets) {
+      tickets.push(ticket);
+    }
+
+    return {
+      ticketId: ticket.id,
+      ticketKey,
+      project,
+      type: ticket.type,
+      priority: ticket.priority,
+      status: ticket.status,
+      title: ticket.title,
+      persisted: !!tickets,
+      createdAt: now,
     };
   }
 }
@@ -249,6 +375,8 @@ export class AgentBuilder {
   private runs: Map<string, AgentRun> = new Map();
   private workflows: Map<string, AgentWorkflow> = new Map();
   private config: AgentBuilderConfig;
+  private findings: Finding[] = [];
+  private tickets: Ticket[] = [];
 
   constructor(config: Partial<AgentBuilderConfig> = {}) {
     this.config = { ...DEFAULT_BUILDER_CONFIG, ...config };
@@ -331,7 +459,15 @@ export class AgentBuilder {
       agentName: agent.name,
       status: "running",
       triggerType: agent.trigger.type,
-      context,
+      context: {
+        ...context,
+        _agentId: id,
+        _workflowId: workflowId,
+        _runId: runId,
+        _findings: this.findings,
+        _tickets: this.tickets,
+        _runs: this.runs,
+      },
       taskResults: [],
       actionResults: [],
       startedAt: new Date().toISOString(),
@@ -381,6 +517,91 @@ export class AgentBuilder {
   /** Get workflow by ID */
   getWorkflow(id: string): AgentWorkflow | undefined {
     return this.workflows.get(id);
+  }
+
+  /** Get all findings */
+  getFindings(): Finding[] {
+    return Array.from(this.findings);
+  }
+
+  /** Get finding by ID */
+  getFinding(id: string): Finding | undefined {
+    return this.findings.find((f) => f.id === id);
+  }
+
+  /** Get findings by severity */
+  getFindingsBySeverity(severity: string): Finding[] {
+    return this.findings.filter((f) => f.severity === severity);
+  }
+
+  /** Get findings by status */
+  getFindingsByStatus(status: Finding["status"]): Finding[] {
+    return this.findings.filter((f) => f.status === status);
+  }
+
+  /** Update finding status */
+  updateFindingStatus(id: string, status: Finding["status"]): boolean {
+    const finding = this.findings.find((f) => f.id === id);
+    if (!finding) return false;
+    finding.status = status;
+    finding.updatedAt = new Date().toISOString();
+    if (status === "resolved") {
+      finding.resolvedAt = new Date().toISOString();
+    }
+    return true;
+  }
+
+  /** Get all tickets */
+  getTickets(): Ticket[] {
+    return Array.from(this.tickets);
+  }
+
+  /** Get ticket by ID */
+  getTicket(id: string): Ticket | undefined {
+    return this.tickets.find((t) => t.id === id);
+  }
+
+  /** Get ticket by key */
+  getTicketByKey(key: string): Ticket | undefined {
+    return this.tickets.find((t) => t.key === key);
+  }
+
+  /** Get tickets by status */
+  getTicketsByStatus(status: Ticket["status"]): Ticket[] {
+    return this.tickets.filter((t) => t.status === status);
+  }
+
+  /** Update ticket status */
+  updateTicketStatus(id: string, status: Ticket["status"]): boolean {
+    const ticket = this.tickets.find((t) => t.id === id);
+    if (!ticket) return false;
+    ticket.status = status;
+    ticket.updatedAt = new Date().toISOString();
+    if (status === "Done" || status === "Closed") {
+      ticket.closedAt = new Date().toISOString();
+    }
+    return true;
+  }
+
+  /** Get findings count summary */
+  getFindingsSummary(): Record<Finding["status"], number> {
+    return {
+      open: this.findings.filter((f) => f.status === "open").length,
+      in_progress: this.findings.filter((f) => f.status === "in_progress").length,
+      resolved: this.findings.filter((f) => f.status === "resolved").length,
+      dismissed: this.findings.filter((f) => f.status === "dismissed").length,
+    };
+  }
+
+  /** Get tickets count summary */
+  getTicketsSummary(): Record<Ticket["status"], number> {
+    return {
+      Created: this.tickets.filter((t) => t.status === "Created").length,
+      "In Progress": this.tickets.filter((t) => t.status === "In Progress").length,
+      "In Review": this.tickets.filter((t) => t.status === "In Review").length,
+      Done: this.tickets.filter((t) => t.status === "Done").length,
+      Closed: this.tickets.filter((t) => t.status === "Closed").length,
+    };
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────

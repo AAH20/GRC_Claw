@@ -12,6 +12,8 @@
     { "path": "../agent-identity" },
     { "path": "../evidence" },
     { "path": "../frameworks" },
+    { "path": "../framework-crosswalk" },
+    { "path": "../chat-grc" },
     { "path": "../a2z-connector" },
     { "path": "../ingest" },
     { "path": "../aims" },

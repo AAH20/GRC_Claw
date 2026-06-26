@@ -37,6 +37,8 @@ import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-q
 import { EntityManager } from '@grc-claw/entity-management';
 import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type ControlRecord as ACCMControlRecord, type GapDetector } from '@grc-claw/accm';
 import { AgentBuilder, PREBUILT_AGENTS, type AgentDefinition } from '@grc-claw/agent-builder';
+import { FrameworkCrosswalk } from '@grc-claw/framework-crosswalk';
+import { ChatGRC } from '@grc-claw/chat-grc';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -83,6 +85,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const riskRegister = new RiskRegister();
   const entityManager = new EntityManager(pg?.database);
   const agentBuilder = new AgentBuilder();
+  const frameworkCrosswalk = new FrameworkCrosswalk();
+  const chatGRC = new ChatGRC();
 
   // Load persisted data from database into in-memory stores on startup
   if (pg?.database) {
@@ -906,6 +910,92 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         res.writeHead(400); res.end(JSON.stringify({ ok: false, error: msg }));
+      }
+      return;
+    }
+
+    // --- Framework Crosswalk Endpoints ---
+    const crosswalkMatch = path.match(/^\/api\/crosswalk\/([^/]+)\/([^/]+)$/);
+    if (req.method === 'GET' && crosswalkMatch) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const source = decodeURIComponent(crosswalkMatch[1]!);
+      const target = decodeURIComponent(crosswalkMatch[2]!);
+      const report = frameworkCrosswalk.generateCrosswalk(source, target);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, report }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/crosswalk/overlaps') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const pairs = frameworkCrosswalk.getSupportedPairs();
+      const overlaps = pairs.map(([s, t]) => frameworkCrosswalk.findOverlaps(s, t));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, overlaps }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/crosswalk/coverage') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const controlIds = (body.controlIds as string[]) ?? [];
+        const frameworks = (body.frameworks as string[]) ?? [];
+        const coverage = frameworkCrosswalk.calculateMultiFrameworkCoverage(controlIds, frameworks);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, coverage }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    // --- Chat GRC Endpoints ---
+    if (req.method === 'POST' && path === '/api/chat') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const message = String(body.message ?? '');
+        const context = (body.context as Record<string, unknown>) ?? {};
+        const sessionId = typeof body.sessionId === 'string' ? body.sessionId : undefined;
+        const chatContext = {
+          frameworks: (context.frameworks as string[]) ?? [],
+          controls: (context.controls as string[]) ?? [],
+          evidence: (context.evidence as string[]) ?? [],
+          risks: (context.risks as string[]) ?? [],
+        };
+        const response = await chatGRC.processMessage(message, chatContext, sessionId);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, response }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/chat/sessions') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const sessions = chatGRC.listSessions();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, sessions }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/chat/sessions') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const initialContext = (body.context as Record<string, unknown>) ?? {};
+        const chatContext = {
+          frameworks: (initialContext.frameworks as string[]) ?? [],
+          controls: (initialContext.controls as string[]) ?? [],
+          evidence: (initialContext.evidence as string[]) ?? [],
+          risks: (initialContext.risks as string[]) ?? [],
+        };
+        const session = chatGRC.createSession(chatContext);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, session }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
       }
       return;
     }

@@ -29,6 +29,8 @@ export {
   SendNotificationExecutor,
   CreateTicketExecutor,
   type AgentBuilderConfig,
+  type Finding,
+  type Ticket,
 } from "./AgentBuilder.js";
 
 export {

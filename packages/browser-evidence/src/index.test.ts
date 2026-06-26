@@ -17,7 +17,10 @@ function createMockAdapter(overrides: Partial<BrowserAdapter> = {}): BrowserAdap
     screenshot: async () => Buffer.from('mock-screenshot-data'),
     getContent: async () => '<html><body>mock-dom</body></html>',
     close: async () => {},
-    getCurrentUrl: () => currentUrl,
+    elementExists: async (_selector: string) => false,
+    fillInput: async (_selector: string, _text: string) => {},
+    click: async (_selector: string) => {},
+    getText: async (_selector: string) => null,
     ...overrides,
   };
 }

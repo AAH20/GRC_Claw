@@ -24,6 +24,8 @@
     "@grc-claw/core": "0.1.0",
     "@grc-claw/evidence": "0.1.0",
     "@grc-claw/frameworks": "0.1.0",
+    "@grc-claw/framework-crosswalk": "0.1.0",
+    "@grc-claw/chat-grc": "0.1.0",
     "@grc-claw/ingest": "0.1.0",
     "@grc-claw/skill-executor": "0.1.0",
     "@grc-claw/security-graph": "0.1.0",

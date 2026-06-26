@@ -42,6 +42,10 @@ export interface BrowserAdapter {
   screenshot(): Promise<Buffer>;
   getContent(): Promise<string>;
   close(): Promise<void>;
+  fillInput(selector: string, value: string): Promise<void>;
+  click(selector: string): Promise<void>;
+  getText(selector: string): Promise<string | null>;
+  elementExists(selector: string): Promise<boolean>;
 }
 
 export interface AuthResult {
