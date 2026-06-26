@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
 import { AgentChatWindow } from '../components/AgentChatWindow';
@@ -22,6 +22,83 @@ export function DashboardPage() {
   const [syncing, setSyncing] = useState(false);
   const [metrics, setMetrics] = useState<Record<string, number> | null>(null);
   const [riskCells, setRiskCells] = useState<{ likelihood: number; impact: number; count: number }[]>([]);
+  const [liveScore, setLiveScore] = useState<number | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // WebSocket connection for real-time compliance updates
+  useEffect(() => {
+    const settings = loadSettings();
+    if (!settings.baseUrl || !settings.token) return;
+
+    const wsUrl = settings.baseUrl.replace(/^http/, 'ws');
+    let socket: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function connect() {
+      try {
+        socket = new WebSocket(wsUrl);
+        wsRef.current = socket;
+
+        socket.onopen = () => {
+          socket?.send(JSON.stringify({
+            type: 'connect',
+            params: { auth: { token: settings.token }, role: 'operator' },
+          }));
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const frame = JSON.parse(String(event.data));
+            if (frame.type === 'hello-ok') {
+              // Subscribe to compliance updates after auth
+              socket?.send(JSON.stringify({
+                type: 'subscribe',
+                channel: 'compliance_updates',
+                token: settings.token,
+              }));
+              return;
+            }
+            if (frame.type === 'subscribed' && frame.channel === 'compliance_updates') {
+              setWsConnected(true);
+              return;
+            }
+            if (frame.type === 'compliance_update' && frame.data) {
+              const data = frame.data as Record<string, unknown>;
+              if (typeof data.overall_score === 'number') {
+                setLiveScore(Math.round(data.overall_score));
+              }
+            }
+          } catch { /* ignore malformed frames */ }
+        };
+
+        socket.onclose = () => {
+          setWsConnected(false);
+          wsRef.current = null;
+          // Reconnect after 5 seconds
+          reconnectTimer = setTimeout(connect, 5000);
+        };
+
+        socket.onerror = () => {
+          socket?.close();
+        };
+      } catch {
+        // WebSocket not available or URL invalid
+      }
+    }
+
+    connect();
+
+    return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (socket) {
+        socket.onclose = null;
+        socket.close();
+      }
+      wsRef.current = null;
+      setWsConnected(false);
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -88,7 +165,7 @@ export function DashboardPage() {
   const geminiProvider = llmList.find((l) => l.id === 'gemini') ?? llmList[0];
   const geminiAvailable = Boolean(geminiProvider?.apiKeyConfigured);
 
-  const complianceScore = metrics ? Math.round((metrics.grc_compliance_score ?? 0.87) * 100) : 87;
+  const complianceScore = liveScore ?? (metrics ? Math.round((metrics.grc_compliance_score ?? 0.87) * 100) : 87);
   const requestsTotal = metrics?.grc_gateway_requests_total ?? 0;
   const agentInvocations = metrics?.grc_agent_invocations_total ?? 0;
 
@@ -182,6 +259,12 @@ export function DashboardPage() {
               sparkline={sampleAgents.map((p) => p.value)}
             />
             <ComplianceGauge score={complianceScore} />
+            {wsConnected && (
+              <div className="live-indicator" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.85rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                <span style={{ color: 'var(--success)', fontWeight: 600 }}>Live</span>
+              </div>
+            )}
           </div>
 
           <div className="grid-2 section-gap">

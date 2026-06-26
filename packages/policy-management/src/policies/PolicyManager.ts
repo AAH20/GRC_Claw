@@ -1,22 +1,25 @@
 import { randomUUID } from "node:crypto";
 import type { Policy, PolicyTemplate, Attestation, PolicyStatus, PolicyCategory, PolicyStats } from "../types.js";
+import { POLICY_TEMPLATES, getTemplateById, getTemplatesByCategory, getTemplatesByFramework } from "../templates.js";
 
-const DEFAULT_TEMPLATES: PolicyTemplate[] = [
-  { id: "tpl-1", name: "Information Security Policy", category: "security", framework: "ISO 27001", content: "# Information Security Policy\n\n## Purpose\nEstablish information security management.\n\n## Scope\nAll employees and systems.\n\n## Policy\n1. Classify data by sensitivity\n2. Implement controls per classification\n3. Review annually", isDefault: true },
-  { id: "tpl-2", name: "Acceptable Use Policy", category: "operational", framework: "SOC 2", content: "# Acceptable Use Policy\n\n## Purpose\nDefine acceptable use of company resources.\n\n## Policy\n1. Use resources for business purposes\n2. No unauthorized software\n3. Report security incidents immediately", isDefault: true },
-  { id: "tpl-3", name: "Data Privacy Policy", category: "privacy", framework: "GDPR", content: "# Data Privacy Policy\n\n## Purpose\nEnsure GDPR compliance.\n\n## Policy\n1. Collect minimal data\n2. Obtain consent\n3. Honor data subject rights\n4. Report breaches within 72 hours", isDefault: true },
-  { id: "tpl-4", name: "Incident Response Policy", category: "security", framework: "NIST CSF", content: "# Incident Response Policy\n\n## Purpose\nDefine incident response procedures.\n\n## Policy\n1. Detect and report incidents\n2. Contain and eradicate threats\n3. Recover and post-incident review", isDefault: true },
-  { id: "tpl-5", name: "Access Control Policy", category: "security", framework: "ISO 27001", content: "# Access Control Policy\n\n## Purpose\nManage access to systems and data.\n\n## Policy\n1. Least privilege principle\n2. Role-based access control\n3. Regular access reviews\n4. MFA for all users", isDefault: true },
-];
+export { POLICY_TEMPLATES, getTemplateById, getTemplatesByCategory, getTemplatesByFramework };
 
 export class PolicyManager {
   private policies: Map<string, Policy> = new Map();
-  private templates: PolicyTemplate[] = [...DEFAULT_TEMPLATES];
+  private templates: PolicyTemplate[] = [...POLICY_TEMPLATES];
 
   createFromTemplate(templateId: string, owner: string, approver: string): Policy | null {
     const template = this.templates.find((t) => t.id === templateId);
     if (!template) return null;
-    return this.createPolicy({ title: template.name, category: template.category, owner, approver, content: template.content, framework: template.framework });
+    const policy = this.createPolicy({
+      title: template.name,
+      category: template.category,
+      owner,
+      approver,
+      content: template.content,
+      framework: template.framework,
+    });
+    return policy;
   }
 
   createPolicy(input: { title: string; category: PolicyCategory; owner: string; approver: string; content: string; framework: string }): Policy {

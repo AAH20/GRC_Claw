@@ -37,6 +37,11 @@
     "@grc-claw/entity-management": "*",
     "@grc-claw/agent-builder": "*",
     "@grc-claw/accm": "*",
+    "@grc-claw/board-reporting": "*",
+    "@grc-claw/third-party-risk": "*",
+    "@grc-claw/questionnaire-automation": "*",
+    "@grc-claw/zk-compliance": "*",
+    "@grc-claw/observability": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

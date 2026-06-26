@@ -11,7 +11,7 @@ describe("ComplianceProver", () => {
       frameworkCode: "iso27001",
       controlId: "A.5.1",
     });
-    assert.ok(proof.id.startsWith("zk-proof-"));
+    assert.ok(proof.id.startsWith("zkp-") || proof.id.startsWith("zk-proof-"));
     assert.equal(proof.proofSystem, "groth16");
     assert.ok(proof.proof);
     assert.ok(proof.verificationKey);

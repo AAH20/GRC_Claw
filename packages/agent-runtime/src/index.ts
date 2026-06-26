@@ -125,6 +125,7 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'soar.get_execution', tier: 'read' },
   { name: 'soar.generate_incident_report', tier: 'read' },
   // Observability (OpenTelemetry Agent Tracing)
+  { name: 'observe.list_traces', tier: 'read' },
   { name: 'observe.start_trace', tier: 'write' },
   { name: 'observe.get_trace', tier: 'read' },
   { name: 'observe.get_metrics', tier: 'read' },
