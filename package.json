@@ -58,7 +58,8 @@
     "packages/compliance-autopilot",
     "packages/vscode-extension",
     "packages/evidence-collector",
-    "packages/drift-detector"
+    "packages/drift-detector",
+    "packages/agent-audit-trail"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",

@@ -52,6 +52,12 @@
     "@grc-claw/continuous-compliance": "*",
     "@grc-claw/ai-threat-detection": "*",
     "@grc-claw/ai-supply-chain": "*",
+    "@grc-claw/auto-evidence": "*",
+    "@grc-claw/browser-evidence": "*",
+    "@grc-claw/incident-response": "*",
+    "@grc-claw/dev-compliance": "*",
+    "@grc-claw/grc-engineering": "*",
+    "@grc-claw/agent-trust-score": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {
