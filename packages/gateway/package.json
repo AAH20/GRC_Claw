@@ -58,6 +58,8 @@
     "@grc-claw/dev-compliance": "*",
     "@grc-claw/grc-engineering": "*",
     "@grc-claw/agent-trust-score": "*",
+    "@grc-claw/agent-audit-trail": "*",
+    "@grc-claw/federated-compliance-mesh": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {
