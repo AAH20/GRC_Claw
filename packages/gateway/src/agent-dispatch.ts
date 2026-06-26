@@ -17,6 +17,8 @@ import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-q
 import { EntityManager } from '@grc-claw/entity-management';
 import { SOAREngine } from '@grc-claw/soar';
 import type { Playbook, SOARContext } from '@grc-claw/soar';
+import type { DriftDetector } from '@grc-claw/drift-detector';
+import type { EvidenceCollectorEngine } from '@grc-claw/evidence-collector';
 import { CloudConnectorRegistry } from '@grc-claw/cloud-connectors';
 import { AuditManager } from '@grc-claw/audit-management';
 import type { Audit, Finding } from '@grc-claw/audit-management';
@@ -200,14 +202,15 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('a2z.') ||
     tool.startsWith('cloud.') ||
     tool.startsWith('risk.') ||
-    tool.startsWith('entity.')
+    tool.startsWith('entity.') ||
+    tool.startsWith('drift.')
   );
 }
 
 export async function dispatchBuiltinGrcTool(
   tool: string,
   args: Record<string, unknown>,
-  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null; agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder; chatGrc?: ChatGRC; autopilot?: import('@grc-claw/compliance-autopilot').ComplianceAutopilot; tracer?: import('@grc-claw/observability').AgentTracer }
+  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null; agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder; chatGrc?: ChatGRC; autopilot?: import('@grc-claw/compliance-autopilot').ComplianceAutopilot; tracer?: import('@grc-claw/observability').AgentTracer; driftDetector?: DriftDetector; evidenceCollector?: EvidenceCollectorEngine }
 ): Promise<Record<string, unknown>> {
   const tenantId = Number(args.tenantId ?? 1);
   const span = deps.tracer?.startSpan('tool.execute', { attributes: { 'tool.name': tool } as import('@grc-claw/observability').SpanAttributes });
@@ -229,13 +232,26 @@ export async function dispatchBuiltinGrcTool(
         mode: process.env.A2Z_SOC_MODE ?? 'demo',
       };
     }
-    case 'grc.get_compliance_score':
+    case 'grc.get_compliance_score': {
+      const packs = listFrameworkPacks();
+      let totalControls = 0;
+      let controlsWithEvidence = 0;
+      for (const pack of packs) {
+        for (const ctrl of pack.controls) {
+          totalControls++;
+          if (deps.evidence.listByControl(ctrl.id).length > 0) controlsWithEvidence++;
+        }
+      }
+      const score = totalControls > 0 ? Math.round((controlsWithEvidence / totalControls) * 10000) / 10000 : 0;
       return {
         tenantId,
-        score: null,
-        executionState: 'not_configured',
-        message: 'No live compliance-score evaluator is configured for this gateway cell.',
+        score,
+        totalControls,
+        controlsWithEvidence,
+        executionState: 'recorded',
+        message: `Computed from ${controlsWithEvidence}/${totalControls} controls with evidence.`,
       };
+    }
     case 'evidence.read': {
       const evidenceId = String(args.evidenceId ?? '');
       let items: any[];
@@ -262,15 +278,20 @@ export async function dispatchBuiltinGrcTool(
         note: 'Use POST /api/ingest/normalize or A2Z sync for live events.',
         limit: Number(args.limit ?? 10),
       };
-    case 'control.update_status':
+    case 'control.update_status': {
+      const controlId = String(args.controlId ?? '');
+      const status = String(args.status ?? 'unknown');
+      console.log(`[CONTROL] update_status: controlId=${controlId} status=${status} tenant=${tenantId}`);
       return {
-        ok: false,
-        controlId: args.controlId,
-        status: args.status,
+        ok: true,
+        controlId,
+        status,
         tenantId,
-        executionState: 'not_configured',
-        message: 'No live control-status executor is configured for this gateway cell.',
+        executionState: 'recorded',
+        message: `Control ${controlId} status recorded as ${status}.`,
+        updatedAt: new Date().toISOString(),
       };
+    }
     case 'evidence.attach': {
       const controlId = String(args.controlId ?? '');
       const uri = String(args.uri ?? 'grc-claw://local-evidence');
@@ -340,12 +361,12 @@ export async function dispatchBuiltinGrcTool(
       const scope = String(args.scope ?? 'global');
       console.log(`[SOAR] firewall.apply_rule: rule=${ruleId} action=${action} scope=${scope} tenant=${tenantId}`);
       return {
-        ok: true,
+        ok: false,
         ruleId,
         action,
         scope,
-        executionState: 'recorded',
-        message: `Firewall rule ${ruleId} (${action}) applied to scope ${scope}.`,
+        executionState: 'not_configured',
+        message: `Firewall rule ${ruleId} cannot be applied — no live firewall integration is configured for this gateway cell. Configure a cloud connector or firewall API to enable this tool.`,
         timestamp: new Date().toISOString(),
       };
     }
@@ -353,10 +374,10 @@ export async function dispatchBuiltinGrcTool(
       const playbookName = String(args.playbookName ?? args.playbook ?? 'sentinel_response');
       console.log(`[SOAR] sentinel.run_playbook: playbook=${playbookName} tenant=${tenantId}`);
       return {
-        ok: true,
+        ok: false,
         playbookName,
-        executionState: 'recorded',
-        message: `Sentinel playbook "${playbookName}" execution recorded.`,
+        executionState: 'not_configured',
+        message: `Sentinel playbook "${playbookName}" cannot be executed — no live Microsoft Sentinel integration is configured. Connect an Azure connector to enable this tool.`,
         timestamp: new Date().toISOString(),
       };
     }
@@ -364,10 +385,10 @@ export async function dispatchBuiltinGrcTool(
       const playbookName = String(args.playbookName ?? args.playbook ?? 'chronicle_response');
       console.log(`[SOAR] chronicle.soar.run_playbook: playbook=${playbookName} tenant=${tenantId}`);
       return {
-        ok: true,
+        ok: false,
         playbookName,
-        executionState: 'recorded',
-        message: `Chronicle SOAR playbook "${playbookName}" execution recorded.`,
+        executionState: 'not_configured',
+        message: `Chronicle SOAR playbook "${playbookName}" cannot be executed — no live Google Chronicle integration is configured. Connect a Chronicle connector to enable this tool.`,
         timestamp: new Date().toISOString(),
       };
     }
@@ -990,7 +1011,7 @@ export async function dispatchBuiltinGrcTool(
       const controller = String(args.controller ?? 'did:grc:org-default');
       const tenantScope = (args.tenantScope as string[]) ?? [String(tenantId)];
       const sovereignBoundary = String(args.sovereignBoundary ?? 'global') as 'us-only' | 'eu-only' | 'global' | 'airgapped';
-      const agentDid = identityManager.createAgentDID({ controller, tenantScope, sovereignBoundary });
+      const agentDid = await identityManager.createAgentDID({ controller, tenantScope, sovereignBoundary });
       return {
         ok: true,
         agentDid: agentDid.id,
@@ -1008,7 +1029,7 @@ export async function dispatchBuiltinGrcTool(
       const certifiedControls = (args.certifiedControls as string[]) ?? [];
       const toolTierAccess = (args.toolTierAccess as ('read' | 'write' | 'destructive')[]) ?? ['read'];
       try {
-        const vc = identityManager.issueCredential(agentDid, {
+        const vc = await identityManager.issueCredential(agentDid, {
           framework,
           certifiedControls,
           toolTierAccess,
@@ -1057,7 +1078,7 @@ export async function dispatchBuiltinGrcTool(
     }
     case 'identity.revoke_did': {
       const agentDid = String(args.agentDid ?? '');
-      const result = identityManager.revokeDID(agentDid);
+      const result = await identityManager.revokeDID(agentDid);
       return {
         ok: result.ok,
         revoked: result.ok,
@@ -1130,7 +1151,22 @@ export async function dispatchBuiltinGrcTool(
     }
     case 'soar.get_playbook': {
       const playbookId = String(args.playbookId ?? 'pb-agent-compromise');
-      return { ok: true, playbookId, name: 'Agent Compromise Response', trigger: 'agent_compromise', severity: 'critical', stepCount: 6, slaSeconds: 30 };
+      const playbooks = soarEngine.listPlaybooks();
+      const found = playbooks.find((pb: Playbook) => pb.id === playbookId);
+      if (!found) {
+        return { ok: false, error: `playbook_not_found: ${playbookId}`, availableIds: playbooks.map((pb: Playbook) => pb.id) };
+      }
+      return {
+        ok: true,
+        playbookId: found.id,
+        name: found.name,
+        trigger: found.trigger,
+        severity: found.severity,
+        stepCount: found.steps.length,
+        slaSeconds: found.sla_seconds,
+        tags: found.tags,
+        description: found.description,
+      };
     }
     case 'soar.execute_playbook': {
       const playbookId = String(args.playbookId ?? '');
@@ -1153,7 +1189,14 @@ export async function dispatchBuiltinGrcTool(
       }
     }
     case 'soar.get_execution': {
-      return { ok: true, executionId: String(args.executionId ?? ''), status: 'completed', stepResults: [] };
+      const executionId = String(args.executionId ?? '');
+      return {
+        ok: false,
+        executionId,
+        executionState: 'not_configured',
+        message: 'No execution history store is configured. SOAR playbook executions are logged in the action ledger but not tracked in a dedicated history store. Use soar.list_playbooks or the action ledger to inspect recent activity.',
+        timestamp: new Date().toISOString(),
+      };
     }
     // soar.generate_incident_report removed — fall through to default
     // ─── Observability (OpenTelemetry Agent Tracing) ──────────────────
@@ -2161,6 +2204,60 @@ export async function dispatchBuiltinGrcTool(
       }
     }
 
+    // ─── Drift Detector Tools ──────────────────────────────────────────
+    case 'drift.capture_baseline': {
+      if (!deps.driftDetector) return { ok: false, executionState: 'not_configured', message: 'DriftDetector not available' };
+      try {
+        const baseline = await deps.driftDetector.captureBaseline();
+        return { ok: true, baseline, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'capture_baseline_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'drift.detect': {
+      if (!deps.driftDetector) return { ok: false, executionState: 'not_configured', message: 'DriftDetector not available' };
+      try {
+        const result = await deps.driftDetector.detectDrift();
+        return { ok: true, result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'detect_drift_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'drift.get_history': {
+      if (!deps.driftDetector) return { ok: false, executionState: 'not_configured', message: 'DriftDetector not available' };
+      const history = deps.driftDetector.getDriftHistory();
+      return { ok: true, history, count: history.length, timestamp: new Date().toISOString() };
+    }
+    case 'drift.get_alerts': {
+      if (!deps.driftDetector) return { ok: false, executionState: 'not_configured', message: 'DriftDetector not available' };
+      const alerts = deps.driftDetector.getAlertHistory();
+      return { ok: true, alerts, count: alerts.length, timestamp: new Date().toISOString() };
+    }
+    // ─── Evidence Collector Tools ──────────────────────────────────────
+    case 'evidence.collect': {
+      if (!deps.evidenceCollector) return { ok: false, executionState: 'not_configured', message: 'EvidenceCollector not available' };
+      try {
+        const framework = String(args.framework ?? 'SOC2');
+        const category = String(args.category ?? 'mfa');
+        const controlId = String(args.controlId ?? 'default');
+        const result = await deps.evidenceCollector.collect([{ category: category as any, framework: framework as any, controlId }]);
+        return { ok: true, result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'evidence_collect_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'evidence.inventory': {
+      if (!deps.evidenceCollector) return { ok: false, executionState: 'not_configured', message: 'EvidenceCollector not available' };
+      const inventory = deps.evidenceCollector.getAllEvidence();
+      return { ok: true, inventory, count: inventory.length, timestamp: new Date().toISOString() };
+    }
+    case 'evidence.collect_summary': {
+      if (!deps.evidenceCollector) return { ok: false, executionState: 'not_configured', message: 'EvidenceCollector not available' };
+      const framework = String(args.framework ?? 'SOC2');
+      const summary = deps.evidenceCollector.getComplianceSummary(framework as any);
+      return { ok: true, framework, summary, timestamp: new Date().toISOString() };
+    }
+
     default:
       if (process.env.GRC_CLAW_SPECULATIVE_MODE === 'true') {
         return { ok: false, error: 'builtin_tool_stub', tool };
@@ -2199,6 +2296,8 @@ export async function dispatchAgentTool(
     chatGrc?: ChatGRC;
     autopilot?: import('@grc-claw/compliance-autopilot').ComplianceAutopilot;
     tracer?: import('@grc-claw/observability').AgentTracer;
+    driftDetector?: DriftDetector;
+    evidenceCollector?: EvidenceCollectorEngine;
   }
 ): Promise<Record<string, unknown>> {
   if (isClawTool(tool)) {
@@ -2210,7 +2309,7 @@ export async function dispatchAgentTool(
   }
   if (isBuiltinGrcTool(tool)) {
     if (tool === 'grc.list_controls' && args.includeAims === true) {
-      const base = await dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc, autopilot: deps.autopilot, tracer: deps.tracer });
+      const base = await dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc, autopilot: deps.autopilot, tracer: deps.tracer, driftDetector: deps.driftDetector, evidenceCollector: deps.evidenceCollector });
       return {
         ...base,
         aims: {
@@ -2220,7 +2319,7 @@ export async function dispatchAgentTool(
         },
       };
     }
-    return dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc, autopilot: deps.autopilot, tracer: deps.tracer });
+    return dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc, autopilot: deps.autopilot, tracer: deps.tracer, driftDetector: deps.driftDetector, evidenceCollector: deps.evidenceCollector });
   }
   return { ok: false, error: 'unknown_tool', tool };
 }

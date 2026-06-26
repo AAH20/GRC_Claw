@@ -33,8 +33,8 @@ export class GatewayAssuranceGraph {
   private readonly actions = new Map<string, AssuranceSnapshot>();
   private readonly maxRisk = configuredMaxRisk();
 
-  observeIntent(intent: ActionLedgerEvent, context: IntentContext): AssuranceSnapshot {
-    const agentDid = this.agentDidFor(context.agentId, context.sessionId, context.tenantId);
+  async observeIntent(intent: ActionLedgerEvent, context: IntentContext): Promise<AssuranceSnapshot> {
+    const agentDid = await this.agentDidFor(context.agentId, context.sessionId, context.tenantId);
     const tenantNodeId = `tenant:${context.tenantId}`;
     const toolNodeId = `tool:${context.tool}`;
     const controlId = controlIdFromArgs(context.args);
@@ -131,15 +131,15 @@ export class GatewayAssuranceGraph {
     return { stats: this.graph.getStats(), identities: this.identity.getStats() };
   }
 
-  private agentDidFor(agentId: string | undefined, sessionId: string, tenantId: number): string {
+  private async agentDidFor(agentId: string | undefined, sessionId: string, tenantId: number): Promise<string> {
     const principal = agentId?.trim() || `session:${sessionId}`;
     const existing = this.principals.get(principal);
     if (existing) return existing;
-    const did = this.identity.createAgentDID({
+    const did = (await this.identity.createAgentDID({
       controller: 'did:grc:gateway',
       tenantScope: [String(tenantId)],
       sovereignBoundary: 'global',
-    }).id;
+    })).id;
     this.principals.set(principal, did);
     return did;
   }

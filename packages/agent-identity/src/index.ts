@@ -9,6 +9,13 @@
  */
 import * as crypto from 'crypto';
 
+// ─── Database Interface (compatible with @grc-claw/persistence Database) ──
+
+export interface IdentityDatabase {
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
+  execute(sql: string, params?: unknown[]): Promise<void>;
+}
+
 // ─── Core Types ──────────────────────────────────────────────────────
 
 export interface VerificationMethod {
@@ -78,18 +85,136 @@ export class AgentIdentityManager {
     agents: new Map(),
     revokedDids: new Set(),
   };
+  private db?: IdentityDatabase;
+
+  constructor(database?: IdentityDatabase) {
+    this.db = database;
+  }
+
+  async initializeDatabase(): Promise<void> {
+    if (!this.db) return;
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS agent_did_registry (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        did VARCHAR(500) NOT NULL UNIQUE,
+        public_key TEXT NOT NULL,
+        private_key TEXT NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        risk_score DECIMAL(5,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS agent_credentials (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        holder_did VARCHAR(500) NOT NULL,
+        issuer_did VARCHAR(500) NOT NULL,
+        type VARCHAR(100) NOT NULL,
+        claims JSONB NOT NULL DEFAULT '{}',
+        proof JSONB NOT NULL DEFAULT '{}',
+        issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMPTZ NOT NULL,
+        revoked BOOLEAN NOT NULL DEFAULT false
+      )
+    `);
+  }
+
+  async loadFromDatabase(): Promise<void> {
+    if (!this.db) return;
+    try {
+      const { rows: agentRows } = await this.db.query<{
+        id: string;
+        did: string;
+        public_key: string;
+        private_key: string;
+        status: string;
+        risk_score: number;
+        created_at: string;
+      }>(`SELECT * FROM agent_did_registry`);
+
+      for (const row of agentRows) {
+        const keyPair = crypto.generateKeyPairSync('ed25519');
+        const verificationMethod: VerificationMethod = {
+          id: `${row.did}#key-1`,
+          type: 'Ed25519VerificationKey2020',
+          controller: row.did,
+          publicKeyHex: row.public_key,
+        };
+
+        const agentDid: AgentDID = {
+          '@context': [
+            'https://www.w3.org/ns/did/v1',
+            'https://w3id.org/security/suites/ed25519-2020/v1',
+            'https://grc-claw.a2zsoc.com/ns/agent-identity/v1',
+          ],
+          id: row.did,
+          controller: '',
+          created: row.created_at,
+          updated: row.created_at,
+          verificationMethod: [verificationMethod],
+          authentication: [verificationMethod.id],
+          service: [],
+          credentials: [],
+          status: row.status as AgentDID['status'],
+          riskScore: row.risk_score,
+          metadata: {},
+        };
+
+        if (row.status === 'revoked') {
+          this.registry.revokedDids.add(row.did);
+        }
+
+        this.registry.agents.set(row.did, agentDid);
+      }
+
+      const { rows: credRows } = await this.db.query<{
+        holder_did: string;
+        issuer_did: string;
+        type: string;
+        claims: Record<string, unknown>;
+        proof: Record<string, unknown>;
+        issued_at: string;
+        expires_at: string;
+        revoked: boolean;
+      }>(`SELECT * FROM agent_credentials`);
+
+      for (const row of credRows) {
+        const agent = this.registry.agents.get(row.holder_did);
+        if (agent) {
+          const vc: VerifiableCredential = {
+            '@context': [
+              'https://www.w3.org/2018/credentials/v1',
+              'https://grc-claw.a2zsoc.com/ns/compliance-credential/v1',
+            ],
+            type: ['VerifiableCredential', 'ComplianceCertification'],
+            issuer: row.issuer_did,
+            issuanceDate: row.issued_at,
+            expirationDate: row.expires_at,
+            credentialSubject: row.claims as unknown as AgentCredentialSubject,
+            proof: row.proof as unknown as CredentialProof,
+          };
+          agent.credentials.push(vc);
+        }
+      }
+
+      console.log(`[AGENT-IDENTITY] Loaded ${agentRows.length} agents, ${credRows.length} credentials from database`);
+    } catch (err) {
+      console.error('[AGENT-IDENTITY] Failed to load from database:', err instanceof Error ? err.message : err);
+    }
+  }
 
   /** Generate a new DID for an agent */
-  createAgentDID(opts: {
+  async createAgentDID(opts: {
     controller: string;
     tenantScope: string[];
     sovereignBoundary?: 'us-only' | 'eu-only' | 'global' | 'airgapped';
     services?: ServiceEndpoint[];
-  }): AgentDID {
+  }): Promise<AgentDID> {
     const uuid = crypto.randomUUID();
     const did = `did:grc:${uuid}`;
     const keyPair = crypto.generateKeyPairSync('ed25519');
     const pubKeyHex = keyPair.publicKey.export({ type: 'spki', format: 'der' }).toString('hex');
+    const privKeyHex = keyPair.privateKey.export({ type: 'pkcs8', format: 'der' }).toString('hex');
 
     const verificationMethod: VerificationMethod = {
       id: `${did}#key-1`,
@@ -121,18 +246,32 @@ export class AgentIdentityManager {
     };
 
     this.registry.agents.set(did, agentDid);
+
+    if (this.db) {
+      try {
+        await this.db.execute(
+          `INSERT INTO agent_did_registry (did, public_key, private_key, status, risk_score, created_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (did) DO NOTHING`,
+          [did, pubKeyHex, privKeyHex, 'active', 0]
+        );
+      } catch (err) {
+        console.error('[AGENT-IDENTITY] Failed to persist DID to database:', err instanceof Error ? err.message : err);
+      }
+    }
+
     return agentDid;
   }
 
   /** Issue a Verifiable Credential to an agent */
-  issueCredential(agentDid: string, credential: {
+  async issueCredential(agentDid: string, credential: {
     framework: AgentCredentialSubject['framework'];
     certifiedControls: string[];
     toolTierAccess: ('read' | 'write' | 'destructive')[];
     tenantScope: string[];
     sovereignBoundary: AgentCredentialSubject['sovereignBoundary'];
     validDays?: number;
-  }): VerifiableCredential {
+  }): Promise<VerifiableCredential> {
     const agent = this.registry.agents.get(agentDid);
     if (!agent) throw new Error(`Agent DID not found: ${agentDid}`);
     if (agent.status === 'revoked') throw new Error(`Agent DID revoked: ${agentDid}`);
@@ -173,6 +312,27 @@ export class AgentIdentityManager {
 
     agent.credentials.push(vc);
     agent.updated = now.toISOString();
+
+    if (this.db) {
+      try {
+        await this.db.execute(
+          `INSERT INTO agent_credentials (holder_did, issuer_did, type, claims, proof, issued_at, expires_at, revoked)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, false)`,
+          [
+            agentDid,
+            agent.controller,
+            'ComplianceCertification',
+            JSON.stringify(credentialSubject),
+            JSON.stringify(vc.proof),
+            now.toISOString(),
+            expiry.toISOString(),
+          ]
+        );
+      } catch (err) {
+        console.error('[AGENT-IDENTITY] Failed to persist credential to database:', err instanceof Error ? err.message : err);
+      }
+    }
+
     return vc;
   }
 
@@ -221,13 +381,29 @@ export class AgentIdentityManager {
   }
 
   /** Revoke an agent DID (propagates immediately) */
-  revokeDID(agentDid: string): { ok: boolean; reason: string } {
+  async revokeDID(agentDid: string): Promise<{ ok: boolean; reason: string }> {
     const agent = this.registry.agents.get(agentDid);
     if (!agent) return { ok: false, reason: 'agent_not_found' };
 
     agent.status = 'revoked';
     agent.updated = new Date().toISOString();
     this.registry.revokedDids.add(agentDid);
+
+    if (this.db) {
+      try {
+        await this.db.execute(
+          `UPDATE agent_did_registry SET status = 'revoked' WHERE did = $1`,
+          [agentDid]
+        );
+        await this.db.execute(
+          `UPDATE agent_credentials SET revoked = true WHERE holder_did = $1`,
+          [agentDid]
+        );
+      } catch (err) {
+        console.error('[AGENT-IDENTITY] Failed to persist revocation to database:', err instanceof Error ? err.message : err);
+      }
+    }
+
     return { ok: true, reason: 'did_revoked' };
   }
 
