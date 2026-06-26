@@ -20,6 +20,8 @@
     { "path": "../security-graph" },
     { "path": "../soar" },
     { "path": "../audit-management" },
-    { "path": "../cloud-connectors" }
+    { "path": "../cloud-connectors" },
+    { "path": "../risk-quantification" },
+    { "path": "../entity-management" }
   ]
 }
