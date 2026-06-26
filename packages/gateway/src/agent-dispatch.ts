@@ -23,13 +23,17 @@ import * as path from 'path';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
-const securityGraph = new SecurityGraph();
+let securityGraph = new SecurityGraph();
 const soarEngine = new SOAREngine();
 const auditManager = new AuditManager();
 const cloudRegistry = new CloudConnectorRegistry();
 const actionLedger = new ActionLedger();
 const memoryStore = new PersistentMemoryStore();
 const agentSessions = new Map<string, AgentSession>();
+
+export function setSecurityGraph(graph: SecurityGraph): void {
+  securityGraph = graph;
+}
 
 export type ExecutionState =
   | 'simulated'
@@ -98,7 +102,7 @@ export function isBuiltinGrcTool(tool: string): boolean {
 export async function dispatchBuiltinGrcTool(
   tool: string,
   args: Record<string, unknown>,
-  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector }
+  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null }
 ): Promise<Record<string, unknown>> {
   const tenantId = Number(args.tenantId ?? 1);
 
@@ -124,8 +128,23 @@ export async function dispatchBuiltinGrcTool(
       };
     case 'evidence.read': {
       const evidenceId = String(args.evidenceId ?? '');
-      const items = deps.evidence.listByControl(evidenceId);
-      return { evidenceId, items, count: items.length };
+      let items = deps.evidence.listByControl(evidenceId);
+      let source = 'in-memory';
+      if (deps.persistence && items.length === 0) {
+        try {
+          const { rows } = await deps.persistence.database.query(
+            'SELECT * FROM evidence WHERE control_id = $1 ORDER BY created_at DESC',
+            [evidenceId]
+          );
+          if (rows.length > 0) {
+            items = rows as any[];
+            source = 'postgresql';
+          }
+        } catch {
+          // fall back to in-memory
+        }
+      }
+      return { evidenceId, items, count: items.length, source };
     }
     case 'soc.query_events':
       return {
@@ -159,7 +178,28 @@ export async function dispatchBuiltinGrcTool(
         lineage: { source: String(args.source ?? 'gateway') },
         content,
       });
-      return { ok: true, executionState: 'recorded', evidence };
+
+      if (deps.persistence) {
+        try {
+          await deps.persistence.database.execute(
+            `INSERT INTO evidence (tenant_id, control_id, sha256, uri, metadata, lineage, collected_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              String(tenantId),
+              controlId,
+              evidence.sha256,
+              uri,
+              JSON.stringify({}),
+              JSON.stringify(evidence.lineage ?? { source: 'gateway' }),
+              evidence.collectedAt,
+            ]
+          );
+        } catch (dbErr) {
+          console.warn('[PERSISTENCE] evidence.attach write failed (in-memory fallback used):', dbErr instanceof Error ? dbErr.message : dbErr);
+        }
+      }
+
+      return { ok: true, executionState: 'recorded', evidence, persisted: !!deps.persistence };
     }
     case 'soar.run_playbook':
     case 'firewall.apply_rule':
@@ -3494,7 +3534,28 @@ export async function dispatchBuiltinGrcTool(
           lineage: { source: String(args.source ?? 'gateway') },
           content,
         });
-        return { ok: true, evidence: record, stored: true, timestamp: new Date().toISOString() };
+
+        if (deps.persistence) {
+          try {
+            await deps.persistence.database.execute(
+              `INSERT INTO evidence (tenant_id, control_id, sha256, uri, metadata, lineage, collected_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              [
+                String(tenantId),
+                controlId,
+                record.sha256,
+                uri,
+                JSON.stringify({}),
+                JSON.stringify(record.lineage ?? { source: 'gateway' }),
+                record.collectedAt,
+              ]
+            );
+          } catch (dbErr) {
+            console.warn('[PERSISTENCE] evidence.store write failed (in-memory fallback used):', dbErr instanceof Error ? dbErr.message : dbErr);
+          }
+        }
+
+        return { ok: true, evidence: record, stored: true, persisted: !!deps.persistence, timestamp: new Date().toISOString() };
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'evidence_store_failed', timestamp: new Date().toISOString() };
       }
@@ -3909,6 +3970,27 @@ export async function dispatchBuiltinGrcTool(
           startDate,
           endDate,
         });
+
+        if (deps.persistence) {
+          try {
+            await deps.persistence.database.execute(
+              `INSERT INTO playbook_executions (tenant_id, playbook_name, status, steps, sla_ms, started_at, evidence_hashes)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              [
+                String(tenantId),
+                audit.name,
+                audit.status,
+                JSON.stringify([{ type: 'audit_create', framework, scope }]),
+                0,
+                audit.createdAt,
+                '[]',
+              ]
+            );
+          } catch (dbErr) {
+            console.warn('[PERSISTENCE] audit.create_audit write failed (in-memory fallback used):', dbErr instanceof Error ? dbErr.message : dbErr);
+          }
+        }
+
         return {
           ok: true,
           audit: {
@@ -3920,6 +4002,7 @@ export async function dispatchBuiltinGrcTool(
             scope: audit.scope,
             createdAt: audit.createdAt,
           },
+          persisted: !!deps.persistence,
           timestamp: new Date().toISOString(),
         };
       } catch (err: any) {
@@ -3968,6 +4051,7 @@ export async function dispatchAgentTool(
     evidence: EvidenceStore;
     a2z: A2ZSocConnector;
     claw: ClawDispatchContext;
+    persistence?: import('@grc-claw/persistence').PersistenceLayer | null;
   }
 ): Promise<Record<string, unknown>> {
   if (isClawTool(tool)) {

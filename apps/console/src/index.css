@@ -681,3 +681,191 @@ th {
   font-style: italic;
 }
 
+.metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.metric-card-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.metric-card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.metric-card-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+}
+
+.metric-card-trend.up {
+  color: var(--success);
+}
+
+.metric-card-trend.down {
+  color: var(--danger);
+}
+
+.trend-arrow {
+  font-size: 1rem;
+}
+
+.metric-sparkline {
+  width: 100%;
+  height: 30px;
+  margin-top: 0.5rem;
+}
+
+.compliance-gauge {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gauge-svg {
+  width: 140px;
+  height: 140px;
+}
+
+.gauge-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.gauge-unit {
+  font-size: 0.7rem;
+}
+
+.risk-heatmap {
+  padding: 0.5rem 0;
+}
+
+.heatmap-header {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.heatmap-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.heatmap-y-label {
+  width: 20px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.heatmap-axis-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.heatmap-axis-label.vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  margin-top: 0.5rem;
+}
+
+.heatmap-cells {
+  flex: 1;
+}
+
+.heatmap-row {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.heatmap-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  min-width: 36px;
+  min-height: 36px;
+  cursor: default;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.heatmap-cell:hover {
+  opacity: 1;
+}
+
+.heatmap-x-labels {
+  display: flex;
+  gap: 3px;
+}
+
+.heatmap-x-label {
+  width: 100%;
+  min-width: 36px;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.time-series-chart {
+  width: 100%;
+  height: 150px;
+}
+
+.time-series-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  font-size: 0.85rem;
+}
+

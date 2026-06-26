@@ -81,9 +81,23 @@ export const soc2StarterPack: FrameworkPack = {
 };
 
 import { iso42001StarterPack } from './iso42001.js';
+import { EXPANDED_FRAMEWORK_PACKS } from './expanded-packs.js';
 
 export { iso42001StarterPack } from './iso42001.js';
+export { EXPANDED_FRAMEWORK_PACKS } from './expanded-packs.js';
 
 export function listFrameworkPacks(): FrameworkPack[] {
   return [iso27001StarterPack, nistCsfStarterPack, soc2StarterPack, iso42001StarterPack];
+}
+
+export {
+  iso27001ExpandedPack, nistCsfExpandedPack, soc2ExpandedPack, iso42001ExpandedPack,
+  gdprPack, hipaaPack, pciDssPack, fedrampPack, cmmcPack, nist80053Pack, nist800171Pack,
+  cisControlsPack, cobitPack, csaCcmPack, iso27701Pack, iso27017Pack, iso27018Pack,
+  soc1Pack, doraPack, nis2Pack, ccpaPack, lgpdPack, pipedaPack,
+  apraCps234Pack, masTrmPack, sgpdpaPack, japanAppiPack,
+} from './expanded-packs.js';
+
+export function listAllFrameworkPacks(): FrameworkPack[] {
+  return [...listFrameworkPacks(), ...EXPANDED_FRAMEWORK_PACKS];
 }

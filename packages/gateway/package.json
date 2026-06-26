@@ -27,6 +27,7 @@
     "@grc-claw/ingest": "0.1.0",
     "@grc-claw/skill-executor": "0.1.0",
     "@grc-claw/security-graph": "0.1.0",
+    "@grc-claw/persistence": "0.1.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
