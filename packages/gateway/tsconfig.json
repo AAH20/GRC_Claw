@@ -25,6 +25,7 @@
     { "path": "../cloud-connectors" },
     { "path": "../risk-quantification" },
     { "path": "../entity-management" },
-    { "path": "../accm" }
+    { "path": "../accm" },
+    { "path": "../agent-builder" }
   ]
 }
