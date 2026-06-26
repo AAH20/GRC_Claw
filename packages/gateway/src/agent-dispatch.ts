@@ -1238,44 +1238,82 @@ export async function dispatchBuiltinGrcTool(
     // ─── Compliance-as-Code SDK ───────────────────────────────────────
     case 'sdk.plan': {
       const organization = String(args.organization ?? 'default-org');
+      const packs = listFrameworkPacks();
+      const controlsByFramework = packs.map((p) => ({
+        framework: p.code,
+        controlCount: p.controls.length,
+        scope: ['infrastructure', 'agents'],
+      }));
+      const totalControls = controlsByFramework.reduce((sum, fw) => sum + fw.controlCount, 0);
       return {
-        ok: true, organization, frameworksCount: 4, totalControls: 867,
-        controlsByFramework: [
-          { framework: 'iso27001', controlCount: 114, scope: ['infrastructure', 'agents'] },
-          { framework: 'soc2', controlCount: 64, scope: ['platform'] },
-          { framework: 'cmmc', controlCount: 171, scope: ['defense'] },
-          { framework: 'iso42001', controlCount: 42, scope: ['ai-systems'] },
-        ],
+        ok: true, organization, frameworksCount: packs.length, totalControls,
+        controlsByFramework,
         warnings: [],
         generatedAt: new Date().toISOString()
       };
     }
     case 'sdk.apply': {
-      return { ok: true, appliedFrameworks: ['iso27001', 'soc2', 'cmmc', 'iso42001'], appliedControls: 867, agentPolicyEnforced: true, didRequired: true, appliedAt: new Date().toISOString() };
+      const packs = listFrameworkPacks();
+      const appliedFrameworks = packs.map((p) => p.code);
+      const appliedControls = packs.reduce((sum, p) => sum + p.controls.length, 0);
+      return { ok: true, appliedFrameworks, appliedControls, agentPolicyEnforced: true, didRequired: true, appliedAt: new Date().toISOString() };
     }
     case 'sdk.audit': {
-      return { ok: true, overallPostureScore: 87.5, frameworkCount: 4, totalControls: 867, passRate: 0.875, auditedAt: new Date().toISOString() };
+      const packs = listFrameworkPacks();
+      let totalControls = 0;
+      let controlsWithEvidence = 0;
+      for (const pack of packs) {
+        for (const ctrl of pack.controls) {
+          totalControls++;
+          if (deps.evidence.listByControl(ctrl.id).length > 0) controlsWithEvidence++;
+        }
+      }
+      const overallPostureScore = totalControls > 0 ? Math.round((controlsWithEvidence / totalControls) * 1000) / 10 : 0;
+      const passRate = totalControls > 0 ? controlsWithEvidence / totalControls : 0;
+      return { ok: true, overallPostureScore, frameworkCount: packs.length, totalControls, passRate, auditedAt: new Date().toISOString() };
     }
     case 'sdk.owasp_coverage': {
+      const OWASP_TOP_10_AI_RISKS = [
+        'Excessive Agency', 'Goal Hijacking', 'Memory Poisoning', 'Cascading Failures',
+        'Unauthorized Tool Access', 'Data Exfiltration', 'Privilege Escalation',
+        'Audit Trail Tampering', 'Supply Chain Compromise', 'Insufficient Observability'
+      ];
+      const packs = listFrameworkPacks();
+      const coveredRisks = new Set<string>();
+      for (const risk of OWASP_TOP_10_AI_RISKS) {
+        const riskLower = risk.toLowerCase();
+        for (const pack of packs) {
+          for (const ctrl of pack.controls) {
+            const titleLower = ctrl.title.toLowerCase();
+            const codeLower = ctrl.controlCode.toLowerCase();
+            if (titleLower.includes(riskLower) || codeLower.includes(riskLower.substring(0, 4))) {
+              if (deps.evidence.listByControl(ctrl.id).length > 0) {
+                coveredRisks.add(risk);
+              }
+            }
+          }
+        }
+      }
+      const fullyAddressed = coveredRisks.size;
+      const partiallyAddressed = Math.max(0, OWASP_TOP_10_AI_RISKS.length - fullyAddressed);
+      const coveragePercentage = OWASP_TOP_10_AI_RISKS.length > 0
+        ? Math.round((fullyAddressed / OWASP_TOP_10_AI_RISKS.length) * 100)
+        : 0;
       return {
-        ok: true, totalRisks: 10, fullyAddressed: 10, partiallyAddressed: 0, coveragePercentage: 100,
-        risks: [
-          'Excessive Agency', 'Goal Hijacking', 'Memory Poisoning', 'Cascading Failures',
-          'Unauthorized Tool Access', 'Data Exfiltration', 'Privilege Escalation',
-          'Audit Trail Tampering', 'Supply Chain Compromise', 'Insufficient Observability'
-        ]
+        ok: true, totalRisks: OWASP_TOP_10_AI_RISKS.length, fullyAddressed, partiallyAddressed, coveragePercentage,
+        risks: OWASP_TOP_10_AI_RISKS
       };
     }
     case 'sdk.marketplace_catalog': {
+      const packs = listFrameworkPacks();
+      const frameworkPacks = packs.map((p) => ({
+        id: p.code,
+        name: p.name,
+        controlCount: p.controls.length,
+      }));
       return {
         ok: true,
-        frameworkPacks: [
-          { id: 'gdpr-eu', name: 'GDPR (EU)', controlCount: 42 },
-          { id: 'hipaa-health', name: 'HIPAA (Healthcare)', controlCount: 44 },
-          { id: 'pci-dss', name: 'PCI DSS v4.0', controlCount: 64 },
-          { id: 'fedramp-high', name: 'FedRAMP High', controlCount: 421 },
-          { id: 'dora-eu', name: 'DORA (EU Financial)', controlCount: 56 },
-        ],
+        frameworkPacks,
         skillPacks: [
           { id: 'incident-response-v2', name: 'Incident Response Automation' },
           { id: 'evidence-collector', name: 'Automated Evidence Collection' },

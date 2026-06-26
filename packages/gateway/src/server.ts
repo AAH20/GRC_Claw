@@ -1060,27 +1060,33 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     socket.on('error', () => socClients.delete(socket));
   });
 
-  // ─── Periodic SOC heartbeat — broadcast live threat/compliance state to subscribers ───
-  const THREAT_EVENTS = [
-    { type: 'threat', severity: 'medium', source: 'wazuh', rule_id: 'WZH-5503', message: 'Sudo command executed by non-privileged user', mitre_tactic: 'Privilege Escalation', mitre_technique: 'T1548.003' },
-    { type: 'threat', severity: 'high', source: 'suricata', rule_id: 'SID-2001219', message: 'ET SCAN Potential SSH Scan', mitre_tactic: 'Discovery', mitre_technique: 'T1046' },
-    { type: 'threat', severity: 'low', source: 'ufw', rule_id: 'UFW-BLOCK', message: 'Blocked inbound connection on port 3306 (MySQL)', mitre_tactic: 'Initial Access', mitre_technique: 'T1190' },
-    { type: 'compliance', severity: 'info', source: 'grc-scan', rule_id: 'GRC-ISO27001-A.9.4.2', message: 'MFA enrollment verified for all privileged accounts', framework: 'ISO 27001', control: 'A.9.4.2', decision: 'compliant', confidence: 0.94 },
-    { type: 'compliance', severity: 'warning', source: 'grc-scan', rule_id: 'GRC-SOC2-CC7.1', message: 'Vulnerability scan overdue by 3 days', framework: 'SOC 2', control: 'CC7.1', decision: 'partial', confidence: 0.61 },
-    { type: 'threat', severity: 'critical', source: 'guardduty', rule_id: 'GD-UnauthorizedAccess:EC2', message: 'Unusual API activity from EC2 instance — possible credential compromise', mitre_tactic: 'Credential Access', mitre_technique: 'T1552' },
-    { type: 'iac', severity: 'high', source: 'iac-scan', rule_id: 'TF-S3-PUBLIC', message: 'S3 bucket with public ACL detected in terraform plan', framework: 'SOC 2', control: 'CC6.6', decision: 'non-compliant' },
-    { type: 'identity', severity: 'medium', source: 'agent-runtime', rule_id: 'AGENT-OVER-PRIVILEGE', message: 'Agent requested tool outside approved allowlist — blocked by exec policy', mitre_tactic: 'Defense Evasion', mitre_technique: 'T1078' },
-  ];
+  // ─── Periodic SOC heartbeat — broadcast real compliance posture to subscribers ───
+  function computeCompliancePosture(): Record<string, { compliance_pct: number; drift_detected: boolean; last_scan: string }> {
+    const packs = listFrameworkPacks();
+    const frameworks: Record<string, { compliance_pct: number; drift_detected: boolean; last_scan: string }> = {};
+    for (const pack of packs) {
+      let total = 0;
+      let withEvidence = 0;
+      for (const ctrl of pack.controls) {
+        total++;
+        if (evidence.listByControl(ctrl.id).length > 0) withEvidence++;
+      }
+      frameworks[pack.code] = {
+        compliance_pct: total > 0 ? Math.round((withEvidence / total) * 1000) / 10 : 0,
+        drift_detected: false,
+        last_scan: new Date().toISOString(),
+      };
+    }
+    return frameworks;
+  }
 
-  let threatIdx = 0;
   const heartbeatInterval = setInterval(() => {
     if (socClients.size === 0) return;
-    const event = THREAT_EVENTS[threatIdx % THREAT_EVENTS.length];
-    threatIdx++;
     broadcastSocEvent({
-      ...event,
-      id: `soc-${Date.now().toString(36)}`,
+      type: 'heartbeat',
+      id: `heartbeat-${Date.now().toString(36)}`,
       timestamp: new Date().toISOString(),
+      status: 'alive',
       node_id: `gateway-${config.host}:${config.port}`,
     });
   }, 60_000);
@@ -1092,11 +1098,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       type: 'posture_update',
       id: `posture-${Date.now().toString(36)}`,
       timestamp: new Date().toISOString(),
-      frameworks: {
-        iso27001: { compliance_pct: 78.6, drift_detected: false, last_scan: new Date(Date.now() - 3600000).toISOString() },
-        soc2:     { compliance_pct: 84.2, drift_detected: false, last_scan: new Date(Date.now() - 7200000).toISOString() },
-        nist_csf: { compliance_pct: 71.4, drift_detected: true,  last_scan: new Date(Date.now() - 1800000).toISOString() },
-      },
+      frameworks: computeCompliancePosture(),
       node_id: `gateway-${config.host}:${config.port}`,
     });
   }, 300_000);

@@ -240,8 +240,8 @@ export class AwsSecurityHubConnector implements CloudConnector {
 
   async fetchFindings(): Promise<CloudFinding[]> {
     if (!this.validCredentials) {
-      console.log("[AWS SecurityHub] No credentials configured, returning mock findings");
-      this.findings = mockSecurityHubFindings(this.config.services, this.config.region);
+      console.log("[AWS SecurityHub] No credentials configured, returning empty results");
+      this.findings = [];
       this.lastSync = new Date();
       return this.findings;
     }
@@ -268,8 +268,8 @@ export class AwsSecurityHubConnector implements CloudConnector {
 
       console.log(`[AWS SecurityHub] Fetched ${allFindings.length} real findings`);
     } catch (err) {
-      console.error("[AWS SecurityHub] API call failed, falling back to mock:", err);
-      allFindings.push(...mockSecurityHubFindings(this.config.services, this.config.region));
+      console.error("[AWS SecurityHub] API call failed:", err);
+      this.findings = [];
     }
 
     this.findings = allFindings;
@@ -349,8 +349,8 @@ export class AwsGuardDutyConnector implements CloudConnector {
 
   async fetchFindings(): Promise<CloudFinding[]> {
     if (!this.validCredentials) {
-      console.log("[AWS GuardDuty] No credentials configured, returning mock findings");
-      this.findings = mockGuardDutyFindings(this.config.region);
+      console.log("[AWS GuardDuty] No credentials configured, returning empty results");
+      this.findings = [];
       this.lastSync = new Date();
       return this.findings;
     }
@@ -412,8 +412,8 @@ export class AwsGuardDutyConnector implements CloudConnector {
       console.log(`[AWS GuardDuty] Fetched ${allFindings.length} real findings`);
       this.findings = allFindings;
     } catch (err) {
-      console.error("[AWS GuardDuty] API call failed, falling back to mock:", err);
-      this.findings = mockGuardDutyFindings(this.config.region);
+      console.error("[AWS GuardDuty] API call failed:", err);
+      this.findings = [];
     }
 
     this.lastSync = new Date();
