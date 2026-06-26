@@ -41,6 +41,8 @@ export interface PolicyTemplate {
   framework: string;
   content: string;
   isDefault: boolean;
+  frameworkMappings?: string[];
+  requiredSections?: string[];
 }
 
 export interface PolicyStats {

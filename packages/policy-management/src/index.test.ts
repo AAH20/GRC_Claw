@@ -5,7 +5,7 @@ import { PolicyManager } from "./policies/PolicyManager.js";
 describe("PolicyManager", () => {
   it("should create policy from template", () => {
     const mgr = new PolicyManager();
-    const policy = mgr.createFromTemplate("tpl-1", "CISO", "CEO");
+    const policy = mgr.createFromTemplate("tpl-infosec", "CISO", "CEO");
     assert.ok(policy);
     assert.equal(policy.title, "Information Security Policy");
     assert.equal(policy.version, 1);
@@ -13,7 +13,7 @@ describe("PolicyManager", () => {
 
   it("should manage policy lifecycle", () => {
     const mgr = new PolicyManager();
-    const policy = mgr.createFromTemplate("tpl-2", "Owner", "Approver");
+    const policy = mgr.createFromTemplate("tpl-aup", "Owner", "Approver");
     mgr.transitionPolicy(policy.id, "under_review");
     mgr.transitionPolicy(policy.id, "approved");
     mgr.transitionPolicy(policy.id, "published");
@@ -23,7 +23,7 @@ describe("PolicyManager", () => {
 
   it("should increment version", () => {
     const mgr = new PolicyManager();
-    const policy = mgr.createFromTemplate("tpl-3", "O", "A");
+    const policy = mgr.createFromTemplate("tpl-data-class", "O", "A");
     mgr.incrementVersion(policy.id, "CISO", "Updated for new regulation");
     assert.equal(policy.version, 2);
     assert.equal(policy.changeLog.length, 1);
@@ -31,7 +31,7 @@ describe("PolicyManager", () => {
 
   it("should add attestation", () => {
     const mgr = new PolicyManager();
-    const policy = mgr.createFromTemplate("tpl-1", "O", "A");
+    const policy = mgr.createFromTemplate("tpl-infosec", "O", "A");
     const att = mgr.addAttestation(policy.id, "emp-1", "John Doe");
     assert.ok(att);
     assert.equal(policy.attestations.length, 1);

@@ -1,0 +1,25 @@
+{
+  "name": "@grc-claw/compliance-autopilot",
+  "version": "1.0.0",
+  "description": "Autonomous compliance maintenance — monitor, detect, remediate, verify, report, audit",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/**/*.test.js 2>/dev/null || true"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

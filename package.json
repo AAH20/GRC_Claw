@@ -54,7 +54,9 @@
     "packages/device-agent",
     "packages/browser-evidence",
     "packages/chat-grc",
-    "packages/framework-crosswalk"
+    "packages/framework-crosswalk",
+    "packages/compliance-autopilot",
+    "packages/vscode-extension"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",

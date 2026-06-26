@@ -1219,6 +1219,10 @@ export async function dispatchBuiltinGrcTool(
       return { ok: true, incidentId: `INC-${Date.now()}`, executionId, severity: 'critical', generatedAt: new Date().toISOString() };
     }
     // ─── Observability (OpenTelemetry Agent Tracing) ──────────────────
+    case 'observe.list_traces': {
+      const limit = Number(args.limit ?? 50);
+      return { ok: true, traces: [], limit, note: 'Use GET /api/traces for full trace listing via gateway' };
+    }
     case 'observe.start_trace': {
       const traceId = `${Date.now().toString(16)}${Math.random().toString(16).substring(2)}`;
       return { ok: true, traceId, spanId: traceId.substring(0, 16), name: args.name ?? 'agent.trace', startedAt: new Date().toISOString() };

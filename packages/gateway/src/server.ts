@@ -39,12 +39,20 @@ import { ACCMEngine, type FrameworkCode as ACCMFrameworkCode, type ControlRecord
 import { AgentBuilder, PREBUILT_AGENTS, type AgentDefinition } from '@grc-claw/agent-builder';
 import { FrameworkCrosswalk } from '@grc-claw/framework-crosswalk';
 import { ChatGRC } from '@grc-claw/chat-grc';
+import { BoardReportGenerator } from '@grc-claw/board-reporting';
+import { VendorRegistry } from '@grc-claw/third-party-risk';
+import { QuestionnaireAutomation, QuestionnaireAnswerEngine } from '@grc-claw/questionnaire-automation';
+import { ComplianceProver } from '@grc-claw/zk-compliance';
+import { AgentTracer } from '@grc-claw/observability';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
 
 // SOC event broadcaster — pushes normalized events to all subscribed WS clients
 const socClients = new Set<WebSocket>();
+
+// Compliance update broadcaster — pushes real-time compliance posture changes
+const complianceClients = new Set<WebSocket>();
 
 function broadcastSocEvent(event: unknown): void {
   const msg = JSON.stringify({ type: 'soc_event', data: event, ts: new Date().toISOString() });
@@ -61,6 +69,21 @@ function broadcastSocEvent(event: unknown): void {
   }
 }
 
+function broadcastComplianceUpdate(compliance: Record<string, unknown>): void {
+  const msg = JSON.stringify({ type: 'compliance_update', data: compliance, ts: new Date().toISOString() });
+  for (const client of complianceClients) {
+    try {
+      if (client.readyState === 1 /* OPEN */) {
+        client.send(msg);
+      } else {
+        complianceClients.delete(client);
+      }
+    } catch {
+      complianceClients.delete(client);
+    }
+  }
+}
+
 export interface GatewayConfig {
   host: string;
   port: number;
@@ -70,6 +93,12 @@ export interface GatewayConfig {
 export function createGateway(config: GatewayConfig, persistence?: PersistenceLayer | null) {
   const seededGraph = initSecurityGraph();
   setSecurityGraph(seededGraph);
+
+  const tracer = new AgentTracer({
+    serviceName: 'grc-claw-gateway',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV ?? 'development',
+  });
 
   const dedupe = new IdempotencyCache();
   const pg = persistence ?? getPersistence();
@@ -126,6 +155,11 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     },
   };
   const accmEngine = new ACCMEngine(accmGapDetector, { tenantId: 'default', autoRemediate: true });
+  const boardReporter = new BoardReportGenerator();
+  const vendorRegistry = new VendorRegistry();
+  const questionnaireAutomation = new QuestionnaireAutomation();
+  const questionnaireAnswerEngine = new QuestionnaireAnswerEngine();
+  const complianceProver = new ComplianceProver();
 
   let execPolicy!: ExecPolicy;
 
@@ -447,14 +481,27 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         res.end(JSON.stringify({ ok: false, decision, audit: session.getAuditLog() }));
         return;
       }
-      const claw = makeClawContext(policy);
-      const result = await claw.runSkill({
-        skillId,
-        task,
-        llmProviderId: typeof body.llmProviderId === 'string' ? body.llmProviderId : undefined,
-        maxSteps: typeof body.maxSteps === 'number' ? body.maxSteps : undefined,
-        readOnlyTools: body.readOnlyTools !== false,
+      const skillTrace = tracer.startTrace(`skill.${skillId}`, {
+        'tool.name': skillId,
+        'agent.session_id': session.sessionId,
+        'tool.tier': 'read',
+        'policy.result': 'allow',
       });
+      const claw = makeClawContext(policy);
+      let result: Awaited<ReturnType<typeof claw.runSkill>>;
+      try {
+        result = await claw.runSkill({
+          skillId,
+          task,
+          llmProviderId: typeof body.llmProviderId === 'string' ? body.llmProviderId : undefined,
+          maxSteps: typeof body.maxSteps === 'number' ? body.maxSteps : undefined,
+          readOnlyTools: body.readOnlyTools !== false,
+        });
+        tracer.endSpan(skillTrace.spanId, result.ok ? 'OK' : 'ERROR');
+      } catch (e) {
+        tracer.endSpan(skillTrace.spanId, 'ERROR', e instanceof Error ? e.message : 'skill_failed');
+        throw e;
+      }
       metricsCollector.incCounter('grc_agent_invocations_total');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
@@ -518,12 +565,19 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const source = String(body.source ?? '') as IngestSource;
       const tenantId = Number(body.tenantId ?? 1);
       const payload = body.payload;
+      const ingestSpan = tracer.startTrace(`ingest.normalize.${source}`, {
+        'tool.name': `ingest.${source}`,
+        'agent.tenant_id': String(tenantId),
+        'policy.result': 'allow',
+      });
       const event = normalizeBySource(source, payload, tenantId);
       if (!event) {
+        tracer.endSpan(ingestSpan.spanId, 'ERROR', 'normalize_failed');
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'normalize_failed', source }));
         return;
       }
+      tracer.setAttributes(ingestSpan.spanId, { 'evidence.type': event.eventType });
       // Broadcast normalized event to all subscribed SOC WebSocket clients
       broadcastSocEvent(event);
       const impact = await a2z.mapSecurityEventToControls({
@@ -534,6 +588,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         tenantId: event.tenantId,
         eventData: event.eventData,
       });
+      tracer.endSpan(ingestSpan.spanId, 'OK');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, event, complianceImpact: impact }));
       return;
@@ -629,6 +684,13 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         return;
       }
       let output: Record<string, unknown> | undefined;
+      const traceSpan = tracer.startTrace(`agent.tool.${tool}`, {
+        'agent.did': typeof body.agentId === 'string' ? body.agentId : 'system',
+        'agent.session_id': sessionId,
+        'tool.name': tool,
+        'tool.tier': toolTierFor(tool),
+        'policy.result': decision.allowed ? 'allow' : 'deny',
+      });
       try {
         const claw = makeClawContext(policy);
         output = await dispatchAgentTool(tool, args, {
@@ -640,8 +702,10 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           agentBuilder,
           chatGrc: chatGRC,
         });
+        tracer.endSpan(traceSpan.spanId, 'OK');
         metricsCollector.incCounter('grc_agent_invocations_total');
       } catch (e) {
+        tracer.endSpan(traceSpan.spanId, 'ERROR', e instanceof Error ? e.message : 'dispatch_failed');
         const resultEvent = ledger.recordResult(intent, { executionState: 'failed' });
         const assuranceReceipt = await persistAssuranceEnvelope(intent, decisionEvent, resultEvent, assurance.get(intent.actionId));
         res.writeHead(502, { 'Content-Type': 'application/json' });
@@ -829,6 +893,16 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           const result = await accmEngine.executeRemediation(workflow);
           results.push({ gapId: gap.id, controlCode: gap.controlCode, workflowId: workflow.id, result });
         }
+        // Broadcast compliance update after remediation
+        const updatedPosture = computeCompliancePosture();
+        const overallScore = Object.values(updatedPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(updatedPosture).length);
+        broadcastComplianceUpdate({
+          overall_score: Math.round(overallScore * 10) / 10,
+          frameworks: updatedPosture,
+          trigger: 'accm_remediate',
+          frameworkCode,
+          remediationsApplied: results.length,
+        });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, frameworkCode, remediations: results }));
       } catch (e: unknown) {
@@ -862,6 +936,15 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         const body = await readJson(req);
         const frameworkCode = String(body.frameworkCode ?? 'iso27001') as ACCMFrameworkCode;
         const report = await accmEngine.fullCycle(frameworkCode);
+        // Broadcast compliance update to all subscribed clients
+        const updatedPosture = computeCompliancePosture();
+        const overallScore = Object.values(updatedPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(updatedPosture).length);
+        broadcastComplianceUpdate({
+          overall_score: Math.round(overallScore * 10) / 10,
+          frameworks: updatedPosture,
+          trigger: 'accm_full_cycle',
+          frameworkCode,
+        });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, report }));
       } catch (e: unknown) {
@@ -1004,6 +1087,163 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       return;
     }
 
+    // ─── Board Reporting (#8) ─────────────────────────────────────────────────
+    if (req.method === 'GET' && path === '/api/reporting/board') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const reqUrl = new URL(req.url ?? '', 'http://local');
+      const type = (reqUrl.searchParams.get('type') ?? 'board_summary') as Parameters<BoardReportGenerator['generateReport']>[0];
+      const period = reqUrl.searchParams.get('period') ?? new Date().toISOString().substring(0, 7);
+      const report = boardReporter.generateReport(type, period);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, report }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/reporting/dashboard') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, dashboard: boardReporter.getExecutiveDashboard() }));
+      return;
+    }
+
+    // ─── Third-Party Risk (#9) ────────────────────────────────────────────────
+    if (req.method === 'GET' && path === '/api/vendors') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, vendors: vendorRegistry.listVendors() }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/vendors') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const vendor = vendorRegistry.registerVendor(body as Parameters<VendorRegistry['registerVendor']>[0]);
+        vendorRegistry.startMonitoring(vendor.id);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, vendor }));
+      } catch (e: unknown) { res.writeHead(400); res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
+      return;
+    }
+    if (req.method === 'GET' && path.startsWith('/api/vendors/') && path.endsWith('/risk-score')) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const vendorId = path.split('/')[3];
+      const score = vendorRegistry.calculateRiskScore(vendorId ?? '');
+      if (!score) { res.writeHead(404); res.end(JSON.stringify({ error: 'vendor_not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, score }));
+      return;
+    }
+
+    // ─── Questionnaire Automation (#4) ───────────────────────────────────────
+    if (req.method === 'POST' && path === '/api/questionnaire/import') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const csvContent = String(body.csv ?? '');
+        if (!csvContent) { res.writeHead(400); res.end(JSON.stringify({ error: 'csv field required' })); return; }
+        const questionnaire = questionnaireAutomation.parseCSVQuestions(csvContent);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, questionnaire }));
+      } catch (e: unknown) { res.writeHead(400); res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/questionnaire/auto-answer') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const questionnaireId = String(body.questionnaireId ?? '');
+        const response = questionnaireAutomation.autoAnswer(questionnaireId);
+        if (!response) { res.writeHead(404); res.end(JSON.stringify({ error: 'questionnaire_not_found' })); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, response }));
+      } catch (e: unknown) { res.writeHead(400); res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
+      return;
+    }
+
+    // ─── Observability Trace Endpoints ─────────────────────────────────────────
+    if (path === '/api/traces' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const url = new URL(req.url ?? '', 'http://local');
+      const limit = Number(url.searchParams.get('limit') ?? 50);
+      const stats = tracer.getStats();
+      const otlp = tracer.exportOTLP();
+      const allSpans = otlp.resourceSpans.flatMap((r) => r.scopeSpans.flatMap((s) => s.spans));
+      const traceIds = [...new Set(allSpans.map((s) => s.traceId))];
+      const recentTraces = traceIds.slice(-limit).map((traceId) => {
+        const spans = tracer.getTrace(traceId);
+        const first = spans[0];
+        const last = spans[spans.length - 1];
+        return {
+          traceId,
+          name: first?.name ?? 'unknown',
+          spanCount: spans.length,
+          startTime: first?.startTime,
+          endTime: last?.endTime,
+          status: last?.status ?? 'UNSET',
+          durationMs: last?.durationMs,
+        };
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, traces: recentTraces, stats }));
+      return;
+    }
+    if (path === '/api/traces/metrics' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const stats = tracer.getStats();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        metrics: {
+          totalTraces: stats.totalTraces,
+          totalSpans: stats.totalSpans,
+          avgSpanDurationMs: stats.avgSpanDurationMs,
+          errorRate: Math.round(stats.errorRate * 10000) / 100,
+          totalMetricEvents: stats.totalMetrics,
+        },
+      }));
+      return;
+    }
+    const traceDetailMatch = path.match(/^\/api\/traces\/([^/]+)$/);
+    if (traceDetailMatch && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const traceId = decodeURIComponent(traceDetailMatch[1]!);
+      const spans = tracer.getTrace(traceId);
+      if (spans.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'trace_not_found', traceId }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, traceId, spans }));
+      return;
+    }
+
+    // ─── ZK Proof Generation (#6) ─────────────────────────────────────────────
+    if (req.method === 'POST' && path === '/api/zk/prove') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req) as { controlId: string; frameworkCode: string; controlStatus: string; evidenceHashes: string[] };
+        const proof = await complianceProver.generateProof({
+          controlId: body.controlId,
+          frameworkCode: body.frameworkCode,
+          controlStatus: body.controlStatus,
+          evidenceHashes: body.evidenceHashes ?? [],
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, proof }));
+      } catch (e: unknown) { res.writeHead(400); res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/zk/verify') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req) as unknown as Parameters<ComplianceProver['verifyProof']>[0];
+        const result = await complianceProver.verifyProof(body);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, result }));
+      } catch (e: unknown) { res.writeHead(400); res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
+      return;
+    }
+
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'not_found' }));
   });
@@ -1049,6 +1289,27 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
           }
           return;
         }
+        if (frame.type === 'subscribe' && frame.channel === 'compliance_updates') {
+          const token = frame.token ?? '';
+          const secretBuf = Buffer.from(config.token, 'utf8');
+          const tokenBuf = Buffer.from(token, 'utf8');
+          const authed = secretBuf.length === tokenBuf.length && timingSafeEqual(secretBuf, tokenBuf);
+          if (authed) {
+            complianceClients.add(socket);
+            // Send initial compliance posture immediately on subscription
+            const initialPosture = computeCompliancePosture();
+            const overallScore = Object.values(initialPosture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(initialPosture).length);
+            socket.send(JSON.stringify({
+              type: 'compliance_update',
+              data: { overall_score: Math.round(overallScore * 10) / 10, frameworks: initialPosture, ts: new Date().toISOString() },
+              ts: new Date().toISOString(),
+            }));
+            socket.send(JSON.stringify({ type: 'subscribed', channel: 'compliance_updates', message: 'Streaming real-time compliance updates' }));
+          } else {
+            socket.send(JSON.stringify({ type: 'error', message: 'unauthorized' }));
+          }
+          return;
+        }
         if (!connected) {
           socket.close(4000, 'connect_required');
         }
@@ -1056,8 +1317,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         socket.close(4002, 'invalid_frame');
       }
     });
-    socket.on('close', () => socClients.delete(socket));
-    socket.on('error', () => socClients.delete(socket));
+    socket.on('close', () => { socClients.delete(socket); complianceClients.delete(socket); });
+    socket.on('error', () => { socClients.delete(socket); complianceClients.delete(socket); });
   });
 
   // ─── Periodic SOC heartbeat — broadcast real compliance posture to subscribers ───
@@ -1093,13 +1354,21 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
 
   // ─── Compliance posture summary — broadcast every 5 minutes ─────────────────
   const postureInterval = setInterval(() => {
-    if (socClients.size === 0) return;
-    broadcastSocEvent({
+    if (socClients.size === 0 && complianceClients.size === 0) return;
+    const posture = computeCompliancePosture();
+    const overallScore = Object.values(posture).reduce((sum, fw) => sum + (fw as { compliance_pct: number }).compliance_pct, 0) / Math.max(1, Object.keys(posture).length);
+    const complianceUpdate = {
       type: 'posture_update',
       id: `posture-${Date.now().toString(36)}`,
       timestamp: new Date().toISOString(),
-      frameworks: computeCompliancePosture(),
+      frameworks: posture,
       node_id: `gateway-${config.host}:${config.port}`,
+    };
+    broadcastSocEvent(complianceUpdate);
+    broadcastComplianceUpdate({
+      overall_score: Math.round(overallScore * 10) / 10,
+      frameworks: posture,
+      trigger: 'periodic_heartbeat',
     });
   }, 300_000);
 

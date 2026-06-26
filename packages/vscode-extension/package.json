@@ -1,0 +1,75 @@
+{
+  "name": "@grc-claw/vscode-extension",
+  "displayName": "GRC_Claw Compliance",
+  "description": "Real-time compliance scanning and GRC posture in your editor — powered by GRC_Claw",
+  "version": "2.0.0",
+  "publisher": "grc-claw",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=20"
+  },
+  "categories": ["Linters", "Other"],
+  "keywords": ["compliance", "security", "grc", "iso27001", "soc2", "nist"],
+  "icon": "assets/icon.png",
+  "activationEvents": ["onLanguage:typescript", "onLanguage:javascript", "onLanguage:python", "onLanguage:go", "onCommand:grc.scan"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "grc.scan", "title": "GRC: Scan File for Compliance Issues" },
+      { "command": "grc.scanWorkspace", "title": "GRC: Scan Workspace" },
+      { "command": "grc.showPosture", "title": "GRC: Show Compliance Posture" },
+      { "command": "grc.openTrustCenter", "title": "GRC: Open Trust Center" },
+      { "command": "grc.runPqcScan", "title": "GRC: PQC Migration Scan" }
+    ],
+    "configuration": {
+      "title": "GRC_Claw",
+      "properties": {
+        "grc.gatewayUrl": {
+          "type": "string",
+          "default": "http://localhost:18791",
+          "description": "GRC_Claw gateway URL"
+        },
+        "grc.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for GRC_Claw gateway"
+        },
+        "grc.a2zSocUrl": {
+          "type": "string",
+          "default": "https://a2zsoc.com",
+          "description": "A2Z SOC platform URL for posture syncing"
+        },
+        "grc.enableOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run compliance scan on file save"
+        },
+        "grc.orgSlug": {
+          "type": "string",
+          "default": "",
+          "description": "Your org slug for trust center integration"
+        }
+      }
+    },
+    "statusBar": [
+      {
+        "id": "grc.posture",
+        "name": "GRC Compliance Posture",
+        "alignment": "right",
+        "priority": 100
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "package": "npx vsce package",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.7.0"
+  },
+  "license": "MIT"
+}
