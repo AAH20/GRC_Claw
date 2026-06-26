@@ -110,6 +110,71 @@ const TOOLS: MCPTool[] = [
       required: ["entityId"],
     },
   },
+  // v4.0 tools
+  {
+    name: "grc_ask_copilot",
+    description: "Ask GRC Copilot a natural-language question about your compliance posture — powered by Claude + proof ledger RAG",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "Your compliance question (e.g. 'Why is A.12.6.1 failing?' or 'What do I need to reach ISO 27001 Gold?')" },
+        orgSlug: { type: "string", description: "Organization slug for posture context" },
+        framework: { type: "string", description: "Framework to focus on (iso27001, soc2, nist-csf, iso42001, eu-ai-act)" },
+      },
+      required: ["question"],
+    },
+  },
+  {
+    name: "grc_scan_iac",
+    description: "Scan Terraform, CloudFormation, or Kubernetes YAML files for compliance misconfigurations mapped to ISO 27001 / SOC 2 controls",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory path containing IaC files (default: current directory)" },
+        framework: { type: "string", description: "Filter findings by framework (iso27001, soc2, nist-csf)" },
+      },
+    },
+  },
+  {
+    name: "grc_generate_sbom",
+    description: "Generate an AI Bill of Materials in SPDX 2.3 or CycloneDX 1.5 format — EU AI Act Art.11 compliant",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agentName: { type: "string", description: "Name of the AI agent or application" },
+        format: { type: "string", description: "Output format: spdx or cyclonedx (default: cyclonedx)" },
+        scanDeps: { type: "boolean", description: "Also scan package.json for AI/ML dependencies" },
+      },
+      required: ["agentName"],
+    },
+  },
+  {
+    name: "grc_run_policy",
+    description: "Run Policy-as-Code policies against your codebase — returns pass/fail per ISO 27001 / SOC 2 control",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory to run policies against (default: current directory)" },
+        framework: { type: "string", description: "Filter policies by framework (iso27001, soc2, nist-csf, iso42001)" },
+        policyIds: { type: "array", items: { type: "string" }, description: "Run only specific policy IDs" },
+      },
+    },
+  },
+  {
+    name: "grc_create_dpia",
+    description: "Generate a GDPR Art.35 DPIA + EU AI Act Art.9 AI Impact Assessment for an AI system",
+    inputSchema: {
+      type: "object",
+      properties: {
+        systemName: { type: "string", description: "Name of the AI system or data processing activity" },
+        purpose: { type: "string", description: "Purpose of the AI system / data processing" },
+        dataCategories: { type: "array", items: { type: "string" }, description: "Categories of personal data processed (e.g. health, biometric, financial)" },
+        deploymentContext: { type: "string", description: "Deployment context: healthcare, hr, finance, education, law_enforcement, general" },
+        aiActCategory: { type: "string", description: "EU AI Act category: unacceptable_risk, high_risk, limited_risk, minimal_risk" },
+      },
+      required: ["systemName", "purpose"],
+    },
+  },
   // v2.0 tools
   {
     name: "grc_scan_repo",
@@ -326,6 +391,65 @@ async function handleToolCall(name: string, args: Record<string, unknown> | unde
       case "grc_get_entity_report":
         result = await gatewayFetch(config, `/api/entities/${args?.entityId}/compliance`);
         break;
+      // v4.0 tools — GRC Copilot, IaC, SBOM, Policy-as-Code, DPIA
+      case "grc_ask_copilot": {
+        const params = new URLSearchParams();
+        if (args?.orgSlug) params.set("org_slug", String(args.orgSlug));
+        if (args?.framework) params.set("framework", String(args.framework));
+        result = await fetch(`https://a2zsoc.com/api/platform/grc/copilot?${params}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: args?.question }),
+        }).then(r => r.json());
+        break;
+      }
+      case "grc_scan_iac": {
+        const iacParams = new URLSearchParams();
+        if (args?.path) iacParams.set("path", String(args.path));
+        if (args?.framework) iacParams.set("framework", String(args.framework));
+        result = await fetch(`https://a2zsoc.com/api/platform/iac-scan?${iacParams}`, {
+          headers: { "Content-Type": "application/json" },
+        }).then(r => r.json());
+        break;
+      }
+      case "grc_generate_sbom": {
+        result = await fetch("https://a2zsoc.com/api/platform/ai-bom-registry/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agentName: args?.agentName,
+            format: args?.format ?? "cyclonedx",
+            scanDeps: args?.scanDeps ?? false,
+          }),
+        }).then(r => r.json());
+        break;
+      }
+      case "grc_run_policy": {
+        result = await fetch("https://a2zsoc.com/api/platform/policy/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            path: args?.path ?? ".",
+            framework: args?.framework,
+            policyIds: args?.policyIds,
+          }),
+        }).then(r => r.json());
+        break;
+      }
+      case "grc_create_dpia": {
+        result = await fetch("https://a2zsoc.com/api/platform/dpia", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemName: args?.systemName,
+            purpose: args?.purpose,
+            dataCategories: args?.dataCategories ?? [],
+            deploymentContext: args?.deploymentContext ?? "general",
+            aiActCategory: args?.aiActCategory ?? "limited_risk",
+          }),
+        }).then(r => r.json());
+        break;
+      }
       // v2.0 tools — call A2Z SOC platform API
       case "grc_scan_repo":
         result = await gatewayFetch(config, "/api/agent/invoke", {

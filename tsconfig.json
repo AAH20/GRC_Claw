@@ -49,6 +49,7 @@
     { "path": "./packages/compliance-autopilot" },
     { "path": "./packages/drift-detector" },
     { "path": "./packages/evidence-collector" },
+    { "path": "./packages/ai-supply-chain" },
     { "path": "./packages/vscode-extension" },
     { "path": "./packages/gateway" },
     { "path": "./packages/accm" },
