@@ -204,15 +204,6 @@ npm install && npm run build
 | Guest-Kernel & Recursive ZK Test | `npx tsx scripts/test-phase22-orchestration.ts` (under packages/agent-runtime) |
 | DPU Offload & Secure Enclave Test | `npx tsx scripts/test-phase23-orchestration.ts` (under packages/agent-runtime) |
 | Neuromorphic & Quantum Consensus Test | `npx tsx scripts/test-phase24-orchestration.ts` (under packages/agent-runtime) |
-| Photonic & DNA Wet-Storage Test | `npx tsx scripts/test-phase25-orchestration.ts` (under packages/agent-runtime) |
-| LEO Space & Silicon PUF Test | `npx tsx scripts/test-phase26-orchestration.ts` (under packages/agent-runtime) |
-| Spacetime & Self-Destruct Test | `npx tsx scripts/test-phase27-orchestration.ts` (under packages/agent-runtime) |
-| Gravitational & Spin-Lock Test | `npx tsx scripts/test-phase28-orchestration.ts` (under packages/agent-runtime) |
-| Entanglement & Pyrotechnics Test | `npx tsx scripts/test-phase29-orchestration.ts` (under packages/agent-runtime) |
-| Cosmic & Topological Test | `npx tsx scripts/test-phase30-orchestration.ts` (under packages/agent-runtime) |
-| Planck & Gravitational Lensing Test | `npx tsx scripts/test-phase31-orchestration.ts` (under packages/agent-runtime) |
-| Redshift & Metabolic Test | `npx tsx scripts/test-phase32-orchestration.ts` (under packages/agent-runtime) |
-| CMB & Dark Matter Test | `npx tsx scripts/test-phase33-orchestration.ts` (under packages/agent-runtime) |
 
 ---
 
@@ -607,10 +598,7 @@ npx tsx packages/agent-runtime/scripts/test-phase20-orchestration.ts # Decoy & S
 npx tsx packages/agent-runtime/scripts/test-phase21-orchestration.ts # Zero-Trust Synaptic (eBPF socket isolation, homomorphic vector RAG, BFT reasoning quorum, synaptic LoRA patching)
 npx tsx packages/agent-runtime/scripts/test-phase22-orchestration.ts # Guest-Kernel & Recursive ZK (eBPF MicroVM sandbox, homomorphic joint policy audit, recursive Halo2 ZK rollup, GPU attention weight redirection)
 npx tsx packages/agent-runtime/scripts/test-phase23-orchestration.ts # DPU Offload & Secure Enclaves (SmartNIC/DPU cognitive filters offloading, CRYSTALS-Dilithium ring signatures, Intel SGX/AMD SEV-SNP secure enclaves, SMT/Coq formal policy proof verification)
-npx tsx packages/agent-runtime/scripts/test-phase24-orchestration.ts # Neuromorphic & Quantum Consensus (Memristive cognitive shields, quantum entanglement-based channels, dynamic Honey-Graph topology morphing, sovereign identity sharding)
-npx tsx packages/agent-runtime/scripts/test-phase25-orchestration.ts # Photonic & DNA Wet-Storage (Photonic zero-knowledge attestation, DNA-locked wet-storage encryption, cognitive swarm self-assembly, photonic memory crystallization)
-npx tsx packages/agent-runtime/scripts/test-phase26-orchestration.ts # LEO Space & Silicon PUF (Astro-sovereign LEO satellite sync, Silicon PUF identity challenge, biological neuron wet-compute filter, organic wetware memory sharding)
-npx tsx packages/agent-runtime/scripts/test-phase27-orchestration.ts # Spacetime & Self-Destruct (Relativistic spacetime propagation checks, anti-tamper chemical vaporization fuses, epigenetic cellular stimulus, epigenetic memory crystallization)
+npx tsx packages/agent-runtime/scripts/test-phase24-orchestration.ts # Neuromorphic & Quantum Consensus (Memristive cognitive shields, dynamic Honey-Graph topology morphing, sovereign identity sharding)
 ```
 
 ---
