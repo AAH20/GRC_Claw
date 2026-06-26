@@ -6,14 +6,21 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test dist/test/skill-executor.test.js"
   },
   "dependencies": {
-    "@grc-claw/agent-runtime": "0.1.0",
-    "@grc-claw/connectors": "0.1.0"
+    "@grc-claw/agent-runtime": "*",
+    "@grc-claw/connectors": "*"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }

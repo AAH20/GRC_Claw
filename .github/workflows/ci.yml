@@ -25,7 +25,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - run: npm install
+      - run: npm install --no-package-lock
 
       - name: TypeScript type check
         run: npx tsc --noEmit
@@ -45,7 +45,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
-      - run: npm install
+      - run: npm install --no-package-lock
 
       - name: Build all packages
         run: npm run build
@@ -64,7 +64,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - run: npm install
+      - run: npm install --no-package-lock
 
       - name: Build all packages
         run: npm run build

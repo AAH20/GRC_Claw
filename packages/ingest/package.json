@@ -6,17 +6,26 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && tsc -p tsconfig.test.json && node --test dist-test/comprehensive.test.js dist-test/cloud-integration.test.js"
   },
-  "dependencies": { "@grc-claw/core": "0.1.0" },
-  "devDependencies": {
-    "@grc-claw/agent-runtime": "0.1.0",
-    "@grc-claw/a2z-connector": "0.1.0",
-    "@grc-claw/evidence": "0.1.0",
-    "@grc-claw/frameworks": "0.1.0"
+  "dependencies": {
+    "@grc-claw/core": "*"
   },
-  "files": ["dist"]
+  "devDependencies": {
+    "@grc-claw/agent-runtime": "*",
+    "@grc-claw/a2z-connector": "*",
+    "@grc-claw/evidence": "*",
+    "@grc-claw/frameworks": "*"
+  },
+  "files": [
+    "dist"
+  ]
 }

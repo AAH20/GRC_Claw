@@ -16,7 +16,7 @@
     "test": "node --test dist/**/*.test.js 2>/dev/null || true"
   },
   "dependencies": {
-    "@grc-claw/core": "^0.1.0"
+    "@grc-claw/core": "*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
