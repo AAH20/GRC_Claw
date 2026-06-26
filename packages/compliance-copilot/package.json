@@ -11,9 +11,9 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@grc-claw/core": "^0.1.0",
-    "@grc-claw/compliance-orchestrator": "^0.1.0",
-    "@grc-claw/ai-supply-chain": "^0.1.0"
+    "@grc-claw/core": "*",
+    "@grc-claw/compliance-orchestrator": "*",
+    "@grc-claw/ai-supply-chain": "*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

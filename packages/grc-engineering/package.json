@@ -17,9 +17,11 @@
     "test": "node --test dist/**/*.test.js 2>/dev/null || true"
   },
   "dependencies": {
-    "@grc-claw/core": "0.1.0",
-    "@grc-claw/evidence": "0.1.0",
-    "@grc-claw/frameworks": "0.1.0"
+    "@grc-claw/core": "*",
+    "@grc-claw/evidence": "*",
+    "@grc-claw/frameworks": "*"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }

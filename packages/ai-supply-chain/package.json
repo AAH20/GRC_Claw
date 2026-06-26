@@ -11,9 +11,9 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@grc-claw/core": "^0.1.0",
-    "@grc-claw/evidence": "^0.1.0",
-    "@grc-claw/agent-runtime": "^0.1.0"
+    "@grc-claw/core": "*",
+    "@grc-claw/evidence": "*",
+    "@grc-claw/agent-runtime": "*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

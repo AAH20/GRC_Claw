@@ -17,13 +17,15 @@
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
-    "@grc-claw/core": "^0.1.0",
-    "@grc-claw/frameworks": "^0.1.0"
+    "@grc-claw/core": "*",
+    "@grc-claw/frameworks": "*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
     "tsx": "^4.19.0",
     "@types/node": "^20.14.0"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }
