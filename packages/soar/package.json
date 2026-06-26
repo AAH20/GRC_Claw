@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/soar",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Autonomous SOAR playbook engine for agentic incident response",
   "license": "MIT",
   "type": "module",

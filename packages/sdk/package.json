@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/sdk",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Compliance-as-Code SDK with grcfile.yaml support and CLI primitives",
   "license": "MIT",
   "type": "module",
@@ -16,6 +16,10 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test dist/**/*.test.js 2>/dev/null || true"
   },
-  "files": ["dist"],
-  "publishConfig": { "access": "public" }
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

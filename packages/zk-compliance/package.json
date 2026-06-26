@@ -1,13 +1,26 @@
 {
   "name": "@grc-claw/zk-compliance",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": { "build": "tsc", "test": "node --import tsx --test src/**/*.test.ts" },
-  "dependencies": { "@grc-claw/core": "*", "@grc-claw/evidence": "*" },
-  "devDependencies": { "typescript": "^5.7.0", "tsx": "^4.19.0" },
-  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@grc-claw/core": "*",
+    "@grc-claw/evidence": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0"
+  },
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/frameworks",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,6 +17,10 @@
   "dependencies": {
     "@grc-claw/core": "*"
   },
-  "files": ["dist"],
-  "publishConfig": { "access": "public" }
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
