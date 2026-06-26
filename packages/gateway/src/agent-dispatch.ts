@@ -16,7 +16,7 @@ import { SecurityGraph } from '@grc-claw/security-graph';
 import { MonteCarloEngine, FAIRCalculator, RiskRegister } from '@grc-claw/risk-quantification';
 import { EntityManager } from '@grc-claw/entity-management';
 import { SOAREngine } from '@grc-claw/soar';
-import type { Playbook } from '@grc-claw/soar';
+import type { Playbook, SOARContext } from '@grc-claw/soar';
 import { CloudConnectorRegistry } from '@grc-claw/cloud-connectors';
 import { AuditManager } from '@grc-claw/audit-management';
 import type { Audit, Finding } from '@grc-claw/audit-management';
@@ -29,7 +29,90 @@ import { ChatGRC } from '@grc-claw/chat-grc';
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
 let securityGraph = new SecurityGraph();
-const soarEngine = new SOAREngine();
+const soarContext: SOARContext = {
+  quarantineAgent: async (agentDid: string, params: Record<string, unknown>) => {
+    actionLedger.recordIntent({
+      tenantId: 1,
+      sessionId: `soar-quarantine-${Date.now()}`,
+      tool: 'soar.quarantine_agent',
+      args: { agentDid, ...params },
+    });
+    securityGraph.addNode({
+      id: `quarantine-${agentDid}`,
+      name: `Quarantined: ${agentDid}`,
+      type: 'infrastructure',
+      riskScore: 100,
+      properties: { action: 'quarantine', agentDid, ...params },
+      tags: ['quarantine', 'soar'],
+    });
+    return { quarantined: true, agentDid, recorded: true, quarantinedAt: new Date().toISOString() };
+  },
+  revokeDID: async (agentDid: string, params: Record<string, unknown>) => {
+    actionLedger.recordIntent({
+      tenantId: 1,
+      sessionId: `soar-revoke-${Date.now()}`,
+      tool: 'soar.revoke_did',
+      args: { agentDid, ...params },
+    });
+    return { revoked: true, agentDid, revokedAt: new Date().toISOString(), recorded: true };
+  },
+  blockNetwork: async (params: Record<string, unknown>) => {
+    const scope = String(params.scope ?? 'unknown');
+    const agentDid = String(params.agentDid ?? 'unknown');
+    actionLedger.recordIntent({
+      tenantId: 1,
+      sessionId: `soar-block-${Date.now()}`,
+      tool: 'soar.block_network',
+      args: params,
+    });
+    securityGraph.addNode({
+      id: `network-block-${agentDid}`,
+      name: `Network blocked: ${agentDid} (scope: ${scope})`,
+      type: 'infrastructure',
+      riskScore: 90,
+      properties: { action: 'block_network', agentDid, scope, ...params },
+      tags: ['firewall', 'network-block', 'soar'],
+    });
+    return { blocked: true, scope, agentDid, blockedAt: new Date().toISOString(), recorded: true };
+  },
+  rotateCredentials: async (params: Record<string, unknown>) => {
+    actionLedger.recordIntent({
+      tenantId: 1,
+      sessionId: `soar-rotate-${Date.now()}`,
+      tool: 'soar.rotate_credentials',
+      args: params,
+    });
+    return { rotated: true, scope: params.scope ?? 'all', rotatedAt: new Date().toISOString(), recorded: true };
+  },
+  sendWebhook: async (url: string, payload: Record<string, unknown>) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return { status: response.status, ok: response.ok, url };
+  },
+  updateControlStatus: async (controlId: string, status: string, evidenceHashes: string[]) => {
+    actionLedger.recordIntent({
+      tenantId: 1,
+      sessionId: `soar-control-${Date.now()}`,
+      tool: 'soar.update_control_status',
+      args: { controlId, status, evidenceHashes },
+    });
+    return { controlId, status, evidenceHashes, updatedAt: new Date().toISOString(), recorded: true };
+  },
+  logEvidence: async (evidenceType: string, params: Record<string, unknown>) => {
+    actionLedger.recordIntent({
+      tenantId: 1,
+      sessionId: `soar-evidence-${Date.now()}`,
+      tool: 'soar.log_evidence',
+      args: { evidenceType, ...params },
+    });
+    return { evidenceType, logged: true, loggedAt: new Date().toISOString(), recorded: true };
+  },
+};
+const soarEngine = new SOAREngine(soarContext);
 const auditManager = new AuditManager();
 const cloudRegistry = new CloudConnectorRegistry();
 const actionLedger = new ActionLedger();
@@ -106,17 +189,23 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('accm.') ||
     tool.startsWith('agent_builder.') ||
     tool.startsWith('crosswalk.') ||
-    tool.startsWith('chat.')
+    tool.startsWith('chat.') ||
+    tool.startsWith('autopilot.')
   );
 }
 
 export async function dispatchBuiltinGrcTool(
   tool: string,
   args: Record<string, unknown>,
-  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null; agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder; chatGrc?: ChatGRC }
+  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null; agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder; chatGrc?: ChatGRC; autopilot?: import('@grc-claw/compliance-autopilot').ComplianceAutopilot; tracer?: import('@grc-claw/observability').AgentTracer }
 ): Promise<Record<string, unknown>> {
   const tenantId = Number(args.tenantId ?? 1);
+  const span = deps.tracer?.startSpan('tool.execute', { attributes: { 'tool.name': tool } as import('@grc-claw/observability').SpanAttributes });
+  if (span && deps.tracer) {
+    deps.tracer.addSpanEvent(span.spanId, 'tool.start', { tool });
+  }
 
+  try {
   switch (tool) {
     case 'grc.list_controls': {
       const packs = listFrameworkPacks();
@@ -139,21 +228,19 @@ export async function dispatchBuiltinGrcTool(
       };
     case 'evidence.read': {
       const evidenceId = String(args.evidenceId ?? '');
-      let items = deps.evidence.listByControl(evidenceId);
-      let source = 'in-memory';
-      if (deps.persistence && items.length === 0) {
+      let items: any[];
+      let source: string;
+      if (deps.persistence) {
         try {
-          const { rows } = await deps.persistence.database.query(
-            'SELECT * FROM evidence WHERE control_id = $1 ORDER BY created_at DESC',
-            [evidenceId]
-          );
-          if (rows.length > 0) {
-            items = rows as any[];
-            source = 'postgresql';
-          }
+          items = await deps.evidence.listByControlFromDb(evidenceId);
+          source = 'postgresql';
         } catch {
-          // fall back to in-memory
+          items = deps.evidence.listByControl(evidenceId);
+          source = 'in-memory';
         }
+      } else {
+        items = deps.evidence.listByControl(evidenceId);
+        source = 'in-memory';
       }
       return { evidenceId, items, count: items.length, source };
     }
@@ -1221,22 +1308,65 @@ export async function dispatchBuiltinGrcTool(
     // ─── Observability (OpenTelemetry Agent Tracing) ──────────────────
     case 'observe.list_traces': {
       const limit = Number(args.limit ?? 50);
-      return { ok: true, traces: [], limit, note: 'Use GET /api/traces for full trace listing via gateway' };
+      if (deps.tracer) {
+        const otlp = deps.tracer.exportOTLP();
+        const allSpans = otlp.resourceSpans.flatMap((r) => r.scopeSpans.flatMap((s) => s.spans));
+        const traceIds = [...new Set(allSpans.map((s) => s.traceId))];
+        const traces = traceIds.slice(-limit).map((traceId) => {
+          const spans = deps.tracer!.getTrace(traceId);
+          const first = spans[0];
+          const last = spans[spans.length - 1];
+          return {
+            traceId,
+            name: first?.name ?? 'unknown',
+            spanCount: spans.length,
+            startTime: first?.startTime,
+            endTime: last?.endTime,
+            status: last?.status ?? 'UNSET',
+            durationMs: last?.durationMs,
+          };
+        });
+        return { ok: true, traces, limit, totalTraceIds: traceIds.length };
+      }
+      return { ok: true, traces: [], limit, note: 'No tracer configured — use GET /api/traces' };
     }
     case 'observe.start_trace': {
+      const traceName = String(args.name ?? 'agent.trace');
+      if (deps.tracer) {
+        const span = deps.tracer.startTrace(traceName);
+        return { ok: true, traceId: span.traceId, spanId: span.spanId, name: traceName, startedAt: span.startTime };
+      }
       const traceId = `${Date.now().toString(16)}${Math.random().toString(16).substring(2)}`;
-      return { ok: true, traceId, spanId: traceId.substring(0, 16), name: args.name ?? 'agent.trace', startedAt: new Date().toISOString() };
+      return { ok: true, traceId, spanId: traceId.substring(0, 16), name: traceName, startedAt: new Date().toISOString() };
     }
     case 'observe.get_trace': {
-      return { ok: true, traceId: String(args.traceId ?? ''), spans: [], spanCount: 0 };
+      const traceId = String(args.traceId ?? '');
+      if (deps.tracer && traceId) {
+        const spans = deps.tracer.getTrace(traceId);
+        return { ok: true, traceId, spans, spanCount: spans.length };
+      }
+      return { ok: true, traceId, spans: [], spanCount: 0 };
     }
     case 'observe.get_metrics': {
+      if (deps.tracer) {
+        const prometheus = deps.tracer.getPrometheusMetrics();
+        const stats = deps.tracer.getStats();
+        return { ok: true, metricsCount: stats.totalMetrics, format: 'prometheus', prometheus, timestamp: new Date().toISOString() };
+      }
       return { ok: true, metricsCount: 0, format: 'prometheus', timestamp: new Date().toISOString() };
     }
     case 'observe.get_stats': {
+      if (deps.tracer) {
+        const stats = deps.tracer.getStats();
+        return { ok: true, ...stats };
+      }
       return { ok: true, totalSpans: 0, totalTraces: 0, totalMetrics: 0, errorRate: 0, avgSpanDurationMs: 0 };
     }
     case 'observe.export_otlp': {
+      if (deps.tracer) {
+        const otlp = deps.tracer.exportOTLP();
+        return { ok: true, format: 'otlp-json', ...otlp, exported: true, timestamp: new Date().toISOString() };
+      }
       return { ok: true, format: 'otlp-json', resourceSpans: [], exported: true, timestamp: new Date().toISOString() };
     }
     // ─── Compliance-as-Code SDK ───────────────────────────────────────
@@ -4378,10 +4508,101 @@ export async function dispatchBuiltinGrcTool(
         return { ok: false, error: err.message ?? 'chat_list_sessions_failed', timestamp: new Date().toISOString() };
       }
     }
+    // ─── Compliance Autopilot Tools ─────────────────────────────────────
+    case 'autopilot.run_cycle': {
+      try {
+        const autopilot = deps.autopilot;
+        if (!autopilot) return { ok: false, executionState: 'not_configured', message: 'ComplianceAutopilot not available' };
+        const cycle = await autopilot.runCycle();
+        return {
+          ok: true,
+          cycleId: cycle.cycleId,
+          startedAt: cycle.startedAt,
+          completedAt: cycle.completedAt,
+          gapsFound: cycle.monitor.gapsFound,
+          controlsChecked: cycle.monitor.controlsChecked,
+          frameworksChecked: cycle.monitor.frameworksChecked,
+          remediationsCount: cycle.remediations.length,
+          verificationResults: cycle.verificationResults.length,
+          report: cycle.report,
+          auditTrailCount: cycle.auditTrail.length,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'autopilot_cycle_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'autopilot.get_status': {
+      try {
+        const autopilot = deps.autopilot;
+        if (!autopilot) return { ok: false, executionState: 'not_configured', message: 'ComplianceAutopilot not available' };
+        const controls = autopilot.getControls();
+        const gaps = autopilot.getGaps();
+        const remediations = autopilot.getRemediations();
+        const compliant = controls.filter(c => c.status === 'compliant').length;
+        const total = controls.length;
+        return {
+          ok: true,
+          complianceScore: total > 0 ? Math.round((compliant / total) * 10000) / 100 : 0,
+          totalControls: total,
+          compliantControls: compliant,
+          nonCompliantControls: controls.filter(c => c.status === 'non_compliant').length,
+          partialControls: controls.filter(c => c.status === 'partial').length,
+          gapsCount: gaps.length,
+          remediationsCount: remediations.length,
+          frameworks: autopilot.getConfig().frameworks,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'autopilot_status_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'autopilot.get_report': {
+      try {
+        const autopilot = deps.autopilot;
+        if (!autopilot) return { ok: false, executionState: 'not_configured', message: 'ComplianceAutopilot not available' };
+        const framework = String(args.framework ?? 'iso27001');
+        const report = await autopilot.generateReport(framework);
+        return { ok: true, report, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'autopilot_report_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'autopilot.get_audit_trail': {
+      try {
+        const autopilot = deps.autopilot;
+        if (!autopilot) return { ok: false, executionState: 'not_configured', message: 'ComplianceAutopilot not available' };
+        const auditTrail = autopilot.getAuditTrail();
+        const verified = autopilot.verifyAuditTrail();
+        return { ok: true, auditTrail, verified, count: auditTrail.length, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'autopilot_audit_trail_failed', timestamp: new Date().toISOString() };
+      }
+    }
 
     default:
-      return { ok: false, error: 'builtin_tool_stub', tool };
+      if (process.env.GRC_CLAW_SPECULATIVE_MODE === 'true') {
+        return { ok: false, error: 'builtin_tool_stub', tool };
+      }
+      return {
+        ok: false,
+        error: 'speculative_tool_disabled',
+        tool,
+        message: 'This tool requires speculative mode to be enabled. Set GRC_CLAW_SPECULATIVE_MODE=true to enable.',
+      };
   }
+      } catch (err: unknown) {
+        if (span && deps.tracer) {
+          deps.tracer.addSpanEvent(span.spanId, 'tool.error', { 'error.message': err instanceof Error ? err.message : String(err) });
+          deps.tracer.endSpan(span.spanId, 'ERROR', err instanceof Error ? err.message : undefined);
+        }
+        throw err;
+      } finally {
+        if (span && deps.tracer) {
+          deps.tracer.addSpanEvent(span.spanId, 'tool.complete', { tool });
+          deps.tracer.endSpan(span.spanId, 'OK');
+        }
+      }
 }
 
 export async function dispatchAgentTool(
@@ -4395,6 +4616,8 @@ export async function dispatchAgentTool(
     persistence?: import('@grc-claw/persistence').PersistenceLayer | null;
     agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder;
     chatGrc?: ChatGRC;
+    autopilot?: import('@grc-claw/compliance-autopilot').ComplianceAutopilot;
+    tracer?: import('@grc-claw/observability').AgentTracer;
   }
 ): Promise<Record<string, unknown>> {
   if (isClawTool(tool)) {
@@ -4406,7 +4629,7 @@ export async function dispatchAgentTool(
   }
   if (isBuiltinGrcTool(tool)) {
     if (tool === 'grc.list_controls' && args.includeAims === true) {
-      const base = await dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc });
+      const base = await dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc, autopilot: deps.autopilot, tracer: deps.tracer });
       return {
         ...base,
         aims: {
@@ -4416,7 +4639,7 @@ export async function dispatchAgentTool(
         },
       };
     }
-    return dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc });
+    return dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder, chatGrc: deps.chatGrc, autopilot: deps.autopilot, tracer: deps.tracer });
   }
   return { ok: false, error: 'unknown_tool', tool };
 }
