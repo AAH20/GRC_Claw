@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/compliance-copilot",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Compliance Copilot — IDE Integration, PR Gates, CLI, and Chat Bot",
   "type": "module",
   "main": "dist/index.js",

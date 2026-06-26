@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/sdk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Compliance-as-Code SDK with grcfile.yaml support and CLI primitives",
   "license": "MIT",
   "type": "module",

@@ -21,6 +21,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [metrics, setMetrics] = useState<Record<string, number> | null>(null);
+  const [riskCells, setRiskCells] = useState<{ likelihood: number; impact: number; count: number }[]>([]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -42,6 +43,19 @@ export function DashboardPage() {
         setMetrics(parsed);
       } catch {
         /* metrics endpoint optional */
+      }
+
+      try {
+        const heatmap = await api.riskHeatmap();
+        setRiskCells(
+          heatmap.cells.map((c) => ({
+            likelihood: c.likelihood,
+            impact: c.impact,
+            count: c.scenarios.length,
+          })),
+        );
+      } catch {
+        /* risk heatmap endpoint optional */
       }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Gateway unreachable \u2014 start gateway and check Settings');
@@ -95,14 +109,6 @@ export function DashboardPage() {
         { label: 'Now', value: agentInvocations },
       ]
     : [];
-
-  const sampleRiskCells = [
-    { likelihood: 5, impact: 5, count: 1 },
-    { likelihood: 4, impact: 3, count: 2 },
-    { likelihood: 3, impact: 4, count: 1 },
-    { likelihood: 2, impact: 2, count: 3 },
-    { likelihood: 1, impact: 1, count: 5 },
-  ];
 
   return (
     <PageShell
@@ -181,7 +187,7 @@ export function DashboardPage() {
           <div className="grid-2 section-gap">
             <div className="card">
               <h2>Risk Heatmap</h2>
-              <RiskHeatmap cells={sampleRiskCells} />
+              <RiskHeatmap cells={riskCells} />
             </div>
             <div className="card">
               <h2>Request Volume</h2>

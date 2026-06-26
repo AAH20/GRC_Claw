@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/a2z-connector",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Private A2Z SOC integration bridge for GRC_Claw",
   "license": "MIT",
   "type": "module",

@@ -21,6 +21,11 @@ function generateId(): string {
   return `ent-${ts}-${rand}`;
 }
 
+export interface EntityManagerDatabase {
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
+  execute(sql: string, params?: unknown[]): Promise<void>;
+}
+
 const INDUSTRY_FRAMEWORKS: IndustryFrameworkRecommendation[] = [
   { industry: 'financial_services', frameworks: ['iso27001', 'soc2', 'pci-dss', 'dora', 'gdpr'], rationale: 'Financial services require strong data protection, payment security, and operational resilience', priority: 'required' },
   { industry: 'healthcare', frameworks: ['iso27001', 'hipaa', 'soc2', 'gdpr'], rationale: 'Healthcare requires patient data protection and regulatory compliance', priority: 'required' },
@@ -37,9 +42,11 @@ export class EntityManager {
   private relationships: Map<string, EntityRelationship> = new Map();
   private complianceStatuses: Map<string, EntityComplianceStatus[]> = new Map();
   private rollup: ComplianceRollup;
+  private readonly db?: EntityManagerDatabase;
 
-  constructor() {
+  constructor(database?: EntityManagerDatabase) {
     this.rollup = new ComplianceRollup(this);
+    this.db = database;
   }
 
   createEntity(input: Omit<Entity, 'id' | 'createdAt' | 'updatedAt' | 'complianceScore' | 'riskScore'>): Entity {
@@ -58,6 +65,30 @@ export class EntityManager {
       this.addRelationship(entity.parentId, entity.id, input.type === 'branch' ? 'branch' : 'subsidiary');
     }
 
+    if (this.db) {
+      const db = this.db;
+      void db.execute(
+        `INSERT INTO entities (id, name, type, jurisdiction, industry, parent_id, metadata, compliance_score, risk_score, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          entity.id,
+          entity.name,
+          entity.type,
+          entity.jurisdiction,
+          entity.industry,
+          entity.parentId ?? null,
+          JSON.stringify(entity.metadata),
+          entity.complianceScore,
+          entity.riskScore,
+          entity.createdAt,
+          entity.updatedAt,
+        ],
+      ).catch(() => {
+        // fall back to in-memory only
+      });
+    }
+
     return entity;
   }
 
@@ -74,11 +105,91 @@ export class EntityManager {
     return result;
   }
 
+  async loadFromDatabase(): Promise<void> {
+    if (!this.db) return;
+    try {
+      const { rows: entityRows } = await this.db.query<{
+        id: string;
+        name: string;
+        type: EntityType;
+        jurisdiction: string;
+        industry: string;
+        parent_id: string | null;
+        metadata: Entity['metadata'];
+        compliance_score: number;
+        risk_score: number;
+        created_at: string;
+        updated_at: string;
+      }>(`SELECT * FROM entities`);
+      for (const row of entityRows) {
+        const entity: Entity = {
+          id: row.id,
+          name: row.name,
+          type: row.type,
+          jurisdiction: row.jurisdiction,
+          industry: row.industry,
+          parentId: row.parent_id ?? undefined,
+          metadata: row.metadata,
+          complianceScore: row.compliance_score,
+          riskScore: row.risk_score,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+        this.entities.set(entity.id, entity);
+      }
+
+      const { rows: relRows } = await this.db.query<{
+        id: string;
+        parent_entity_id: string;
+        child_entity_id: string;
+        relationship_type: RelationshipType;
+        status: RelationshipStatus;
+        created_at: string;
+        updated_at: string;
+      }>(`SELECT * FROM entity_relationships`);
+      for (const row of relRows) {
+        const rel: EntityRelationship = {
+          id: row.id,
+          parentEntityId: row.parent_entity_id,
+          childEntityId: row.child_entity_id,
+          relationshipType: row.relationship_type,
+          status: row.status,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+        this.relationships.set(rel.id, rel);
+      }
+    } catch {
+      // fall back to empty in-memory state
+    }
+  }
+
   updateEntity(id: string, updates: Partial<Omit<Entity, 'id' | 'createdAt'>>): Entity | undefined {
     const entity = this.entities.get(id);
     if (!entity) return undefined;
     const updated: Entity = { ...entity, ...updates, updatedAt: new Date().toISOString() };
     this.entities.set(id, updated);
+
+    if (this.db) {
+      const db = this.db;
+      void db.execute(
+        `UPDATE entities SET name=$2, type=$3, jurisdiction=$4, industry=$5, parent_id=$6, metadata=$7, compliance_score=$8, risk_score=$9, updated_at=$10
+         WHERE id=$1`,
+        [
+          updated.id,
+          updated.name,
+          updated.type,
+          updated.jurisdiction,
+          updated.industry,
+          updated.parentId ?? null,
+          JSON.stringify(updated.metadata),
+          updated.complianceScore,
+          updated.riskScore,
+          updated.updatedAt,
+        ],
+      ).catch(() => {});
+    }
+
     return updated;
   }
 
@@ -100,6 +211,13 @@ export class EntityManager {
 
     this.complianceStatuses.delete(id);
     this.entities.delete(id);
+
+    if (this.db) {
+      const db = this.db;
+      void db.execute(`DELETE FROM entities WHERE id = $1`, [id]).catch(() => {});
+      void db.execute(`DELETE FROM entity_relationships WHERE parent_entity_id = $1 OR child_entity_id = $1`, [id]).catch(() => {});
+    }
+
     return true;
   }
 
@@ -137,6 +255,24 @@ export class EntityManager {
 
     const childUpdated = { ...child, parentId: parentEntityId, updatedAt: now };
     this.entities.set(childEntityId, childUpdated);
+
+    if (this.db) {
+      const db = this.db;
+      void db.execute(
+        `INSERT INTO entity_relationships (id, parent_entity_id, child_entity_id, relationship_type, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          relationship.id,
+          relationship.parentEntityId,
+          relationship.childEntityId,
+          relationship.relationshipType,
+          relationship.status,
+          relationship.createdAt,
+          relationship.updatedAt,
+        ],
+      ).catch(() => {});
+    }
 
     return relationship;
   }

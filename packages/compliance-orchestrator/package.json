@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/compliance-orchestrator",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Regulation AST Compiler, Neuro-Symbolic Reasoner, and Continuous Compliance Engine",
   "type": "module",
   "main": "dist/index.js",

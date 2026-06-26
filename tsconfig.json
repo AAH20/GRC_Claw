@@ -40,6 +40,8 @@
     { "path": "./packages/mcp-server" },
     { "path": "./packages/grc-engineering" },
     { "path": "./packages/sdk-client" },
-    { "path": "./packages/gateway" }
+    { "path": "./packages/gateway" },
+    { "path": "./packages/accm" },
+    { "path": "./packages/agent-builder" }
   ]
 }

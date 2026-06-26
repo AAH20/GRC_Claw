@@ -1,8 +1,8 @@
 {
   "name": "grc-claw",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "The OSS chassis for ISO 42001-compliant agentic AI — Swarm Harness, Anti-Swarm WAF, MAVLink & UAS compliance, a2zsoc.com bridge",
+  "description": "The OSS chassis for ISO 42001-compliant agentic AI \u2014 Swarm Harness, Anti-Swarm WAF, MAVLink & UAS compliance, a2zsoc.com bridge",
   "license": "MIT",
   "workspaces": [
     "apps/console",
@@ -47,7 +47,10 @@
     "packages/sdk-client",
     "packages/risk-quantification",
     "packages/entity-management",
-    "packages/mcp-server"
+    "packages/mcp-server",
+    "packages/cli",
+    "packages/accm",
+    "packages/agent-builder"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",

@@ -205,6 +205,30 @@ export interface ComplianceSnapshotRecord {
   createdAt: string;
 }
 
+export interface EntityRecord {
+  id: string;
+  name: string;
+  type: string;
+  jurisdiction: string;
+  industry: string;
+  parentId?: string;
+  metadata: Record<string, unknown>;
+  complianceScore: number;
+  riskScore: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EntityRelationshipRecord {
+  id: string;
+  parentEntityId: string;
+  childEntityId: string;
+  relationshipType: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const MIGRATION_SQL = `
 -- GRC_Claw Schema Migration
 -- Requires PostgreSQL 13+ (for gen_random_uuid)
@@ -452,4 +476,35 @@ CREATE TABLE IF NOT EXISTS compliance_snapshots (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_compliance_snapshots_tenant ON compliance_snapshots(tenant_id);
+
+-- 17. entities
+CREATE TABLE IF NOT EXISTS entities (
+  id VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  jurisdiction VARCHAR(255) NOT NULL,
+  industry VARCHAR(255) NOT NULL,
+  parent_id VARCHAR(100),
+  metadata JSONB NOT NULL DEFAULT '{}',
+  compliance_score DECIMAL(5,2) NOT NULL DEFAULT 0,
+  risk_score DECIMAL(5,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_entities_jurisdiction ON entities(jurisdiction);
+CREATE INDEX IF NOT EXISTS idx_entities_industry ON entities(industry);
+CREATE INDEX IF NOT EXISTS idx_entities_parent ON entities(parent_id);
+
+-- 18. entity_relationships
+CREATE TABLE IF NOT EXISTS entity_relationships (
+  id VARCHAR(100) PRIMARY KEY,
+  parent_entity_id VARCHAR(100) NOT NULL,
+  child_entity_id VARCHAR(100) NOT NULL,
+  relationship_type VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_parent ON entity_relationships(parent_entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_child ON entity_relationships(child_entity_id);
 `;

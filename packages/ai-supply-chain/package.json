@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/ai-supply-chain",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "AI Supply Chain Sovereignty — Model Provenance, TEE Attestation, Federated Governance",
   "type": "module",
   "main": "dist/index.js",

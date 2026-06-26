@@ -1,0 +1,26 @@
+{
+  "name": "@grc-claw/cli",
+  "version": "1.0.0",
+  "description": "GRC_Claw CLI — grc scan, grc apply, grc report, grc diff",
+  "publishConfig": { "access": "public" },
+  "license": "MIT",
+  "bin": {
+    "grc": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@grc-claw/compliance-copilot": "*",
+    "@grc-claw/frameworks": "*",
+    "@grc-claw/aims": "*",
+    "@grc-claw/sdk": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

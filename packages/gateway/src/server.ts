@@ -50,18 +50,18 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   setSecurityGraph(seededGraph);
 
   const dedupe = new IdempotencyCache();
-  const evidence = new EvidenceStore();
+  const pg = persistence ?? getPersistence();
+  const evidence = new EvidenceStore(pg?.database);
   const ledger = new ActionLedger(
     process.env.GRC_CLAW_ACTION_LEDGER_PATH?.trim() || join(process.cwd(), '.grc_memory', 'action-ledger.ndjson')
   );
-  const pg = persistence ?? getPersistence();
   const assurance = new GatewayAssuranceGraph();
   const a2z = new A2ZSocConnector(loadA2ZConfigFromEnv());
   const connectors = getConnectorRegistry();
   const store = new PersistentMemoryStore(process.env.GRC_CLAW_MEMORY_DIR?.trim() || '.grc_memory');
   const rateLimiter = createRateLimiter();
   const riskRegister = new RiskRegister();
-  const entityManager = new EntityManager();
+  const entityManager = new EntityManager(pg?.database);
   let execPolicy!: ExecPolicy;
 
   async function persistAssuranceEnvelope(
