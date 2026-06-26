@@ -101,14 +101,15 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('sandbox.') ||
     tool.startsWith('attestation.') ||
     tool.startsWith('consensus.') ||
-    tool.startsWith('accm.')
+    tool.startsWith('accm.') ||
+    tool.startsWith('agent_builder.')
   );
 }
 
 export async function dispatchBuiltinGrcTool(
   tool: string,
   args: Record<string, unknown>,
-  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null }
+  deps: { evidence: EvidenceStore; a2z: A2ZSocConnector; persistence?: import('@grc-claw/persistence').PersistenceLayer | null; agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder }
 ): Promise<Record<string, unknown>> {
   const tenantId = Number(args.tenantId ?? 1);
 
@@ -4172,6 +4173,50 @@ export async function dispatchBuiltinGrcTool(
         return { ok: false, error: err.message ?? 'accm_full_cycle_failed', timestamp: new Date().toISOString() };
       }
     }
+    // ─── Agent Builder Tools ───────────────────────────────────────
+    case 'agent_builder.list_agents': {
+      const builder = deps.agentBuilder;
+      if (!builder) return { ok: false, executionState: 'not_configured', message: 'AgentBuilder not available' };
+      const agents = builder.listAgents();
+      return {
+        ok: true,
+        agents: agents.map((a) => ({ id: a.id, name: a.name, description: a.description, tags: a.tags, enabled: a.enabled })),
+        count: agents.length,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'agent_builder.get_agent': {
+      const builder = deps.agentBuilder;
+      if (!builder) return { ok: false, executionState: 'not_configured', message: 'AgentBuilder not available' };
+      const agentId = String(args.agentId ?? '');
+      const agent = builder.getAgent(agentId);
+      if (!agent) return { ok: false, error: `agent_not_found: ${agentId}` };
+      return { ok: true, agent, timestamp: new Date().toISOString() };
+    }
+    case 'agent_builder.create_agent': {
+      const builder = deps.agentBuilder;
+      if (!builder) return { ok: false, executionState: 'not_configured', message: 'AgentBuilder not available' };
+      try {
+        const definition = args.definition as import('@grc-claw/agent-builder').AgentDefinition;
+        if (!definition || !definition.name) return { ok: false, error: 'definition_with_name_required' };
+        const agent = builder.createAgent(definition);
+        return { ok: true, agent, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'create_agent_failed' };
+      }
+    }
+    case 'agent_builder.trigger_agent': {
+      const builder = deps.agentBuilder;
+      if (!builder) return { ok: false, executionState: 'not_configured', message: 'AgentBuilder not available' };
+      try {
+        const agentId = String(args.agentId ?? '');
+        const context = (args.context as Record<string, unknown>) ?? {};
+        const run = await builder.triggerAgent(agentId, context);
+        return { ok: true, run, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'trigger_agent_failed' };
+      }
+    }
 
     default:
       return { ok: false, error: 'builtin_tool_stub', tool };
@@ -4187,6 +4232,7 @@ export async function dispatchAgentTool(
     a2z: A2ZSocConnector;
     claw: ClawDispatchContext;
     persistence?: import('@grc-claw/persistence').PersistenceLayer | null;
+    agentBuilder?: import('@grc-claw/agent-builder').AgentBuilder;
   }
 ): Promise<Record<string, unknown>> {
   if (isClawTool(tool)) {
@@ -4198,7 +4244,7 @@ export async function dispatchAgentTool(
   }
   if (isBuiltinGrcTool(tool)) {
     if (tool === 'grc.list_controls' && args.includeAims === true) {
-      const base = await dispatchBuiltinGrcTool(tool, args, deps);
+      const base = await dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder });
       return {
         ...base,
         aims: {
@@ -4208,7 +4254,7 @@ export async function dispatchAgentTool(
         },
       };
     }
-    return dispatchBuiltinGrcTool(tool, args, deps);
+    return dispatchBuiltinGrcTool(tool, args, { evidence: deps.evidence, a2z: deps.a2z, persistence: deps.persistence, agentBuilder: deps.agentBuilder });
   }
   return { ok: false, error: 'unknown_tool', tool };
 }

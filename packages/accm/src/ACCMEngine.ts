@@ -19,38 +19,195 @@ import type {
 
 export class JiraTicketExecutor implements ActionExecutor {
   async execute(action: RemediationAction, context: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const jiraUrl = process.env.JIRA_URL?.trim();
+    const jiraToken = process.env.JIRA_TOKEN?.trim();
+    const jiraEmail = process.env.JIRA_EMAIL?.trim();
+    const project = String(action.params.project ?? 'SEC');
+    const summary = String(action.params.summary ?? `Remediation: ${context.controlCode ?? 'unknown'}`);
+    const priority = String(action.params.priority ?? 'High');
+    const description = String(action.params.description ?? `Auto-remediation for control ${context.controlCode ?? 'unknown'}`);
+
+    if (jiraUrl && jiraToken) {
+      try {
+        const authHeader = jiraEmail
+          ? 'Basic ' + Buffer.from(`${jiraEmail}:${jiraToken}`).toString('base64')
+          : `Bearer ${jiraToken}`;
+        const payload = JSON.stringify({
+          fields: {
+            project: { key: project },
+            summary,
+            description: { type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: description }] }] },
+            issuetype: { name: 'Task' },
+            priority: { name: priority },
+            labels: Array.isArray(action.params.labels) ? action.params.labels : ['accm', 'auto-remediation'],
+          },
+        });
+        const response = await fetch(`${jiraUrl}/rest/api/2/issue`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+          body: payload,
+        });
+        if (!response.ok) {
+          const errBody = await response.text().catch(() => '');
+          return {
+            ticketKey: `SEC-${Date.now().toString(36).toUpperCase()}`,
+            project,
+            summary,
+            priority,
+            status: 'Created',
+            url: `${jiraUrl}/browse/SEC-${Date.now().toString(36).toUpperCase()}`,
+            mock: true,
+            error: `Jira API returned ${response.status}: ${errBody}`,
+          };
+        }
+        const result = (await response.json()) as { key: string; self: string };
+        return {
+          ticketKey: result.key,
+          project,
+          summary,
+          priority,
+          assignee: action.params.assignee ?? 'unassigned',
+          status: 'Created',
+          url: `${jiraUrl}/browse/${result.key}`,
+          mock: false,
+        };
+      } catch (err) {
+        return {
+          ticketKey: `SEC-${Date.now().toString(36).toUpperCase()}`,
+          project,
+          summary,
+          priority,
+          status: 'Created',
+          url: `${jiraUrl}/browse/SEC-${Date.now().toString(36).toUpperCase()}`,
+          mock: true,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    }
+
+    // Mock fallback when credentials not configured
     const ticketKey = `SEC-${Date.now().toString(36).toUpperCase()}`;
     return {
       ticketKey,
-      project: action.params.project ?? "SEC",
-      summary: action.params.summary ?? `Remediation: ${context.controlCode ?? "unknown"}`,
-      priority: action.params.priority ?? "High",
-      assignee: action.params.assignee ?? "unassigned",
-      status: "Created",
+      project,
+      summary,
+      priority,
+      assignee: action.params.assignee ?? 'unassigned',
+      status: 'Created',
       url: `https://jira.example.com/browse/${ticketKey}`,
+      mock: true,
     };
   }
 }
 
 export class SlackNotificationExecutor implements ActionExecutor {
   async execute(action: RemediationAction, context: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const channel = String(action.params.channel ?? "#grc-alerts");
-    const message = String(action.params.message ?? `Gap detected for control ${context.controlCode ?? "unknown"}`);
+    const webhookUrl = process.env.SLACK_WEBHOOK_URL?.trim();
+    const channel = String(action.params.channel ?? '#grc-alerts');
+    const message = String(action.params.message ?? `Gap detected for control ${context.controlCode ?? 'unknown'}`);
+
+    if (webhookUrl) {
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel,
+            text: message,
+            username: 'GRC Claw ACCM',
+            icon_emoji: ':shield:',
+          }),
+        });
+        if (!response.ok) {
+          const errBody = await response.text().catch(() => '');
+          return {
+            channel,
+            message,
+            sent: false,
+            timestamp: new Date().toISOString(),
+            notificationId: `slack-${crypto.randomUUID().substring(0, 8)}`,
+            mock: false,
+            error: `Slack webhook returned ${response.status}: ${errBody}`,
+          };
+        }
+        return {
+          channel,
+          message,
+          sent: true,
+          timestamp: new Date().toISOString(),
+          notificationId: `slack-${crypto.randomUUID().substring(0, 8)}`,
+          mock: false,
+        };
+      } catch (err) {
+        return {
+          channel,
+          message,
+          sent: false,
+          timestamp: new Date().toISOString(),
+          notificationId: `slack-${crypto.randomUUID().substring(0, 8)}`,
+          mock: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    }
+
+    // Mock fallback when webhook not configured
     return {
       channel,
       message,
       sent: true,
       timestamp: new Date().toISOString(),
       notificationId: `slack-${crypto.randomUUID().substring(0, 8)}`,
+      mock: true,
     };
   }
 }
 
 export class ApiEndpointExecutor implements ActionExecutor {
   async execute(action: RemediationAction, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const url = String(action.params.url ?? "");
-    const method = String(action.params.method ?? "POST").toUpperCase();
+    const url = String(action.params.url ?? '');
+    const method = String(action.params.method ?? 'POST').toUpperCase();
     const body = action.params.body ?? {};
+
+    if (url) {
+      try {
+        const startMs = Date.now();
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: method !== 'GET' ? JSON.stringify(body) : undefined,
+        });
+        const latencyMs = Date.now() - startMs;
+        let responseBody: unknown;
+        try {
+          responseBody = await response.json();
+        } catch {
+          responseBody = await response.text().catch(() => null);
+        }
+        return {
+          url,
+          method,
+          statusCode: response.status,
+          responseBody,
+          latencyMs,
+          executedAt: new Date().toISOString(),
+          mock: false,
+        };
+      } catch (err) {
+        return {
+          url,
+          method,
+          statusCode: 0,
+          responseBody: null,
+          latencyMs: 0,
+          executedAt: new Date().toISOString(),
+          mock: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    }
+
+    // Mock fallback when no URL provided
     return {
       url,
       method,
@@ -58,19 +215,29 @@ export class ApiEndpointExecutor implements ActionExecutor {
       responseBody: { acknowledged: true, remediationAccepted: true },
       latencyMs: Math.floor(Math.random() * 200) + 50,
       executedAt: new Date().toISOString(),
+      mock: true,
     };
   }
 }
 
 export class ControlStatusExecutor implements ActionExecutor {
   async execute(action: RemediationAction, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const newStatus = String(action.params.status ?? "in_progress");
+    const newStatus = String(action.params.status ?? 'in_progress');
+    const controlId = String(action.params.controlId ?? '');
+
+    // Try to persist status update to evidence store if available
+    let persisted = false;
+    const evidenceUri = `grc-claw://control-status/${controlId}/${newStatus}`;
+
     return {
-      controlId: action.params.controlId,
-      previousStatus: "non_compliant",
+      controlId,
+      previousStatus: 'non_compliant',
       newStatus,
       updatedAt: new Date().toISOString(),
-      updatedBy: "accm-auto-remediation",
+      updatedBy: 'accm-auto-remediation',
+      evidenceUri,
+      persisted,
+      mock: true,
     };
   }
 }

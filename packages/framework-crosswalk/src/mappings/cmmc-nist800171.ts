@@ -1,0 +1,37 @@
+import type { CrossMapping } from '../types.js';
+
+export const CMMC_NIST800171_MAPPINGS: CrossMapping[] = [
+  { sourceFramework: 'cmmc', sourceControl: 'AC.L2-3.1.1', targetFramework: 'nist_800_171', targetControl: '3.1.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'AC.L2-3.1.2', targetFramework: 'nist_800_171', targetControl: '3.1.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'AC.L2-3.1.3', targetFramework: 'nist_800_171', targetControl: '3.1.3', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'AC.L2-3.1.5', targetFramework: 'nist_800_171', targetControl: '3.1.5', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'AC.L2-3.1.7', targetFramework: 'nist_800_171', targetControl: '3.1.7', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'AU.L2-3.3.1', targetFramework: 'nist_800_171', targetControl: '3.3.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'AU.L2-3.3.2', targetFramework: 'nist_800_171', targetControl: '3.3.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'CA.L2-3.1.13', targetFramework: 'nist_800_171', targetControl: '3.1.13', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'CA.L2-3.1.14', targetFramework: 'nist_800_171', targetControl: '3.1.14', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'CM.L2-3.4.1', targetFramework: 'nist_800_171', targetControl: '3.4.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'CM.L2-3.4.2', targetFramework: 'nist_800_171', targetControl: '3.4.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'IA.L2-3.5.1', targetFramework: 'nist_800_171', targetControl: '3.5.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'IA.L2-3.5.2', targetFramework: 'nist_800_171', targetControl: '3.5.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'IA.L2-3.5.3', targetFramework: 'nist_800_171', targetControl: '3.5.3', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'IR.L2-3.6.1', targetFramework: 'nist_800_171', targetControl: '3.6.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'IR.L2-3.6.2', targetFramework: 'nist_800_171', targetControl: '3.6.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'MP.L2-3.8.1', targetFramework: 'nist_800_171', targetControl: '3.8.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'MP.L2-3.8.2', targetFramework: 'nist_800_171', targetControl: '3.8.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'PE.L2-3.10.1', targetFramework: 'nist_800_171', targetControl: '3.10.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'PE.L2-3.10.3', targetFramework: 'nist_800_171', targetControl: '3.10.3', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'PL.L2-3.12.1', targetFramework: 'nist_800_171', targetControl: '3.12.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'PL.L2-3.12.3', targetFramework: 'nist_800_171', targetControl: '3.12.3', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'PS.L2-3.13.1', targetFramework: 'nist_800_171', targetControl: '3.13.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'RA.L2-3.11.1', targetFramework: 'nist_800_171', targetControl: '3.11.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'RA.L2-3.11.2', targetFramework: 'nist_800_171', targetControl: '3.11.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'SA.L2-3.15.1', targetFramework: 'nist_800_171', targetControl: '3.15.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'SA.L2-3.15.2', targetFramework: 'nist_800_171', targetControl: '3.15.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'SC.L2-3.13.1', targetFramework: 'nist_800_171', targetControl: '3.13.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'SC.L2-3.13.2', targetFramework: 'nist_800_171', targetControl: '3.13.2', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'SI.L2-3.14.1', targetFramework: 'nist_800_171', targetControl: '3.14.1', confidence: 1.0, relationship: 'equivalent' },
+  { sourceFramework: 'cmmc', sourceControl: 'SI.L2-3.14.2', targetFramework: 'nist_800_171', targetControl: '3.14.2', confidence: 1.0, relationship: 'equivalent' },
+];
+
+export const CMMC_NIST800171_PAIR = { source: 'cmmc', target: 'nist_800_171' };
