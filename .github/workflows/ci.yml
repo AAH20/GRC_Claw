@@ -72,7 +72,7 @@ jobs:
       - name: Verify build artifacts exist
         run: |
           for pkg in packages/*/; do
-            if [ -d "$pkg/src" ] && [ ! -d "$pkg/dist" ]; then
+            if [ -f "${pkg}tsconfig.json" ] && [ -d "${pkg}src" ] && [ ! -d "${pkg}dist" ]; then
               echo "ERROR: $pkg has src/ but no dist/ after build"
               exit 1
             fi
