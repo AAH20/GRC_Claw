@@ -172,6 +172,7 @@ const BUILTIN_FRAMEWORKS: Record<FrameworkCode, FrameworkDefinition> = {
 };
 
 const DEFAULT_CROSSWALKS: CrosswalkEntry[] = [
+  // Original mappings
   { sourceFramework: 'iso27001', sourceControl: 'A.8.2', targetFramework: 'soc2', targetControl: 'CC6.1', relationship: 'equivalent', confidence: 0.95 },
   { sourceFramework: 'iso27001', sourceControl: 'A.8.3', targetFramework: 'soc2', targetControl: 'CC6.3', relationship: 'equivalent', confidence: 0.9 },
   { sourceFramework: 'iso27001', sourceControl: 'A.8.16', targetFramework: 'soc2', targetControl: 'CC7.2', relationship: 'equivalent', confidence: 0.92 },
@@ -183,6 +184,106 @@ const DEFAULT_CROSSWALKS: CrosswalkEntry[] = [
   { sourceFramework: 'eu-ai-act', sourceControl: 'Art.14', targetFramework: 'iso42001', targetControl: 'A.7.1', relationship: 'stronger', confidence: 0.78 },
   { sourceFramework: 'iso27001', sourceControl: 'A.5.3', targetFramework: 'soc2', targetControl: 'CC6.1', relationship: 'subset', confidence: 0.8 },
   { sourceFramework: 'dora', sourceControl: 'ICT-17', targetFramework: 'iso27001', targetControl: 'A.5.2', relationship: 'stronger', confidence: 0.75 },
+  // ISO 27001 ↔ ISO 42001 (AI governance layer)
+  { sourceFramework: 'iso27001', sourceControl: 'A.5.1', targetFramework: 'iso42001', targetControl: 'A.5.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.5.2', targetFramework: 'iso42001', targetControl: 'A.5.2', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.6.1', targetFramework: 'iso42001', targetControl: 'A.6.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.8.1', targetFramework: 'iso42001', targetControl: 'A.8.1', relationship: 'subset', confidence: 0.85 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.9.1', targetFramework: 'iso42001', targetControl: 'A.9.1', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.10.1', targetFramework: 'iso42001', targetControl: 'A.10.1', relationship: 'equivalent', confidence: 0.92 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.12.1', targetFramework: 'iso42001', targetControl: 'A.12.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.12.4', targetFramework: 'iso42001', targetControl: 'A.12.4', relationship: 'equivalent', confidence: 0.85 },
+  // ISO 42001 ↔ EU AI Act
+  { sourceFramework: 'iso42001', sourceControl: 'A.6.1', targetFramework: 'eu-ai-act', targetControl: 'Art.9', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.6.2', targetFramework: 'eu-ai-act', targetControl: 'Art.10', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.7.1', targetFramework: 'eu-ai-act', targetControl: 'Art.11', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.7.2', targetFramework: 'eu-ai-act', targetControl: 'Art.12', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.8.1', targetFramework: 'eu-ai-act', targetControl: 'Art.13', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.8.2', targetFramework: 'eu-ai-act', targetControl: 'Art.14', relationship: 'equivalent', confidence: 0.92 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.9.1', targetFramework: 'eu-ai-act', targetControl: 'Art.15', relationship: 'subset', confidence: 0.83 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.10.1', targetFramework: 'eu-ai-act', targetControl: 'Art.16', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.12.1', targetFramework: 'eu-ai-act', targetControl: 'Art.17', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'iso42001', sourceControl: 'A.13.1', targetFramework: 'eu-ai-act', targetControl: 'Art.61', relationship: 'equivalent', confidence: 0.82 },
+  // ISO 27001 ↔ EU AI Act
+  { sourceFramework: 'iso27001', sourceControl: 'A.12.4', targetFramework: 'eu-ai-act', targetControl: 'Art.12', relationship: 'equivalent', confidence: 0.83 },
+  { sourceFramework: 'iso27001', sourceControl: 'A.8.2', targetFramework: 'eu-ai-act', targetControl: 'Art.10', relationship: 'subset', confidence: 0.78 },
+  // NIST CSF ↔ ISO 42001
+  { sourceFramework: 'nist-csf', sourceControl: 'GV.OC', targetFramework: 'iso42001', targetControl: 'A.5.1', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'nist-csf', sourceControl: 'GV.RM', targetFramework: 'iso42001', targetControl: 'A.6.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'nist-csf', sourceControl: 'ID.AM', targetFramework: 'iso42001', targetControl: 'A.8.1', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'nist-csf', sourceControl: 'PR.AT', targetFramework: 'iso42001', targetControl: 'A.7.2', relationship: 'equivalent', confidence: 0.82 },
+  { sourceFramework: 'nist-csf', sourceControl: 'DE.AE', targetFramework: 'iso42001', targetControl: 'A.13.1', relationship: 'equivalent', confidence: 0.80 },
+  // SOC 2 ↔ ISO 27001
+  { sourceFramework: 'soc2', sourceControl: 'CC1.1', targetFramework: 'iso27001', targetControl: 'A.5.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'soc2', sourceControl: 'CC2.1', targetFramework: 'iso27001', targetControl: 'A.5.2', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'soc2', sourceControl: 'CC3.1', targetFramework: 'iso27001', targetControl: 'A.6.1', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'soc2', sourceControl: 'CC5.1', targetFramework: 'iso27001', targetControl: 'A.8.1', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'soc2', sourceControl: 'CC6.2', targetFramework: 'iso27001', targetControl: 'A.9.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'soc2', sourceControl: 'CC6.3', targetFramework: 'iso27001', targetControl: 'A.9.2', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'soc2', sourceControl: 'CC6.6', targetFramework: 'iso27001', targetControl: 'A.13.1', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'soc2', sourceControl: 'CC6.7', targetFramework: 'iso27001', targetControl: 'A.8.3', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'soc2', sourceControl: 'CC7.1', targetFramework: 'iso27001', targetControl: 'A.12.6', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'soc2', sourceControl: 'CC7.4', targetFramework: 'iso27001', targetControl: 'A.16.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'soc2', sourceControl: 'CC8.1', targetFramework: 'iso27001', targetControl: 'A.12.1', relationship: 'equivalent', confidence: 0.85 },
+  // SOC 2 ↔ NIST CSF
+  { sourceFramework: 'soc2', sourceControl: 'CC6.1', targetFramework: 'nist-csf', targetControl: 'PR.AC-1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'soc2', sourceControl: 'CC6.6', targetFramework: 'nist-csf', targetControl: 'PR.PT-3', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'soc2', sourceControl: 'CC7.2', targetFramework: 'nist-csf', targetControl: 'DE.CM-1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'soc2', sourceControl: 'CC7.4', targetFramework: 'nist-csf', targetControl: 'RS.RP-1', relationship: 'equivalent', confidence: 0.85 },
+  // GDPR ↔ ISO 27001
+  { sourceFramework: 'gdpr', sourceControl: 'Art.25', targetFramework: 'iso27001', targetControl: 'A.8.25', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'gdpr', sourceControl: 'Art.32', targetFramework: 'iso27001', targetControl: 'A.8.24', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'gdpr', sourceControl: 'Art.33', targetFramework: 'iso27001', targetControl: 'A.5.24', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'gdpr', sourceControl: 'Art.35', targetFramework: 'iso27001', targetControl: 'A.8.10', relationship: 'equivalent', confidence: 0.82 },
+  // GDPR ↔ SOC 2
+  { sourceFramework: 'gdpr', sourceControl: 'Art.32', targetFramework: 'soc2', targetControl: 'CC9.2', relationship: 'equivalent', confidence: 0.83 },
+  { sourceFramework: 'gdpr', sourceControl: 'Art.33', targetFramework: 'soc2', targetControl: 'CC7.4', relationship: 'equivalent', confidence: 0.85 },
+  // HIPAA ↔ ISO 27001
+  { sourceFramework: 'hipaa', sourceControl: '164.312(a)(1)', targetFramework: 'iso27001', targetControl: 'A.9.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'hipaa', sourceControl: '164.312(a)(2)', targetFramework: 'iso27001', targetControl: 'A.9.4', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'hipaa', sourceControl: '164.312(b)', targetFramework: 'iso27001', targetControl: 'A.12.4', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'hipaa', sourceControl: '164.312(e)(1)', targetFramework: 'iso27001', targetControl: 'A.10.1', relationship: 'equivalent', confidence: 0.90 },
+  // HIPAA ↔ SOC 2
+  { sourceFramework: 'hipaa', sourceControl: '164.312(a)(1)', targetFramework: 'soc2', targetControl: 'CC6.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'hipaa', sourceControl: '164.312(b)', targetFramework: 'soc2', targetControl: 'CC7.2', relationship: 'equivalent', confidence: 0.85 },
+  // PCI DSS ↔ ISO 27001
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-1', targetFramework: 'iso27001', targetControl: 'A.13.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-2', targetFramework: 'iso27001', targetControl: 'A.8.8', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-3', targetFramework: 'iso27001', targetControl: 'A.10.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-7', targetFramework: 'iso27001', targetControl: 'A.9.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-8', targetFramework: 'iso27001', targetControl: 'A.9.2', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-10', targetFramework: 'iso27001', targetControl: 'A.12.4', relationship: 'equivalent', confidence: 0.88 },
+  // PCI DSS ↔ SOC 2
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-7', targetFramework: 'soc2', targetControl: 'CC6.3', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-8', targetFramework: 'soc2', targetControl: 'CC6.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'pci-dss', sourceControl: 'Req-10', targetFramework: 'soc2', targetControl: 'CC7.2', relationship: 'equivalent', confidence: 0.87 },
+  // DORA ↔ ISO 27001
+  { sourceFramework: 'dora', sourceControl: 'ICT-1', targetFramework: 'iso27001', targetControl: 'A.5.1', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'dora', sourceControl: 'ICT-2', targetFramework: 'iso27001', targetControl: 'A.6.1', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'dora', sourceControl: 'ICT-6', targetFramework: 'iso27001', targetControl: 'A.16.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'dora', sourceControl: 'ICT-7', targetFramework: 'iso27001', targetControl: 'A.17.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'dora', sourceControl: 'ICT-11', targetFramework: 'iso27001', targetControl: 'A.15.1', relationship: 'equivalent', confidence: 0.85 },
+  // NIS2 ↔ ISO 27001
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-a', targetFramework: 'iso27001', targetControl: 'A.5.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-b', targetFramework: 'iso27001', targetControl: 'A.16.1', relationship: 'equivalent', confidence: 0.87 },
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-c', targetFramework: 'iso27001', targetControl: 'A.17.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-e', targetFramework: 'iso27001', targetControl: 'A.14.1', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-h', targetFramework: 'iso27001', targetControl: 'A.8.8', relationship: 'equivalent', confidence: 0.87 },
+  // NIS2 ↔ DORA
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-b', targetFramework: 'dora', targetControl: 'ICT-6', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'nis2', sourceControl: 'Art.21-c', targetFramework: 'dora', targetControl: 'ICT-7', relationship: 'equivalent', confidence: 0.88 },
+  // FedRAMP ↔ NIST CSF
+  { sourceFramework: 'fedramp', sourceControl: 'AC-1', targetFramework: 'nist-csf', targetControl: 'PR.AC-1', relationship: 'equivalent', confidence: 0.92 },
+  { sourceFramework: 'fedramp', sourceControl: 'AC-2', targetFramework: 'nist-csf', targetControl: 'PR.AC-4', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'fedramp', sourceControl: 'AU-2', targetFramework: 'nist-csf', targetControl: 'DE.CM-3', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'fedramp', sourceControl: 'AU-3', targetFramework: 'nist-csf', targetControl: 'DE.CM-7', relationship: 'equivalent', confidence: 0.85 },
+  { sourceFramework: 'fedramp', sourceControl: 'IR-1', targetFramework: 'nist-csf', targetControl: 'RS.RP-1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'fedramp', sourceControl: 'SC-8', targetFramework: 'nist-csf', targetControl: 'PR.DS-2', relationship: 'equivalent', confidence: 0.90 },
+  // FedRAMP ↔ ISO 27001
+  { sourceFramework: 'fedramp', sourceControl: 'AC-1', targetFramework: 'iso27001', targetControl: 'A.9.1', relationship: 'equivalent', confidence: 0.90 },
+  { sourceFramework: 'fedramp', sourceControl: 'AU-2', targetFramework: 'iso27001', targetControl: 'A.12.4', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'fedramp', sourceControl: 'IR-1', targetFramework: 'iso27001', targetControl: 'A.16.1', relationship: 'equivalent', confidence: 0.88 },
+  { sourceFramework: 'fedramp', sourceControl: 'SC-8', targetFramework: 'iso27001', targetControl: 'A.10.1', relationship: 'equivalent', confidence: 0.90 },
 ];
 
 function parseSeverity(sev?: string): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' {
@@ -342,4 +443,27 @@ export class RegulationASTCompiler {
     const ast = this.asts.get(framework);
     return ast ? hashAST(ast) : undefined;
   }
+}
+
+/**
+ * Given a control in one framework, returns all equivalent controls across other frameworks.
+ * Performs a bidirectional search across DEFAULT_CROSSWALKS, so callers do not need to
+ * know which direction a mapping was originally authored in.
+ *
+ * Results are sorted descending by confidence so the caller can short-circuit at a threshold.
+ */
+export function getEvidenceDeduplicationMap(
+  framework: string,
+  controlId: string
+): Array<{ framework: string; control: string; confidence: number; relationship: string }> {
+  const results: Array<{ framework: string; control: string; confidence: number; relationship: string }> = [];
+  for (const cw of DEFAULT_CROSSWALKS) {
+    if (cw.sourceFramework === framework && cw.sourceControl === controlId) {
+      results.push({ framework: cw.targetFramework, control: cw.targetControl, confidence: cw.confidence, relationship: cw.relationship });
+    }
+    if (cw.targetFramework === framework && cw.targetControl === controlId) {
+      results.push({ framework: cw.sourceFramework, control: cw.sourceControl, confidence: cw.confidence, relationship: cw.relationship });
+    }
+  }
+  return results.sort((a, b) => b.confidence - a.confidence);
 }
