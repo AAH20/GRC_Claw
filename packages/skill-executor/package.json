@@ -1,6 +1,7 @@
 {
   "name": "@grc-claw/skill-executor",
   "version": "1.0.0",
+  "private": true,
   "description": "Cursor skill discovery and gated skill execution loop for GRC_Claw",
   "license": "MIT",
   "type": "module",

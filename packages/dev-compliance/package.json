@@ -1,10 +1,20 @@
 {
   "name": "@grc-claw/dev-compliance",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": { "build": "tsc", "test": "node --import tsx --test src/**/*.test.ts" },
-  "dependencies": { "@grc-claw/core": "*", "@grc-claw/compliance-orchestrator": "*" },
-  "devDependencies": { "typescript": "^5.7.0", "tsx": "^4.19.0" }
+  "scripts": {
+    "build": "tsc",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@grc-claw/core": "*",
+    "@grc-claw/compliance-orchestrator": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0"
+  }
 }

@@ -1,8 +1,11 @@
 {
   "name": "@grc-claw/registry",
   "version": "1.0.0",
-  "description": "GRC Registry — versioned framework packs, control templates, and evidence schemas (npm for compliance)",
-  "publishConfig": { "access": "public" },
+  "private": true,
+  "description": "GRC Registry \u2014 versioned framework packs, control templates, and evidence schemas (npm for compliance)",
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

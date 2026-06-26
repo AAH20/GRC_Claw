@@ -1,7 +1,8 @@
 {
   "name": "@grc-claw/chat-grc",
   "version": "1.0.0",
-  "description": "Conversational GRC Interface — natural language queries for compliance data",
+  "private": true,
+  "description": "Conversational GRC Interface \u2014 natural language queries for compliance data",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
