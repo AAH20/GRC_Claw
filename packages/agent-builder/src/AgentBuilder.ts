@@ -1,4 +1,8 @@
 import * as crypto from "crypto";
+import { listFrameworkPacks } from "@grc-claw/frameworks";
+import { EvidenceStore } from "@grc-claw/evidence";
+import { SecurityGraph } from "@grc-claw/security-graph";
+import { BoardReportGenerator } from "@grc-claw/board-reporting";
 import type {
   AgentDefinition,
   AgentWorkflow,
@@ -17,18 +21,38 @@ import { PREBUILT_AGENTS } from "./prebuilt/index.js";
 
 export class ScanControlsExecutor implements TaskExecutor {
   async execute(task: Task, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const frameworks = String(task.params.frameworks ?? "iso27001").split(",");
-    const scope = String(task.params.scope ?? "all");
-    const controlsScanned = frameworks.length * (scope === "all" ? 120 : 40);
-    const nonCompliant = Math.floor(controlsScanned * 0.15);
+    const frameworkFilter = String(task.params.frameworks ?? "").split(",").filter(Boolean);
+    const packs = listFrameworkPacks();
+    const filteredPacks = frameworkFilter.length > 0
+      ? packs.filter((p) => frameworkFilter.includes(p.code))
+      : packs;
+
+    let totalControls = 0;
+    let compliant = 0;
+    let nonCompliant = 0;
+    let partialCompliance = 0;
+    const evidenceStore = (_context.evidence as EvidenceStore) ?? new EvidenceStore();
+
+    for (const pack of filteredPacks) {
+      for (const ctrl of pack.controls) {
+        totalControls++;
+        const items = evidenceStore.listByControl(ctrl.id);
+        if (items.length > 0) {
+          compliant++;
+        } else {
+          nonCompliant++;
+          partialCompliance++;
+        }
+      }
+    }
 
     return {
-      frameworks,
-      scope,
-      controlsScanned,
-      compliant: controlsScanned - nonCompliant,
+      frameworks: filteredPacks.map((p) => p.code),
+      scope: String(task.params.scope ?? "all"),
+      controlsScanned: totalControls,
+      compliant,
       nonCompliant,
-      partialCompliance: Math.floor(nonCompliant * 0.4),
+      partialCompliance,
       scanTimestamp: new Date().toISOString(),
     };
   }
@@ -38,8 +62,25 @@ export class CheckEvidenceExecutor implements TaskExecutor {
   async execute(task: Task, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
     const evidenceType = String(task.params.evidenceType ?? "all");
     const freshnessDays = Number(task.params.freshnessDays ?? 365);
-    const totalEvidence = 85;
-    const validEvidence = Math.floor(totalEvidence * 0.82);
+    const evidenceStore = (_context.evidence as EvidenceStore) ?? new EvidenceStore();
+    const packs = listFrameworkPacks();
+
+    let totalEvidence = 0;
+    let validEvidence = 0;
+    const cutoffMs = freshnessDays * 86_400_000;
+    const now = Date.now();
+
+    for (const pack of packs) {
+      for (const ctrl of pack.controls) {
+        const items = evidenceStore.listByControl(ctrl.id);
+        for (const item of items) {
+          totalEvidence++;
+          const age = now - new Date(item.collectedAt).getTime();
+          if (age <= cutoffMs) validEvidence++;
+        }
+      }
+    }
+
     const staleEvidence = totalEvidence - validEvidence;
 
     return {
@@ -48,7 +89,7 @@ export class CheckEvidenceExecutor implements TaskExecutor {
       totalEvidence,
       validEvidence,
       staleEvidence,
-      completenessScore: validEvidence / totalEvidence,
+      completenessScore: totalEvidence > 0 ? validEvidence / totalEvidence : 1,
       checkedAt: new Date().toISOString(),
     };
   }
@@ -57,22 +98,18 @@ export class CheckEvidenceExecutor implements TaskExecutor {
 export class AnalyzeRiskExecutor implements TaskExecutor {
   async execute(task: Task, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
     const model = String(task.params.model ?? "default");
-    const overallRisk = 0.32;
-    const criticalRisks = 2;
-    const highRisks = 5;
-    const recommendations = [
-      "Review access control policies",
-      "Update incident response plan",
-      "Conduct penetration testing",
-    ];
+    const graph = (_context.securityGraph as SecurityGraph) ?? new SecurityGraph();
+    const agentDid = String(_context.agentDid ?? "did:grc:agent-default");
+    const assessment = graph.assessAgentRisk(agentDid);
 
     return {
       model,
-      overallRisk,
-      criticalRisks,
-      highRisks,
-      recommendations,
-      riskScore: overallRisk,
+      overallRisk: assessment.overallRisk,
+      criticalRisks: assessment.riskFactors.filter((f) => f.score >= 30).length,
+      highRisks: assessment.riskFactors.filter((f) => f.score >= 15 && f.score < 30).length,
+      recommendations: assessment.recommendedActions,
+      riskScore: assessment.overallRisk,
+      riskFactors: assessment.riskFactors,
       analyzedAt: new Date().toISOString(),
     };
   }
@@ -81,14 +118,22 @@ export class AnalyzeRiskExecutor implements TaskExecutor {
 export class GenerateReportExecutor implements TaskExecutor {
   async execute(task: Task, _context: Record<string, unknown>): Promise<Record<string, unknown>> {
     const format = String(task.params.format ?? "summary");
-    const reportId = `rpt-${crypto.randomUUID().substring(0, 8)}`;
+    const reportType = (String(task.params.reportType ?? "board_summary") as import("@grc-claw/board-reporting").ReportType) ?? "board_summary";
+    const generator = new BoardReportGenerator();
+    const period = String(task.params.period ?? new Date().toISOString().slice(0, 7));
+    const report = generator.generateReport(reportType, period);
 
     return {
-      reportId,
+      reportId: report.id,
+      title: report.title,
+      type: report.type,
       format,
-      generatedAt: new Date().toISOString(),
-      sections: ["executive_summary", "control_status", "evidence_gaps", "risk_analysis", "remediation_plan"],
-      pageCount: format === "detailed" ? 24 : 8,
+      period,
+      generatedAt: report.generatedAt,
+      sections: report.sections.map((s) => s.title),
+      summary: report.summary,
+      recommendations: report.recommendations,
+      pageCount: format === "detailed" ? report.sections.length * 3 : report.sections.length,
     };
   }
 }
