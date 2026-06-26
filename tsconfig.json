@@ -44,6 +44,7 @@
     { "path": "./packages/device-agent" },
     { "path": "./packages/chat-grc" },
     { "path": "./packages/framework-crosswalk" },
+    { "path": "./packages/cli" },
     { "path": "./packages/gateway" },
     { "path": "./packages/accm" },
     { "path": "./packages/agent-builder" }
