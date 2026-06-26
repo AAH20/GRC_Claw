@@ -1,0 +1,27 @@
+{
+  "name": "@grc-claw/registry",
+  "version": "1.0.0",
+  "description": "GRC Registry — versioned framework packs, control templates, and evidence schemas (npm for compliance)",
+  "publishConfig": { "access": "public" },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@grc-claw/core": "*",
+    "@grc-claw/frameworks": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

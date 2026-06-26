@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/grc-engineering",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "GRC-as-Code engineering: grcfile, CI/CD compliance pipelines, and GitOps workflows",
   "license": "MIT",
   "type": "module",

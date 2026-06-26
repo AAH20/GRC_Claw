@@ -110,4 +110,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  riskHeatmap: () =>
+    request<{ ok: boolean; cells: { likelihood: number; impact: number; scenarios: string[]; totalRisk: number }[]; axisLabels: { x: string; y: string } }>('/api/risk/heatmap'),
 };

@@ -690,12 +690,20 @@ npm install && npm run build && npm run test:comprehensive
 - [x] Phase 22 — MicroVM Guest-Kernel Sandboxing (eBPF monitors), Homomorphic Joint-Policy Auditing (FHE), Recursive ZK-Proof Aggregation (Halo2 rollup), GPU Attention-Head Redirection (Dynamic steering)
 - [x] Phase 23 — DPU Cognitive Offloading (SmartNIC filter), Post-Quantum Lattice Ring Signatures (Dilithium cohort trust), Hardware-Locked Secure Enclaves (AMD SEV-SNP enclaves), Self-Evolving Formal Consensus (SMT solver verification)
 - [x] Phase 24 — Neuromorphic Cognitive Shields (Memristor arrays), Quantum-Entanglement Consensus (teleported attestations), Dynamic Honey-Graph Morphing (moving-target routing), Sovereign Identity Sharding (threshold credential splits)
-- [x] Phase 25 — Photonic ZK Attestation (speed-of-light proofs), DNA-Locked Wet-Storage Encryption (microfluidic biological key storage), Cognitive Swarm Self-Assembly (enclaved self-writing logic), Photonic Memory Crystallization (optical context arrays)
-- [x] Phase 26 — Astro-Sovereign Satellite Attestation (LEO laser sync), Silicon PUF Identity (substrate verification challenge), Biological Wet-Compute Cognitive Mediation (organic neuron filters), Organic Wetware Memory Sharding (biological weight shares)
-- [x] Phase 27 — Relativistic Space-Time Cryptography (propagation checks), Silicon Self-Destruct (anti-tamper chemical fuses), Epigenetic DNA Key Generation (dynamic methylation stimulus), Epigenetic Memory Crystallization (photonic signatures)
-- [ ] GRC_Claw Cloud (multi-tenant managed SaaS on a2zsoc.com)
-- [x] Federated Compliance Mesh (multi-org ZK-attested trust network via attestation.issue_compliance_credential / attestation.verify_vendor_credential)
-- [ ] Compliance Copilot (AI-powered natural language GRC assistant)
+- [x] Federated Compliance Mesh (`@grc-claw/federated-compliance-mesh`) — multi-org ZK-attested compliance proofs, cross-tenant trust network, `attestation.issue_compliance_credential` / `attestation.verify_vendor_credential`
+- [x] GRC Registry (`@grc-claw/registry`) — versioned framework packs with cryptographic signing, PackVerifier, 8 built-in packs (ISO 27001, ISO 42001, EU AI Act, SOC 2, DORA, CMMC, GDPR, FedRAMP), trust scoring
+
+### Upcoming (Next 90 Days)
+
+- [ ] `@grc-claw/cli` — `grc scan .` compliance posture check, `grc apply grcfile.yaml`, `grc report --framework iso27001` with signed evidence bundles
+- [ ] GitHub App + VS Code Extension — compliance-copilot PR gates on GitHub Marketplace, LSP diagnostics in VS Code
+- [ ] npm v1.0.0 publish — all 15 core packages with stable API contract, `publishConfig.access: public`
+- [ ] GRC Registry public endpoint — `registry.a2zsoc.com` with community contribution workflow
+- [ ] AI-BOM Standard Submission — schema submitted to NIST AI RMF WG and ISO/IEC JTC 1/SC 42 WG 42
+- [ ] Regulatory Intelligence Live Feed — real-time EU AI Act / DORA / NIS2 implementing act monitoring with auto-diff against framework packs
+- [ ] GRC_Claw Cloud — multi-tenant managed SaaS on a2zsoc.com with PostgreSQL persistence, SSO, audit export
+
+> Research directions beyond current deployable technology: [speculative/FUTURE_RESEARCH.md](speculative/FUTURE_RESEARCH.md)
 
 ---
 

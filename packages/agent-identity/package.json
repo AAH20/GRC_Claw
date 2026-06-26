@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/agent-identity",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "DID-based agent identity fabric with Verifiable Credentials for GRC_Claw",
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/observability",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "OpenTelemetry-native agent tracing and compliance observability",
   "license": "MIT",
   "type": "module",

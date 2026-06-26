@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/sdk-client",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Public HTTP client SDK for GRC_Claw gateway integration",
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/ingest",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "OSS SIEM/IDS/firewall log normalizers (ingest-oss-siem-ids-logs)",
   "license": "MIT",
   "type": "module",
