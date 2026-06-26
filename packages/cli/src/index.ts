@@ -2,8 +2,9 @@
 // @grc-claw/cli — The GRC_Claw command-line interface
 // Usage: grc <command> [options]
 
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { resolve, join, extname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSync } from 'node:fs';
+import { resolve, join, extname, relative } from 'node:path';
+import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
 const VERSION = '1.0.0';
@@ -410,6 +411,376 @@ async function cmdDoctor() {
   }
 }
 
+// ─── grc init ─────────────────────────────────────────────────────────────────
+function cmdInit(args: string[]) {
+  const fw = args[args.indexOf('--framework') + 1] ?? args[args.indexOf('-f') + 1] ?? 'iso27001';
+  const validFrameworks = ['iso27001', 'soc2', 'nist-csf', 'iso42001', 'dora', 'hipaa', 'pci-dss'];
+  if (!validFrameworks.includes(fw)) {
+    error(`Unknown framework: ${fw}. Valid: ${validFrameworks.join(', ')}`);
+    process.exit(1);
+  }
+
+  if (existsSync('grcfile.yaml')) {
+    warn('grcfile.yaml already exists — skipping (use --force to overwrite)');
+    if (!args.includes('--force')) return;
+  }
+
+  const grcfile = `# GRC_Claw Compliance-as-Code configuration
+# Run: grc scan . | grc apply | grc report --framework ${fw}
+# Docs: https://a2zsoc.com/developers/compliance-as-code
+
+version: "1.0"
+framework: ${fw}
+org: ${process.env.GRC_ORG ?? 'my-org'}
+
+scan:
+  paths:
+    - src/
+    - api/
+    - scripts/
+  exclude:
+    - node_modules/
+    - dist/
+    - .git/
+
+evidence:
+  output: ./compliance-evidence
+  formats: [json, html]
+  retention_days: 365
+
+controls:
+  # Override specific control thresholds
+  # cc6.1:
+  #   required_evidence: [mfa_logs, access_review]
+  #   exemption: "Legacy system — tracked in JIRA-1234"
+
+integrations:
+  github_app: ${process.env.GRC_GITHUB_APP_ID ? 'enabled' : 'disabled'}
+  gateway: ${process.env.GRC_CLAW_GATEWAY_TOKEN ? 'enabled' : 'disabled'}
+  a2z_soc: ${process.env.A2Z_SOC_API_KEY ? 'enabled' : 'disabled'}
+`;
+
+  writeFileSync('grcfile.yaml', grcfile);
+  success('Created grcfile.yaml');
+
+  // GitHub Actions workflow
+  if (!existsSync('.github/workflows')) {
+    mkdirSync('.github/workflows', { recursive: true });
+  }
+  if (!existsSync('.github/workflows/compliance.yml')) {
+    const ghAction = `name: Compliance Gate
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g @grc-claw/cli
+      - name: Scan
+        run: grc scan . --json > compliance-report.json
+      - name: Gate on errors
+        run: |
+          ERRORS=$(cat compliance-report.json | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8'); console.log(JSON.parse(d).summary?.errors ?? 0)")
+          if [ "$ERRORS" -gt "0" ]; then
+            echo "::error::$ERRORS compliance error(s) found — run 'grc scan .' locally"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compliance-report
+          path: compliance-report.json
+`;
+    writeFileSync('.github/workflows/compliance.yml', ghAction);
+    success('Created .github/workflows/compliance.yml');
+  }
+
+  // .grcignore
+  if (!existsSync('.grcignore')) {
+    writeFileSync('.grcignore', '# Files excluded from compliance scanning\nnode_modules/\ndist/\ncoverage/\n*.test.ts\n*.spec.ts\n');
+    success('Created .grcignore');
+  }
+
+  log('');
+  log(`${bold('Next steps:')}`);
+  log(`  1. ${c.cyan}grc scan .${c.reset}                    — run your first compliance scan`);
+  log(`  2. ${c.cyan}grc doctor${c.reset}                    — verify environment`);
+  log(`  3. ${c.cyan}grc report --framework ${fw}${c.reset}  — generate evidence report`);
+  log(`  4. ${c.cyan}grc ai-bom generate${c.reset}           — generate AI Bill of Materials\n`);
+}
+
+// ─── grc doctor --fix ─────────────────────────────────────────────────────────
+interface AutoFix {
+  id: string;
+  description: string;
+  check: () => boolean;
+  fix: () => string;
+  framework: string;
+  control: string;
+}
+
+const AUTO_FIXES: AutoFix[] = [
+  {
+    id: 'gitignore-secrets',
+    description: 'Ensure .env files are in .gitignore',
+    framework: 'SOC 2 / ISO 27001',
+    control: 'CC6.1 / A.9.4.3',
+    check: () => {
+      if (!existsSync('.gitignore')) return false;
+      const gi = readFileSync('.gitignore', 'utf8');
+      return gi.includes('.env') && gi.includes('*.pem') && gi.includes('*.key');
+    },
+    fix: () => {
+      const entries = '\n# Security — GRC auto-fix\n.env\n.env.*\n*.pem\n*.key\n*.p12\n*.pfx\n*_rsa\n*_dsa\n*_ecdsa\n*_ed25519\n.secrets\ncredentials.json\nservice-account*.json\n';
+      if (!existsSync('.gitignore')) {
+        writeFileSync('.gitignore', entries);
+        return 'Created .gitignore with secret exclusions';
+      }
+      const current = readFileSync('.gitignore', 'utf8');
+      if (!current.includes('.env')) {
+        writeFileSync('.gitignore', current + entries);
+        return 'Added secret exclusion patterns to .gitignore';
+      }
+      return 'Already present';
+    },
+  },
+  {
+    id: 'security-headers',
+    description: 'Check for security headers in vercel.json / next.config',
+    framework: 'SOC 2',
+    control: 'CC6.6',
+    check: () => {
+      if (existsSync('vercel.json')) {
+        const v = JSON.parse(readFileSync('vercel.json', 'utf8'));
+        return Array.isArray(v.headers) && v.headers.some((h: { headers: Array<{key: string}> }) =>
+          h.headers?.some((x) => x.key === 'Strict-Transport-Security'));
+      }
+      return false;
+    },
+    fix: () => 'Manual: add HSTS + X-Frame-Options headers to vercel.json or web server config',
+  },
+  {
+    id: 'npm-audit',
+    description: 'No high/critical npm vulnerabilities',
+    framework: 'ISO 27001',
+    control: 'A.12.6.1',
+    check: () => {
+      try {
+        execSync('npm audit --audit-level=high --json 2>/dev/null', { stdio: 'pipe' });
+        return true;
+      } catch { return false; }
+    },
+    fix: () => {
+      try {
+        execSync('npm audit fix --only=prod 2>&1', { stdio: 'pipe' });
+        return 'Ran npm audit fix — check output for remaining manual fixes';
+      } catch (e) {
+        return `npm audit fix failed: ${(e as Error).message.slice(0, 80)}`;
+      }
+    },
+  },
+  {
+    id: 'grcfile-present',
+    description: 'grcfile.yaml present',
+    framework: 'GRC_Claw',
+    control: 'operational',
+    check: () => existsSync('grcfile.yaml') || existsSync('.grcfile.yaml'),
+    fix: () => { cmdInit([]); return 'Created grcfile.yaml (default: iso27001)'; },
+  },
+];
+
+async function cmdDoctorFix(args: string[]) {
+  const dryRun = args.includes('--dry-run');
+  log(`\n${bold('GRC Doctor — Auto-Fix')} ${dim(dryRun ? '(dry run)' : '')} ${dim(`v${VERSION}`)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
+
+  let fixed = 0; let skipped = 0; let already = 0;
+  for (const af of AUTO_FIXES) {
+    const passing = af.check();
+    if (passing) {
+      success(`${af.id.padEnd(30)} ${dim('already passing')}`);
+      already++;
+      continue;
+    }
+    if (dryRun) {
+      warn(`${af.id.padEnd(30)} ${c.yellow}would fix${c.reset} — ${af.description} (${af.framework} ${af.control})`);
+      skipped++;
+    } else {
+      try {
+        const result = af.fix();
+        success(`${af.id.padEnd(30)} ${dim(result)}`);
+        fixed++;
+      } catch (e) {
+        error(`${af.id.padEnd(30)} fix failed: ${(e as Error).message}`);
+      }
+    }
+  }
+
+  log('');
+  log(`Fixed: ${fixed}  Already passing: ${already}  ${dryRun ? 'Would fix: ' + skipped : ''}`);
+  log(`\n${dim('Tip: Run grc scan . to verify remaining findings\n')}`);
+}
+
+// ─── grc diff ─────────────────────────────────────────────────────────────────
+function cmdDiff(args: string[]) {
+  const ref = args[0] ?? 'HEAD~1';
+  log(`\n${bold('Compliance Diff')} ${dim(`${ref} → HEAD`)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
+
+  let changedFiles: string[] = [];
+  try {
+    const out = execSync(`git diff --name-only ${ref} HEAD 2>/dev/null`, { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
+    changedFiles = out.trim().split('\n').filter(Boolean);
+  } catch {
+    error('Could not run git diff — ensure you are in a git repository');
+    process.exit(1);
+  }
+
+  if (changedFiles.length === 0) {
+    info('No changed files between HEAD and ' + ref);
+    return;
+  }
+
+  const srcFiles = changedFiles.filter(f => ['.ts', '.tsx', '.js', '.jsx', '.py', '.go'].some(ext => f.endsWith(ext)));
+  if (srcFiles.length === 0) {
+    info(`${changedFiles.length} changed files — no source code changes to scan`);
+    return;
+  }
+
+  info(`Scanning ${srcFiles.length} changed source files for compliance delta…\n`);
+
+  const allFindings: Finding[] = [];
+  for (const file of srcFiles) {
+    const abs = resolve(file);
+    if (existsSync(abs)) allFindings.push(...scanFile(abs));
+  }
+
+  if (allFindings.length === 0) {
+    success('No new compliance findings in changed files');
+    log(`${dim(`(${srcFiles.length} files scanned, ${changedFiles.length - srcFiles.length} non-source files skipped)`)}\n`);
+    return;
+  }
+
+  const errors = allFindings.filter(f => f.severity === 'error');
+  const warnings = allFindings.filter(f => f.severity === 'warning');
+
+  log(`Found ${c.red}${errors.length} error(s)${c.reset}  ${c.yellow}${warnings.length} warning(s)${c.reset} in diff\n`);
+  for (const f of allFindings) {
+    const sev = f.severity === 'error' ? c.red : f.severity === 'warning' ? c.yellow : c.dim;
+    log(`  ${sev}${f.severity.toUpperCase()}${c.reset}  ${dim(relative(process.cwd(), f.file))}:${f.line}  ${f.message}`);
+    log(`         ${dim(f.framework + ' ' + f.control)}`);
+  }
+  log('');
+  if (errors.length > 0) {
+    warn('This diff introduces compliance errors — fix before merging\n');
+    process.exit(1);
+  }
+}
+
+// ─── grc ai-bom generate ──────────────────────────────────────────────────────
+async function cmdAiBom(args: string[]) {
+  const sub = args[0];
+
+  if (sub !== 'generate') {
+    log(`Usage: grc ai-bom generate [--model-card <path>] [--output <file>]`);
+    log(`       grc ai-bom generate --scan-deps`);
+    return;
+  }
+
+  const modelCardPath = args[args.indexOf('--model-card') + 1];
+  const outputPath = args[args.indexOf('--output') + 1];
+  const scanDeps = args.includes('--scan-deps');
+
+  log(`\n${bold('AI Bill of Materials Generator')} ${dim(`v${VERSION}`)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
+
+  const bom: Record<string, unknown> = {
+    schema: 'https://a2zsoc.com/schemas/ai-bom/v1.0',
+    bomFormat: 'GRC-AI-BOM',
+    specVersion: '1.0',
+    serialNumber: `urn:uuid:${createHash('sha256').update(Date.now().toString()).digest('hex').slice(0, 32)}`,
+    version: 1,
+    metadata: {
+      timestamp: new Date().toISOString(),
+      generator: { name: '@grc-claw/cli', version: VERSION },
+      licenses: [{ id: 'MIT' }],
+    },
+    components: [] as unknown[],
+    externalReferences: [
+      { type: 'documentation', url: 'https://a2zsoc.com/developers/ai-bom' },
+    ],
+    regulatory: {
+      euAiAct: { article53Compliant: false, riskCategory: 'unknown', auditTrailRequired: true },
+      nistAiRmf: { profile: 'generic', governFunctionCoverage: 0 },
+      iso42001: { clause9_1: 'partial' },
+    },
+  };
+
+  // Parse model card if provided
+  if (modelCardPath && existsSync(modelCardPath)) {
+    try {
+      const mc = JSON.parse(readFileSync(modelCardPath, 'utf8')) as Record<string, unknown>;
+      const comp: Record<string, unknown> = {
+        type: 'machine-learning-model',
+        name: mc['model_name'] ?? mc['name'] ?? 'unknown',
+        version: mc['version'] ?? '0.0.0',
+        description: mc['description'] ?? '',
+        properties: [],
+      };
+      if (mc['base_model']) (comp['properties'] as unknown[]).push({ name: 'base_model', value: mc['base_model'] });
+      if (mc['training_data']) (comp['properties'] as unknown[]).push({ name: 'training_data', value: String(mc['training_data']) });
+      if (mc['architecture']) (comp['properties'] as unknown[]).push({ name: 'architecture', value: String(mc['architecture']) });
+      if (mc['license']) (comp['properties'] as unknown[]).push({ name: 'license', value: String(mc['license']) });
+      (bom['components'] as unknown[]).push(comp);
+      bom['regulatory'] = { ...bom['regulatory'] as object, euAiAct: { article53Compliant: true, riskCategory: mc['risk_category'] ?? 'limited', auditTrailRequired: true } };
+      success(`Parsed model card: ${modelCardPath}`);
+    } catch { warn('Could not parse model card JSON — including empty component'); }
+  }
+
+  // Scan npm dependencies for AI/ML packages
+  if (scanDeps && existsSync('package.json')) {
+    const pkgJson = JSON.parse(readFileSync('package.json', 'utf8')) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+    const aiPackages = ['openai', '@anthropic-ai/sdk', '@google/generative-ai', 'langchain', 'llamaindex',
+      'transformers', '@huggingface/inference', 'ollama', 'groq-sdk', 'cohere-ai', 'mistralai', 'replicate'];
+    const allDeps = { ...pkgJson['dependencies'], ...pkgJson['devDependencies'] };
+    for (const [pkg, ver] of Object.entries(allDeps)) {
+      if (aiPackages.some(ai => pkg.includes(ai))) {
+        (bom['components'] as unknown[]).push({
+          type: 'library',
+          name: pkg,
+          version: ver,
+          scope: 'required',
+          properties: [{ name: 'category', value: 'ai-sdk' }],
+        });
+      }
+    }
+    info(`Scanned dependencies — found ${(bom['components'] as unknown[]).length} AI/ML package(s)`);
+  }
+
+  const bomJson = JSON.stringify(bom, null, 2);
+  const hash = createHash('sha256').update(bomJson).digest('hex');
+  (bom['metadata'] as Record<string, unknown>)['hash'] = { alg: 'SHA-256', content: hash };
+
+  const finalJson = JSON.stringify(bom, null, 2);
+
+  if (outputPath) {
+    writeFileSync(outputPath, finalJson);
+    success(`AI-BOM written to ${outputPath} (SHA-256: ${hash.slice(0, 16)}…)`);
+  } else {
+    process.stdout.write(finalJson + '\n');
+  }
+
+  log(`\n${dim('EU AI Act Article 53 compliance data captured')}`);
+  log(`${dim('Submit to your compliance platform:')} grc report --attach-bom ${outputPath ?? 'ai-bom.json'}\n`);
+}
+
 function cmdVersion() {
   log(`@grc-claw/cli ${VERSION}`);
   log(`Node: ${process.version}`);
@@ -424,6 +795,9 @@ ${bold('USAGE')}
   grc <command> [options]
 
 ${bold('COMMANDS')}
+  ${c.cyan}init${c.reset}                          Scaffold grcfile.yaml + GitHub Actions workflow
+    --framework <id>          Framework to target (default: iso27001)
+
   ${c.cyan}scan${c.reset} [path]                  Scan codebase for compliance findings
     --framework <id>          Filter findings to a specific framework
     --json                    Output JSON (suitable for CI/CD gates)
@@ -432,18 +806,39 @@ ${bold('COMMANDS')}
     --framework <id>          Framework to report against (default: iso27001)
     --path <dir>              Directory to scan (default: .)
 
-  ${c.cyan}frameworks${c.reset} list               List available framework packs
+  ${c.cyan}diff${c.reset} [ref]                   Show compliance delta between git refs (default: HEAD~1)
 
   ${c.cyan}doctor${c.reset}                        Check environment and gateway connectivity
+    --fix                     Auto-remediate common control failures
+    --dry-run                 Preview fixes without applying
+
+  ${c.cyan}ai-bom generate${c.reset}               Generate AI Bill of Materials (EU AI Act Art. 53)
+    --model-card <path>       Parse a model_card.json file
+    --scan-deps               Scan package.json for AI/ML dependencies
+    --output <file>           Write BOM to file (default: stdout)
+
+  ${c.cyan}frameworks${c.reset} list               List available framework packs
 
   ${c.cyan}version${c.reset}                       Print version information
 
 ${bold('EXAMPLES')}
+  ${dim('# Scaffold a new compliance project')}
+  grc init --framework soc2
+
   ${dim('# Scan current directory')}
   grc scan .
 
   ${dim('# Scan and gate CI/CD (exits 1 if errors found)')}
   grc scan . --json | jq '.summary.errors'
+
+  ${dim('# Show compliance changes in this PR branch')}
+  grc diff main
+
+  ${dim('# Auto-fix common control failures')}
+  grc doctor --fix
+
+  ${dim('# Generate AI Bill of Materials')}
+  grc ai-bom generate --scan-deps --output ai-bom.json
 
   ${dim('# Generate ISO 27001 evidence report')}
   grc report --framework iso27001 > evidence-$(date +%F).json
@@ -470,10 +865,16 @@ ${bold('DOCS')}
 const [,, cmd, ...rest] = process.argv;
 
 switch (cmd) {
+  case 'init':       cmdInit(rest); break;
   case 'scan':       await cmdScan(rest); break;
   case 'report':     cmdReport(rest); break;
+  case 'diff':       cmdDiff(rest); break;
+  case 'doctor':
+    if (rest.includes('--fix')) { await cmdDoctorFix(rest); }
+    else { await cmdDoctor(); }
+    break;
+  case 'ai-bom':     await cmdAiBom(rest); break;
   case 'frameworks': cmdFrameworks(rest); break;
-  case 'doctor':     await cmdDoctor(); break;
   case 'version':    cmdVersion(); break;
   case 'help':
   case '--help':

@@ -25,7 +25,6 @@
     "@grc-claw/evidence": "*",
     "@grc-claw/frameworks": "*"
   },
-  "files": [
-    "dist"
-  ]
+  "files": ["dist"],
+  "publishConfig": { "access": "public" }
 }

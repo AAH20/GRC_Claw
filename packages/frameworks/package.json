@@ -17,7 +17,6 @@
   "dependencies": {
     "@grc-claw/core": "*"
   },
-  "files": [
-    "dist"
-  ]
+  "files": ["dist"],
+  "publishConfig": { "access": "public" }
 }
