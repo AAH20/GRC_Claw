@@ -56,7 +56,9 @@
     "packages/chat-grc",
     "packages/framework-crosswalk",
     "packages/compliance-autopilot",
-    "packages/vscode-extension"
+    "packages/vscode-extension",
+    "packages/evidence-collector",
+    "packages/drift-detector"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
