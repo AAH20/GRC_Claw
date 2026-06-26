@@ -184,19 +184,31 @@ function severityToVscode(s: "critical" | "high" | "medium" | "low"): vscode.Dia
   return vscode.DiagnosticSeverity.Information;
 }
 
-function runScanOnDocument(doc: vscode.TextDocument): void {
-  const supported = [".ts", ".tsx", ".js", ".mjs", ".py", ".go", ".java", ".cs", ".rb", ".rs"];
-  if (!supported.some((ext) => doc.fileName.endsWith(ext))) return;
+const IAC_EXTENSIONS = new Set([".tf", ".yaml", ".yml"]);
+const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".py", ".go", ".java", ".cs", ".rb", ".rs"]);
 
-  const findings = scanText(doc.getText());
-  const diagnostics: vscode.Diagnostic[] = findings.map((f) => {
-    const range = new vscode.Range(f.line, f.col, f.line, doc.lineAt(f.line).text.length);
+function runScanOnDocument(doc: vscode.TextDocument): void {
+  const ext = path.extname(doc.fileName).toLowerCase();
+  const isCode = CODE_EXTENSIONS.has(ext);
+  const isIaC = IAC_EXTENSIONS.has(ext);
+  if (!isCode && !isIaC) return;
+
+  const text = doc.getText();
+  const allFindings: ComplianceFinding[] = [];
+
+  if (isCode) allFindings.push(...scanText(text));
+  if (isIaC) allFindings.push(...scanIaC(text, ext));
+
+  const diagnostics: vscode.Diagnostic[] = allFindings.map((f) => {
+    const lineLen = doc.lineAt(Math.min(f.line, doc.lineCount - 1)).text.length;
+    const range = new vscode.Range(f.line, f.col, f.line, lineLen);
+    const label = isIaC ? `[IaC ${f.controlId}]` : `[GRC ${f.controlId}]`;
     const diag = new vscode.Diagnostic(
       range,
-      `[GRC ${f.controlId}] ${f.message}`,
+      `${label} ${f.message}`,
       severityToVscode(f.severity),
     );
-    diag.source = "GRC_Claw";
+    diag.source = isIaC ? "GRC_Claw/IaC" : "GRC_Claw";
     diag.code = f.ruleId;
     if (f.fix) {
       (diag as vscode.Diagnostic & { hint?: string }).hint = f.fix;

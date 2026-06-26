@@ -923,6 +923,135 @@ async function cmdPqcScan(args: string[]) {
   if (critical.length > 0) process.exit(1);
 }
 
+// ─── grc iac-scan ─────────────────────────────────────────────────────────────
+
+interface IaCFinding {
+  file: string;
+  line: number;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  rule: string;
+  control: string;
+  framework: string;
+  message: string;
+  fix: string;
+}
+
+const IAC_RULES: Array<{
+  id: string;
+  control: string;
+  framework: string;
+  pattern: RegExp;
+  fileExts: string[];
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  message: string;
+  fix: string;
+}> = [
+  { id: 'iac-public-s3', control: 'A.13.1.3', framework: 'ISO 27001', pattern: /acl\s*=\s*["']public-read(-write)?["']/i, fileExts: ['.tf'], severity: 'critical', message: 'S3 bucket ACL is public — ISO 27001 A.13.1.3', fix: 'Set acl = "private" and enable S3 Block Public Access' },
+  { id: 'iac-rds-no-encrypt', control: 'A.10.1.1', framework: 'ISO 27001', pattern: /storage_encrypted\s*=\s*false/i, fileExts: ['.tf'], severity: 'critical', message: 'RDS storage encryption disabled — SOC 2 CC6.1 / ISO 27001 A.10.1.1', fix: 'Set storage_encrypted = true on all aws_db_instance resources' },
+  { id: 'iac-open-sg', control: 'A.13.1.1', framework: 'ISO 27001', pattern: /cidr_blocks\s*=\s*\["0\.0\.0\.0\/0"\]/, fileExts: ['.tf'], severity: 'high', message: 'Security group open to 0.0.0.0/0 — ISO 27001 A.13.1.1', fix: 'Restrict cidr_blocks to specific IP ranges' },
+  { id: 'iac-tf-no-state-encrypt', control: 'A.10.1.1', framework: 'ISO 27001', pattern: /backend\s+"s3"/, fileExts: ['.tf'], severity: 'high', message: 'Terraform S3 backend — verify encrypt = true is set — ISO 27001 A.10.1.1', fix: 'Add encrypt = true to the terraform backend "s3" block' },
+  { id: 'iac-k8s-privileged', control: 'A.9.4.1', framework: 'ISO 27001', pattern: /privileged\s*:\s*true/i, fileExts: ['.yaml', '.yml'], severity: 'critical', message: 'Kubernetes container privileged=true — SOC 2 CC6.1 / ISO 27001 A.9.4.1', fix: 'Set privileged: false; use least-privilege security context' },
+  { id: 'iac-cf-http', control: 'A.13.2.3', framework: 'ISO 27001', pattern: /Protocol\s*:\s*HTTP(?!S)/i, fileExts: ['.yaml', '.yml', '.json'], severity: 'high', message: 'CloudFormation resource using HTTP — ISO 27001 A.13.2.3', fix: 'Switch Protocol to HTTPS and configure an SSL certificate' },
+  { id: 'iac-gcs-public', control: 'A.13.1.3', framework: 'ISO 27001', pattern: /public_access_prevention\s*=\s*["']unspecified["']/i, fileExts: ['.tf'], severity: 'critical', message: 'GCS bucket public access prevention unspecified — ISO 27001 A.13.1.3', fix: 'Set public_access_prevention = "enforced"' },
+  { id: 'iac-azure-blob-public', control: 'A.13.1.3', framework: 'ISO 27001', pattern: /allow_blob_public_access\s*=\s*true/i, fileExts: ['.tf'], severity: 'critical', message: 'Azure Blob public access enabled — ISO 27001 A.13.1.3', fix: 'Set allow_blob_public_access = false on azurerm_storage_account' },
+];
+
+const IAC_EXTS = new Set(['.tf', '.yaml', '.yml', '.json']);
+
+function scanFileForIaC(filePath: string): IaCFinding[] {
+  const ext = extname(filePath).toLowerCase();
+  if (!IAC_EXTS.has(ext)) return [];
+  const findings: IaCFinding[] = [];
+  let content: string;
+  try { content = readFileSync(filePath, 'utf8'); } catch { return []; }
+  const lines = content.split('\n');
+  for (const rule of IAC_RULES) {
+    if (!rule.fileExts.includes(ext)) continue;
+    for (let i = 0; i < lines.length; i++) {
+      const re = new RegExp(rule.pattern.source, 'i');
+      if (re.test(lines[i])) {
+        findings.push({ file: filePath, line: i + 1, severity: rule.severity, rule: rule.id, control: rule.control, framework: rule.framework, message: rule.message, fix: rule.fix });
+      }
+    }
+  }
+  return findings;
+}
+
+function walkDirForIaC(dir: string, findings: IaCFinding[]) {
+  let entries: string[] = [];
+  try { entries = readdirSync(dir); } catch { return; }
+  for (const entry of entries) {
+    if (SKIP_DIRS.has(entry)) continue;
+    const full = join(dir, entry);
+    try {
+      const stat = statSync(full);
+      if (stat.isDirectory()) walkDirForIaC(full, findings);
+      else if (IAC_EXTS.has(extname(entry))) findings.push(...scanFileForIaC(full));
+    } catch { /* skip */ }
+  }
+}
+
+async function cmdIaCScan(args: string[]) {
+  const targetDir = resolve(args.find(a => !a.startsWith('-')) ?? '.');
+  const jsonMode = args.includes('--json');
+  const framework = args[args.indexOf('--framework') + 1] ?? null;
+  const outputPath = args[args.indexOf('--output') + 1];
+
+  if (!jsonMode) {
+    log(`\n${bold('GRC_Claw IaC Compliance Scanner')} ${dim(`v${VERSION}`)}`);
+    log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    info(`Scanning ${bold(targetDir)} for Terraform, CloudFormation, Kubernetes manifests…`);
+  }
+
+  const findings: IaCFinding[] = [];
+  walkDirForIaC(targetDir, findings);
+
+  const filtered = framework ? findings.filter(f => f.framework.toLowerCase().includes(framework.toLowerCase())) : findings;
+  const critical = filtered.filter(f => f.severity === 'critical');
+  const high = filtered.filter(f => f.severity === 'high');
+  const medium = filtered.filter(f => f.severity === 'medium');
+  const low = filtered.filter(f => f.severity === 'low');
+  const score = Math.max(0, 100 - critical.length * 20 - high.length * 10 - medium.length * 3 - low.length);
+
+  const report = {
+    schema: 'https://a2zsoc.com/schemas/iac-scan/v1.0',
+    scanned_at: new Date().toISOString(),
+    target_dir: targetDir,
+    framework_filter: framework,
+    summary: { total: filtered.length, critical: critical.length, high: high.length, medium: medium.length, low: low.length, posture_score: score },
+    findings: filtered.map(f => ({ ...f, file: relative(targetDir, f.file) })),
+    frameworks_checked: [...new Set(filtered.map(f => f.framework))],
+    controls_checked: [...new Set(filtered.map(f => f.control))],
+  };
+
+  if (jsonMode || outputPath) {
+    const json = JSON.stringify(report, null, 2);
+    if (outputPath) { writeFileSync(outputPath, json); if (!jsonMode) success(`IaC scan report written to ${outputPath}`); }
+    else process.stdout.write(json + '\n');
+  } else {
+    log('');
+    if (filtered.length === 0) {
+      success(`No IaC compliance findings in ${targetDir} — infrastructure looks clean!`);
+    } else {
+      for (const f of critical) {
+        log(`${c.red}✗ CRITICAL${c.reset}  ${c.dim}${relative(targetDir, f.file)}:${f.line}${c.reset}  [${f.control}]  ${f.message}`);
+        log(`  ${c.green}Fix:${c.reset} ${f.fix}`);
+      }
+      for (const f of high) {
+        log(`${c.yellow}⚠ HIGH${c.reset}     ${c.dim}${relative(targetDir, f.file)}:${f.line}${c.reset}  [${f.control}]  ${f.message}`);
+        log(`  ${c.green}Fix:${c.reset} ${f.fix}`);
+      }
+      for (const f of [...medium, ...low]) {
+        log(`${c.blue}ℹ ${f.severity.toUpperCase()}${c.reset}    ${c.dim}${relative(targetDir, f.file)}:${f.line}${c.reset}  [${f.control}]  ${f.message}`);
+      }
+      log(`\n${bold('Posture Score:')} ${score < 60 ? c.red : score < 80 ? c.yellow : c.green}${score}/100${c.reset}`);
+      log(`${c.dim}Critical: ${critical.length}  High: ${high.length}  Medium: ${medium.length}  Low: ${low.length}${c.reset}\n`);
+    }
+  }
+
+  if (critical.length > 0 && !jsonMode) process.exit(1);
+}
+
 function cmdVersion() {
   log(`@grc-claw/cli ${VERSION}`);
   log(`Node: ${process.version}`);
@@ -962,6 +1091,12 @@ ${bold('COMMANDS')}
   ${c.cyan}ai-bom publish${c.reset}                Publish AI-BOM to A2Z SOC public registry
     --file <path>             AI-BOM JSON file to publish (default: ai-bom.json)
     --model-id <id>           Override model identifier
+
+  ${c.cyan}iac-scan${c.reset} [path]               Scan Terraform/CloudFormation/Kubernetes for compliance
+    --framework <id>          Filter by framework (iso27001, soc2, nist-csf)
+    --output <file>           Write report to file
+    --json                    JSON output for CI/CD gates
+    Exits 1 if critical IaC findings detected
 
   ${c.cyan}pqc-scan${c.reset} [path]               Scan for deprecated cryptography (RSA/ECDSA/ECDH)
     --output <file>           Write report to file
@@ -1028,6 +1163,7 @@ switch (cmd) {
     if (rest[0] === 'publish') { await cmdAiBomPublish(rest.slice(1)); }
     else { await cmdAiBom(rest); }
     break;
+  case 'iac-scan':   await cmdIaCScan(rest); break;
   case 'pqc-scan':   await cmdPqcScan(rest); break;
   case 'frameworks': cmdFrameworks(rest); break;
   case 'version':    cmdVersion(); break;
