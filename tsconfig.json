@@ -47,6 +47,7 @@
     { "path": "./packages/cli" },
     { "path": "./packages/registry" },
     { "path": "./packages/compliance-autopilot" },
+    { "path": "./packages/vscode-extension" },
     { "path": "./packages/gateway" },
     { "path": "./packages/accm" },
     { "path": "./packages/agent-builder" }
