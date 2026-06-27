@@ -11,6 +11,23 @@ import { ComplianceGauge } from '../components/ComplianceGauge';
 import { RiskHeatmap } from '../components/RiskHeatmap';
 import { TimeSeriesChart } from '../components/TimeSeriesChart';
 
+interface SocEvent {
+  id: string;
+  timestamp: string;
+  severity: string;
+  source: string;
+  title: string;
+  control?: string;
+}
+
+interface ComplianceUpdate {
+  overall_score: number;
+  control?: string;
+  previous_score?: number;
+  delta?: number;
+  timestamp: string;
+}
+
 export function DashboardPage() {
   const meta = PAGE_META.dashboard;
   const [health, setHealth] = useState<Record<string, unknown> | null>(null);
@@ -24,23 +41,30 @@ export function DashboardPage() {
   const [riskCells, setRiskCells] = useState<{ likelihood: number; impact: number; count: number }[]>([]);
   const [liveScore, setLiveScore] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
+  const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [socEvents, setSocEvents] = useState<SocEvent[]>([]);
+  const [complianceUpdates, setComplianceUpdates] = useState<ComplianceUpdate[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptsRef = useRef(0);
 
-  // WebSocket connection for real-time compliance updates
+  // WebSocket connection for real-time compliance + SOC events
   useEffect(() => {
     const settings = loadSettings();
     if (!settings.baseUrl || !settings.token) return;
 
     const wsUrl = settings.baseUrl.replace(/^http/, 'ws');
     let socket: WebSocket | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    const MAX_RECONNECT_DELAY = 30_000;
 
     function connect() {
       try {
+        setWsStatus('connecting');
         socket = new WebSocket(wsUrl);
         wsRef.current = socket;
 
         socket.onopen = () => {
+          reconnectAttemptsRef.current = 0;
           socket?.send(JSON.stringify({
             type: 'connect',
             params: { auth: { token: settings.token }, role: 'operator' },
@@ -51,23 +75,42 @@ export function DashboardPage() {
           try {
             const frame = JSON.parse(String(event.data));
             if (frame.type === 'hello-ok') {
-              // Subscribe to compliance updates after auth
               socket?.send(JSON.stringify({
                 type: 'subscribe',
                 channel: 'compliance_updates',
                 token: settings.token,
               }));
+              socket?.send(JSON.stringify({
+                type: 'subscribe',
+                channel: 'soc_events',
+                token: settings.token,
+              }));
               return;
             }
-            if (frame.type === 'subscribed' && frame.channel === 'compliance_updates') {
-              setWsConnected(true);
+            if (frame.type === 'subscribed') {
+              if (frame.channel === 'compliance_updates' || frame.channel === 'soc_events') {
+                setWsConnected(true);
+                setWsStatus('connected');
+              }
               return;
             }
             if (frame.type === 'compliance_update' && frame.data) {
-              const data = frame.data as Record<string, unknown>;
+              const data = frame.data as ComplianceUpdate;
               if (typeof data.overall_score === 'number') {
                 setLiveScore(Math.round(data.overall_score));
               }
+              setComplianceUpdates((prev) => {
+                const next = [{ ...data, timestamp: data.timestamp ?? new Date().toISOString() }, ...prev];
+                return next.slice(0, 20);
+              });
+              return;
+            }
+            if (frame.type === 'soc_event' && frame.data) {
+              const evt = frame.data as SocEvent;
+              setSocEvents((prev) => {
+                const next = [{ ...evt, timestamp: evt.timestamp ?? new Date().toISOString() }, ...prev];
+                return next.slice(0, 30);
+              });
             }
           } catch { /* ignore malformed frames */ }
         };
@@ -75,28 +118,34 @@ export function DashboardPage() {
         socket.onclose = () => {
           setWsConnected(false);
           wsRef.current = null;
-          // Reconnect after 5 seconds
-          reconnectTimer = setTimeout(connect, 5000);
+          const delay = Math.min(
+            5000 * Math.pow(2, reconnectAttemptsRef.current),
+            MAX_RECONNECT_DELAY,
+          );
+          reconnectAttemptsRef.current += 1;
+          reconnectTimerRef.current = setTimeout(connect, delay);
         };
 
         socket.onerror = () => {
+          setWsStatus('error');
           socket?.close();
         };
       } catch {
-        // WebSocket not available or URL invalid
+        setWsStatus('error');
       }
     }
 
     connect();
 
     return () => {
-      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       if (socket) {
         socket.onclose = null;
         socket.close();
       }
       wsRef.current = null;
       setWsConnected(false);
+      setWsStatus('disconnected');
     };
   }, []);
 
@@ -265,6 +314,18 @@ export function DashboardPage() {
                 <span style={{ color: 'var(--success)', fontWeight: 600 }}>Live</span>
               </div>
             )}
+            {!wsConnected && wsStatus === 'connecting' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.85rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>Connecting\u2026</span>
+              </div>
+            )}
+            {wsStatus === 'error' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.85rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                <span style={{ color: '#ef4444', fontWeight: 600 }}>Disconnected</span>
+              </div>
+            )}
           </div>
 
           <div className="grid-2 section-gap">
@@ -334,6 +395,72 @@ export function DashboardPage() {
             {syncError && <p className="error">{syncError}</p>}
             {syncResult != null && <JsonBlock data={syncResult} />}
           </div>
+
+          {socEvents.length > 0 && (
+            <div className="card section-gap">
+              <h2>Live SOC Events</h2>
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border, #333)', textAlign: 'left' }}>
+                      <th style={{ padding: '6px 8px' }}>Time</th>
+                      <th style={{ padding: '6px 8px' }}>Severity</th>
+                      <th style={{ padding: '6px 8px' }}>Source</th>
+                      <th style={{ padding: '6px 8px' }}>Event</th>
+                      <th style={{ padding: '6px 8px' }}>Control</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {socEvents.map((evt) => (
+                      <tr key={evt.id} style={{ borderBottom: '1px solid var(--border, #222)' }}>
+                        <td style={{ padding: '6px 8px', color: '#999' }}>
+                          {new Date(evt.timestamp).toLocaleTimeString()}
+                        </td>
+                        <td style={{ padding: '6px 8px' }}>
+                          <span style={{
+                            padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600,
+                            background: evt.severity === 'critical' ? '#7f1d1d' : evt.severity === 'high' ? '#78350f' : evt.severity === 'medium' ? '#1e3a5f' : '#1a3a1a',
+                            color: evt.severity === 'critical' ? '#fca5a5' : evt.severity === 'high' ? '#fcd34d' : evt.severity === 'medium' ? '#93c5fd' : '#86efac',
+                          }}>
+                            {evt.severity.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 8px', color: '#999' }}>{evt.source}</td>
+                        <td style={{ padding: '6px 8px' }}>{evt.title}</td>
+                        <td style={{ padding: '6px 8px', color: '#999' }}>{evt.control ?? '\u2014'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {complianceUpdates.length > 0 && (
+            <div className="card section-gap">
+              <h2>Real-time Compliance Updates</h2>
+              <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                {complianceUpdates.map((update, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '1px solid var(--border, #222)' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#999', minWidth: '70px' }}>
+                      {new Date(update.timestamp).toLocaleTimeString()}
+                    </span>
+                    <span style={{ fontWeight: 600, minWidth: '40px' }}>
+                      {update.overall_score}/100
+                    </span>
+                    {typeof update.delta === 'number' && update.delta !== 0 && (
+                      <span style={{ color: update.delta > 0 ? '#22c55e' : '#ef4444', fontSize: '0.85rem' }}>
+                        {update.delta > 0 ? '+' : ''}{update.delta}
+                      </span>
+                    )}
+                    {update.control && (
+                      <span style={{ color: '#999', fontSize: '0.85rem' }}>{update.control}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </PageShell>

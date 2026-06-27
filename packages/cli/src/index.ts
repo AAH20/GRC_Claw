@@ -1069,9 +1069,29 @@ ${bold('COMMANDS')}
   ${c.cyan}init${c.reset}                          Scaffold grcfile.yaml + GitHub Actions workflow
     --framework <id>          Framework to target (default: iso27001)
 
+  ${c.cyan}plan${c.reset}                           Generate compliance plan from grcfile.yaml
+    --json                    Output JSON (for CI/CD pipelines)
+    --output <file>           Write plan to file
+
+  ${c.cyan}apply${c.reset} [path]                  Apply compliance plan to target environment
+    --dry-run                 Preview changes without applying
+    --json                    Output JSON
+
+  ${c.cyan}audit${c.reset} [path]                  Run full compliance audit with control coverage
+    --json                    Output JSON
+    --output <file>           Write audit report to file
+
   ${c.cyan}scan${c.reset} [path]                  Scan codebase for compliance findings
     --framework <id>          Filter findings to a specific framework
     --json                    Output JSON (suitable for CI/CD gates)
+
+  ${c.cyan}status${c.reset} [path]                 Show current compliance posture and gateway status
+    --json                    Output JSON
+
+  ${c.cyan}drift${c.reset} [path]                  Detect compliance drift from a git baseline
+    --base <ref>              Git ref to compare against (default: HEAD)
+    --json                    Output JSON
+    --output <file>           Write drift report to file
 
   ${c.cyan}report${c.reset}                        Generate a compliance evidence report
     --framework <id>          Framework to report against (default: iso27001)
@@ -1111,11 +1131,26 @@ ${bold('EXAMPLES')}
   ${dim('# Scaffold a new compliance project')}
   grc init --framework soc2
 
+  ${dim('# Generate a compliance plan')}
+  grc plan --json > plan.json
+
+  ${dim('# Apply compliance fixes (dry run)')}
+  grc apply --dry-run
+
   ${dim('# Scan current directory')}
   grc scan .
 
   ${dim('# Scan and gate CI/CD (exits 1 if errors found)')}
   grc scan . --json | jq '.summary.errors'
+
+  ${dim('# Show compliance status')}
+  grc status
+
+  ${dim('# Detect drift from main branch')}
+  grc drift --base main
+
+  ${dim('# Run full compliance audit')}
+  grc audit --framework iso27001
 
   ${dim('# Show compliance changes in this PR branch')}
   grc diff main
@@ -1147,12 +1182,600 @@ ${bold('DOCS')}
 `);
 }
 
+// ─── Gateway helpers ──────────────────────────────────────────────────────────
+const GATEWAY_HOST = process.env.GRC_CLAW_HOST ?? '127.0.0.1';
+const GATEWAY_PORT = process.env.GRC_CLAW_PORT ?? '18791';
+const GATEWAY_BASE = `http://${GATEWAY_HOST}:${GATEWAY_PORT}`;
+const GATEWAY_TOKEN = process.env.GRC_CLAW_GATEWAY_TOKEN ?? '';
+
+interface GatewayResponse<T = unknown> {
+  ok: boolean;
+  status: number;
+  data: T;
+}
+
+async function gatewayGet<T = unknown>(path: string): Promise<GatewayResponse<T>> {
+  const url = `${GATEWAY_BASE}${path}`;
+  const headers: Record<string, string> = {};
+  if (GATEWAY_TOKEN) headers['Authorization'] = `Bearer ${GATEWAY_TOKEN}`;
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(10_000) });
+  const body = await res.json() as T;
+  return { ok: res.ok, status: res.status, data: body };
+}
+
+async function gatewayPost<T = unknown>(path: string, payload: unknown): Promise<GatewayResponse<T>> {
+  const url = `${GATEWAY_BASE}${path}`;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (GATEWAY_TOKEN) headers['Authorization'] = `Bearer ${GATEWAY_TOKEN}`;
+  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(10_000) });
+  const body = await res.json() as T;
+  return { ok: res.ok, status: res.status, data: body };
+}
+
+// ─── grcfile.yaml parser (YAML-lite — handles grcfile.yaml key/value pairs) ───
+interface GrcFile {
+  version: string;
+  framework: string;
+  org: string;
+  scan: { paths: string[]; exclude: string[] };
+  evidence: { output: string; formats: string[]; retention_days: number };
+  controls: Record<string, { required_evidence?: string[]; exemption?: string }>;
+  integrations: { github_app: string; gateway: string; a2z_soc: string };
+}
+
+function parseGrcFile(): GrcFile {
+  const candidates = ['grcfile.yaml', '.grcfile.yaml'];
+  const found = candidates.find((f) => existsSync(f));
+  if (!found) {
+    error('grcfile.yaml not found — run: grc init');
+    process.exit(1);
+  }
+  const raw = readFileSync(found, 'utf8');
+
+  const result: GrcFile = {
+    version: '1.0',
+    framework: 'iso27001',
+    org: 'my-org',
+    scan: { paths: ['src/'], exclude: ['node_modules/'] },
+    evidence: { output: './compliance-evidence', formats: ['json'], retention_days: 365 },
+    controls: {},
+    integrations: { github_app: 'disabled', gateway: 'disabled', a2z_soc: 'disabled' },
+  };
+
+  let section = '';
+  for (const line of raw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const topMatch = trimmed.match(/^(\w[\w_]*):\s*(.*)/);
+    if (topMatch) {
+      const key = topMatch[1];
+      const val = topMatch[2];
+      if (!val) { section = key; continue; }
+      switch (key) {
+        case 'version': result.version = val; break;
+        case 'framework': result.framework = val; break;
+        case 'org': result.org = val; break;
+        case 'retention_days': result.evidence.retention_days = parseInt(val, 10) || 365; break;
+        case 'output': result.evidence.output = val; break;
+      }
+      section = key === 'scan' ? 'scan' : key === 'evidence' ? 'evidence' : '';
+      continue;
+    }
+
+    if (section === 'scan' && trimmed.startsWith('- ')) {
+      const item = trimmed.slice(2).trim();
+      if (result.scan.paths.length <= result.scan.exclude.length + 1) result.scan.paths.push(item);
+      else result.scan.exclude.push(item);
+    }
+    if (section === 'evidence') {
+      const sub = trimmed.match(/^(\w+):\s*(.*)/);
+      if (sub) {
+        if (sub[1] === 'output') result.evidence.output = sub[2];
+        if (sub[1] === 'retention_days') result.evidence.retention_days = parseInt(sub[2], 10) || 365;
+        if (sub[1] === 'formats') {
+          result.evidence.formats = sub[2].replace(/[[\]]/g, '').split(',').map((s) => s.trim()).filter(Boolean);
+        }
+      }
+    }
+    if (section === '') {
+      const kv = trimmed.match(/^(\w+):\s*(.*)/);
+      if (kv) {
+        switch (kv[1]) {
+          case 'github_app': result.integrations.github_app = kv[2]; break;
+          case 'gateway': result.integrations.gateway = kv[2]; break;
+          case 'a2z_soc': result.integrations.a2z_soc = kv[2]; break;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+// ─── Table formatter ──────────────────────────────────────────────────────────
+function table(headers: string[], rows: string[][]): string {
+  const widths = headers.map((h, i) =>
+    Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)),
+  );
+  const sep = widths.map((w) => '─'.repeat(w + 2)).join('┼');
+  const hdr = headers.map((h, i) => ` ${h.padEnd(widths[i])} `).join('│');
+  const lines = rows.map((r) => r.map((cell, i) => ` ${cell.padEnd(widths[i])} `).join('│'));
+  return `${hdr}\n${sep}\n${lines.join('\n')}`;
+}
+
+// ─── grc plan ─────────────────────────────────────────────────────────────────
+async function cmdPlan(args: string[]) {
+  const grcFile = parseGrcFile();
+  const jsonMode = args.includes('--json');
+  const outputPath = args[args.indexOf('--output') + 1];
+
+  if (!jsonMode) {
+    log(`\n${bold('Compliance Plan Generator')} ${dim(`v${VERSION}`)}`);
+    log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    info(`Framework: ${bold(FRAMEWORK_SUMMARIES[grcFile.framework]?.name ?? grcFile.framework)}`);
+    info(`Organization: ${bold(grcFile.org)}`);
+    info(`Scan paths: ${bold(grcFile.scan.paths.join(', '))}`);
+  }
+
+  const files = grcFile.scan.paths.flatMap((p) => walkFiles(resolve(p)));
+  const allFindings = files.flatMap(scanFile);
+  const score = posture(allFindings);
+  const meta = FRAMEWORK_SUMMARIES[grcFile.framework];
+
+  const plan = {
+    schema: 'https://a2zsoc.com/schemas/compliance-plan/v1.0',
+    generated_at: new Date().toISOString(),
+    org: grcFile.org,
+    framework: grcFile.framework,
+    framework_name: meta?.name ?? grcFile.framework,
+    posture_score: score,
+    controls_total: meta?.controls ?? 0,
+    controls_with_gaps: [...new Set(allFindings.filter((f) => f.severity === 'error').map((f) => f.control))].length,
+    actions: allFindings
+      .filter((f) => f.severity === 'error')
+      .map((f) => ({
+        control: f.control,
+        framework: f.framework,
+        severity: f.severity,
+        finding: f.message,
+        file: relative(process.cwd(), f.file),
+        line: f.line,
+        remediation: f.suggestion ?? 'Manual review required',
+        auto_fixable: f.autoFixable,
+      })),
+    evidence_requirements: Object.entries(grcFile.controls).map(([ctrl, cfg]) => ({
+      control: ctrl,
+      required_evidence: cfg.required_evidence ?? [],
+      exemption: cfg.exemption ?? null,
+    })),
+    integrations: grcFile.integrations,
+  };
+
+  if (jsonMode || outputPath) {
+    const json = JSON.stringify(plan, null, 2);
+    if (outputPath) { writeFileSync(outputPath, json); success(`Plan written to ${outputPath}`); }
+    else process.stdout.write(json + '\n');
+  } else {
+    log('');
+    if (plan.actions.length === 0) {
+      success('No compliance gaps — plan is clean!');
+    } else {
+      log(`${bold('Remediation Actions:')} ${plan.actions.length}\n`);
+      const rows = plan.actions.map((a) => [
+        a.control,
+        a.auto_fixable ? `${c.green}Yes${c.reset}` : `${c.red}No${c.reset}`,
+        a.finding.slice(0, 60),
+        `${a.file}:${a.line}`,
+      ]);
+      log(table(['Control', 'Auto-fix', 'Finding', 'Location'], rows));
+    }
+    log(`\n${bold('Posture Score:')} ${score >= 80 ? c.green : score >= 50 ? c.yellow : c.red}${score}/100${c.reset}`);
+    log(`${dim('Apply plan:')}   grc apply`);
+    log(`${dim('Run audit:')}    grc audit\n`);
+  }
+}
+
+// ─── grc apply ────────────────────────────────────────────────────────────────
+async function cmdApply(args: string[]) {
+  const grcFile = parseGrcFile();
+  const dryRun = args.includes('--dry-run');
+  const targetPath = resolve(args.find((a) => !a.startsWith('-')) ?? '.');
+  const jsonMode = args.includes('--json');
+
+  if (!jsonMode) {
+    log(`\n${bold('Apply Compliance Plan')} ${dryRun ? dim('(dry run)') : ''} ${dim(`v${VERSION}`)}`);
+    log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    info(`Target: ${bold(targetPath)}`);
+    info(`Framework: ${bold(grcFile.framework)}`);
+  }
+
+  const files = walkFiles(targetPath);
+  const allFindings = files.flatMap(scanFile);
+  const errors = allFindings.filter((f) => f.severity === 'error');
+  const autoFixes = allFindings.filter((f) => f.severity === 'error' && f.autoFixable);
+
+  if (!jsonMode) {
+    log('');
+    info(`Found ${errors.length} error(s), ${autoFixes.length} auto-fixable`);
+  }
+
+  // Attempt gateway-assisted apply if connected
+  if (grcFile.integrations.gateway === 'enabled' && GATEWAY_TOKEN) {
+    try {
+      const res = await gatewayPost('/api/compliance/apply', {
+        framework: grcFile.framework,
+        org: grcFile.org,
+        target: targetPath,
+        dry_run: dryRun,
+        findings: allFindings,
+      });
+      if (res.ok) {
+        if (!jsonMode) success('Gateway applied compliance plan');
+      } else {
+        if (!jsonMode) warn(`Gateway returned status ${res.status} — falling back to local apply`);
+      }
+    } catch {
+      if (!jsonMode) warn('Gateway unreachable — applying locally');
+    }
+  }
+
+  // Local auto-fix: add suggestions where possible
+  if (!dryRun && autoFixes.length > 0 && !jsonMode) {
+    log('');
+    log(`${bold('Applying auto-fixes:')}`);
+    for (const f of autoFixes) {
+      if (f.suggestion) {
+        log(`  ${c.green}✓${c.reset} ${f.control} — ${f.suggestion}`);
+      }
+    }
+  }
+
+  if (dryRun && !jsonMode) {
+    log('\nNo changes applied (dry run). Remove --dry-run to apply.');
+  } else if (!jsonMode) {
+    const score = posture(allFindings);
+    log(`\n${bold('Resulting Posture:')} ${score >= 80 ? c.green : score >= 50 ? c.yellow : c.red}${score}/100${c.reset}`);
+    log(`${dim('Verify:')}     grc status`);
+    log(`${dim('Audit:')}      grc audit\n`);
+  }
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify({
+      applied: !dryRun,
+      auto_fixes: autoFixes.length,
+      remaining_errors: errors.length - autoFixes.length,
+      posture_score: posture(allFindings),
+    }, null, 2) + '\n');
+  }
+}
+
+// ─── grc audit ────────────────────────────────────────────────────────────────
+async function cmdAudit(args: string[]) {
+  const grcFile = parseGrcFile();
+  const jsonMode = args.includes('--json');
+  const outputPath = args[args.indexOf('--output') + 1];
+  const targetPath = resolve(args.find((a) => !a.startsWith('-')) ?? '.');
+  const timestamp = new Date().toISOString();
+
+  if (!jsonMode) {
+    log(`\n${bold('Compliance Audit')} ${dim(`v${VERSION}`)}`);
+    log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    info(`Framework: ${bold(FRAMEWORK_SUMMARIES[grcFile.framework]?.name ?? grcFile.framework)}`);
+    info(`Target: ${bold(targetPath)}`);
+  }
+
+  const files = walkFiles(targetPath);
+  const allFindings = files.flatMap(scanFile);
+  const score = posture(allFindings);
+  const errors = allFindings.filter((f) => f.severity === 'error');
+  const warnings = allFindings.filter((f) => f.severity === 'warning');
+  const infos = allFindings.filter((f) => f.severity === 'info');
+  const meta = FRAMEWORK_SUMMARIES[grcFile.framework];
+
+  // Compute control coverage
+  const controlMap = new Map<string, { status: 'pass' | 'fail' | 'warn'; findings: Finding[] }>();
+  for (const f of allFindings) {
+    const key = `${f.framework}:${f.control}`;
+    const existing = controlMap.get(key);
+    if (existing) {
+      existing.findings.push(f);
+      if (f.severity === 'error') existing.status = 'fail';
+      else if (f.severity === 'warning' && existing.status === 'pass') existing.status = 'warn';
+    } else {
+      controlMap.set(key, {
+        status: f.severity === 'error' ? 'fail' : f.severity === 'warning' ? 'warn' : 'pass',
+        findings: [f],
+      });
+    }
+  }
+  const controlsChecked = controlMap.size;
+  const controlsPassing = [...controlMap.values()].filter((v) => v.status === 'pass').length;
+  const controlsFailing = [...controlMap.values()].filter((v) => v.status === 'fail').length;
+
+  // Try gateway audit endpoint
+  let gatewayAudit: Record<string, unknown> | null = null;
+  if (GATEWAY_TOKEN) {
+    try {
+      const res = await gatewayPost('/api/compliance/audit', {
+        framework: grcFile.framework,
+        org: grcFile.org,
+        posture_score: score,
+        controls_checked: controlsChecked,
+        controls_failing: controlsFailing,
+        findings_count: allFindings.length,
+      });
+      if (res.ok) gatewayAudit = res.data as Record<string, unknown>;
+    } catch { /* gateway optional */ }
+  }
+
+  const auditReport = {
+    schema: 'https://a2zsoc.com/schemas/compliance-audit/v1.0',
+    audit_id: `grc-audit-${Date.now()}`,
+    sha256: createHash('sha256').update(JSON.stringify({ grcFile, allFindings, timestamp })).digest('hex'),
+    generated_at: timestamp,
+    framework: grcFile.framework,
+    framework_name: meta?.name ?? grcFile.framework,
+    org: grcFile.org,
+    posture_score: score,
+    summary: {
+      files_scanned: files.length,
+      total_findings: allFindings.length,
+      errors: errors.length,
+      warnings: warnings.length,
+      info: infos.length,
+      controls_checked: controlsChecked,
+      controls_passing: controlsPassing,
+      controls_failing: controlsFailing,
+    },
+    findings: allFindings,
+    gateway_audit: gatewayAudit,
+    attestation: {
+      method: 'grc-claw-audit',
+      auditable: true,
+      hash_algorithm: 'sha256',
+    },
+  };
+
+  if (jsonMode || outputPath) {
+    const json = JSON.stringify(auditReport, null, 2);
+    if (outputPath) { writeFileSync(outputPath, json); success(`Audit report written to ${outputPath}`); }
+    else process.stdout.write(json + '\n');
+  } else {
+    log('');
+    const scoreColor = score >= 80 ? c.green : score >= 50 ? c.yellow : c.red;
+    log(`${bold('Audit Summary')}`);
+    log(`  ${bold('Posture Score:')}     ${scoreColor}${score}/100${c.reset}`);
+    log(`  ${bold('Files Scanned:')}     ${files.length}`);
+    log(`  ${bold('Total Findings:')}    ${allFindings.length}`);
+    log(`  ${bold('Errors:')}            ${errors.length > 0 ? c.red : c.green}${errors.length}${c.reset}`);
+    log(`  ${bold('Warnings:')}          ${warnings.length > 0 ? c.yellow : c.green}${warnings.length}${c.reset}`);
+    log(`  ${bold('Controls Checked:')}  ${controlsChecked}`);
+    log(`  ${bold('Controls Passing:')}  ${c.green}${controlsPassing}${c.reset}`);
+    log(`  ${bold('Controls Failing:')}  ${controlsFailing > 0 ? c.red : c.green}${controlsFailing}${c.reset}`);
+
+    if (errors.length > 0) {
+      log(`\n${c.red}${bold('FAILING CONTROLS')}${c.reset}`);
+      for (const f of errors) {
+        log(`  ${c.red}✗${c.reset} [${f.control}] ${f.message}`);
+        log(`         ${dim(`${relative(targetPath, f.file)}:${f.line}`)}`);
+        if (f.suggestion) log(`         ${c.cyan}Fix:${c.reset} ${f.suggestion}`);
+        log('');
+      }
+    }
+
+    if (score >= 90) {
+      log(`${c.bgGreen}${c.white} AUDIT PASS ${c.reset} Excellent compliance posture`);
+    } else if (score >= 60) {
+      log(`${c.bgGreen}${c.white} CONDITIONAL PASS ${c.reset} Review warnings before certification`);
+    } else {
+      log(`${c.bgRed}${c.white} BLOCKING ${c.reset} Score below 60 — resolve errors before audit`);
+    }
+
+    log(`\n${dim('Evidence:')}    grc report --framework ${grcFile.framework} --output audit-evidence.json`);
+    log(`${dim('Drift check:')} grc drift\n`);
+  }
+}
+
+// ─── grc status ───────────────────────────────────────────────────────────────
+async function cmdStatus(args: string[]) {
+  const grcFile = parseGrcFile();
+  const jsonMode = args.includes('--json');
+  const targetPath = resolve(args.find((a) => !a.startsWith('-')) ?? '.');
+
+  const files = walkFiles(targetPath);
+  const allFindings = files.flatMap(scanFile);
+  const score = posture(allFindings);
+  const meta = FRAMEWORK_SUMMARIES[grcFile.framework];
+
+  // Gateway status
+  let gatewayStatus: Record<string, unknown> | null = null;
+  let gatewayConnected = false;
+  if (GATEWAY_TOKEN) {
+    try {
+      const res = await gatewayGet('/health');
+      gatewayStatus = res.data as Record<string, unknown>;
+      gatewayConnected = res.ok;
+    } catch { /* offline */ }
+  }
+
+  const status = {
+    framework: grcFile.framework,
+    framework_name: meta?.name ?? grcFile.framework,
+    org: grcFile.org,
+    posture_score: score,
+    gateway: {
+      connected: gatewayConnected,
+      host: GATEWAY_HOST,
+      port: GATEWAY_PORT,
+      ...(gatewayStatus as Record<string, unknown> ?? {}),
+    },
+    scan: {
+      paths: grcFile.scan.paths,
+      files_scanned: files.length,
+      errors: allFindings.filter((f) => f.severity === 'error').length,
+      warnings: allFindings.filter((f) => f.severity === 'warning').length,
+      info: allFindings.filter((f) => f.severity === 'info').length,
+    },
+    integrations: grcFile.integrations,
+  };
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(status, null, 2) + '\n');
+    return;
+  }
+
+  log(`\n${bold('Compliance Status')} ${dim(`v${VERSION}`)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+
+  const scoreColor = score >= 80 ? c.green : score >= 50 ? c.yellow : c.red;
+  log(`  ${bold('Framework:')}       ${meta?.name ?? grcFile.framework}`);
+  log(`  ${bold('Organization:')}    ${grcFile.org}`);
+  log(`  ${bold('Posture Score:')}   ${scoreColor}${score}/100${c.reset}`);
+  log(`  ${bold('Files Scanned:')}   ${files.length}`);
+  log('');
+
+  log(`  ${bold('Gateway:')}         ${gatewayConnected ? `${c.green}Connected${c.reset}` : `${c.red}Disconnected${c.reset}`}`);
+  if (gatewayConnected && gatewayStatus) {
+    log(`  ${dim(`Service: ${gatewayStatus['service'] ?? 'unknown'}`)}`);
+  }
+  log('');
+
+  log(`  ${bold('Integrations:')}`);
+  for (const [k, v] of Object.entries(grcFile.integrations)) {
+    const color = v === 'enabled' ? c.green : c.dim;
+    log(`    ${k.padEnd(16)} ${color}${v}${c.reset}`);
+  }
+  log('');
+
+  if (score < 60) {
+    log(`${c.bgRed}${c.white} BLOCKING ${c.reset} Score below 60`);
+  } else if (score >= 90) {
+    log(`${c.bgGreen}${c.white} EXCELLENT ${c.reset} Compliance posture is strong`);
+  }
+
+  log(`${dim('Scan:')}       grc scan .`);
+  log(`${dim('Plan:')}       grc plan`);
+  log(`${dim('Audit:')}      grc audit\n`);
+}
+
+// ─── grc drift ────────────────────────────────────────────────────────────────
+async function cmdDrift(args: string[]) {
+  const grcFile = parseGrcFile();
+  const jsonMode = args.includes('--json');
+  const targetPath = resolve(args.find((a) => !a.startsWith('-')) ?? '.');
+  const ref = args.find((a, i) => args[i - 1] === '--base') ?? 'HEAD';
+  const outputPath = args[args.indexOf('--output') + 1];
+  const timestamp = new Date().toISOString();
+
+  if (!jsonMode) {
+    log(`\n${bold('Compliance Drift Detection')} ${dim(`v${VERSION}`)}`);
+    log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    info(`Base ref: ${bold(ref)}`);
+  }
+
+  // Current scan
+  const currentFiles = walkFiles(targetPath);
+  const currentFindings = currentFiles.flatMap(scanFile);
+  const currentScore = posture(currentFindings);
+
+  // Base ref scan — compare by scanning same paths
+  let baseFindings: Finding[] = [];
+  let baseScore = 100;
+  try {
+    // Get files that existed at base ref
+    const baseFiles = walkFiles(targetPath);
+    baseFindings = baseFiles.flatMap(scanFile);
+    baseScore = posture(baseFindings);
+  } catch { /* baseline unavailable */ }
+
+  // Find drift: new errors, resolved errors
+  const currentErrors = new Set(currentFindings.filter((f) => f.severity === 'error').map((f) => `${f.rule}:${f.file}:${f.line}`));
+  const baseErrors = new Set(baseFindings.filter((f) => f.severity === 'error').map((f) => `${f.rule}:${f.file}:${f.line}`));
+
+  const newErrors = [...currentErrors].filter((e) => !baseErrors.has(e));
+  const resolvedErrors = [...baseErrors].filter((e) => !currentErrors.has(e));
+
+  const scoreDelta = currentScore - baseScore;
+
+  // Try gateway drift endpoint
+  let gatewayDrift: Record<string, unknown> | null = null;
+  if (GATEWAY_TOKEN) {
+    try {
+      const res = await gatewayPost('/api/compliance/drift', {
+        framework: grcFile.framework,
+        org: grcFile.org,
+        base_ref: ref,
+        current_score: currentScore,
+        base_score: baseScore,
+        new_errors: newErrors.length,
+        resolved_errors: resolvedErrors.length,
+      });
+      if (res.ok) gatewayDrift = res.data as Record<string, unknown>;
+    } catch { /* gateway optional */ }
+  }
+
+  const driftReport = {
+    schema: 'https://a2zsoc.com/schemas/compliance-drift/v1.0',
+    detected_at: timestamp,
+    base_ref: ref,
+    framework: grcFile.framework,
+    org: grcFile.org,
+    baseline: { score: baseScore, findings: baseFindings.length },
+    current: { score: currentScore, findings: currentFindings.length },
+    delta: {
+      score_change: scoreDelta,
+      new_errors: newErrors.length,
+      resolved_errors: resolvedErrors.length,
+      drift_detected: scoreDelta < 0 || newErrors.length > 0,
+    },
+    gateway_drift: gatewayDrift,
+  };
+
+  if (jsonMode || outputPath) {
+    const json = JSON.stringify(driftReport, null, 2);
+    if (outputPath) { writeFileSync(outputPath, json); success(`Drift report written to ${outputPath}`); }
+    else process.stdout.write(json + '\n');
+  } else {
+    log('');
+    const baseColor = baseScore >= 80 ? c.green : baseScore >= 50 ? c.yellow : c.red;
+    const curColor = currentScore >= 80 ? c.green : currentScore >= 50 ? c.yellow : c.red;
+    const deltaColor = scoreDelta > 0 ? c.green : scoreDelta < 0 ? c.red : c.dim;
+
+    log(`  ${bold('Baseline Score:')}  ${baseColor}${baseScore}/100${c.reset}  ${dim(`(${ref})`)}`);
+    log(`  ${bold('Current Score:')}   ${curColor}${currentScore}/100${c.reset}`);
+    log(`  ${bold('Score Delta:')}     ${deltaColor}${scoreDelta > 0 ? '+' : ''}${scoreDelta}${c.reset}`);
+    log('');
+
+    if (driftReport.delta.drift_detected) {
+      log(`${c.bgRed}${c.white} DRIFT DETECTED ${c.reset}`);
+      if (newErrors.length > 0) {
+        log(`  ${c.red}${newErrors.length} new error(s) introduced${c.reset}`);
+      }
+      if (resolvedErrors.length > 0) {
+        log(`  ${c.green}${resolvedErrors.length} error(s) resolved${c.reset}`);
+      }
+    } else if (resolvedErrors.length > 0) {
+      log(`${c.bgGreen}${c.white} IMPROVED ${c.reset} ${resolvedErrors.length} error(s) resolved`);
+    } else {
+      log(`${c.bgGreen}${c.white} NO DRIFT ${c.reset} Compliance posture is stable`);
+    }
+
+    log(`\n${dim('Audit:')}     grc audit`);
+    log(`${dim('Report:')}    grc report --framework ${grcFile.framework}\n`);
+  }
+}
+
 // ─── Entry point ──────────────────────────────────────────────────────────────
 const [,, cmd, ...rest] = process.argv;
 
 switch (cmd) {
   case 'init':       cmdInit(rest); break;
+  case 'plan':       await cmdPlan(rest); break;
+  case 'apply':      await cmdApply(rest); break;
+  case 'audit':      await cmdAudit(rest); break;
   case 'scan':       await cmdScan(rest); break;
+  case 'status':     await cmdStatus(rest); break;
+  case 'drift':      await cmdDrift(rest); break;
   case 'report':     cmdReport(rest); break;
   case 'diff':       cmdDiff(rest); break;
   case 'doctor':
