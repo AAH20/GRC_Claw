@@ -40,6 +40,8 @@
     { "path": "../vendor-risk-management" },
     { "path": "../employee-lifecycle" },
     { "path": "../compliance-task-engine" },
-    { "path": "../evidence-automation-engine" }
+    { "path": "../evidence-automation-engine" },
+    { "path": "../openapi-generator" },
+    { "path": "../agent-discovery" }
   ]
 }

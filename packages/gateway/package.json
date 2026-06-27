@@ -66,6 +66,8 @@
     "@grc-claw/employee-lifecycle": "*",
     "@grc-claw/compliance-task-engine": "*",
     "@grc-claw/evidence-automation-engine": "*",
+    "@grc-claw/openapi-generator": "*",
+    "@grc-claw/agent-discovery": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

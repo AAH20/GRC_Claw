@@ -53,6 +53,8 @@ import { VendorRiskManagement } from '@grc-claw/vendor-risk-management';
 import { EmployeeLifecycleEngine } from '@grc-claw/employee-lifecycle';
 import { ComplianceTaskEngine } from '@grc-claw/compliance-task-engine';
 import { EvidenceAutomationEngine } from '@grc-claw/evidence-automation-engine';
+import { OpenAPIGenerator } from '@grc-claw/openapi-generator';
+import { AgentDiscoveryScanner } from '@grc-claw/agent-discovery';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -1494,6 +1496,396 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       return;
     }
 
+    // ─── OpenAPI Specification Endpoints ────────────────────────────────
+    if (req.method === 'GET' && path === '/api/openapi.json') {
+      const generator = new OpenAPIGenerator({ baseUrl: `http://${config.host}:${config.port}` });
+      generator.addEndpoints(OpenAPIGenerator.buildGatewayEndpoints());
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(generator.toJson());
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/openapi.yaml') {
+      const generator = new OpenAPIGenerator({ baseUrl: `http://${config.host}:${config.port}` });
+      generator.addEndpoints(OpenAPIGenerator.buildGatewayEndpoints());
+      res.writeHead(200, { 'Content-Type': 'text/yaml; charset=utf-8' });
+      res.end(generator.toYaml());
+      return;
+    }
+
+    // ─── Agent Discovery Endpoints ──────────────────────────────────────
+    if (req.method === 'POST' && path === '/api/discovery/scan') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const scanner = new AgentDiscoveryScanner({ tenantId: 1 });
+        const scanResult = await scanner.scan(basePath());
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, ...scanResult }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(500); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/discovery/inventory') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const scanner = new AgentDiscoveryScanner({ tenantId: 1 });
+      await scanner.scan(basePath());
+      const inventory = scanner.inventory();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...inventory }));
+      return;
+    }
+    if (req.method === 'GET' && path.match(/^\/api\/discovery\/risk-score\/[^/]+$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const agentId = decodeURIComponent(path.split('/').pop()!);
+      const scanner = new AgentDiscoveryScanner({ tenantId: 1 });
+      await scanner.scan(basePath());
+      const score = scanner.riskScore(agentId);
+      if (!score) { res.writeHead(404); res.end(JSON.stringify({ error: 'agent_not_found', agentId })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...score }));
+      return;
+    }
+
+    // ─── Real-time Compliance Dashboard Endpoints ───────────────────────
+    if (req.method === 'GET' && path === '/api/dashboard/realtime') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const packs = listFrameworkPacks();
+        const frameworkData: Record<string, { compliance_pct: number; drift_detected: boolean; last_scan: string; evidence_count: number; control_count: number }> = {};
+        let totalControls = 0;
+        let controlsWithEvidence = 0;
+
+        for (const pack of packs) {
+          let packTotal = 0;
+          let packWithEvidence = 0;
+          for (const ctrl of pack.controls) {
+            packTotal++;
+            totalControls++;
+            let hasEvidence = false;
+            if (pg) {
+              try {
+                const items = await evidence.listByControlFromDb(ctrl.id);
+                hasEvidence = items.length > 0;
+                if (hasEvidence) packWithEvidence++;
+              } catch {
+                hasEvidence = evidence.listByControl(ctrl.id).length > 0;
+                if (hasEvidence) packWithEvidence++;
+              }
+            } else {
+              hasEvidence = evidence.listByControl(ctrl.id).length > 0;
+              if (hasEvidence) packWithEvidence++;
+            }
+          }
+          controlsWithEvidence += packWithEvidence;
+          frameworkData[pack.code] = {
+            compliance_pct: packTotal > 0 ? Math.round((packWithEvidence / packTotal) * 1000) / 10 : 0,
+            drift_detected: false,
+            last_scan: new Date().toISOString(),
+            evidence_count: packWithEvidence,
+            control_count: packTotal,
+          };
+        }
+
+        const autopilotControls = autopilot.getControls();
+        const autopilotGaps = autopilot.getGaps();
+        const autopilotRemediations = autopilot.getRemediations();
+        const autopilotCompliant = autopilotControls.filter((c) => c.status === 'compliant').length;
+        const driftHistory = driftDetector.getDriftHistory();
+        const driftAlerts = driftDetector.getAlertHistory();
+        const baseline = driftDetector.getCurrentBaseline();
+
+        const overallScore = totalControls > 0 ? Math.round((controlsWithEvidence / totalControls) * 1000) / 10 : 0;
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          ok: true,
+          timestamp: new Date().toISOString(),
+          overall: {
+            compliance_score: overallScore,
+            total_controls: totalControls,
+            controls_with_evidence: controlsWithEvidence,
+            controls_without_evidence: totalControls - controlsWithEvidence,
+          },
+          frameworks: frameworkData,
+          autopilot: {
+            total_controls: autopilotControls.length,
+            compliant: autopilotCompliant,
+            non_compliant: autopilotControls.filter((c) => c.status === 'non_compliant').length,
+            partial: autopilotControls.filter((c) => c.status === 'partial').length,
+            unknown: autopilotControls.filter((c) => c.status === 'unknown').length,
+            gaps_count: autopilotGaps.length,
+            remediations_count: autopilotRemediations.length,
+            is_monitoring: autopilot.isMonitoring(),
+          },
+          drift: {
+            history_count: driftHistory.length,
+            alerts_count: driftAlerts.length,
+            baseline_captured: baseline !== null,
+            baseline_score: baseline?.overallScore ?? null,
+            recent_events: driftHistory.slice(-10),
+            recent_alerts: driftAlerts.slice(-5),
+          },
+          websocket: {
+            compliance_channel: 'ws://host/ws — subscribe with {"type":"subscribe","channel":"compliance_updates","token":"<token>"}',
+            soc_channel: 'ws://host/ws — subscribe with {"type":"subscribe","channel":"soc_events","token":"<token>"}',
+          },
+        }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(500); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && path === '/api/dashboard/trends') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const url3 = new URL(req.url ?? '', 'http://local');
+      const periodDays = Number(url3.searchParams.get('days') ?? '30');
+      const packs = listFrameworkPacks();
+      const now = Date.now();
+      const periodMs = periodDays * 24 * 60 * 60 * 1000;
+
+      const baselineHistory = driftDetector.getBaselineHistory();
+      const driftHistory = driftDetector.getDriftHistory();
+
+      const filteredBaselines = baselineHistory.filter((b) => {
+        const ts = new Date(b.capturedAt).getTime();
+        return ts >= now - periodMs;
+      });
+
+      const filteredDrift = driftHistory.filter((d) => {
+        const ts = new Date(d.timestamp).getTime();
+        return ts >= now - periodMs;
+      });
+
+      const dailyScores: Array<{ date: string; score: number; framework_scores: Record<string, number> }> = [];
+      for (const baseline of filteredBaselines) {
+        dailyScores.push({
+          date: baseline.capturedAt.split('T')[0]!,
+          score: baseline.overallScore,
+          framework_scores: baseline.frameworkScores,
+        });
+      }
+
+      const driftTrend = filteredDrift.reduce(
+        (acc, event) => {
+          const date = event.timestamp.split('T')[0]!;
+          acc[date] = (acc[date] ?? 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      const currentControls = autopilot.getControls();
+      const gaps = autopilot.getGaps();
+      const remediations = autopilot.getRemediations();
+
+      const summary = {
+        period_days: periodDays,
+        baseline_snapshots: filteredBaselines.length,
+        drift_events_total: filteredDrift.length,
+        drift_events_by_severity: filteredDrift.reduce(
+          (acc, e) => { acc[e.severity] = (acc[e.severity] ?? 0) + 1; return acc;
+          },
+          {} as Record<string, number>,
+        ),
+        daily_drift_counts: driftTrend,
+        current_compliance: {
+          total_controls: currentControls.length,
+          compliant: currentControls.filter((c) => c.status === 'compliant').length,
+          non_compliant: currentControls.filter((c) => c.status === 'non_compliant').length,
+          gaps: gaps.length,
+          remediations_pending: remediations.filter((r) => r.status === 'pending').length,
+          remediations_completed: remediations.filter((r) => r.status === 'completed').length,
+        },
+        trend_data: dailyScores,
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...summary }));
+      return;
+    }
+
+    if (req.method === 'GET' && path === '/api/dashboard/alerts') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const driftAlerts = driftDetector.getAlertHistory();
+      const autopilotGaps = autopilot.getGaps();
+      const autopilotRemediations = autopilot.getRemediations();
+
+      const activeAlerts: Array<{
+        id: string;
+        type: 'drift' | 'gap' | 'remediation_failed';
+        priority: string;
+        severity: string;
+        summary: string;
+        timestamp: string;
+        details: Record<string, unknown>;
+      }> = [];
+
+      for (const alert of driftAlerts) {
+        activeAlerts.push({
+          id: alert.id,
+          type: 'drift',
+          priority: alert.priority,
+          severity: alert.maxSeverity,
+          summary: alert.summary,
+          timestamp: alert.timestamp,
+          details: {
+            affectedFrameworks: alert.affectedFrameworks,
+            affectedControlCount: alert.affectedControlCount,
+            overallScoreDelta: alert.overallScoreDelta,
+          },
+        });
+      }
+
+      for (const gap of autopilotGaps) {
+        activeAlerts.push({
+          id: gap.id,
+          type: 'gap',
+          priority: gap.severity === 'critical' ? 'p1' : gap.severity === 'high' ? 'p2' : gap.severity === 'medium' ? 'p3' : 'p4',
+          severity: gap.severity,
+          summary: `${gap.description} [${gap.framework}]`,
+          timestamp: gap.detectedAt,
+          details: {
+            controlId: gap.controlId,
+            controlTitle: gap.controlTitle,
+            framework: gap.framework,
+            evidenceCount: gap.evidenceCount,
+          },
+        });
+      }
+
+      for (const rem of autopilotRemediations) {
+        if (rem.status === 'failed') {
+          activeAlerts.push({
+            id: rem.id,
+            type: 'remediation_failed',
+            priority: 'p2',
+            severity: 'high',
+            summary: `Remediation failed for control ${rem.controlId} [${rem.framework}]`,
+            timestamp: rem.createdAt,
+            details: {
+              gapId: rem.gapId,
+              controlId: rem.controlId,
+              framework: rem.framework,
+              actionsCount: rem.actions.length,
+            },
+          });
+        }
+      }
+
+      activeAlerts.sort((a, b) => {
+        const priorityOrder: Record<string, number> = { p1: 0, p2: 1, p3: 2, p4: 3 };
+        return (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4);
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        total: activeAlerts.length,
+        by_type: {
+          drift: activeAlerts.filter((a) => a.type === 'drift').length,
+          gap: activeAlerts.filter((a) => a.type === 'gap').length,
+          remediation_failed: activeAlerts.filter((a) => a.type === 'remediation_failed').length,
+        },
+        alerts: activeAlerts,
+      }));
+      return;
+    }
+
+    if (req.method === 'GET' && path === '/api/dashboard/kpis') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const packs = listFrameworkPacks();
+      let totalControls = 0;
+      let controlsWithEvidence = 0;
+      for (const pack of packs) {
+        for (const ctrl of pack.controls) {
+          totalControls++;
+          let hasEvidence = false;
+          if (pg) {
+            try {
+              const items = await evidence.listByControlFromDb(ctrl.id);
+              hasEvidence = items.length > 0;
+            } catch {
+              hasEvidence = evidence.listByControl(ctrl.id).length > 0;
+            }
+          } else {
+            hasEvidence = evidence.listByControl(ctrl.id).length > 0;
+          }
+          if (hasEvidence) controlsWithEvidence++;
+        }
+      }
+
+      const autopilotControls = autopilot.getControls();
+      const autopilotGaps = autopilot.getGaps();
+      const autopilotRemediations = autopilot.getRemediations();
+      const driftHistory = driftDetector.getDriftHistory();
+      const driftAlerts = driftDetector.getAlertHistory();
+      const baseline = driftDetector.getCurrentBaseline();
+      const ledgerCount = ledger.list(0).length;
+      const auditCount = agentAuditTrail.count();
+
+      const complianceScore = totalControls > 0 ? Math.round((controlsWithEvidence / totalControls) * 10000) / 100 : 0;
+      const autopilotCompliant = autopilotControls.filter((c) => c.status === 'compliant').length;
+      const autopilotTotal = autopilotControls.length;
+      const autopilotScore = autopilotTotal > 0 ? Math.round((autopilotCompliant / autopilotTotal) * 10000) / 100 : 0;
+      const remediationSuccessRate = autopilotRemediations.length > 0
+        ? Math.round((autopilotRemediations.filter((r) => r.status === 'completed' || r.status === 'verified').length / autopilotRemediations.length) * 10000) / 100
+        : 0;
+
+      const kpis = {
+        compliance: {
+          overall_score: complianceScore,
+          autopilot_score: autopilotScore,
+          total_controls: totalControls,
+          controls_with_evidence: controlsWithEvidence,
+          evidence_coverage_pct: totalControls > 0 ? Math.round((controlsWithEvidence / totalControls) * 10000) / 100 : 0,
+          frameworks_monitored: packs.length,
+        },
+        autopilot: {
+          total_controls: autopilotTotal,
+          compliant: autopilotCompliant,
+          non_compliant: autopilotControls.filter((c) => c.status === 'non_compliant').length,
+          partial: autopilotControls.filter((c) => c.status === 'partial').length,
+          gaps_total: autopilotGaps.length,
+          gaps_critical: autopilotGaps.filter((g) => g.severity === 'critical').length,
+          gaps_high: autopilotGaps.filter((g) => g.severity === 'high').length,
+          remediations_total: autopilotRemediations.length,
+          remediations_completed: autopilotRemediations.filter((r) => r.status === 'completed').length,
+          remediations_pending: autopilotRemediations.filter((r) => r.status === 'pending').length,
+          remediation_success_rate: remediationSuccessRate,
+          is_monitoring: autopilot.isMonitoring(),
+        },
+        drift: {
+          baseline_captured: baseline !== null,
+          baseline_score: baseline?.overallScore ?? null,
+          total_events: driftHistory.length,
+          events_by_severity: driftHistory.reduce(
+            (acc, e) => { acc[e.severity] = (acc[e.severity] ?? 0) + 1; return acc; },
+            {} as Record<string, number>,
+          ),
+          total_alerts: driftAlerts.length,
+          alerts_by_priority: driftAlerts.reduce(
+            (acc, a) => { acc[a.priority] = (acc[a.priority] ?? 0) + 1; return acc; },
+            {} as Record<string, number>,
+          ),
+        },
+        activity: {
+          total_tool_invocations: ledgerCount,
+          total_audit_records: auditCount,
+          agents_tracked: agentAuditTrail.list(0).length > 0
+            ? new Set(agentAuditTrail.list(0).map((r) => r.agentDid)).size
+            : 0,
+        },
+        generated_at: new Date().toISOString(),
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, kpis }));
+      return;
+    }
+
     if (tryServeConsoleStatic(req, res, path)) return;
 
     // --- ACCM Endpoints ---
@@ -2237,6 +2629,10 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     refreshExecPolicy,
     persistence: pg,
   };
+}
+
+function basePath(): string {
+  return process.env.GRC_CLAW_SCAN_ROOT?.trim() || process.cwd();
 }
 
 function toolTierFor(tool: string): ToolTier {

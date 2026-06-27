@@ -65,7 +65,9 @@
     "packages/employee-lifecycle",
     "packages/vendor-risk-management",
     "packages/compliance-task-engine",
-    "packages/policy-management-hub"
+    "packages/employee-lifecycle",
+    "packages/agent-discovery",
+    "packages/openapi-generator"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
