@@ -63,6 +63,8 @@
     { "path": "./packages/employee-lifecycle" },
     { "path": "./packages/drift-detector" },
     { "path": "./packages/agent-discovery" },
-    { "path": "./packages/openapi-generator" }
+    { "path": "./packages/openapi-generator" },
+    { "path": "./packages/terraform-provider" },
+    { "path": "./packages/gateway" }
   ]
 }
