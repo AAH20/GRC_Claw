@@ -40,13 +40,7 @@ export class SentinelOneConnector implements IntegrationConnector {
   readonly category = "endpoint" as const;
   readonly authType = "api_key" as const;
   readonly capabilities = capabilities;
-  readonly frameworks: ComplianceFramework[] = [
-    "SOC2",
-    "ISO27001",
-    "NIST_CSF",
-    "HIPAA",
-    "PCI_DSS",
-  ];
+  readonly frameworks: ComplianceFramework[] = ["SOC2", "ISO27001", "NIST_CSF", "HIPAA", "PCI_DSS"];
 
   private async fetchApi(
     config: ConnectorConfig,

@@ -98,3 +98,60 @@ export { WebexConnector } from "./WebexConnector.js";
 export { TeamsConnector } from "./TeamsConnector.js";
 export { DiscordConnector } from "./DiscordConnector.js";
 export { RingCentralConnector } from "./RingCentralConnector.js";
+// --- 50 new connectors (150+ total) ---
+// Cloud Infrastructure (10)
+export { AWSLambdaConnector } from "./AWSLambdaConnector.js";
+export { AWSRDSConnector } from "./AWSRDSConnector.js";
+export { AWSKMSConnector } from "./AWSKMSConnector.js";
+export { AzureDevOpsPipelinesConnector } from "./AzureDevOpsPipelinesConnector.js";
+export { GCPFirestoreConnector } from "./GCPFirestoreConnector.js";
+export { GCPBigQueryConnector } from "./GCPBigQueryConnector.js";
+export { GCPComputeConnector } from "./GCPComputeConnector.js";
+export { DigitalOceanConnector } from "./DigitalOceanConnector.js";
+export { LinodeConnector } from "./LinodeConnector.js";
+export { VultrConnector } from "./VultrConnector.js";
+// Security (10)
+export { MalwarebytesConnector } from "./MalwarebytesConnector.js";
+export { SophosConnector } from "./SophosConnector.js";
+export { McAfeeConnector } from "./McAfeeConnector.js";
+export { FSecureConnector } from "./FSecureConnector.js";
+export { KasperskyConnector } from "./KasperskyConnector.js";
+// DevOps (10)
+export { GitLabCIConnector } from "./GitLabCIConnector.js";
+export { BambooCICDConnector } from "./BambooCICDConnector.js";
+export { TeamCityConnector } from "./TeamCityConnector.js";
+export { AzurePipelinesConnector } from "./AzurePipelinesConnector.js";
+export { BitbucketPipelinesConnector } from "./BitbucketPipelinesConnector.js";
+export { CloudBeesJenkinsConnector } from "./CloudBeesJenkinsConnector.js";
+export { SpinnakerConnector } from "./SpinnakerConnector.js";
+export { LaunchDarklyConnector } from "./LaunchDarklyConnector.js";
+export { FeatureFlagConnector } from "./FeatureFlagConnector.js";
+// Data (10)
+export { MongoDBConnector } from "./MongoDBConnector.js";
+export { PostgreSQLCloudConnector } from "./PostgreSQLCloudConnector.js";
+export { RedisCloudConnector } from "./RedisCloudConnector.js";
+export { ElasticsearchCloudConnector } from "./ElasticsearchCloudConnector.js";
+export { KafkaConnector } from "./KafkaConnector.js";
+export { RabbitMQConnector } from "./RabbitMQConnector.js";
+export { CassandraConnector } from "./CassandraConnector.js";
+export { CouchDBConnector } from "./CouchDBConnector.js";
+export { Neo4jConnector } from "./Neo4jConnector.js";
+export { InfluxDBConnector } from "./InfluxDBConnector.js";
+// Other (10)
+export { ZapierConnector } from "./ZapierConnector.js";
+export { IFTTTConnector } from "./IFTTTConnector.js";
+export { TwilioConnector } from "./TwilioConnector.js";
+export { SendGridConnector } from "./SendGridConnector.js";
+export { MailchimpConnector } from "./MailchimpConnector.js";
+export { ConstantContactConnector } from "./ConstantContactConnector.js";
+export { ZendeskConnector } from "./ZendeskConnector.js";
+export { FreshdeskConnector } from "./FreshdeskConnector.js";
+export { IntercomConnector } from "./IntercomConnector.js";
+export { DriftConnector } from "./DriftConnector.js";
+// Additional connectors for 150+ total
+export { CloudflareDNSConnector } from "./CloudflareDNSConnector.js";
+export { OpsgenieConnector } from "./OpsgenieConnector.js";
+export { GitHubCopilotConnector } from "./GitHubCopilotConnector.js";
+export { VercelConnector } from "./VercelConnector.js";
+export { AWSCloudWatchConnector } from "./AWSCloudWatchConnector.js";
+export { CircleCIConnectorsConnector } from "./CircleCIConnectorsConnector.js";

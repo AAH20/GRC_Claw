@@ -37,6 +37,26 @@ const SCAN_RULES: Array<{
   { id: "missing-hsts", controlId: "A.13.2.3", pattern: /setHeader\s*\(.*Content-Type.*\)(?![\s\S]{0,500}Strict-Transport)/i, severity: "low", message: "HTTP Strict-Transport-Security header may be missing", fix: "Add: res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')" },
   { id: "rsa-weak", controlId: "PQC-FIPS203", pattern: /RSA[._]?(?:generate|create|key).*(?:1024|2048)/i, severity: "medium", message: "RSA key size should be ≥4096 bits; plan migration to ML-KEM (FIPS 203)", fix: "Upgrade to RSA-4096 now; migrate to ML-KEM per NIST FIPS 203 by 2030" },
   { id: "ecdh-usage", controlId: "PQC-FIPS203", pattern: /\b(?:ECDH|ecdh)\b/i, severity: "low", message: "ECDH is quantum-vulnerable — plan migration to ML-KEM (FIPS 203)", fix: "Plan ML-KEM migration per NIST PQC timeline (harvest-now-decrypt-later risk)" },
+
+  // ─── Python rules ────────────────────────────────────────────────────────────
+  { id: "python-env-access", controlId: "SOC2:CC6.1", pattern: /os\.environ\[['"](\w+)['"]\]/, severity: "medium", message: "Hardcoded env access — use python-dotenv with .env validation", fix: "Use python-dotenv and validate env vars at startup" },
+  { id: "python-boto3-no-tls", controlId: "SOC2:CC6.7", pattern: /boto3\.client\([^)]+\)(?!.*ssl_context)/, severity: "medium", message: "boto3 client without explicit TLS context — ensure SSL verification enabled", fix: "Pass ssl_context or verify=True when creating boto3 clients" },
+  { id: "python-subprocess-shell", controlId: "SOC2:CC6.1", pattern: /subprocess\.call\(.*shell=True/, severity: "critical", message: "subprocess shell=True enables command injection (OWASP A1)", fix: "Remove shell=True; pass command as a list: subprocess.call(['cmd', 'arg'])" },
+  { id: "python-pickle-loads", controlId: "SOC2:CC6.1", pattern: /pickle\.loads\(/, severity: "critical", message: "pickle.loads() is unsafe — deserializing untrusted data allows RCE", fix: "Use json.loads() or a safe serialization format instead of pickle" },
+
+  // ─── Go rules ────────────────────────────────────────────────────────────────
+  { id: "go-tls-skip-verify", controlId: "SOC2:CC6.7", pattern: /InsecureSkipVerify:\s*true/, severity: "critical", message: "TLS verification disabled — InsecureSkipVerify must not be true in production", fix: "Remove InsecureSkipVerify or set it to false; load a trusted CA bundle" },
+  { id: "go-sql-injection", controlId: "SOC2:CC6.1", pattern: /fmt\.Sprintf\(.*%s.*sql/, severity: "critical", message: "Possible SQL injection via fmt.Sprintf — use parameterized queries", fix: "Use db.Query(query, args...) with placeholders instead of fmt.Sprintf" },
+  { id: "go-weak-rand", controlId: "SOC2:CC9.2", pattern: /rand\.Intn\(|rand\.Float/, severity: "medium", message: "math/rand is not cryptographically secure — use crypto/rand for security-sensitive values", fix: "Import crypto/rand and use rand.Int() or rand.Read() for security purposes" },
+
+  // ─── Rust rules ──────────────────────────────────────────────────────────────
+  { id: "rust-unsafe-block", controlId: "SOC2:CC6.1", pattern: /unsafe\s*\{/, severity: "medium", message: "unsafe block in security-critical path — document invariants and audit carefully", fix: "Add a safety comment explaining invariants; consider wrapping in a safe abstraction" },
+  { id: "rust-unwrap-expect", controlId: "SOC2:A1.2", pattern: /unwrap\(\)|expect\(/, severity: "low", message: "unwrap()/expect() panics in production — use proper error handling for resilience", fix: "Replace with ? operator, match, or if let for graceful error propagation" },
+
+  // ─── Java rules ──────────────────────────────────────────────────────────────
+  { id: "java-md5", controlId: "SOC2:CC9.2", pattern: /new\s+MessageDigest.*MD5|DigestUtils\.md5/, severity: "critical", message: "MD5 is cryptographically broken — use SHA-256 or stronger", fix: "Replace with MessageDigest.getInstance('SHA-256') or DigestUtils.sha256()" },
+  { id: "java-csrf-disabled", controlId: "SOC2:CC6.1", pattern: /HttpSecurity.*csrf\(\)\.disable\(\)/, severity: "critical", message: "CSRF protection disabled in Spring Security", fix: "Remove .csrf().disable(); configure CSRF token handling instead" },
+  { id: "java-runtime-exec", controlId: "SOC2:CC6.1", pattern: /Runtime\.getRuntime\(\)\.exec\(/, severity: "critical", message: "Command injection risk via Runtime.exec() — validate and sanitize inputs", fix: "Use ProcessBuilder with a String[] argument list; validate all user inputs first" },
 ];
 
 // ─── IaC Compliance Rules (Terraform / CloudFormation / Kubernetes YAML) ──────
@@ -125,6 +145,15 @@ const IAC_RULES: Array<{
     severity: "high",
     message: "Terraform S3 backend missing encrypt = true — ISO 27001 A.10.1.1",
     fix: "Add encrypt = true to the terraform S3 backend configuration block",
+  },
+  {
+    id: "iac-grc-control-missing-evidence",
+    controlId: "GRC-CTRL-001",
+    pattern: /resource\s+"grc_control"\s+"[^"]+"\s*\{(?=[^}]*status\s*=\s*"non_compliant")(?=[^}]*(?!evidence_url\s*=))[^}]*\}/s,
+    fileTypes: [".tf"],
+    severity: "medium",
+    message: "GRC control marked non-compliant but missing evidence_url — attach supporting evidence to the proof ledger",
+    fix: 'Add evidence_url = "<url>" to the grc_control resource so the control failure is documented in the proof ledger',
   },
 ];
 
