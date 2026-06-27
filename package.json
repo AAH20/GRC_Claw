@@ -62,7 +62,10 @@
     "packages/agent-audit-trail",
     "packages/integration-marketplace",
     "packages/evidence-automation-engine",
-    "packages/employee-lifecycle"
+    "packages/employee-lifecycle",
+    "packages/vendor-risk-management",
+    "packages/compliance-task-engine",
+    "packages/policy-management-hub"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",

@@ -47,6 +47,12 @@ import { AgentTrustScoreEngine } from '@grc-claw/agent-trust-score';
 import { BoardReportGenerator } from '@grc-claw/board-reporting';
 import { AgentAuditTrail } from '@grc-claw/agent-audit-trail';
 import { createHash } from 'node:crypto';
+import { IntegrationMarketplace } from '@grc-claw/integration-marketplace';
+import { PolicyManagementHub } from '@grc-claw/policy-management-hub';
+import { VendorRiskManagement } from '@grc-claw/vendor-risk-management';
+import { EmployeeLifecycleEngine } from '@grc-claw/employee-lifecycle';
+import { ComplianceTaskEngine } from '@grc-claw/compliance-task-engine';
+import { EvidenceAutomationEngine } from '@grc-claw/evidence-automation-engine';
 
 const vectorMemory = new VectorGraphMemory();
 const skillsRegistry = new SkillsRegistry();
@@ -188,6 +194,12 @@ const trustScoreEngine = new AgentTrustScoreEngine({
   },
 });
 const agentAuditTrail = new AgentAuditTrail();
+const integrationMarketplace = new IntegrationMarketplace();
+const policyHub = new PolicyManagementHub();
+const vendorRiskMgmt = new VendorRiskManagement();
+const employeeLifecycle = new EmployeeLifecycleEngine();
+const complianceTaskEngine = new ComplianceTaskEngine();
+const evidenceAutoEngine = new EvidenceAutomationEngine();
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
@@ -286,7 +298,13 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('engineering.') ||
     tool.startsWith('trust_score.') ||
     tool.startsWith('audit_trail.') ||
-    tool.startsWith('federated.')
+    tool.startsWith('federated.') ||
+    tool.startsWith('integration.') ||
+    tool.startsWith('policy_hub.') ||
+    tool.startsWith('vendor_risk.') ||
+    tool.startsWith('employee.') ||
+    tool.startsWith('task.') ||
+    tool.startsWith('evidence_auto.')
   );
 }
 
@@ -3157,6 +3175,202 @@ export async function dispatchBuiltinGrcTool(
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'audit_trail_export_failed', timestamp: new Date().toISOString() };
       }
+    }
+
+    // ─── Integration Marketplace Tools ────────────────────────────────
+    case 'integration.list': {
+      const connectors = integrationMarketplace.getEnabledConnectors();
+      const stats = integrationMarketplace.getStats();
+      return {
+        ok: true,
+        connectors: connectors.map(c => ({ id: c.id, name: c.name, category: c.category, frameworks: c.frameworks, capabilities: c.capabilities })),
+        stats,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    case 'integration.enable': {
+      const id = String(args.connectorId ?? args.id ?? '');
+      if (!id) return { ok: false, error: 'connectorId_required', timestamp: new Date().toISOString() };
+      integrationMarketplace.enableConnector(id);
+      return { ok: true, connectorId: id, enabled: true, timestamp: new Date().toISOString() };
+    }
+    case 'integration.disable': {
+      const id = String(args.connectorId ?? args.id ?? '');
+      if (!id) return { ok: false, error: 'connectorId_required', timestamp: new Date().toISOString() };
+      integrationMarketplace.disableConnector(id);
+      return { ok: true, connectorId: id, enabled: false, timestamp: new Date().toISOString() };
+    }
+    case 'integration.collect': {
+      const id = typeof args.connectorId === 'string' ? args.connectorId : typeof args.id === 'string' ? args.id : '';
+      try {
+        if (id) {
+          const job = await integrationMarketplace.collectFromConnector(id);
+          return { ok: true, job, timestamp: new Date().toISOString() };
+        }
+        const jobs = await integrationMarketplace.collectAll();
+        return { ok: true, jobs, count: jobs.length, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'integration_collect_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // ─── Policy Management Hub Tools ──────────────────────────────────
+    case 'policy_hub.create': {
+      try {
+        const policy = policyHub.createPolicy(args as Parameters<typeof policyHub.createPolicy>[0]);
+        return { ok: true, policy, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'policy_hub_create_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'policy_hub.list': {
+      const policies = policyHub.listPolicies();
+      return { ok: true, policies, count: policies.length, timestamp: new Date().toISOString() };
+    }
+    case 'policy_hub.approve': {
+      const policyId = String(args.policyId ?? '');
+      if (!policyId) return { ok: false, error: 'policyId_required', timestamp: new Date().toISOString() };
+      try {
+        const workflow = policyHub.initiateApproval(policyId, (args.steps as Array<{ assigneeId: string; assigneeName: string; role: string; deadline?: string }>) ?? [], String(args.initiatedBy ?? 'system'));
+        return { ok: true, workflow, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'policy_hub_approve_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'policy_hub.publish': {
+      const policyId = String(args.policyId ?? '');
+      if (!policyId) return { ok: false, error: 'policyId_required', timestamp: new Date().toISOString() };
+      try {
+        const policy = policyHub.publishPolicy(policyId, String(args.publishedBy ?? 'system'));
+        return { ok: true, policy, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'policy_hub_publish_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // ─── Vendor Risk Management Tools ─────────────────────────────────
+    case 'vendor_risk.create_vendor': {
+      try {
+        const vendor = vendorRiskMgmt.createVendor(args as Parameters<typeof vendorRiskMgmt.createVendor>[0]);
+        return { ok: true, vendor, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'vendor_risk_create_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'vendor_risk.list_vendors': {
+      const vendors = vendorRiskMgmt.listVendors();
+      return { ok: true, vendors, count: vendors.length, timestamp: new Date().toISOString() };
+    }
+    case 'vendor_risk.get_risk_score': {
+      const vendorId = String(args.vendorId ?? '');
+      if (!vendorId) return { ok: false, error: 'vendorId_required', timestamp: new Date().toISOString() };
+      const score = vendorRiskMgmt.getRiskScore(vendorId);
+      if (!score) return { ok: false, error: `vendor_not_found: ${vendorId}`, timestamp: new Date().toISOString() };
+      return { ok: true, score, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Employee Lifecycle Tools ─────────────────────────────────────
+    case 'employee.create': {
+      try {
+        const employee = employeeLifecycle.createEmployee(args as Parameters<typeof employeeLifecycle.createEmployee>[0]);
+        return { ok: true, employee, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'employee_create_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'employee.list': {
+      const state = typeof args.state === 'string' ? args.state as import('@grc-claw/employee-lifecycle').EmployeeState : undefined;
+      const department = typeof args.department === 'string' ? args.department : undefined;
+      const employees = employeeLifecycle.listEmployees(state ? { state, department } : undefined);
+      return { ok: true, employees, count: employees.length, timestamp: new Date().toISOString() };
+    }
+    case 'employee.onboard': {
+      const employeeId = String(args.employeeId ?? args.id ?? '');
+      if (!employeeId) return { ok: false, error: 'employeeId_required', timestamp: new Date().toISOString() };
+      try {
+        const workflow = employeeLifecycle.startOnboarding(employeeId);
+        return { ok: true, workflow, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'employee_onboard_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'employee.offboard': {
+      const employeeId = String(args.employeeId ?? args.id ?? '');
+      if (!employeeId) return { ok: false, error: 'employeeId_required', timestamp: new Date().toISOString() };
+      try {
+        const workflow = employeeLifecycle.startOffboarding(employeeId, typeof args.targetDate === 'string' ? args.targetDate : undefined);
+        return { ok: true, workflow, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'employee_offboard_failed', timestamp: new Date().toISOString() };
+      }
+    }
+
+    // ─── Compliance Task Engine Tools ─────────────────────────────────
+    case 'task.create': {
+      try {
+        const task = complianceTaskEngine.createTask(args as Parameters<typeof complianceTaskEngine.createTask>[0]);
+        return { ok: true, task, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'task_create_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'task.list': {
+      const tasks = complianceTaskEngine.listTasks();
+      return { ok: true, tasks, count: tasks.length, timestamp: new Date().toISOString() };
+    }
+    case 'task.update_status': {
+      const taskId = String(args.taskId ?? args.id ?? '');
+      const action = String(args.action ?? '');
+      if (!taskId || !action) return { ok: false, error: 'taskId_and_action_required', timestamp: new Date().toISOString() };
+      try {
+        let task;
+        if (action === 'start') task = complianceTaskEngine.startTask(taskId);
+        else if (action === 'complete') task = complianceTaskEngine.completeTask(taskId);
+        else if (action === 'block') task = complianceTaskEngine.blockTask(taskId, typeof args.reason === 'string' ? args.reason : undefined);
+        else if (action === 'cancel') task = complianceTaskEngine.cancelTask(taskId);
+        else return { ok: false, error: 'invalid_action', validActions: ['start', 'complete', 'block', 'cancel'], timestamp: new Date().toISOString() };
+        return { ok: true, task, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'task_update_status_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'task.analytics': {
+      const analytics = complianceTaskEngine.getAnalytics();
+      return { ok: true, analytics, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Evidence Automation Engine Tools ──────────────────────────────
+    case 'evidence_auto.schedule': {
+      const connectorId = String(args.connectorId ?? '');
+      const scheduleConfig = args.config as import('@grc-claw/evidence-automation-engine').ScheduleConfig;
+      if (!connectorId || !scheduleConfig) return { ok: false, error: 'connectorId_and_config_required', timestamp: new Date().toISOString() };
+      try {
+        const schedule = evidenceAutoEngine.createSchedule(connectorId, scheduleConfig);
+        return { ok: true, schedule, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'evidence_auto_schedule_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'evidence_auto.run_now': {
+      const connectorId = typeof args.connectorId === 'string' ? args.connectorId : '';
+      try {
+        if (connectorId) {
+          const job = await evidenceAutoEngine.collectFromConnector(connectorId);
+          return { ok: true, job, timestamp: new Date().toISOString() };
+        }
+        const jobs = await evidenceAutoEngine.collectAll();
+        return { ok: true, jobs, count: jobs.length, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'evidence_auto_run_now_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'evidence_auto.gaps': {
+      const gaps = evidenceAutoEngine.detectGaps();
+      return { ok: true, gaps, count: gaps.length, timestamp: new Date().toISOString() };
+    }
+    case 'evidence_auto.summary': {
+      const summary = evidenceAutoEngine.generateSummaryReport();
+      return { ok: true, summary, timestamp: new Date().toISOString() };
     }
 
     default:

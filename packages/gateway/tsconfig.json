@@ -34,6 +34,12 @@
     { "path": "../continuous-compliance" },
     { "path": "../ai-threat-detection" },
     { "path": "../board-reporting" },
-    { "path": "../third-party-risk" }
+    { "path": "../third-party-risk" },
+    { "path": "../integration-marketplace" },
+    { "path": "../policy-management-hub" },
+    { "path": "../vendor-risk-management" },
+    { "path": "../employee-lifecycle" },
+    { "path": "../compliance-task-engine" },
+    { "path": "../evidence-automation-engine" }
   ]
 }

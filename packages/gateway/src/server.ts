@@ -47,6 +47,12 @@ import { AgentTracer } from '@grc-claw/observability';
 import { ComplianceAutopilot } from '@grc-claw/compliance-autopilot';
 import { DriftDetector, type ControlEvaluator, type ControlSnapshot } from '@grc-claw/drift-detector';
 import { EvidenceCollectorEngine, type SystemAdapter, type ComplianceFramework as ECFramework } from '@grc-claw/evidence-collector';
+import { IntegrationMarketplace } from '@grc-claw/integration-marketplace';
+import { PolicyManagementHub } from '@grc-claw/policy-management-hub';
+import { VendorRiskManagement } from '@grc-claw/vendor-risk-management';
+import { EmployeeLifecycleEngine } from '@grc-claw/employee-lifecycle';
+import { ComplianceTaskEngine } from '@grc-claw/compliance-task-engine';
+import { EvidenceAutomationEngine } from '@grc-claw/evidence-automation-engine';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -176,6 +182,12 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     autoRemediate: true,
     tenantId: 1,
   });
+  const integrationMarketplace = new IntegrationMarketplace();
+  const policyHub = new PolicyManagementHub();
+  const vendorRiskMgmt = new VendorRiskManagement();
+  const employeeLifecycle = new EmployeeLifecycleEngine();
+  const complianceTaskEngine = new ComplianceTaskEngine();
+  const evidenceAutoEngine = new EvidenceAutomationEngine();
 
   // ─── Drift Detector ─────────────────────────────────────────────────
   const driftControlEvaluator: ControlEvaluator = {
@@ -1025,6 +1037,460 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const report = entityManager.getConsolidatedReport();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, report }));
+      return;
+    }
+
+    // ─── Integration Marketplace Endpoints ──────────────────────────────
+    if (req.method === 'GET' && path === '/api/integrations') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const connectors = integrationMarketplace.getEnabledConnectors();
+      const stats = integrationMarketplace.getStats();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, connectors: connectors.map(c => ({ id: c.id, name: c.name, category: c.category, frameworks: c.frameworks, capabilities: c.capabilities })), stats }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/integrations\/[^/]+\/enable$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      integrationMarketplace.enableConnector(id);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, connectorId: id, enabled: true }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/integrations\/[^/]+\/disable$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      integrationMarketplace.disableConnector(id);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, connectorId: id, enabled: false }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/integrations/collect') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const jobs = await integrationMarketplace.collectAll();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, jobs, count: jobs.length }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/integrations\/collect\/[^/]+$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[4]!);
+      try {
+        const job = await integrationMarketplace.collectFromConnector(id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, job }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/integrations/jobs') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const jobs = integrationMarketplace.getRecentJobs(50);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, jobs, count: jobs.length }));
+      return;
+    }
+
+    // ─── Policy Management Hub Endpoints ────────────────────────────────
+    if (req.method === 'POST' && path === '/api/policies/create') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const policy = policyHub.createPolicy(body as Parameters<typeof policyHub.createPolicy>[0]);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, policy }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/policies') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const policies = policyHub.listPolicies();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, policies, count: policies.length }));
+      return;
+    }
+    if (req.method === 'GET' && path.match(/^\/api\/policies\/[^/]+$/) && !path.includes('/templates') && !path.includes('/stats')) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/').pop()!);
+      const policy = policyHub.getPolicy(id);
+      if (!policy) { res.writeHead(404); res.end(JSON.stringify({ error: 'not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, policy }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/policies\/[^/]+\/approve$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const body = await readJson(req);
+        const workflow = policyHub.initiateApproval(id, (body.steps as Array<{ assigneeId: string; assigneeName: string; role: string; deadline?: string }>) ?? [], String(body.initiatedBy ?? 'system'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, workflow }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/policies\/[^/]+\/publish$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const body = await readJson(req);
+        const policy = policyHub.publishPolicy(id, String(body.publishedBy ?? 'system'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, policy }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/policies\/[^/]+\/attest$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const body = await readJson(req);
+        const attestations = policyHub.assignAttestation(id, (body.employees as Array<{ employeeId: string; employeeName: string; employeeEmail: string; department: string }>) ?? [], String(body.dueDate ?? new Date(Date.now() + 30 * 86400000).toISOString()));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, attestations, count: attestations.length }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/policies/templates') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const templates = policyHub.getTemplates();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, templates, count: templates.length }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/policies/stats') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const stats = policyHub.getStats();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, stats }));
+      return;
+    }
+
+    // ─── Vendor Risk Management Endpoints ───────────────────────────────
+    if (req.method === 'POST' && path === '/api/vendor-risk/vendors') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const vendor = vendorRiskMgmt.createVendor(body as Parameters<typeof vendorRiskMgmt.createVendor>[0]);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, vendor }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/vendor-risk/vendors') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const vendors = vendorRiskMgmt.listVendors();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, vendors, count: vendors.length }));
+      return;
+    }
+    if (req.method === 'GET' && path.match(/^\/api\/vendor-risk\/vendors\/[^/]+$/) && !path.includes('/risk-score') && !path.includes('/questionnaire') && !path.includes('/monitor')) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/').pop()!);
+      const vendor = vendorRiskMgmt.getVendor(id);
+      if (!vendor) { res.writeHead(404); res.end(JSON.stringify({ error: 'not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, vendor }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/vendor-risk\/vendors\/[^/]+\/questionnaire$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[4]!);
+      try {
+        const body = await readJson(req);
+        const assessment = vendorRiskMgmt.createAssessment(id, String(body.questionnaireId ?? 'qt-sig-lite'));
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, assessment }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path.match(/^\/api\/vendor-risk\/vendors\/[^/]+\/risk-score$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = path.split('/')[4]!;
+      const score = vendorRiskMgmt.getRiskScore(id);
+      if (!score) { res.writeHead(404); res.end(JSON.stringify({ error: 'not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, score }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/vendor-risk\/vendors\/[^/]+\/monitor$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[4]!);
+      try {
+        vendorRiskMgmt.onboardVendor(id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, vendorId: id, monitoring: true }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/vendor-risk/alerts') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const alerts = vendorRiskMgmt.getActiveAlerts();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, alerts, count: alerts.length }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/vendor-risk/dashboard') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const dashboard = vendorRiskMgmt.getDashboard();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, dashboard }));
+      return;
+    }
+
+    // ─── Employee Lifecycle Endpoints ───────────────────────────────────
+    if (req.method === 'POST' && path === '/api/employees') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const employee = employeeLifecycle.createEmployee(body as Parameters<typeof employeeLifecycle.createEmployee>[0]);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, employee }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/employees') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const url2 = new URL(req.url ?? '', 'http://local');
+      const state = url2.searchParams.get('state') as import('@grc-claw/employee-lifecycle').EmployeeState | undefined;
+      const department = url2.searchParams.get('department') ?? undefined;
+      const employees = employeeLifecycle.listEmployees(state ? { state, department } : undefined);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, employees, count: employees.length }));
+      return;
+    }
+    if (req.method === 'GET' && path.match(/^\/api\/employees\/[^/]+$/) && !path.includes('/compliance-dashboard') && !path.includes('/access-review')) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/').pop()!);
+      const employee = employeeLifecycle.getEmployee(id);
+      if (!employee) { res.writeHead(404); res.end(JSON.stringify({ error: 'not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, employee }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/employees\/[^/]+\/onboard$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const workflow = employeeLifecycle.startOnboarding(id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, workflow }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/employees\/[^/]+\/offboard$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const body = await readJson(req).catch(() => ({})) as Record<string, unknown>;
+        const workflow = employeeLifecycle.startOffboarding(id, typeof body.targetDate === 'string' ? body.targetDate : undefined);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, workflow }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/employees\/[^/]+\/compliance-check$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const compliant = employeeLifecycle.isEmployeeCompliant(id);
+        const checks = employeeLifecycle.getEmployeeCompliance(id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, employeeId: id, compliant, checks }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/employees/compliance-dashboard') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const dashboard = employeeLifecycle.getComplianceDashboard();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, dashboard }));
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/employees/access-review') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const campaign = employeeLifecycle.createAccessReviewCampaign(body as Parameters<typeof employeeLifecycle.createAccessReviewCampaign>[0]);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, campaign }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    // ─── Compliance Task Engine Endpoints ───────────────────────────────
+    if (req.method === 'POST' && path === '/api/tasks') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const task = complianceTaskEngine.createTask(body as Parameters<typeof complianceTaskEngine.createTask>[0]);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, task }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/tasks') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const tasks = complianceTaskEngine.listTasks();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, tasks, count: tasks.length }));
+      return;
+    }
+    if (req.method === 'GET' && path.match(/^\/api\/tasks\/[^/]+$/) && !path.includes('/analytics')) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/').pop()!);
+      const task = complianceTaskEngine.getTask(id);
+      if (!task) { res.writeHead(404); res.end(JSON.stringify({ error: 'not_found' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, task }));
+      return;
+    }
+    if (req.method === 'POST' && path.match(/^\/api\/tasks\/[^/]+\/status$/)) {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const id = decodeURIComponent(path.split('/')[3]!);
+      try {
+        const body = await readJson(req);
+        const statusAction = String(body.action ?? '');
+        let task;
+        if (statusAction === 'start') task = complianceTaskEngine.startTask(id);
+        else if (statusAction === 'complete') task = complianceTaskEngine.completeTask(id);
+        else if (statusAction === 'block') task = complianceTaskEngine.blockTask(id, typeof body.reason === 'string' ? body.reason : undefined);
+        else if (statusAction === 'cancel') task = complianceTaskEngine.cancelTask(id);
+        else { res.writeHead(400); res.end(JSON.stringify({ error: 'invalid_action', validActions: ['start', 'complete', 'block', 'cancel'] })); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, task }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/tasks/bulk-from-findings') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const findings = (body.findings as import('@grc-claw/compliance-task-engine').AuditFinding[]) ?? [];
+        const results = complianceTaskEngine.createTasksFromFindings(findings);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, results, count: results.length }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/tasks/analytics') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const analytics = complianceTaskEngine.getAnalytics();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, analytics }));
+      return;
+    }
+
+    // ─── Evidence Automation Engine Endpoints ───────────────────────────
+    if (req.method === 'POST' && path === '/api/evidence-automation/schedule') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const connectorId = String(body.connectorId ?? '');
+        const scheduleConfig = body.config as import('@grc-claw/evidence-automation-engine').ScheduleConfig;
+        if (!connectorId || !scheduleConfig) { res.writeHead(400); res.end(JSON.stringify({ error: 'connectorId_and_config_required' })); return; }
+        const schedule = evidenceAutoEngine.createSchedule(connectorId, scheduleConfig);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, schedule }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'POST' && path === '/api/evidence-automation/run-now') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const connectorId = String(body.connectorId ?? '');
+        let job;
+        if (connectorId) {
+          job = await evidenceAutoEngine.collectFromConnector(connectorId);
+        } else {
+          const jobs = await evidenceAutoEngine.collectAll();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, jobs, count: jobs.length }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, job }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400); res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/evidence-automation/history') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const jobs = evidenceAutoEngine.getRecentJobs(50);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, jobs, count: jobs.length }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/evidence-automation/gaps') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const gaps = evidenceAutoEngine.detectGaps();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, gaps, count: gaps.length }));
+      return;
+    }
+    if (req.method === 'GET' && path === '/api/evidence-automation/summary') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const summary = evidenceAutoEngine.generateSummaryReport();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, summary }));
       return;
     }
 
