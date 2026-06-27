@@ -60,7 +60,7 @@
     { "path": "./packages/policy-management-hub" },
     { "path": "./packages/vendor-risk-management" },
     { "path": "./packages/compliance-task-engine" },
-    { "path": "./packages/employee-lifecycle" },,
+    { "path": "./packages/employee-lifecycle" },
     { "path": "./packages/drift-detector" }
   ]
 }
