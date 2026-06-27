@@ -56,7 +56,7 @@
     { "path": "./packages/accm" },
     { "path": "./packages/agent-builder" },
     { "path": "./packages/integration-marketplace" },
-    { "path": "/Users/ahmedhassan/Downloads/a2z-soc-main 2/GRC_Claw/packages/evidence-automation-engine" },
+    { "path": "./packages/evidence-automation-engine" },
     { "path": "./packages/policy-management-hub" },
     { "path": "./packages/vendor-risk-management" },
     { "path": "./packages/compliance-task-engine" },
