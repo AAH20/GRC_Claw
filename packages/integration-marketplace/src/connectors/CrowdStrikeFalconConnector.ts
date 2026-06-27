@@ -9,28 +9,22 @@ import { hashEvidence, generateEvidenceId } from "../types.js";
 
 const capabilities: IntegrationCapability[] = [
   {
-    id: "csf-endpoint-posture",
-    name: "Endpoint Security Posture",
-    description: "Fetch CrowdStrike Falcon endpoint security posture scores and compliance status",
+    id: "crowdstrike-falcon-endpoints",
+    name: "Falcon Endpoint Protection",
+    description: "Fetch CrowdStrike Falcon endpoint detection and prevention status",
     evidenceCategories: ["endpoint_security", "posture_assessment"],
   },
   {
-    id: "csf-policy-evaluations",
-    name: "Policy Evaluations",
-    description: "Fetch device policy evaluation results and remediation status",
-    evidenceCategories: ["policy_compliance", "device_management"],
+    id: "crowdstrike-falcon-incidents",
+    name: "Falcon Incidents",
+    description: "Fetch CrowdStrike Falcon incident detections and response actions",
+    evidenceCategories: ["vulnerability_management", "incident_management"],
   },
   {
-    id: "csf-vulnerability-assessments",
-    name: "Vulnerability Assessments",
-    description: "Fetch endpoint vulnerability scan results and severity distribution",
-    evidenceCategories: ["vulnerability_management", "risk_assessment"],
-  },
-  {
-    id: "csf-prevention-settings",
-    name: "Prevention Settings",
-    description: "Fetch Falcon prevention policy configurations across sensor groups",
-    evidenceCategories: ["configuration", "endpoint_protection"],
+    id: "crowdstrike-falcon-policies",
+    name: "Falcon Detection Policies",
+    description: "Fetch CrowdStrike Falcon detection policy configurations and tuning",
+    evidenceCategories: ["policy_compliance", "configuration"],
   },
 ];
 
@@ -82,7 +76,7 @@ export class CrowdStrikeFalconConnector implements IntegrationConnector {
     artifacts.push({
       id: generateEvidenceId(),
       connectorId: this.id,
-      capabilityId: "csf-endpoint-posture",
+      capabilityId: "crowdstrike-falcon-endpoints",
       timestamp: now,
       hash: hashEvidence({ deviceCount: deviceIds.length }),
       framework: "SOC2",
@@ -93,60 +87,22 @@ export class CrowdStrikeFalconConnector implements IntegrationConnector {
       metadata: {},
     });
 
-    const policies = await fetch(
-      "https://api.crowdstrike.com/device-policy/v1/queries/policy-ids",
+    const detections = await fetch(
+      "https://api.crowdstrike.com/detects/queries/detects/v1?limit=100",
       { headers }
     ).then((r) => r.json()).catch(() => ({ resources: [] })) as Record<string, unknown>;
-    const policyIds = (policies.resources || []) as string[];
+    const detectIds = (detections.resources || []) as string[];
     artifacts.push({
       id: generateEvidenceId(),
       connectorId: this.id,
-      capabilityId: "csf-policy-evaluations",
+      capabilityId: "crowdstrike-falcon-incidents",
       timestamp: now,
-      hash: hashEvidence({ policyCount: policyIds.length }),
+      hash: hashEvidence({ detectionCount: detectIds.length }),
       framework: "ISO27001",
-      controlId: "A.12.6.1",
-      source: "crowdstrike-falcon/device-policy",
-      status: "unknown",
-      data: { policyCount: policyIds.length },
-      metadata: {},
-    });
-
-    const vulnerabilities = await fetch(
-      "https://api.crowdstrike.com/spotlight/queries/vulnerabilities/v1?limit=100",
-      { headers }
-    ).then((r) => r.json()).catch(() => ({ resources: [] })) as Record<string, unknown>;
-    const vulnIds = (vulnerabilities.resources || []) as string[];
-    artifacts.push({
-      id: generateEvidenceId(),
-      connectorId: this.id,
-      capabilityId: "csf-vulnerability-assessments",
-      timestamp: now,
-      hash: hashEvidence({ vulnCount: vulnIds.length }),
-      framework: "NIST_CSF",
-      controlId: "DE.CM-1",
-      source: "crowdstrike-falcon/spotlight",
-      status: vulnIds.length === 0 ? "compliant" : "non_compliant",
-      data: { vulnerabilityCount: vulnIds.length },
-      metadata: {},
-    });
-
-    const preventionPolicies = await fetch(
-      "https://api.crowdstrike.com/device-policy/v1/queries/prevention-policies/v1",
-      { headers }
-    ).then((r) => r.json()).catch(() => ({ resources: [] })) as Record<string, unknown>;
-    const preventionIds = (preventionPolicies.resources || []) as string[];
-    artifacts.push({
-      id: generateEvidenceId(),
-      connectorId: this.id,
-      capabilityId: "csf-prevention-settings",
-      timestamp: now,
-      hash: hashEvidence({ preventionCount: preventionIds.length }),
-      framework: "SOC2",
-      controlId: "CC6.1",
-      source: "crowdstrike-falcon/prevention-policies",
-      status: "unknown",
-      data: { preventionPolicyCount: preventionIds.length },
+      controlId: "A.12.2.1",
+      source: "crowdstrike-falcon/detections",
+      status: detectIds.length === 0 ? "compliant" : "non_compliant",
+      data: { openDetections: detectIds.length },
       metadata: {},
     });
 

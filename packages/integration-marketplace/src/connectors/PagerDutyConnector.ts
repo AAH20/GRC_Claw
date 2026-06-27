@@ -9,22 +9,22 @@ import { hashEvidence, generateEvidenceId } from "../types.js";
 
 const capabilities: IntegrationCapability[] = [
   {
-    id: "pd-services",
-    name: "Services",
-    description: "Fetch PagerDuty service configurations and escalation policies",
-    evidenceCategories: ["incident_management", "configuration"],
-  },
-  {
-    id: "pd-oncall",
-    name: "On-Call Schedules",
-    description: "Fetch on-call schedules and rotation policies",
+    id: "pagerduty-incidents-v2",
+    name: "Incident Management",
+    description: "Fetch PagerDuty incident lifecycle, escalation policies, and SLA compliance",
     evidenceCategories: ["incident_management", "availability"],
   },
   {
-    id: "pd-incidents",
-    name: "Incident History",
-    description: "Fetch recent incidents and resolution metrics",
-    evidenceCategories: ["incident_management"],
+    id: "pagerduty-oncall-v2",
+    name: "On-Call Schedules",
+    description: "Fetch on-call schedules, rotations, and escalation handoff records",
+    evidenceCategories: ["incident_management", "configuration"],
+  },
+  {
+    id: "pagerduty-services-v2",
+    name: "Service Catalog",
+    description: "Fetch PagerDuty service health, integrations, and business impact mapping",
+    evidenceCategories: ["incident_management", "monitoring"],
   },
 ];
 
@@ -69,7 +69,7 @@ export class PagerDutyConnector implements IntegrationConnector {
     artifacts.push({
       id: generateEvidenceId(),
       connectorId: this.id,
-      capabilityId: "pd-services",
+      capabilityId: "pagerduty-services-v2",
       timestamp: now,
       hash: hashEvidence({ services: serviceList.map((s) => ({ id: s.id, name: s.name })) }),
       framework: "SOC2",
@@ -87,7 +87,7 @@ export class PagerDutyConnector implements IntegrationConnector {
     artifacts.push({
       id: generateEvidenceId(),
       connectorId: this.id,
-      capabilityId: "pd-oncall",
+      capabilityId: "pagerduty-oncall-v2",
       timestamp: now,
       hash: hashEvidence({ schedules: scheduleList.map((s) => ({ id: s.id, name: s.name })) }),
       framework: "SOC2",
@@ -107,7 +107,7 @@ export class PagerDutyConnector implements IntegrationConnector {
     artifacts.push({
       id: generateEvidenceId(),
       connectorId: this.id,
-      capabilityId: "pd-incidents",
+      capabilityId: "pagerduty-incidents-v2",
       timestamp: now,
       hash: hashEvidence({ incidents: incidentList.map((i) => ({ id: i.id, status: i.status })) }),
       framework: "ISO27001",

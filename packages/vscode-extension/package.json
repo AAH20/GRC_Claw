@@ -13,7 +13,7 @@
   "categories": ["Linters", "Other"],
   "keywords": ["compliance", "security", "grc", "iso27001", "soc2", "nist"],
   "icon": "assets/icon.png",
-  "activationEvents": ["onLanguage:typescript", "onLanguage:javascript", "onLanguage:python", "onLanguage:go", "onCommand:grc.scan"],
+  "activationEvents": ["onLanguage:typescript", "onLanguage:javascript", "onLanguage:python", "onLanguage:go", "onLanguage:rust", "onLanguage:java", "onCommand:grc.scan"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [

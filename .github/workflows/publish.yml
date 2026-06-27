@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'GRC_Claw/packages/**'
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -23,7 +26,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          registry-url: https://registry.npmjs.org
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -31,22 +34,12 @@ jobs:
       - name: Build all packages
         run: npm run build
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: npx changeset publish
-          title: "chore: release @grc-claw packages"
-          commit: "chore: version @grc-claw packages"
+      - name: Publish to npm
+        run: npm publish --workspaces --access public
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Summary
-        if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "## Published packages" >> $GITHUB_STEP_SUMMARY
-          echo '${{ steps.changesets.outputs.publishedPackages }}' | \
-            node -e "const d=require('fs').readFileSync('/dev/stdin','utf8'); JSON.parse(d).forEach(p=>console.log('- \`'+p.name+'@'+p.version+'\`'))" \
-            >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo '${{ steps.changesets.outputs.publishedPackages }}' >> $GITHUB_STEP_SUMMARY
+          echo "## Published @grc-claw packages" >> $GITHUB_STEP_SUMMARY
+          echo "Published packages at version from each package.json" >> $GITHUB_STEP_SUMMARY
