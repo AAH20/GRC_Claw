@@ -43,6 +43,7 @@ import { IncidentManager } from '@grc-claw/incident-response';
 import { GitHubPRReviewer, CICDComplianceGate } from '@grc-claw/dev-compliance';
 import { CompliancePipeline, GitOpsWorkflow } from '@grc-claw/grc-engineering';
 import { AgentTrustScoreEngine } from '@grc-claw/agent-trust-score';
+import { TerraformProvider } from '@grc-claw/terraform-provider';
 
 import { BoardReportGenerator } from '@grc-claw/board-reporting';
 import { AgentAuditTrail } from '@grc-claw/agent-audit-trail';
@@ -199,6 +200,7 @@ const vendorRiskMgmt = new VendorRiskManagement();
 const employeeLifecycle = new EmployeeLifecycleEngine();
 const complianceTaskEngine = new ComplianceTaskEngine();
 const evidenceAutoEngine = new EvidenceAutomationEngine();
+const terraformProvider = new TerraformProvider();
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
@@ -287,7 +289,8 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('vendor_risk.') ||
     tool.startsWith('employee.') ||
     tool.startsWith('task.') ||
-    tool.startsWith('evidence_auto.')
+    tool.startsWith('evidence_auto.') ||
+    tool.startsWith('terraform.')
   );
 }
 
@@ -2947,6 +2950,54 @@ export async function dispatchBuiltinGrcTool(
     case 'evidence_auto.summary': {
       const summary = evidenceAutoEngine.generateSummaryReport();
       return { ok: true, summary, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Terraform Provider Tools ──────────────────────────────────
+    case 'terraform.plan': {
+      try {
+        const config = args as unknown as import('@grc-claw/terraform-provider').TerraformResourceConfig;
+        const plan = terraformProvider.plan(config);
+        return { ok: true, plan, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'terraform_plan_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'terraform.apply': {
+      try {
+        const config = args as unknown as import('@grc-claw/terraform-provider').TerraformResourceConfig;
+        const result = terraformProvider.apply(config);
+        return { ok: true, result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'terraform_apply_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'terraform.destroy': {
+      const resourceType = String(args.resourceType ?? args.type ?? '') as import('@grc-claw/terraform-provider').TerraformResourceType;
+      const name = String(args.name ?? '');
+      if (!resourceType || !name) {
+        return { ok: false, error: 'resourceType_and_name_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const deleted = terraformProvider.destroy(resourceType, name);
+        return { ok: true, deleted, resourceType, name, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'terraform_destroy_failed', timestamp: new Date().toISOString() };
+      }
+    }
+    case 'terraform.import': {
+      const resourceType = String(args.resourceType ?? args.type ?? '') as import('@grc-claw/terraform-provider').TerraformResourceType;
+      const name = String(args.name ?? '');
+      const id = String(args.id ?? '');
+      const attributes = (args.attributes as Record<string, unknown>) ?? {};
+      if (!resourceType || !name || !id) {
+        return { ok: false, error: 'resourceType_name_and_id_required', timestamp: new Date().toISOString() };
+      }
+      try {
+        const result = terraformProvider.importResource(resourceType, name, id, attributes);
+        return { ok: true, result, timestamp: new Date().toISOString() };
+      } catch (err: any) {
+        return { ok: false, error: err.message ?? 'terraform_import_failed', timestamp: new Date().toISOString() };
+      }
     }
 
     default:

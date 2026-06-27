@@ -68,6 +68,8 @@
     "@grc-claw/evidence-automation-engine": "*",
     "@grc-claw/openapi-generator": "*",
     "@grc-claw/agent-discovery": "*",
+    "@grc-claw/rbac-multi-tenant": "*",
+    "@grc-claw/terraform-provider": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {
