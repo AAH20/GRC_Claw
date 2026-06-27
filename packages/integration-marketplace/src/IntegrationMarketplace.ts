@@ -43,6 +43,21 @@ import {
   GoogleWorkspaceConnector,
   Microsoft365Connector,
   Auth0Connector,
+  AtlassianJiraConnector,
+  GitLabSASTConnector,
+  AWSGuardDutyConnector,
+  AzurePolicyConnector,
+  GCPConfigConnector,
+  OktaSystemLogConnector,
+  CrowdStrikeSpotlightConnector,
+  QualysScannerConnector,
+  TenableIOConnector,
+  SnykMonitorConnector,
+  PrismaCloudConnector,
+  WizConnector,
+  LaceworkConnector,
+  AzureDevOpsConnector,
+  CircleCIConnector,
 } from "./connectors/index.js";
 
 export interface CollectionJob {
@@ -101,6 +116,21 @@ export class IntegrationMarketplace {
       new GoogleWorkspaceConnector(),
       new Microsoft365Connector(),
       new Auth0Connector(),
+      new AtlassianJiraConnector(),
+      new GitLabSASTConnector(),
+      new AWSGuardDutyConnector(),
+      new AzurePolicyConnector(),
+      new GCPConfigConnector(),
+      new OktaSystemLogConnector(),
+      new CrowdStrikeSpotlightConnector(),
+      new QualysScannerConnector(),
+      new TenableIOConnector(),
+      new SnykMonitorConnector(),
+      new PrismaCloudConnector(),
+      new WizConnector(),
+      new LaceworkConnector(),
+      new AzureDevOpsConnector(),
+      new CircleCIConnector(),
     ];
     for (const connector of builtins) {
       this.registrations.set(connector.id, {

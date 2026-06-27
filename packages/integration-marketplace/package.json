@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/integration-marketplace",
   "version": "1.0.0",
-  "description": "Marketplace of 25+ SaaS integrations for automated GRC evidence collection",
+  "description": "Marketplace of 50+ SaaS integrations for automated GRC evidence collection",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
