@@ -65,6 +65,7 @@
     { "path": "./packages/agent-discovery" },
     { "path": "./packages/openapi-generator" },
     { "path": "./packages/terraform-provider" },
+    { "path": "./packages/rbac-multi-tenant" },
     { "path": "./packages/gateway" }
   ]
 }
