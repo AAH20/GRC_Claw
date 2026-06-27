@@ -20,6 +20,12 @@ export async function chatViaProvider(
   providerId: string,
   req: LlmChatRequest
 ): Promise<LlmChatResult> {
+  if (process.env.SOVEREIGN_MODE === 'true' && providerId !== 'ollama') {
+    throw new Error(
+      "SOVEREIGN_MODE=true — all LLM traffic must route through Ollama. Set provider to 'ollama' in your connectors.yaml"
+    );
+  }
+
   const provider = registry.getLlm(providerId);
   if (!provider) throw new Error(`llm_provider_not_found:${providerId}`);
 

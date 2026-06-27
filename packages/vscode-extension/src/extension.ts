@@ -374,6 +374,23 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
+  // Real-time scanning with debounce (500ms)
+  const debounceMap = new Map<string, NodeJS.Timeout>();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (cfg().get<boolean>("enableRealtime") === false) return;
+      const doc = event.document;
+      const key = doc.uri.toString();
+      const existing = debounceMap.get(key);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(() => {
+        runScanOnDocument(doc);
+        debounceMap.delete(key);
+      }, 500);
+      debounceMap.set(key, timer);
+    }),
+  );
+
   // Scan current file on open
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {

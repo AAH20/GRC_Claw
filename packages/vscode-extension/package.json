@@ -50,6 +50,11 @@
           "type": "string",
           "default": "",
           "description": "Your org slug for trust center integration"
+        },
+        "grc.enableRealtime": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time compliance scanning as you type (debounced 500ms)"
         }
       }
     },

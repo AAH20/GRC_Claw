@@ -1765,6 +1765,89 @@ async function cmdDrift(args: string[]) {
   }
 }
 
+// ─── grc sovereign ────────────────────────────────────────────────────────────
+function cmdSovereign(args: string[]) {
+  const sub = args[0] ?? 'help';
+
+  if (sub !== 'init') {
+    log(`Usage: grc sovereign init`);
+    log(`       Initialize Sovereign Deploy Mode (air-gap / on-premise)`);
+    return;
+  }
+
+  log(`\n${bold('Initializing Sovereign Deploy Mode...')} ${dim(`v${VERSION}`)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
+
+  const dockerCompose = `version: '3.9'
+# A2Z SOC GRC_Claw — Sovereign/Air-Gap Deploy
+# All data stays on-premise. No external API calls.
+# Uses Ollama for local LLM (no Anthropic/OpenAI calls leave the boundary).
+services:
+  grc-gateway:
+    image: ghcr.io/aah20/grc-claw-gateway:latest
+    ports: ["18791:18791"]
+    environment:
+      - SOVEREIGN_MODE=true
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - SUPABASE_URL=\${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=\${SUPABASE_SERVICE_ROLE_KEY:-}
+    depends_on: [ollama, supabase-db]
+  ollama:
+    image: ollama/ollama:latest
+    volumes: ["ollama_data:/root/.ollama"]
+    ports: ["11434:11434"]
+    command: ["ollama", "pull", "llama3"]
+  supabase-db:
+    image: supabase/postgres:15.1.0.117
+    environment:
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: grc
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    ports: ["5432:5432"]
+volumes:
+  ollama_data:
+  pgdata:
+`;
+
+  writeFileSync('docker-compose.sovereign.yml', dockerCompose);
+  success('Created docker-compose.sovereign.yml');
+
+  const envSovereign = `# GRC_Claw Sovereign Deploy — environment template
+# Copy to .env and fill in your values before running docker compose
+
+# Supabase (self-hosted — leave blank to skip)
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Postgres password for local supabase-db
+POSTGRES_PASSWORD=changeme
+
+# GRC Gateway auth token (generate with: openssl rand -hex 32)
+GRC_CLAW_GATEWAY_TOKEN=
+
+# Sovereign mode — do NOT change; enforces Ollama-only LLM routing
+SOVEREIGN_MODE=true
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+`;
+
+  writeFileSync('.env.sovereign', envSovereign);
+  success('Created .env.sovereign');
+
+  log('');
+  log(`${bold('Next steps:')}`);
+  log(`  1. ${c.cyan}cp .env.sovereign .env${c.reset}              — copy env template`);
+  log(`  2. ${c.cyan}nano .env${c.reset}                           — set POSTGRES_PASSWORD and GRC_CLAW_GATEWAY_TOKEN`);
+  log(`  3. ${c.cyan}docker compose -f docker-compose.sovereign.yml up -d${c.reset}`);
+  log(`     — starts GRC gateway (port 18791), Ollama (port 11434), Postgres (port 5432)`);
+  log(`  4. ${c.cyan}export GRC_CLAW_GATEWAY_TOKEN=<your-token>${c.reset}`);
+  log(`  5. ${c.cyan}grc doctor${c.reset}                          — verify sovereign environment`);
+  log('');
+  log(`${c.yellow}Note:${c.reset} SOVEREIGN_MODE=true enforces all LLM calls through Ollama.`);
+  log(`      No data leaves your network boundary.\n`);
+}
+
 // ─── Entry point ──────────────────────────────────────────────────────────────
 const [,, cmd, ...rest] = process.argv;
 
@@ -1789,6 +1872,7 @@ switch (cmd) {
   case 'iac-scan':   await cmdIaCScan(rest); break;
   case 'pqc-scan':   await cmdPqcScan(rest); break;
   case 'frameworks': cmdFrameworks(rest); break;
+  case 'sovereign':  cmdSovereign(rest); break;
   case 'version':    cmdVersion(); break;
   case 'help':
   case '--help':

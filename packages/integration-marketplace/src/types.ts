@@ -20,7 +20,8 @@ export type IntegrationCategory =
   | "documentation"
   | "workspace"
   | "document_management"
-  | "file_storage";
+  | "file_storage"
+  | "finance";
 
 export type AuthType =
   | "api_key"
