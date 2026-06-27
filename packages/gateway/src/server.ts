@@ -55,9 +55,24 @@ import { ComplianceTaskEngine } from '@grc-claw/compliance-task-engine';
 import { EvidenceAutomationEngine } from '@grc-claw/evidence-automation-engine';
 import { OpenAPIGenerator } from '@grc-claw/openapi-generator';
 import { AgentDiscoveryScanner } from '@grc-claw/agent-discovery';
+import { RBACEngine, type JWTPayload } from '@grc-claw/rbac-multi-tenant';
+import { TerraformProvider } from '@grc-claw/terraform-provider';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
+
+export interface TenantContext {
+  userId?: string;
+  tenantId?: string;
+  role?: string;
+  scope?: string;
+  permissions?: string[];
+  jwtPayload?: JWTPayload;
+}
+
+export interface GatewayRequest extends IncomingMessage {
+  tenantContext?: TenantContext;
+}
 
 // SOC event broadcaster — pushes normalized events to all subscribed WS clients
 const socClients = new Set<WebSocket>();
@@ -127,6 +142,19 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const agentBuilder = new AgentBuilder(pg?.database ? { database: pg.database } : undefined);
   const frameworkCrosswalk = new FrameworkCrosswalk();
   const chatGRC = new ChatGRC();
+
+  // ─── RBAC Engine (multi-tenant auth) ─────────────────────────────────
+  const rbacEngine = new RBACEngine({
+    jwtSecret: process.env.GRC_CLAW_JWT_SECRET?.trim() || config.token,
+    jwtExpiresIn: Number(process.env.GRC_CLAW_JWT_EXPIRES_IN ?? 3600),
+    auditLogLimit: 10000,
+  });
+
+  // Create a default tenant for backward compatibility
+  const defaultTenant = rbacEngine.createTenant('default');
+
+  // ─── Terraform Provider (IaC for GRC resources) ─────────────────────
+  const terraformProvider = new TerraformProvider();
 
   // Load persisted data from database into in-memory stores on startup
   if (pg?.database) {
@@ -375,13 +403,31 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
 
   function authOk(req: IncomingMessage): boolean {
     const header = req.headers['x-grc-claw-token'] ?? req.headers.authorization;
-    const token =
+    const rawToken =
       typeof header === 'string' && header.startsWith('Bearer ')
         ? header.slice(7)
         : String(header ?? '');
 
+    // Attempt RBAC JWT verification first
+    if (rawToken.split('.').length === 3) {
+      const jwtPayload = rbacEngine.verifyJWT(rawToken);
+      if (jwtPayload) {
+        const gwReq = req as GatewayRequest;
+        gwReq.tenantContext = {
+          userId: jwtPayload.sub,
+          tenantId: jwtPayload.tenant_id,
+          role: jwtPayload.role,
+          scope: jwtPayload.scope,
+          permissions: jwtPayload.permissions,
+          jwtPayload,
+        };
+        return true;
+      }
+    }
+
+    // Fallback: simple token auth (backward compatibility)
     const secretBuf = Buffer.from(config.token, 'utf8');
-    const tokenBuf = Buffer.from(token, 'utf8');
+    const tokenBuf = Buffer.from(rawToken, 'utf8');
 
     if (secretBuf.length !== tokenBuf.length) {
       logAuthFailure(req, 'length_mismatch');
@@ -389,7 +435,17 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     }
 
     const match = timingSafeEqual(secretBuf, tokenBuf);
-    if (!match) {
+    if (match) {
+      // Simple token auth — assign default tenant context
+      const gwReq = req as GatewayRequest;
+      gwReq.tenantContext = {
+        userId: 'token-auth',
+        tenantId: defaultTenant.id,
+        role: 'admin',
+        scope: 'global',
+        permissions: ['*'],
+      };
+    } else {
       logAuthFailure(req, 'token_mismatch');
     }
     return match;
@@ -2461,6 +2517,233 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       if (!record) { res.writeHead(404); res.end(JSON.stringify({ ok: false, error: 'record_not_found', recordId })); return; }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, record }));
+      return;
+    }
+
+    // ─── RBAC Auth Endpoints ────────────────────────────────────────
+    if (path === '/api/auth/login' && req.method === 'POST') {
+      let body: Record<string, unknown>;
+      try {
+        body = await readJson(req);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'invalid_body';
+        const status = msg === 'request_body_too_large' ? 413 : 400;
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+        return;
+      }
+      const userId = String(body.userId ?? body.user_id ?? '');
+      const tenantId = String(body.tenantId ?? body.tenant_id ?? defaultTenant.id);
+      if (!userId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'userId_required' }));
+        return;
+      }
+      // Auto-assign viewer role if user has no roles
+      const existingRoles = rbacEngine.getUserRoles(userId, tenantId);
+      if (existingRoles.length === 0) {
+        rbacEngine.assignRole(userId, 'viewer', 'global', tenantId, 'system');
+      }
+      const token = rbacEngine.generateJWT(userId, tenantId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, token, userId, tenantId }));
+      return;
+    }
+
+    if (path === '/api/auth/refresh' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const gwReq = req as GatewayRequest;
+      const tc = gwReq.tenantContext;
+      if (!tc?.userId || !tc?.tenantId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'no_tenant_context' }));
+        return;
+      }
+      const newToken = rbacEngine.generateJWT(tc.userId, tc.tenantId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, token: newToken, userId: tc.userId, tenantId: tc.tenantId }));
+      return;
+    }
+
+    if (path === '/api/auth/me' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const gwReq = req as GatewayRequest;
+      const tc = gwReq.tenantContext;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        userId: tc?.userId ?? 'unknown',
+        tenantId: tc?.tenantId ?? 'unknown',
+        role: tc?.role ?? 'unknown',
+        scope: tc?.scope ?? 'unknown',
+        permissions: tc?.permissions ?? [],
+      }));
+      return;
+    }
+
+    if (path === '/api/auth/roles' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const roles = rbacEngine.getAllRoles();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, roles, count: roles.length }));
+      return;
+    }
+
+    if (path === '/api/auth/roles' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      let body: Record<string, unknown>;
+      try {
+        body = await readJson(req);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'invalid_body';
+        const status = msg === 'request_body_too_large' ? 413 : 400;
+        res.writeHead(status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+        return;
+      }
+      const userId = String(body.userId ?? '');
+      const role = String(body.role ?? 'viewer') as import('@grc-claw/rbac-multi-tenant').RoleName;
+      const tenantId = String(body.tenantId ?? defaultTenant.id);
+      const scope = (String(body.scope ?? 'global') as import('@grc-claw/rbac-multi-tenant').ScopeLevel);
+      const gwReq = req as GatewayRequest;
+      const assignedBy = gwReq.tenantContext?.userId ?? 'system';
+      if (!userId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'userId_required' }));
+        return;
+      }
+      try {
+        const assignment = rbacEngine.assignRole(userId, role, scope, tenantId, assignedBy);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, assignment }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    if (path === '/api/auth/audit' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const gwReq = req as GatewayRequest;
+      const url = new URL(req.url ?? '', 'http://local');
+      const limit = Number(url.searchParams.get('limit') ?? 100);
+      const tenantFilter = url.searchParams.get('tenantId') ?? gwReq.tenantContext?.tenantId;
+      const logs = rbacEngine.getAuditLog(tenantFilter ?? undefined, limit);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, logs, count: logs.length }));
+      return;
+    }
+
+    // ─── Terraform Provider Endpoints ───────────────────────────────
+    if (path === '/api/terraform/plan' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const config = body as unknown as import('@grc-claw/terraform-provider').TerraformResourceConfig;
+        const plan = terraformProvider.plan(config);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, plan }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    if (path === '/api/terraform/apply' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const config = body as unknown as import('@grc-claw/terraform-provider').TerraformResourceConfig;
+        const result = terraformProvider.apply(config);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, result }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    if (path === '/api/terraform/destroy' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const resourceType = String(body.resourceType ?? body.type ?? '') as import('@grc-claw/terraform-provider').TerraformResourceType;
+        const name = String(body.name ?? '');
+        if (!resourceType || !name) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'resourceType_and_name_required' }));
+          return;
+        }
+        const deleted = terraformProvider.destroy(resourceType, name);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, deleted, resourceType, name }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    if (path === '/api/terraform/import' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      try {
+        const body = await readJson(req);
+        const resourceType = String(body.resourceType ?? body.type ?? '') as import('@grc-claw/terraform-provider').TerraformResourceType;
+        const name = String(body.name ?? '');
+        const id = String(body.id ?? '');
+        const attributes = (body.attributes as Record<string, unknown>) ?? {};
+        if (!resourceType || !name || !id) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'resourceType_name_and_id_required' }));
+          return;
+        }
+        const result = terraformProvider.importResource(resourceType, name, id, attributes);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, result }));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+      return;
+    }
+
+    if (path === '/api/terraform/state' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const url = new URL(req.url ?? '', 'http://local');
+      const resourceType = url.searchParams.get('type') as import('@grc-claw/terraform-provider').TerraformResourceType | undefined;
+      const name = url.searchParams.get('name');
+      if (resourceType && name) {
+        const state = terraformProvider.getState(resourceType, name);
+        if (!state) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, error: 'state_not_found', resourceType, name }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, state }));
+      } else {
+        const states = terraformProvider.listStates(resourceType);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, states, count: states.length }));
+      }
+      return;
+    }
+
+    if (path === '/api/terraform/resources' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const types = terraformProvider.getResourceTypes();
+      const dataTypes = terraformProvider.getDataSourceTypes();
+      const states = terraformProvider.listStates();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, resourceTypes: types, dataSourceTypes: dataTypes, states, count: states.length }));
       return;
     }
 

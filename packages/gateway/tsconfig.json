@@ -42,6 +42,8 @@
     { "path": "../compliance-task-engine" },
     { "path": "../evidence-automation-engine" },
     { "path": "../openapi-generator" },
-    { "path": "../agent-discovery" }
+    { "path": "../agent-discovery" },
+    { "path": "../rbac-multi-tenant" },
+    { "path": "../terraform-provider" }
   ]
 }
