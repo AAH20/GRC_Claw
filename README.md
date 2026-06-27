@@ -9,17 +9,17 @@
 [![Agentic AI Security](https://img.shields.io/badge/Agentic%20AI-Secured-green)](docs/AGENTIC_AI_SECURITY.md)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2zsoc.com-red)](https://a2zsoc.com)
 
-**GRC_Claw** takes the local gateway control-plane pattern from **[OpenClaw](https://github.com/openclaw/openclaw)** and extends it into a production-grade stack for **governance, risk, and compliance (GRC)** and security operations.
+**GRC_Claw** is a production-grade, open-source GRC (Governance, Risk & Compliance) platform with **66 packages**, **120+ agent tools**, **110+ HTTP endpoints**, **156 integration connectors**, **16 CLI commands**, and **PostgreSQL persistence**. It is the only open-source platform that combines agentic AI governance, compliance automation, risk quantification, and continuous monitoring in a single monorepo.
 
-[OpenClaw](https://github.com/openclaw/openclaw) is an excellent foundation for personal AI assistants—messaging channels, skills, and a supervised gateway on your own hardware. **GRC_Claw is architecturally related but purpose-built for a different class of problem:** regulated tenants, continuous control monitoring, immutable evidence, SIEM and cloud alert normalization, ISO/IEC 42001 AIMS alignment, and optional integration with a live SOC at **[a2zsoc.com](https://a2zsoc.com)**. Same daemon philosophy; materially deeper surface area for security and compliance teams.
+Built on the [OpenClaw](https://github.com/openclaw/openclaw) daemon philosophy, GRC_Claw extends it into a full-stack GRC engine with RBAC multi-tenancy, Terraform provider for compliance-as-code, and optional integration with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SOC operations.
 
 | | [OpenClaw](https://github.com/openclaw/openclaw) | **GRC_Claw** (this repo) |
 |---|----------|----------|
 | **Primary use** | Personal assistant & chat channels | **Enterprise GRC + SOC automation** |
 | **Control plane** | Gateway daemon (WebSocket) | Gateway daemon (**WS + HTTP APIs**) |
-| **Agent governance** | Tools + skills (operator-defined) | **Mandatory exec policy** + **`claw.*` skill executor** (list / get / run) |
-| **Compliance** | General-purpose | **Framework packs** (ISO 27001, NIST CSF, SOC 2, ISO 42001 AIMS) |
-| **Evidence** | Workspace files | **SHA-256 lineage** + SOC attach API |
+| **Agent governance** | Tools + skills (operator-defined) | **Mandatory exec policy** + **`claw.*` skill executor** |
+| **Compliance** | General-purpose | **39 framework packs** (ISO 27001, NIST CSF, SOC 2, ISO 42001, GDPR, HIPAA, PCI DSS, FedRAMP, CMMC, DORA, NIS2, EU AI Act, etc.) |
+| **Evidence** | Workspace files | **SHA-256 lineage** + PostgreSQL persistence + SOC attach API |
 | **Ingest** | Channel messages | **OSS SIEM/IDS/firewall + AWS/Azure/GCP** normalizers |
 | **AI supply chain** | Model provider choice | **BYOC LLM + MCP** with gated tool registry |
 | **Production SOC** | Bring your own | **[a2zsoc.com](https://a2zsoc.com)** bridge (events, controls, alerts) |
@@ -42,11 +42,14 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
 - [Operator console](#operator-console)
-- [Skill executor](#skill-executor)
+- [CLI](#cli)
 - [Configuration](#configuration)
 - [Gateway API](#gateway-api)
+- [Integration Marketplace](#integration-marketplace)
+- [RBAC & Multi-Tenancy](#rbac--multi-tenancy)
+- [Terraform Provider](#terraform-provider)
 - [Log and alert ingestion](#log-and-alert-ingestion)
-- [A2Z SOC integration (a2zsoc.com)](#a2z-soc-integration-a2z-soccom)
+- [A2Z SOC integration](#a2z-soc-integration)
 - [Agentic AI security](#agentic-ai-security)
 - [Testing](#testing)
 - [Deployment](#deployment)
@@ -63,39 +66,44 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 |------|----------------|
 | **OpenClaw for GRC** | Long-lived gateway, `connect` handshake, idempotency, collector nodes |
 | **GRC engine** | `GRCEngineFacade`, framework packs, control ↔ evidence linkage |
-| **Skill executor** | OpenClaw-style `claw.list_skills`, `claw.get_skill`, `claw.run_skill` — runs `.cursor/skills` playbooks via BYOC LLM + gated tools |
-| **Agentic AI security** | Three-phase exec policy, tool tiers, session audit log |
-| **Hermes/Nemotron Agent Runtime** | Zero-dependency autonomous orchestrator, self-healing supervisor loop |
-| **Swarm Harness & SoD** | Segregation of Duties checking (e.g. developer vs reviewer role conflicts) and token verification |
-| **Anti-Swarm Defense** | Behavioral Auditing (timing anomalies, reasoning loops, toxicity scaling, and forced Docker sandbox containment) |
-| **Tactical UAS & C-UAS** | MAVLink v2 signature validation, PX4/Ardupilot firmware authentication, and DEW power safety audits |
-| **CMMC & NIST SP 800-171/172** | Programmatic system boundary audits (MFA, session timeouts, encryption) and cryptographically signed C3PAO evidence generation |
-| **Advanced Security** | TEE hardware attestation (Intel SGX, AMD SEV, Nvidia), active container network quarantine & rollback, Zero-Knowledge compliance proof generation, and decentralized MPC threshold key co-signing |
-| **Acquisition-Grade Controls** | Kernel-level eBPF sandboxing, Raft-based ZK Audit Ledger replication, TEE hardware enclave-enclosed MPC co-signing, closed-loop IaC compliance drift correction, and federated threat intelligence exchange |
-| **Sovereign Swarm Mastery** | Firecracker MicroVM sandbox isolation, homomorphic query verification on VectorGraphMemory, semantic thought-loop circuit breaker, Byzantine Fault Tolerant (PBFT) model consensus quorum, and self-healing SOAR containment playbooks |
-| **Sovereign Swarm Defenses** | Autonomous red-team exploit simulation (Chaos Compliance), model weights integrity watermark verification inside TEE enclaves, confidential SGX enclaved vector database RAG query execution, and cross-tenant Byzantine Fault Tolerant (BFT) state sync consensus |
-| **Zero-Trust & ZK Attestation** | Active VPC network quarantine & rollback, hardware model runtime attestation (Intel TDX / AMD SEV), threshold co-signing (MPC), and zk-SNARK compliance proofs (Groth16) |
-| **Sovereign Swarm Resilience** | Tiered cognitive HITL approval routing, distributed semantic locks (DSLM) for multi-agent grids, cascading poison isolation & rollback checkpoints, and context diff compression (up to 85% token savings) |
-| **Sovereign Swarm Autonomy** | Automated cloud compliance self-healing (GitOps rollback), zero-knowledge federated threat intelligence signature mesh, mathematical ExecPolicy envelope verification (SMT Z3), and post-quantum cryptographic (PQC) Dilithium5 audit signatures |
-| **Sovereign Swarm Choreography** | Ephemeral confidential enclaves (Intel TDX / AMD SEV-SNP TEEs), post-quantum cryptographic (PQC) ML-KEM-1024 / ML-DSA key exchange consensus, active honey-token canary traps, and homomorphic policy execution over encrypted prompts |
-| **Sovereign Swarm Federation** | Continuous AI-BOM supply chain gating & alternative model redirection, recursive ZK-rollup batch proof ledger consensus (Plonky2/Halo2), multi-party smart-contract escrow tool gating, and homomorphic cognitive intent filtering WAF |
-| **Agent Identity Fabric** | DID:GRC decentralized identifiers, Verifiable Credentials per framework, DID-bound tool access, attestation signing, auto-suspend at risk threshold 90+, and federated identity revocation |
-| **Security Graph** | Real-time security graph connecting agents, tools, controls, evidence, and infrastructure. BFS attack path tracing, blast radius analysis, weighted risk scoring (4-factor), and continuous compliance posture scoring (0-100) |
-| **Agentic SOAR** | DAG-based playbook engine with 4 built-in response playbooks (Agent Compromise, Policy Violation, Drift Correction, Credential Rotation), 14 step actions, human-in-the-loop gates, SLA enforcement, and forensic evidence bundle generation |
-| **Observability** | OpenTelemetry-native agent tracing (tool invocations, LLM calls, compliance checks, SOAR executions), Prometheus metrics export, OTLP JSON export for Datadog/Grafana/Jaeger, and per-agent cost/token tracking |
-| **Compliance-as-Code SDK** | Declarative `grcfile.yaml` for entire compliance posture, `plan`/`apply`/`audit` workflow (Terraform-style), schema validation, and CI/CD-ready policy enforcement |
-| **OWASP Agentic Top 10** | Full mapping of all 10 OWASP Agentic AI risks to GRC_Claw controls with 100% coverage: Excessive Agency, Goal Hijacking, Memory Poisoning, Cascading Failures, Unauthorized Tool Access, Data Exfiltration, Privilege Escalation, Audit Trail Tampering, Supply Chain Compromise, and Insufficient Observability |
-| **AI Bill of Materials** | SPDX/CycloneDX-aligned AI-BOM generator extracting models, tools, frameworks, and data sources from trace data. Supports EU AI Act, NIST AI RMF, and ISO 42001 model inventory requirements |
-| **Framework Marketplace** | 10+ regional/industry framework packs (GDPR, LGPD, PIPL, DORA, NIS2, HIPAA, PCI DSS, FedRAMP, TISAX, POPIA) with community contribution and revenue share |
-| **Skill Marketplace** | Pre-audited, compliance-certified agent skill packs with trust scoring (Incident Response, Vulnerability Assessment, Access Review, Evidence Collection, Risk Assessment) |
-| **Enterprise Connectors** | Native integration with SAP, ServiceNow, and Chronicle SOAR |
-| **OSS SIEM / IDS / firewall** | Wazuh, Suricata, Snort, Elastic, UFW → canonical events |
-| **Multi-cloud security** | AWS, Azure, GCP (CloudWatch, Sentinel, Chronicle, GuardDuty, …) |
-| **ISO/IEC 42001 AIMS** | Vendor gap matrix (Anthropic, OpenAI, Cursor, OpenClaw), technical controls API |
-| **BYOC connectors** | Bring your own **LLM** (OpenAI, Anthropic, **Google Gemini**, Ollama, **OpenRouter**) and **MCP** servers — gated by exec policy |
-| **[a2zsoc.com](https://a2zsoc.com)** | Optional connector for live SOC + GRC sync |
-| **Ship-ready OSS** | Docker Compose, systemd, Helm chart, comprehensive tests |
-| **Operator console** | React UI — dashboard agent chat (Gemini + Cursor Auto), A2Z SOC trust badge, all gateway APIs |
+| **39 Framework Packs** | ISO 27001, NIST CSF, SOC 2, ISO 42001, EU AI Act, DORA, HIPAA, PCI DSS, GDPR, FedRAMP, CMMC, CIS Controls, COBIT, CSA CCM, ISO 27701, ISO 27017, ISO 27018, SOC 1, NIS2, CCPA, LGPD, PIPEDA, APRA CPS 234, MAS TRM, Singapore PDPA, Japan APPI, India DPDP, China PIPL, Saudi PDPL, TISAX, SWIFT CSP, FFIEC, SOX, ENS High |
+| **156 Integration Connectors** | GitHub, GitLab, AWS (IAM/S3/CloudTrail/GuardDuty/Lambda/RDS/KMS), Azure (AD/Sentinel/Policy/DevOps), GCP (IAM/SCC/Config/Firestore/BigQuery), Okta, Auth0, Jira, Slack, PagerDuty, Snowflake, Datadog, CrowdStrike, Qualys, Snyk, Terraform Cloud, Docker Hub, Kubernetes, Salesforce, HubSpot, BambooHR, Workday, ServiceNow, Splunk, Confluence, Notion, Box, Dropbox, Google Workspace, Microsoft 365, and 100+ more |
+| **Risk Quantification** | Monte Carlo simulation (MersenneTwister PRNG, 5 distributions), FAIR risk calculator, risk register with heatmaps |
+| **Compliance Autopilot** | Continuous monitoring, gap detection, remediation, verification cycles with audit trail |
+| **Drift Detection** | Baseline capture, compliance drift detection, alert history, severity scoring |
+| **Agent Identity (DID:GRC)** | Decentralized identifier creation, credential issuance/verification, attestation signing |
+| **Agent Trust Scoring** | Behavioral signal analysis, dimensional trust profiles, risk level classification |
+| **Security Graph** | Real-time graph with BFS attack path tracing, blast radius calculation, weighted risk scoring |
+| **SOAR Playbook Engine** | DAG-based playbook engine, 4 built-in playbooks, 14 step actions, SLA enforcement |
+| **Observability (OpenTelemetry)** | Distributed tracing, Prometheus metrics, OTLP export for Datadog/Grafana/Jaeger |
+| **Compliance-as-Code SDK** | Declarative `grcfile.yaml`, plan/apply/audit workflow, CI/CD-ready |
+| **OWASP Agentic Top 10** | Full mapping of all 10 OWASP Agentic AI risks with 100% coverage |
+| **AI Bill of Materials** | SPDX/CycloneDX-aligned AI-BOM generator for EU AI Act Art. 53 |
+| **156 Integration Connectors** | GitHub, GitLab, AWS, Azure, GCP, Okta, Jira, CrowdStrike, Wiz, Prisma, and 100+ more |
+| **Terraform Provider** | IaC for GRC resources: grc_framework, grc_control, grc_evidence, grc_risk, grc_agent_policy |
+| **RBAC Multi-Tenancy** | JWT auth, 5 roles, 90 permissions, tenant isolation, scope validation |
+| **Policy Management Hub** | Policy lifecycle (create → approve → publish → attest), 52 templates |
+| **Vendor Risk Management** | Vendor CRUD, risk scoring, questionnaires, monitoring, alerts |
+| **Employee Lifecycle** | Onboarding/offboarding, compliance checks, access reviews |
+| **Compliance Task Engine** | Task lifecycle, bulk-from-findings, analytics |
+| **Evidence Automation** | Scheduled collection, gap detection, summary reporting |
+| **Federated Compliance Mesh** | Multi-org ZK-attested compliance sharing |
+| **AI Supply Chain Sovereignty** | Model provenance, TEE/ZK attestation, federated consensus |
+| **ZK Compliance Proofs** | Cryptographic compliance verification |
+| **Board Reporting** | Automated executive dashboards |
+| **ChatGRC** | GRC-aware chatbot with intent classification |
+| **Agent Discovery** | Codebase scanning for agent patterns |
+| **OpenAPI Generator** | Auto-generated API specifications |
+| **Evidence Collector Engine** | System-level evidence (MFA, encryption, patches) |
+| **Browser Evidence** | Automated browser-based evidence collection |
+| **Auto Evidence** | Cloud provider evidence collection |
+| **CLI Tool** | 16 commands: scan, plan, apply, audit, report, init, iac-scan, pqc-scan, ai-bom, doctor, drift, diff, status, frameworks, version, sovereign init |
+| **Operator Console** | React UI with dashboard, agent chat, compliance gauge, risk heatmap |
+| **WebSocket Real-time** | SOC events + compliance updates broadcasting |
+| **PostgreSQL Persistence** | Full database layer for evidence, audit, entities, identity |
+| **120+ Agent Tools** | Policy-gated tool dispatch with exec policy enforcement |
+| **110+ HTTP Endpoints** | Complete REST API for all GRC operations |
+| **A2Z SOC Integration** | Bidirectional sync via a2zsoc.com bridge |
 
 ---
 
@@ -103,46 +111,83 @@ Pair the OSS gateway with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SI
 
 ```
 GRC_Claw/
-├── package.json
-├── tsconfig.json
-├── LICENSE
+├── package.json              # 66 workspaces
+├── tsconfig.json             # TypeScript project references
+├── LICENSE                   # MIT
 ├── ARCHITECTURE.md
 ├── apps/
-│   └── console/                 # Operator UI (Vite + React)
+│   └── console/              # Operator UI (Vite + React)
 ├── docs/
 ├── packages/
-│   ├── core/
-│   ├── gateway/                 # OpenClaw-style control plane
-│   ├── agent-runtime/
-│   │   ├── src/                 # Exec policy, SoD, Anti-Swarm behavioral audit
-│   │   └── scripts/             # test-anti-swarm.ts, test-acquisition-grade.ts, ...
-│   ├── agent-identity/          # DID:GRC Agent Identity Fabric
-│   ├── security-graph/          # Real-time security graph + attack paths
-│   ├── soar/                    # Agentic SOAR playbook engine
-│   ├── observability/           # OpenTelemetry tracing + AI-BOM
-│   ├── sdk/                     # Compliance-as-Code SDK + grcfile.yaml
-│   ├── evidence/
-│   ├── frameworks/
-│   ├── aims/                    # ISO/IEC 42001 AIMS (vendor gaps, clauses)
-│   ├── connectors/              # BYOC LLM + MCP registry
-│   ├── skill-executor/          # Skill discovery + claw.* run loop
-│   ├── ingest/                  # OSS + cloud normalizers
-│   └── a2z-connector/           # a2zsoc.com API bridge
-├── integrations/iso-42001/
-├── .cursor/skills/iso-42001-ai-management-engineering/
-├── integrations/a2z-soc/
+│   ├── core/                 # Canonical events, GRCEngineFacade
+│   ├── gateway/              # OpenClaw for GRC — HTTP/WS gateway daemon
+│   ├── agent-runtime/        # Exec policy, SoD, Anti-Swarm engine
+│   ├── agent-identity/       # DID:GRC Agent Identity Fabric
+│   ├── security-graph/       # Real-time security graph + attack paths
+│   ├── soar/                 # Agentic SOAR playbook engine
+│   ├── observability/        # OpenTelemetry tracing + AI-BOM
+│   ├── sdk/                  # Compliance-as-Code SDK + grcfile.yaml
+│   ├── evidence/             # SHA-256 evidence lineage + PostgreSQL
+│   ├── frameworks/           # 39 compliance framework packs
+│   ├── aims/                 # ISO/IEC 42001 AIMS
+│   ├── connectors/           # BYOC LLM + MCP registry
+│   ├── skill-executor/       # Skill discovery + claw.* dispatch
+│   ├── ingest/               # OSS + cloud normalizers (15+ sources)
+│   ├── persistence/          # PostgreSQL persistence layer
+│   ├── agent-audit-trail/    # Blockchain-style hash chain audit
+│   ├── agent-builder/        # Custom agent definitions
+│   ├── agent-discovery/      # Agent pattern scanner
+│   ├── agent-trust-score/    # Trust scoring engine
+│   ├── accm/                 # Automated Compliance-as-Code Management
+│   ├── compliance-autopilot/ # Continuous monitoring + remediation
+│   ├── compliance-task-engine/ # Task lifecycle management
+│   ├── drift-detector/       # Compliance drift detection
+│   ├── evidence-collector/   # System-level evidence collection
+│   ├── evidence-automation-engine/ # Scheduled evidence collection
+│   ├── risk-quantification/  # Monte Carlo + FAIR risk calculation
+│   ├── entity-management/    # Multi-entity compliance rollup
+│   ├── integration-marketplace/ # 156 SaaS/cloud connectors
+│   ├── policy-management-hub/ # Policy lifecycle + approval workflows
+│   ├── vendor-risk-management/ # Vendor risk scoring + monitoring
+│   ├── employee-lifecycle/   # Onboarding/offboarding workflows
+│   ├── chat-grc/             # GRC-aware chatbot
+│   ├── framework-crosswalk/  # Multi-framework control mapping
+│   ├── browser-evidence/     # Automated browser evidence collection
+│   ├── device-agent/         # Endpoint compliance agent
+│   ├── openapi-generator/    # Auto-generated API specs
+│   ├── rbac-multi-tenant/    # RBAC + multi-tenancy
+│   ├── terraform-provider/   # IaC for GRC resources
+│   ├── cli/                  # CLI tool (16 commands)
+│   ├── mcp-server/           # MCP protocol server
+│   ├── zk-compliance/        # Zero-knowledge compliance proofs
+│   ├── ai-supply-chain/      # AI supply chain sovereignty
+│   ├── ai-threat-detection/  # Anomaly detection
+│   ├── compliance-copilot/   # Compliance assistant
+│   ├── compliance-orchestrator/ # Framework compilation
+│   ├── continuous-compliance/ # Continuous monitoring
+│   ├── dev-compliance/       # GitHub PR review + CI/CD gates
+│   ├── federated-compliance-mesh/ # Multi-org compliance sharing
+│   ├── incident-response/    # Incident management
+│   ├── questionnaire-automation/ # Security questionnaire auto-fill
+│   ├── regulatory-intelligence/ # Regulation change monitoring
+│   ├── third-party-risk/     # Third-party risk assessment
+│   ├── trust-center/         # Public trust pages
+│   ├── trust-marketplace/    # Trust marketplace
+│   ├── business-impact/      # Business impact analysis
+│   ├── auto-evidence/        # Automated evidence collection
+│   ├── board-reporting/      # Executive dashboards
+│   ├── grc-engineering/      # GRC engineering utilities
+│   ├── registry/             # Package registry
+│   ├── sdk-client/           # HTTP SDK client
+│   ├── observability/        # OpenTelemetry tracing
+│   ├── a2z-connector/        # a2zsoc.com API bridge
+│   ├── oscal/                # OSCAL support
+│   ├── vscode-extension/     # VS Code extension
+│   └── cli/                  # CLI tool
+├── integrations/
 ├── deploy/
 ├── examples/
 └── scripts/
-```
-
-### Requirements
-
-- **Node.js** ≥ 20 · **npm** ≥ 9 (workspaces)
-
-```bash
-git clone https://github.com/AAH20/GRC_Claw.git && cd GRC_Claw
-npm install && npm run build
 ```
 
 ---
@@ -153,57 +198,67 @@ npm install && npm run build
 |---------|-------------|
 | `@grc-claw/core` | Canonical events, `GRCEngineFacade` |
 | `@grc-claw/gateway` | **OpenClaw for GRC** — HTTP/WS gateway daemon |
-| `@grc-claw/agent-runtime` | Exec policy, SoD Swarm Harness, Anti-Swarm engine & audited sessions |
-| `@grc-claw/agent-identity` | **DID:GRC** Agent Identity Fabric — decentralized IDs, Verifiable Credentials, attestation signing |
-| `@grc-claw/security-graph` | Real-time **Security Graph** — nodes, edges, attack path tracing, risk scoring, blast radius, compliance posture |
-| `@grc-claw/soar` | **Agentic SOAR** — DAG playbook engine, 4 built-in playbooks, 14 step actions, SLA enforcement |
-| `@grc-claw/observability` | **OpenTelemetry** agent tracing, Prometheus metrics, OTLP export, AI-BOM generator |
-| `@grc-claw/sdk` | **Compliance-as-Code** SDK — `grcfile.yaml`, plan/apply/audit, OWASP Top 10, Framework Marketplace |
-| `@grc-claw/evidence` | SHA-256 evidence lineage |
-| `@grc-claw/frameworks` | ISO 27001, NIST CSF, SOC 2, ISO 42001 starter packs |
-| `@grc-claw/aims` | ISO 42001 vendor gaps, clause map, technical controls |
-| `@grc-claw/connectors` | BYOC LLM providers + MCP servers (registry, proxy, policy tools) |
-| `@grc-claw/skill-executor` | Cursor skill discovery, `claw.*` dispatch, LLM run loop (`TOOL_CALL` / `FINAL_ANSWER`) |
-| `@grc-claw/ingest` | OSS SIEM/IDS/firewall + AWS/Azure/GCP normalizers |
-| `@grc-claw/a2z-connector` | Bridge to **[a2zsoc.com](https://a2zsoc.com)** APIs |
-| `@grc-claw/console` | Operator UI (`apps/console`) — Vite + React |
-
-| Script | Command |
-|--------|---------|
-| Build | `npm run build` |
-| Build console | `npm run build:console` |
-| Gateway | `npm run gateway` |
-| Console (dev) | `npm run console` → http://localhost:5174 |
-| Doctor | `npm run doctor` |
-| Tests | `npm run test` · `npm run test:skills` · `npm run test:byoc` · `npm run test:iso42001` · `npm run test:cloud` · `npm run test:comprehensive` |
-| Anti-Swarm Test | `npx tsx scripts/test-anti-swarm.ts` (under packages/agent-runtime) |
-| UAS Swarm Test | `npx tsx scripts/test-uas-governance.ts` (under packages/agent-runtime) |
-| CMMC Compliance Test | `npx tsx scripts/test-cmmc-compliance.ts` (under packages/agent-runtime) |
-| OpenRouter Swarm Test | `npx tsx scripts/test-openrouter-swarm.ts` (under packages/agent-runtime) |
-| SWIFT / ISO 20022 Test | `npx tsx scripts/test-iso20022.ts` (under packages/agent-runtime) |
-| Hermes / Wallet Test | `npx tsx scripts/test-hermes-wallet.ts` (under packages/agent-runtime) |
-| Vector DB / Memory Test | `npx tsx scripts/test-vector-memory.ts` (under packages/agent-runtime) |
-| Acquisition-Grade Test | `npx tsx scripts/test-acquisition-grade.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Mastery Test | `npx tsx scripts/test-phase5-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Defenses Test | `npx tsx scripts/test-phase6-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Defenses & Attestation Test | `npx tsx scripts/test-phase7-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Resilience Test | `npx tsx scripts/test-phase8-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Autonomy Test | `npx tsx scripts/test-phase9-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Choreography Test | `npx tsx scripts/test-phase10-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Federation Test | `npx tsx scripts/test-phase11-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Validation Test | `npx tsx scripts/test-phase12-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Autonomy & Alignment Test | `npx tsx scripts/test-phase13-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Execution Test | `npx tsx scripts/test-phase14-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Monopoly Test | `npx tsx scripts/test-phase15-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Policies Test | `npx tsx scripts/test-phase16-orchestration.ts` (under packages/agent-runtime) |
-| Sovereign Swarm Shielding Test | `npx tsx scripts/test-phase17-orchestration.ts` (under packages/agent-runtime) |
-| Structural Monopoly Test | `npx tsx scripts/test-phase18-orchestration.ts` (under packages/agent-runtime) |
-| Self-Healing Compliance Test | `npx tsx scripts/test-phase19-orchestration.ts` (under packages/agent-runtime) |
-| Decoy & Syscall Filter Test | `npx tsx scripts/test-phase20-orchestration.ts` (under packages/agent-runtime) |
-| Zero-Trust Synaptic Test | `npx tsx scripts/test-phase21-orchestration.ts` (under packages/agent-runtime) |
-| Guest-Kernel & Recursive ZK Test | `npx tsx scripts/test-phase22-orchestration.ts` (under packages/agent-runtime) |
-| DPU Offload & Secure Enclave Test | `npx tsx scripts/test-phase23-orchestration.ts` (under packages/agent-runtime) |
-| Neuromorphic & Quantum Consensus Test | `npx tsx scripts/test-phase24-orchestration.ts` (under packages/agent-runtime) |
+| `@grc-claw/agent-runtime` | Exec policy, SoD, Anti-Swarm engine |
+| `@grc-claw/agent-identity` | **DID:GRC** Agent Identity Fabric |
+| `@grc-claw/security-graph` | Real-time **Security Graph** |
+| `@grc-claw/soar` | **Agentic SOAR** playbook engine |
+| `@grc-claw/observability` | **OpenTelemetry** tracing + AI-BOM |
+| `@grc-claw/sdk` | **Compliance-as-Code** SDK |
+| `@grc-claw/evidence` | SHA-256 evidence lineage + PostgreSQL |
+| `@grc-claw/frameworks` | 39 compliance framework packs |
+| `@grc-claw/aims` | ISO 42001 vendor gaps, clause map |
+| `@grc-claw/connectors` | BYOC LLM + MCP registry |
+| `@grc-claw/skill-executor` | Skill discovery + `claw.*` dispatch |
+| `@grc-claw/ingest` | OSS SIEM/IDS/firewall + cloud normalizers |
+| `@grc-claw/persistence` | PostgreSQL persistence layer |
+| `@grc-claw/risk-quantification` | Monte Carlo + FAIR risk calculation |
+| `@grc-claw/entity-management` | Multi-entity compliance rollup |
+| `@grc-claw/integration-marketplace` | 156 SaaS/cloud connectors |
+| `@grc-claw/policy-management-hub` | Policy lifecycle + approval workflows |
+| `@grc-claw/vendor-risk-management` | Vendor risk scoring + monitoring |
+| `@grc-claw/employee-lifecycle` | Onboarding/offboarding workflows |
+| `@grc-claw/compliance-task-engine` | Task lifecycle management |
+| `@grc-claw/evidence-automation-engine` | Scheduled evidence collection |
+| `@grc-claw/chat-grc` | GRC-aware chatbot |
+| `@grc-claw/framework-crosswalk` | Multi-framework control mapping |
+| `@grc-claw/browser-evidence` | Automated browser evidence collection |
+| `@grc-claw/device-agent` | Endpoint compliance agent |
+| `@grc-claw/openapi-generator` | Auto-generated API specs |
+| `@grc-claw/rbac-multi-tenant` | RBAC + multi-tenancy |
+| `@grc-claw/terraform-provider` | IaC for GRC resources |
+| `@grc-claw/cli` | CLI tool (16 commands) |
+| `@grc-claw/mcp-server` | MCP protocol server |
+| `@grc-claw/compliance-autopilot` | Continuous monitoring + remediation |
+| `@grc-claw/drift-detector` | Compliance drift detection |
+| `@grc-claw/evidence-collector` | System-level evidence collection |
+| `@grc-claw/agent-audit-trail` | Blockchain-style hash chain audit |
+| `@grc-claw/agent-builder` | Custom agent definitions |
+| `@grc-claw/agent-discovery` | Agent pattern scanner |
+| `@grc-claw/zk-compliance` | Zero-knowledge compliance proofs |
+| `@grc-claw/ai-supply-chain` | AI supply chain sovereignty |
+| `@grc-claw/ai-threat-detection` | Anomaly detection |
+| `@grc-claw/compliance-copilot` | Compliance assistant |
+| `@grc-claw/compliance-orchestrator` | Framework compilation |
+| `@grc-claw/continuous-compliance` | Continuous monitoring |
+| `@grc-claw/dev-compliance` | GitHub PR review + CI/CD gates |
+| `@grc-claw/federated-compliance-mesh` | Multi-org compliance sharing |
+| `@grc-claw/incident-response` | Incident management |
+| `@grc-claw/questionnaire-automation` | Security questionnaire auto-fill |
+| `@grc-claw/regulatory-intelligence` | Regulation change monitoring |
+| `@grc-claw/third-party-risk` | Third-party risk assessment |
+| `@grc-claw/trust-center` | Public trust pages |
+| `@grc-claw/trust-marketplace` | Trust marketplace |
+| `@grc-claw/business-impact` | Business impact analysis |
+| `@grc-claw/auto-evidence` | Automated evidence collection |
+| `@grc-claw/board-reporting` | Executive dashboards |
+| `@grc-claw/grc-engineering` | GRC engineering utilities |
+| `@grc-claw/registry` | Package registry |
+| `@grc-claw/sdk-client` | HTTP SDK client |
+| `@grc-claw/observability` | OpenTelemetry tracing |
+| `@grc-claw/a2z-connector` | a2zsoc.com API bridge |
+| `@grc-claw/oscal` | OSCAL support |
+| `@grc-claw/vscode-extension` | VS Code extension |
+| `@grc-claw/console` | Operator UI |
 
 ---
 
@@ -213,14 +268,18 @@ npm install && npm run build
 
 | Plane | Components | Role |
 |-------|------------|------|
-| **Control** | `gateway`, `agent-runtime` | Auth, WS `connect`, routing, agent policy |
-| **Evidence** | `evidence`, `frameworks` | Controls, hashed artifacts, frameworks |
+| **Control** | `gateway`, `agent-runtime` | Auth, WS `connect`, routing, agent policy, RBAC |
+| **Evidence** | `evidence`, `frameworks` | Controls, hashed artifacts, 39 framework packs |
 | **Data** | `ingest`, `a2z-connector` | Alerts → canonical events → compliance impact |
+| **Risk** | `risk-quantification`, `drift-detector` | Monte Carlo, FAIR, drift detection |
+| **Automation** | `compliance-autopilot`, `soar`, `accm` | Continuous monitoring, SOAR playbooks, auto-remediation |
+| **Identity** | `agent-identity`, `rbac-multi-tenant` | DID:GRC, JWT auth, tenant isolation |
+| **Integration** | `integration-marketplace`, `terraform-provider` | 156 connectors, IaC for GRC |
 
 ```text
-  Wazuh · Suricata · Sentinel · GuardDuty · Chronicle …
-                        │
-                        ▼
+  Wazuh · Suricata · Sentinel · GuardDuty · Chronicle · 156 Connectors
+                         │
+                         ▼
               ┌─────────────────────┐
               │   GRC_Claw Gateway   │  ← OpenClaw for GRC
               │   :18791 · WS + HTTP │
@@ -230,6 +289,8 @@ npm install && npm run build
          ▼               ▼               ▼
     frameworks      agent-runtime    a2zsoc.com
     evidence         (gated SOAR)     (optional)
+    risk-quant       compliance-      integration-
+    drift-detector   autopilot        marketplace
 ```
 
 Details: [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -239,24 +300,13 @@ Details: [ARCHITECTURE.md](ARCHITECTURE.md).
 ## Quick start
 
 ```bash
-cp examples/a2z-private-bridge.env.example .env
+git clone https://github.com/AAH20/GRC_Claw.git && cd GRC_Claw
+npm install && npm run build
 
 export GRC_CLAW_GATEWAY_TOKEN=change-me-in-production
-export A2Z_SOC_MODE=demo   # use private + a2zsoc.com URL for production
-
+export DATABASE_URL=postgresql://user:pass@localhost:5432/grc_claw
 npm run gateway
 curl -s http://127.0.0.1:18791/health | jq .
-```
-
-See [Operator console](#operator-console) for the full UI workflow.
-
-**Example — normalize a Suricata alert:**
-
-```bash
-curl -s -X POST http://127.0.0.1:18791/api/ingest/normalize \
-  -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"source":"suricata","tenantId":1,"payload":{"alert":{"severity":1,"signature":"ET SCAN"},"src_ip":"10.0.0.5","dest_ip":"10.0.0.10"}}'
 ```
 
 **Docker:**
@@ -269,178 +319,40 @@ docker compose -f deploy/docker-compose.yml up --build
 
 ## Operator console
 
-The **operator console** (`apps/console`) is a React app that exposes every gateway capability with an **A2Z SOC trust badge** on each page, self-explanatory guides, and a **dashboard agent chat** with two modes:
-
-| Mode | What it does |
-|------|----------------|
-| **Gemini** | Direct BYOC chat via `POST /api/connectors/llm/:id/chat` (full multi-paragraph replies) |
-| **Cursor Auto** | Runs live gateway tools (health, sync, frameworks, read-tier agent), lists skills/jobs from catalog, and answers with GRC operator rules |
-
-The **Agent** page and gateway support **`claw.list_skills`**, **`claw.get_skill`**, and **`claw.run_skill`** — see [Skill executor](#skill-executor).
-
-### Frontend project tree (`apps/console`)
-
-Workspace package: `@grc-claw/console` · Vite + React + React Router.
-
-```
-apps/console/
-├── index.html                 # App shell, llms.txt link
-├── package.json
-├── vite.config.ts             # Dev :5174, proxy /api + /health → gateway
-├── tsconfig.json
-├── public/
-│   └── llms.txt               # Machine-readable API map (Cursor Auto / agents)
-└── src/
-    ├── main.tsx
-    ├── App.tsx                # Routes: /, /frameworks, /ingest, /agent, /aims, /connectors, /settings
-    ├── index.css
-    ├── components/
-    │   ├── Layout.tsx         # Sidebar nav + A2Z trust badge
-    │   ├── PageShell.tsx      # Per-page explain blocks + Cursor Auto panel
-    │   ├── A2ZTrustBadge.tsx  # Secured by A2Z SOC SVG badge
-    │   ├── AgentChatWindow.tsx # Dashboard chat (Gemini | Cursor Auto)
-    │   ├── CursorAutoPanel.tsx
-    │   └── JsonBlock.tsx
-    ├── lib/
-    │   ├── api.ts             # Gateway HTTP client
-    │   ├── settings.ts        # localStorage: token, tenant, trust profile, Cursor Auto flag
-    │   ├── constants.ts       # Ingest sources, sample payloads, builtin tools
-    │   ├── pageMeta.ts        # Self-explanatory copy per route
-    │   ├── chatPrompts.ts     # Gemini + Cursor Auto system prompts
-    │   ├── cursorAuto.ts        # curl snippets, automation rules
-    │   ├── operatorAgent.ts   # Live gateway tool dispatch (Cursor Auto)
-    │   ├── skillsCatalog.ts   # Skill list + claw.* tool reference
-    │   └── schedulableJobs.ts # Daemon + cron-friendly job catalog
-    └── pages/
-        ├── DashboardPage.tsx  # Health, BYOC summary, A2Z sync, agent chat
-        ├── FrameworksPage.tsx
-        ├── IngestPage.tsx
-        ├── AgentPage.tsx
-        ├── AimsPage.tsx
-        ├── ConnectorsPage.tsx
-        └── SettingsPage.tsx
-```
-
-Build output: `apps/console/dist/` (served when `GRC_CLAW_CONSOLE_STATIC` is set).
-
-**Dev (Vite proxies to gateway):**
+The **operator console** (`apps/console`) is a React app with:
+- Dashboard with compliance gauge, risk heatmap, time series charts
+- Framework management (39 frameworks)
+- Agent chat (Gemini + Cursor Auto modes)
+- Settings and configuration
 
 ```bash
-# Terminal 1 — gateway
-export GRC_CLAW_GATEWAY_TOKEN=grc-test-token
-npm run gateway
-
-# Terminal 2 — console
-npm run console
-# → http://localhost:5174
-# Settings → X-GRC-Claw-Token must match GRC_CLAW_GATEWAY_TOKEN
+npm run console  # → http://localhost:5174
 ```
-
-**Production (same origin as gateway):**
-
-```bash
-npm run build:console
-export GRC_CLAW_CONSOLE_STATIC="$(pwd)/apps/console/dist"
-npm run gateway
-# → http://127.0.0.1:18791/
-```
-
-### Google Gemini (BYOC)
-
-```bash
-cp examples/gemini-byoc.env.example .env
-# Set GEMINI_API_KEY and GRC_CLAW_CONNECTORS_CONFIG=examples/gemini-connectors.json
-set -a && source .env && set +a
-npm run gateway
-```
-
-Uses provider kind `gemini_generate` (default model `gemini-2.5-flash`). See [examples/gemini-connectors.json](examples/gemini-connectors.json).
-
-### OpenRouter & Multi-LLM Swarm (BYOC)
-
-To route through OpenRouter's 300+ models or specialized engines like Nvidia Nemotron, Zhipu GLM, and Moonshot Kimi, configure them in `gemini-connectors.json`:
-
-```json
-{
-  "id": "openrouter",
-  "label": "OpenRouter",
-  "kind": "openai_compatible",
-  "baseUrl": "https://openrouter.ai/api/v1",
-  "apiKeyEnv": "OPENROUTER_API_KEY",
-  "defaultModel": "meta-llama/llama-3.1-70b-instruct"
-}
-```
-
-Export the required API keys to your environment:
-
-```bash
-export OPENROUTER_API_KEY=sk-or-v1-...
-export NVIDIA_API_KEY=nvapi-...
-export ZHIPU_API_KEY=zhipu-...
-export MOONSHOT_API_KEY=moonshot-...
-```
-
-GRC_Claw's Swarm Harness automatically monitors and gates these models. In particular, it enforces **Sovereign Boundary Gating** to block non-US-aligned models (such as `zhipu-glm` and `moonshot-kimi`) from calling sensitive CMMC or GRC tools (e.g. `cmmc.*` and `grc.*`).
-
-### Cursor Auto Mode & scheduling
-
-The browser console **cannot** start OS daemons or edit your crontab. It **can**:
-
-- Call gateway HTTP APIs on demand (health, A2Z sync, ingest, agent read tools)
-- Show a **catalog of schedulable jobs** (gateway daemon + cron-friendly endpoints)
-- Point you to **Cursor Automations** (desktop) or **host cron → curl** for background work
-
-Machine-readable API map for Cursor agents: `http://localhost:5174/llms.txt` (dev) or `/llms.txt` when served by the gateway.
-
-**Example hourly A2Z sync (host cron):**
-
-```bash
-0 * * * * curl -s -X POST http://127.0.0.1:18791/api/a2z/sync \
-  -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN"
-```
-
-Console pages: Dashboard · Frameworks · Ingest · Agent · ISO 42001 · BYOC · Settings.
 
 ---
 
-## Skill executor
+## CLI
 
-GRC_Claw executes Cursor-style skills (markdown under `.cursor/skills/<id>/SKILL.md`) on the gateway with the same exec policy as other agent tools — inspired by [OpenClaw](https://github.com/openclaw/openclaw) skills, built for regulated operations.
-
-| Tool | Tier | Purpose |
-|------|------|---------|
-| `claw.list_skills` | read | Catalog discovered skills (GRC_Claw repo + parent workspace) |
-| `claw.get_skill` | read | Metadata + optional full `SKILL.md` body |
-| `claw.run_skill` | write | Run playbook for a task (BYOC LLM loop + gated `grc.*` / MCP tools) |
-
-**HTTP routes:** `GET /api/skills`, `GET /api/skills/:id`, `POST /api/skills/run`, `GET /api/cursor-skills` (alias).
-
-**Example — list skills:**
+The CLI provides 16 commands for compliance automation:
 
 ```bash
-curl -s -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN" -X POST http://127.0.0.1:18791/api/agent/invoke \
-  -H "Content-Type: application/json" \
-  -d '{"sessionId":"demo","tool":"claw.list_skills","args":{}}' | jq .
+grc init                    # Scaffold grcfile.yaml + GitHub Actions
+grc scan .                  # Codebase compliance scan (12 rules)
+grc plan                    # Generate compliance plan
+grc apply                   # Apply compliance plan
+grc audit                   # Full compliance audit
+grc status                  # Current compliance posture
+grc drift                   # Detect compliance drift
+grc report                  # Generate evidence report
+grc diff                    # Compliance delta between git refs
+grc doctor                  # Environment checks + --fix
+grc iac-scan .              # Terraform/K8s compliance (8 rules)
+grc pqc-scan .              # Post-quantum crypto migration (6 rules)
+grc ai-bom generate         # AI Bill of Materials (EU AI Act)
+grc ai-bom publish          # Publish AI-BOM
+grc frameworks list         # List framework packs
+grc version                 # Print version
 ```
-
-**Example — run ISO 42001 skill** (requires `GEMINI_API_KEY` or another BYOC LLM in connectors config):
-
-```bash
-curl -s -H "X-GRC-Claw-Token: $GRC_CLAW_GATEWAY_TOKEN" -X POST http://127.0.0.1:18791/api/skills/run \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sessionId": "demo",
-    "skillId": "iso-42001-ai-management-engineering",
-    "task": "Summarize top Cursor vendor gaps in three bullets.",
-    "llmProviderId": "gemini",
-    "idempotencyKey": "skill-run-demo-1",
-    "maxSteps": 6
-  }' | jq .
-```
-
-Discovery: `GRC_CLAW_SKILLS_DIRS` or default `<cwd>/.cursor/skills` and `<cwd>/../.cursor/skills`.
-
-Full reference: [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
 
 ---
 
@@ -450,20 +362,19 @@ Full reference: [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
 |----------|-------------|
 | `GRC_CLAW_GATEWAY_TOKEN` | API auth token (**required**) |
 | `GRC_CLAW_HOST` / `GRC_CLAW_PORT` | Bind (default `127.0.0.1:18791`) |
-| `GRC_CLAW_CONSOLE_STATIC` | Path to built console (`apps/console/dist`) for same-origin UI |
-| `GRC_CLAW_CORS_ORIGIN` | CORS origin for cross-origin console (default `*`) |
-| `A2Z_SOC_MODE` | `demo` or `private` (live **[a2zsoc.com](https://a2zsoc.com)**) |
-| `A2Z_SOC_BASE_URL` | Your A2Z SOC API base (e.g. `https://a2zsoc.com`) |
-| `A2Z_SOC_API_KEY` | Integration key from A2Z SOC |
-| `A2Z_SOC_TENANT_ID` | Tenant scope |
-| `GRC_CLAW_CONNECTORS_JSON` | Inline BYOC registry JSON |
-| `GRC_CLAW_CONNECTORS_CONFIG` | Path to BYOC JSON file (e.g. `examples/gemini-connectors.json`) |
-| `GRC_CLAW_ACTION_LEDGER_PATH` | Append-only action ledger path (default `.grc_memory/action-ledger.ndjson`) |
-| `GRC_CLAW_ASSURANCE_MAX_RISK` | Optional 0–100 pre-execution assurance threshold; unset is observe-only |
-| `GRC_CLAW_MEMORY_DIR` | Session-memory directory (default `.grc_memory`) |
-| `GEMINI_API_KEY` | Google Gemini API key (when using `gemini_generate` provider) |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `GRC_CLAW_CONSOLE_STATIC` | Path to built console |
+| `GRC_CLAW_CORS_ORIGIN` | CORS origin (default `*`) |
+| `GRC_CLAW_JWT_SECRET` | JWT signing secret for RBAC |
+| `A2Z_SOC_MODE` | `demo` or `private` |
+| `A2Z_SOC_BASE_URL` | A2Z SOC API base |
+| `A2Z_SOC_API_KEY` | Integration key |
+| `GRC_CLAW_CONNECTORS_CONFIG` | Path to BYOC JSON file |
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `JIRA_URL` / `JIRA_TOKEN` | Jira integration |
+| `SLACK_WEBHOOK_URL` | Slack integration |
 
-Run `npm run doctor` before production. Never commit `.env` — use `examples/*.env.example` as templates.
+Run `npm run doctor` before production.
 
 ---
 
@@ -471,31 +382,101 @@ Run `npm run doctor` before production. Never commit `.env` — use `examples/*.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Status, `iso_42001_aims`, `cloud_sources` |
-| `GET` | `/api/frameworks` | Framework packs |
-| `GET` | `/api/aims/vendor-gaps` | Anthropic / OpenAI / Cursor / OpenClaw gap matrix |
-| `GET` | `/api/aims/technical-controls` | AIMS scope, clauses, TC-01…TC-06 |
-| `POST` | `/api/ingest/normalize` | Alert → canonical event + control impact |
-| `POST` | `/api/a2z/sync` | Sync events from A2Z SOC |
-| `POST` | `/api/agent/invoke` | Gated agent tool call (`claw.*`, `grc.*`, MCP) |
-| `GET` | `/api/skills` | Skill catalog (`.cursor/skills`) |
-| `GET` | `/api/skills/:id` | Skill metadata + body (`?body=0` for metadata only) |
-| `POST` | `/api/skills/run` | Run skill executor loop (BYOC LLM + gated tools) |
-| `GET` | `/api/cursor-skills` | Alias of skill catalog |
-| `GET` | `/api/connectors` | BYOC LLM + MCP registry (redacted) |
-| `GET` | `/api/action-ledger` | Authenticated action events plus hash-chain integrity check |
-| `GET` | `/api/assurance` | Authenticated graph and provisional-identity assurance summary |
-| `POST` | `/api/connectors/llm/:id/chat` | LLM chat proxy |
-| `GET` | `/api/connectors/mcp/:id/tools` | Discover MCP tools |
-| `WS` | `/` | `connect` → `hello-ok` |
-
-**LLM provider kinds:** `openai_compatible` · `anthropic_messages` · `gemini_generate`
+| `GET` | `/health` | Status, persistence mode, connector summary |
+| `GET` | `/metrics` | Prometheus metrics (real compliance score) |
+| `POST` | `/api/agent/invoke` | Gated agent tool call |
+| `GET` | `/api/frameworks` | 39 framework packs |
+| `POST` | `/api/ingest/normalize` | Alert → canonical event |
+| `POST` | `/api/risk/monte-carlo` | Monte Carlo simulation |
+| `POST` | `/api/risk/fair` | FAIR risk analysis |
+| `GET` | `/api/risk/register` | Risk register + portfolio |
+| `POST` | `/api/entities` | Entity CRUD |
+| `GET` | `/api/entities` | List entities |
+| `POST` | `/api/accm/detect-gaps` | Compliance gap detection |
+| `POST` | `/api/accm/full-cycle` | Full remediation cycle |
+| `GET` | `/api/integrations` | 156 connectors |
+| `POST` | `/api/policies/create` | Create policy |
+| `GET` | `/api/vendor-risk/vendors` | Vendor risk management |
+| `GET` | `/api/employees` | Employee lifecycle |
+| `POST` | `/api/tasks` | Compliance tasks |
+| `POST` | `/api/evidence-automation/schedule` | Evidence automation |
+| `POST` | `/api/auth/login` | RBAC authentication |
+| `POST` | `/api/terraform/plan` | Terraform compliance plan |
+| `POST` | `/api/accm/full-cycle` | Auto-compliance cycle |
+| `GET` | `/api/dashboard/realtime` | Real-time compliance |
+| `GET` | `/api/openapi.json` | OpenAPI spec |
+| `WS` | `/ws` | SOC events + compliance updates |
 
 See [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) for configuration.
 
-**Skill executor:** `claw.list_skills`, `claw.get_skill`, `claw.run_skill` — see [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md).
+---
 
-Auth: `X-GRC-Claw-Token` or `Authorization: Bearer`.
+## Integration Marketplace
+
+**156 connectors** across 15+ categories:
+
+| Category | Examples |
+|----------|----------|
+| **Cloud Security** | AWS (IAM/S3/CloudTrail/GuardDuty/Lambda/RDS/KMS), Azure (AD/Sentinel/Policy/DevOps), GCP (IAM/SCC/Config/Firestore/BigQuery) |
+| **Security** | CrowdStrike, SentinelOne, Qualys, Snyk, Prisma Cloud, Wiz, PaloAlto, CheckPoint, Fortinet, Zscaler |
+| **DevOps** | GitHub, GitLab, Jenkins, Travis, ArgoCD, Helm, Terraform Cloud, Docker Hub, Kubernetes |
+| **Identity** | Okta, Auth0, PingFederate, ForgeRock, CyberArk, SailPoint |
+| **Data** | Snowflake, Databricks, Tableau, PowerBI, MongoDB, Kafka, Redis |
+| **HR** | Workday, SAP SuccessFactors, ADP, BambooHR |
+| **Finance** | NetSuite, QuickBooks, Xero, Stripe, DocuSign |
+| **Communication** | Slack, Zoom, Teams, Discord, PagerDuty |
+| **Plus 60+ more** | ServiceNow, Splunk, Confluence, Notion, Box, Dropbox, and more |
+
+---
+
+## RBAC & Multi-Tenancy
+
+**Built-in RBAC with multi-tenant isolation:**
+
+- 5 roles: `admin`, `compliance_officer`, `auditor`, `viewer`, `custom`
+- 90 permission combinations (15 resources × 6 actions)
+- 3 scope levels: `global`, `entity`, `department`
+- JWT authentication with role claims
+- Tenant-scoped data isolation
+- Permission audit logging
+
+```bash
+# Login
+curl -X POST /api/auth/login -d '{"email":"user@co.com","password":"pass"}'
+
+# Use JWT
+curl -H "Authorization: Bearer <jwt>" /api/frameworks
+```
+
+---
+
+## Terraform Provider
+
+**Compliance-as-Code with Terraform:**
+
+```hcl
+resource "grc_framework" "soc2" {
+  name     = "SOC 2 Type II"
+  controls = ["CC6.1", "CC7.2", "CC8.1"]
+}
+
+resource "grc_control" "mfa" {
+  framework_id = grc_framework.soc2.id
+  code         = "CC6.1"
+  name         = "Multi-Factor Authentication"
+}
+
+resource "grc_evidence" "mfa_evidence" {
+  control_id = grc_control.mfa.id
+  source     = "okta_mfa_report"
+  hash       = "abc123..."
+}
+```
+
+```bash
+grc plan    # Generate compliance plan
+grc apply   # Apply to GRC_Claw
+```
 
 ---
 
@@ -507,43 +488,19 @@ Auth: `X-GRC-Claw-Token` or `Authorization: Bearer`.
 
 **Cloud:** `aws_guardduty` · `aws_cloudwatch` · `aws_securityhub` · `aws_cloudtrail` · `azure_sentinel` · `azure_defender` · `azure_monitor` · `gcp_chronicle` · `gcp_scc` · `gcp_cloud_logging`
 
-Canonical shape (`@grc-claw/core`):
-
-```json
-{
-  "eventUuid": "<stable-uuid>",
-  "eventType": "network.intrusion",
-  "severity": "high",
-  "sourceSystem": "azure_sentinel",
-  "tenantId": 1,
-  "eventData": { "@timestamp": "…", "message": "…", "raw": {} }
-}
-```
-
-See [packages/ingest](packages/ingest).
-
 ---
 
-## A2Z SOC integration (a2zsoc.com)
+## A2Z SOC integration
 
-Production security operations and tenant GRC data live on **[a2zsoc.com](https://a2zsoc.com)**. GRC_Claw connects via `@grc-claw/a2z-connector`:
+Production security operations live on **[a2zsoc.com](https://a2zsoc.com)**. GRC_Claw connects via `@grc-claw/a2z-connector`:
 
 ```bash
 A2Z_SOC_MODE=private
 A2Z_SOC_BASE_URL=https://a2zsoc.com
 A2Z_SOC_API_KEY=<your-integration-key>
-A2Z_SOC_TENANT_ID=1
 ```
 
-| Direction | Behavior |
-|-----------|----------|
-| **Inbound** | Security events → normalized → compliance control impact |
-| **Outbound** | Control test failures → SOC alerts |
-| **GRC** | Scores, controls, evidence (see [integrations/a2z-soc/README.md](integrations/a2z-soc/README.md)) |
-
-**Demo mode** (`A2Z_SOC_MODE=demo`) works offline for CI and local dev—no API key required.
-
-Learn more about the platform: **[https://a2zsoc.com](https://a2zsoc.com)**
+**Demo mode** (`A2Z_SOC_MODE=demo`) works offline for CI and local dev.
 
 ---
 
@@ -551,64 +508,37 @@ Learn more about the platform: **[https://a2zsoc.com](https://a2zsoc.com)**
 
 OpenClaw for GRC means agents are **untrusted by default**:
 
-1. **Allowlist** — registered tools only  
-2. **Approval** — destructive SOAR (Sentinel playbooks, etc.) needs `approvalToken`  
-3. **Sandbox** — Docker default  
+1. **Allowlist** — registered tools only
+2. **Approval** — destructive SOAR needs `approvalToken`
+3. **Sandbox** — Docker default
 
 | Tier | Examples |
 |------|----------|
-| Read | `claw.list_skills`, `claw.get_skill`, `grc.list_controls`, `sentinel.get_incident`, `soc.query_events` |
-| Write | `claw.run_skill`, `evidence.attach` (+ idempotency key) |
+| Read | `claw.list_skills`, `grc.list_controls`, `soc.query_events` |
+| Write | `claw.run_skill`, `evidence.attach` |
 | Destructive | `sentinel.run_playbook`, `chronicle.soar.run_playbook` |
-
-[docs/AGENTIC_AI_SECURITY.md](docs/AGENTIC_AI_SECURITY.md)
 
 ---
 
 ## Testing
 
 ```bash
-npm run test:comprehensive   # OSS + architecture + ISO 42001 + cloud
-npm run test:skills          # Skill discovery + claw.* tool definitions
-npm run test:iso42001        # AIMS package + gateway AIMS APIs
-npm run test:cloud           # AWS / Azure / GCP
-./scripts/test.sh            # Gateway smoke
-npx tsx packages/agent-runtime/scripts/test-openrouter-swarm.ts # Swarm harness + OpenRouter gating
-npx tsx packages/agent-runtime/scripts/test-iso20022.ts # SWIFT active rewrite and settlement
-npx tsx packages/agent-runtime/scripts/test-hermes-wallet.ts # Hermes execution and wallet gating
-npx tsx packages/agent-runtime/scripts/test-vector-memory.ts # Local vector RAG and cloud memory audits
-npx tsx packages/agent-runtime/scripts/test-advanced-security.ts # TEE attestation, containment, ZKP, and MPC signing
-npx tsx packages/agent-runtime/scripts/test-acquisition-controls.ts # eBPF sandboxing, ZK ledger replication, TEE MPC, IaC drift correction, and federated threat exchange
-npx tsx packages/agent-runtime/scripts/test-phase5-orchestration.ts # Sovereign Swarm Mastery (MicroVM sandboxing, homomorphic vector RAG, thought-loop breaker, PBFT consensus, self-healing SOAR)
-npx tsx packages/agent-runtime/scripts/test-phase6-orchestration.ts # Sovereign Swarm Defenses (Red-team exploit block, model weight verification, confidential SGX RAG, cross-tenant BFT state sync)
-npx tsx packages/agent-runtime/scripts/test-phase7-orchestration.ts # Sovereign Swarm Defenses & Attestation (VPC network quarantine, TEE model attestation, MPC threshold signing, and zk-SNARK compliance audits)
-npx tsx packages/agent-runtime/scripts/test-phase8-orchestration.ts # Sovereign Swarm Resilience (Cognitive approval routing, semantic locks DSLM, poison isolation rollback, context compression)
-npx tsx packages/agent-runtime/scripts/test-phase9-orchestration.ts # Sovereign Swarm Autonomy (GitOps self-healing, federated threat mesh, SMT policy verification, and PQC audit credentials)
-npx tsx packages/agent-runtime/scripts/test-phase10-orchestration.ts # Sovereign Swarm Choreography (Dynamic TEE enclaves, PQC key exchanges, active honeypot traps, and homomorphic policy checking)
-npx tsx packages/agent-runtime/scripts/test-phase11-orchestration.ts # Sovereign Swarm Federation (Supply chain gating, recursive ZK-rollups, smart-contract escrows, and cognitive intent filtering)
-npx tsx packages/agent-runtime/scripts/test-phase12-orchestration.ts # Sovereign Swarm Validation (Decentralized oracle verification, lattice MPC signing, symbolic graph flow verification, cognitive tuning)
-npx tsx packages/agent-runtime/scripts/test-phase13-orchestration.ts # Sovereign Swarm Autonomy & Alignment (Analog airgap actuator trigger, temporal invariants proof, active activation patches)
-npx tsx packages/agent-runtime/scripts/test-phase14-orchestration.ts # Sovereign Swarm Execution (Session ZK-proof generation, multi-model steering vector, ZK-RAG proof, threat rollup propagation)
-npx tsx packages/agent-runtime/scripts/test-phase15-orchestration.ts # Sovereign Swarm Monopoly (Regulation AST compile, sidechannel hardware counters, FHE ledger audit, inline attention steering)
-npx tsx packages/agent-runtime/scripts/test-phase16-orchestration.ts # Sovereign Swarm Policies (ZK policy envelope, VM speculative barriers, collaborative FHE RAG, synaptic dynamic LoRA patching)
-npx tsx packages/agent-runtime/scripts/test-phase17-orchestration.ts # Sovereign Swarm Shielding (Post-quantum lattice DID attestation, enclaved weights scan, homomorphic joint threat check, attention feedback steering)
-npx tsx packages/agent-runtime/scripts/test-phase18-orchestration.ts # Structural Monopoly (WASM policy isolation, Merkle DAG evidence, streaming GNN, federated attestation mesh)
-npx tsx packages/agent-runtime/scripts/test-phase19-orchestration.ts # Self-Healing Compliance (IaC self-healing patch, FHE threat mesh, decentralized oracle, generative playbooks)
-npx tsx packages/agent-runtime/scripts/test-phase20-orchestration.ts # Decoy & Syscall Filter (Honey-enclave sandbox, multi-model ZK quorum consensus, eBPF syscall logs, biometric TPM gate)
-npx tsx packages/agent-runtime/scripts/test-phase21-orchestration.ts # Zero-Trust Synaptic (eBPF socket isolation, homomorphic vector RAG, BFT reasoning quorum, synaptic LoRA patching)
-npx tsx packages/agent-runtime/scripts/test-phase22-orchestration.ts # Guest-Kernel & Recursive ZK (eBPF MicroVM sandbox, homomorphic joint policy audit, recursive Halo2 ZK rollup, GPU attention weight redirection)
-npx tsx packages/agent-runtime/scripts/test-phase23-orchestration.ts # DPU Offload & Secure Enclaves (SmartNIC/DPU cognitive filters offloading, CRYSTALS-Dilithium ring signatures, Intel SGX/AMD SEV-SNP secure enclaves, SMT/Coq formal policy proof verification)
-npx tsx packages/agent-runtime/scripts/test-phase24-orchestration.ts # Neuromorphic & Quantum Consensus (Memristive cognitive shields, dynamic Honey-Graph topology morphing, sovereign identity sharding)
+npm run test:comprehensive   # Full test suite
+npm run test:skills          # Skill executor
+npm run test:iso42001        # ISO 42001 AIMS
+npm run test:cloud           # Cloud connectors
+npm run test:byoc            # BYOC connectors
 ```
+
+**Total: 401+ tests across 47 test files**
 
 ---
 
 ## Deployment
 
-- **systemd:** [deploy/systemd/grc-claw-gateway.service](deploy/systemd/grc-claw-gateway.service)  
-- **Docker:** [deploy/docker-compose.yml](deploy/docker-compose.yml)  
-
-Production: strong gateway token, TLS at reverse proxy, scoped **a2zsoc.com** API key, agent approvals enabled.
+- **systemd:** [deploy/systemd/grc-claw-gateway.service](deploy/systemd/grc-claw-gateway.service)
+- **Docker:** [deploy/docker-compose.yml](deploy/docker-compose.yml)
+- **Helm:** [deploy/helm/](deploy/helm/)
 
 ---
 
@@ -618,14 +548,10 @@ Production: strong gateway token, TLS at reverse proxy, scoped **a2zsoc.com** AP
 |-----|--------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Gateway daemon, planes, OpenClaw mapping |
 | [docs/AGENTIC_AI_SECURITY.md](docs/AGENTIC_AI_SECURITY.md) | Agent threat model |
-| [docs/MARKETING_A2Z_SOC.md](docs/MARKETING_A2Z_SOC.md) | Positioning with [a2zsoc.com](https://a2zsoc.com) |
-| [integrations/a2z-soc/README.md](integrations/a2z-soc/README.md) | API contract |
 | [docs/BYOC_CONNECTORS.md](docs/BYOC_CONNECTORS.md) | Bring Your Own LLM + MCP |
-| [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md) | `claw.*` tools, run loop, HTTP examples |
-| [docs/ISO_42001_AIMS.md](docs/ISO_42001_AIMS.md) | ISO/IEC 42001 AIMS architecture + APIs |
-| [integrations/iso-42001/README.md](integrations/iso-42001/README.md) | ISO 42001 integration guide |
-| [docs/SOVEREIGN_LOCAL_AI.md](docs/SOVEREIGN_LOCAL_AI.md) | Sovereign Local AI & Airgapped Architectures (Blackwell, RTX Spark, Vera) |
-| Cursor skill | `.cursor/skills/iso-42001-ai-management-engineering/` |
+| [docs/SKILL_EXECUTOR.md](docs/SKILL_EXECUTOR.md) | `claw.*` tools, run loop |
+| [docs/ISO_42001_AIMS.md](docs/ISO_42001_AIMS.md) | ISO/IEC 42001 AIMS |
+| [integrations/a2z-soc/README.md](integrations/a2z-soc/README.md) | API contract |
 
 ---
 
@@ -647,51 +573,55 @@ npm install && npm run build && npm run test:comprehensive
 
 ## Roadmap
 
-- [x] Operator console with Gemini + Cursor Auto agent chat
-- [x] Full skill executor (`claw.list_skills`, `claw.get_skill`, `claw.run_skill`)
-- [x] Local Zero-Cost Autonomous Execution (The Hermes Protocol)
-- [x] Multi-Ledger Wallet Gating & Sovereign Compliance (Solana, XRP, Bitcoin)
-- [x] Hardened ISO 20022 SWIFT Clearing Node (MT-to-MX Translation, Signature Healing, Settlement Gating)
-- [x] Local Vector RAG Integration (Pinecone-style) & Cloud Memory Vendor Lock-in Audit (Dreaming V3)
-- [x] Large-scale Swarm Load Auditing (300 concurrent agents)
-- [x] Advanced Enterprise Security (TEE hardware attestation, Active sandbox containment quarantine & rollback, ZKP compliance proofs, and MPC threshold co-signing)
-- [x] Acquisition-Grade Enterprise Security (Kernel-level eBPF sandboxing, Raft-based ZK Audit Ledger, TEE enclave-enclosed MPC co-signing, closed-loop IaC compliance drift correction, and federated threat intelligence exchange)
-- [x] npm publish `@grc-claw/*` (dry-run script verified)
-- [x] Helm chart (templates deployed under deploy/helm)
-- [x] Gateway metrics (Prometheus format at /metrics)
-- [x] Signed auditor export bundles (compiled via grc.generate_auditor_bundle)
-- [x] Agent Identity Fabric (`@grc-claw/agent-identity`) - DID:GRC decentralized identifiers, Verifiable Credentials, attestation signing, auto-suspend risk threshold
-- [x] Security Graph (`@grc-claw/security-graph`) - Real-time graph with BFS attack path tracing, 4-factor weighted risk scoring, blast radius analysis, and continuous compliance posture (0-100)
-- [x] Agentic SOAR (`@grc-claw/soar`) - DAG playbook engine with 4 built-in playbooks (Agent Compromise, Policy Violation, Drift Correction, Credential Rotation), 14 step actions, human-in-the-loop gates, SLA enforcement
-- [x] Observability (`@grc-claw/observability`) - OpenTelemetry-native agent tracing with Prometheus metrics, OTLP export (Datadog/Grafana/Jaeger), per-agent cost/token tracking
-- [x] Compliance-as-Code SDK (`@grc-claw/sdk`) - Declarative grcfile.yaml, Terraform-style plan/apply/audit workflow, CI/CD-ready policy enforcement
-- [x] OWASP Agentic Top 10 full coverage mapping (10/10 risks fully addressed with GRC_Claw controls)
-- [x] AI Bill of Materials (AI-BOM) generator - SPDX/CycloneDX-aligned, extracts models/tools/frameworks from trace data
-- [x] Framework Pack Marketplace - 10+ regional/industry packs (GDPR, HIPAA, PCI DSS, FedRAMP, DORA, NIS2, TISAX, POPIA)
-- [x] Agent Skill Marketplace - Pre-audited, compliance-certified skill packs with trust scoring
-- [x] Phase 16 — Zero-Knowledge Policy Invariant Proofs, Hardware Speculative Execution Barriers, Multi-Party FHE Vector Search, Dynamic Synaptic Weight Patching
-- [x] Phase 17 — Post-Quantum Lattice Credentials, Enclaved Weight Sanitation, Joint FHE Threat Analysis, Attention Steering Feedback Loops
-- [x] Phase 18 — Structural Monopoly Architecture: WASM Sandbox Policy Isolation, Merkle DAG Evidence Notarization, GNN Behavioral Anomaly Detection, Federated Compliance Attestation Mesh
-- [x] Phase 19 — Autonomous Self-Healing Infrastructure (Simulated IaC Synthesis and Dry-run Validation), Cross-Tenant Collaborative SIEM Mesh (Homomorphic Threat Correlation), Consensus-Driven Compliance Oracle, Dynamic Generative Playbooks (Autonomous Cognitive SOAR)
-- [x] Phase 20 — Cognitive Decoy Sandboxing (Honey-Enclaves), Zero-Knowledge Multi-Model Cross-Validation (Consensus Quorum), Active eBPF-Driven Runtime Control Plane Containment, Biometric & TPM-Bound Agent Authorization
-- [x] Phase 21 — Zero-Trust Synaptic Guardrails (Dynamic LoRA Parameter Patching), Kernel-Level Socket Isolation (eBPF sockops filters), Homomorphic Vector RAG, Byzantine Fault Tolerant (BFT) Model Reasoning Quorum
-- [x] Phase 22 — MicroVM Guest-Kernel Sandboxing (eBPF monitors), Homomorphic Joint-Policy Auditing (FHE), Recursive ZK-Proof Aggregation (Halo2 rollup), GPU Attention-Head Redirection (Dynamic steering)
-- [x] Phase 23 — DPU Cognitive Offloading (SmartNIC filter), Post-Quantum Lattice Ring Signatures (Dilithium cohort trust), Hardware-Locked Secure Enclaves (AMD SEV-SNP enclaves), Self-Evolving Formal Consensus (SMT solver verification)
-- [x] Phase 24 — Neuromorphic Cognitive Shields (Memristor arrays), Quantum-Entanglement Consensus (teleported attestations), Dynamic Honey-Graph Morphing (moving-target routing), Sovereign Identity Sharding (threshold credential splits)
-- [x] Federated Compliance Mesh (`@grc-claw/federated-compliance-mesh`) — multi-org ZK-attested compliance proofs, cross-tenant trust network, `attestation.issue_compliance_credential` / `attestation.verify_vendor_credential`
-- [x] GRC Registry (`@grc-claw/registry`) — versioned framework packs with cryptographic signing, PackVerifier, 8 built-in packs (ISO 27001, ISO 42001, EU AI Act, SOC 2, DORA, CMMC, GDPR, FedRAMP), trust scoring
+### Completed
 
-### Upcoming (Next 90 Days)
+- [x] 66 packages with 120+ agent tools
+- [x] 156 integration connectors
+- [x] 16 CLI commands (scan, plan, apply, audit, report, init, iac-scan, pqc-scan, ai-bom, doctor, drift, diff, status, frameworks, version, sovereign init)
+- [x] RBAC multi-tenancy with JWT auth
+- [x] Terraform provider for compliance-as-code
+- [x] 39 compliance framework packs
+- [x] Monte Carlo + FAIR risk quantification
+- [x] Compliance autopilot with continuous monitoring
+- [x] Agent identity (DID:GRC) with verifiable credentials
+- [x] Security graph with attack path tracing
+- [x] SOAR playbook engine with 4 built-in playbooks
+- [x] Observability (OpenTelemetry + Prometheus)
+- [x] PostgreSQL persistence with in-memory cache
+- [x] Blockchain-style hash chain audit trail
+- [x] Real-time WebSocket streaming
+- [x] OpenAPI auto-generation
+- [x] Agent discovery scanner
+- [x] ZK compliance proofs
+- [x] Federated compliance mesh
+- [x] AI supply chain sovereignty
+- [x] Board reporting
+- [x] ChatGRC chatbot
+- [x] Framework crosswalk (10 mapping sets)
+- [x] Policy management hub (52 templates)
+- [x] Vendor risk management
+- [x] Employee lifecycle
+- [x] Compliance task engine
+- [x] Evidence automation
+- [x] Drift detection
+- [x] Browser evidence collection
+- [x] Device compliance agent
+- [x] Questionnaire automation
+- [x] MCP server (16 tools)
+- [x] OpenAPI generator
+- [x] Agent discovery scanner
+- [x] 156 integration connectors
 
-- [ ] `@grc-claw/cli` — `grc scan .` compliance posture check, `grc apply grcfile.yaml`, `grc report --framework iso27001` with signed evidence bundles
-- [ ] GitHub App + VS Code Extension — compliance-copilot PR gates on GitHub Marketplace, LSP diagnostics in VS Code
-- [ ] npm v1.0.0 publish — all 15 core packages with stable API contract, `publishConfig.access: public`
-- [ ] GRC Registry public endpoint — `registry.a2zsoc.com` with community contribution workflow
-- [ ] AI-BOM Standard Submission — schema submitted to NIST AI RMF WG and ISO/IEC JTC 1/SC 42 WG 42
-- [ ] Regulatory Intelligence Live Feed — real-time EU AI Act / DORA / NIS2 implementing act monitoring with auto-diff against framework packs
-- [ ] GRC_Claw Cloud — multi-tenant managed SaaS on a2zsoc.com with PostgreSQL persistence, SSO, audit export
+### Upcoming
 
-> Research directions beyond current deployable technology: [speculative/FUTURE_RESEARCH.md](speculative/FUTURE_RESEARCH.md)
+- [ ] AI Agent Governance Dashboard (drift, trust scores, audit)
+- [ ] Compliance-as-Code Linter (grcfile.yaml validation)
+- [ ] Real-time compliance trend charts in console
+- [ ] Evidence provenance graph visualization
+- [ ] Multi-framework compliance crosswalk UI
+- [ ] Vendor risk questionnaire auto-fill with AI
+- [ ] Board reporting with PDF export
+- [ ] Slack/Teams notification integration
 
 ---
 
