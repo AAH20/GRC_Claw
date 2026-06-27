@@ -60,6 +60,12 @@
     "@grc-claw/agent-trust-score": "*",
     "@grc-claw/agent-audit-trail": "*",
     "@grc-claw/federated-compliance-mesh": "*",
+    "@grc-claw/integration-marketplace": "*",
+    "@grc-claw/policy-management-hub": "*",
+    "@grc-claw/vendor-risk-management": "*",
+    "@grc-claw/employee-lifecycle": "*",
+    "@grc-claw/compliance-task-engine": "*",
+    "@grc-claw/evidence-automation-engine": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {
