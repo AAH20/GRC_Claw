@@ -1,0 +1,42 @@
+export { IntegrationMarketplace } from "./IntegrationMarketplace.js";
+export type { CollectionJob } from "./IntegrationMarketplace.js";
+export {
+  GitHubConnector,
+  GitLabConnector,
+  AWSIAMConnector,
+  AWSS3Connector,
+  AWSCloudTrailConnector,
+  AzureADConnector,
+  AzureSentinelConnector,
+  GCPIAMConnector,
+  GCPSCCConnector,
+  OktaConnector,
+  JiraConnector,
+  SlackConnector,
+  PagerDutyConnector,
+  SnowflakeConnector,
+  DatadogConnector,
+  CrowdStrikeConnector,
+  QualysConnector,
+  SnykConnector,
+  TerraformCloudConnector,
+  GitHubActionsConnector,
+  DockerHubConnector,
+  KubernetesConnector,
+  SalesforceConnector,
+  HubSpotConnector,
+  BambooHRConnector,
+} from "./connectors/index.js";
+export type {
+  IntegrationConnector,
+  ConnectorConfig,
+  ConnectorRegistration,
+  EvidenceArtifact,
+  IntegrationCapability,
+  IntegrationCategory,
+  AuthType,
+  ComplianceFramework,
+  EvidenceStatus,
+  MarketplaceStats,
+} from "./types.js";
+export { hashEvidence, generateEvidenceId } from "./types.js";

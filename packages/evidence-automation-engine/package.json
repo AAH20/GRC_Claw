@@ -1,0 +1,26 @@
+{
+  "name": "@grc-claw/evidence-automation-engine",
+  "version": "1.0.0",
+  "description": "Automated evidence collection scheduling, execution, and gap detection for GRC compliance",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test --test-force-exit src/**/*.test.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0"
+  }
+}

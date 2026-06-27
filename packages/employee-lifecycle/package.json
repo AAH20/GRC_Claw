@@ -1,0 +1,30 @@
+{
+  "name": "@grc-claw/employee-lifecycle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Employee lifecycle management — onboarding, offboarding, access reviews, training tracking, compliance dashboards, and HR system integrations",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@grc-claw/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

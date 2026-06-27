@@ -59,7 +59,10 @@
     "packages/vscode-extension",
     "packages/evidence-collector",
     "packages/drift-detector",
-    "packages/agent-audit-trail"
+    "packages/agent-audit-trail",
+    "packages/integration-marketplace",
+    "packages/evidence-automation-engine",
+    "packages/employee-lifecycle"
   ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
