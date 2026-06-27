@@ -4,8 +4,103 @@ import type { AuditRecord, AuditQuery, AuditExportOptions, IntegrityResult } fro
 
 const GENESIS_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
+export interface AuditDatabase {
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
+  execute(sql: string, params?: unknown[]): Promise<void>;
+}
+
 export class AgentAuditTrail {
   private records: AuditRecord[] = [];
+  private readonly db?: AuditDatabase;
+  private pendingWrites: Promise<void>[] = [];
+
+  constructor(database?: AuditDatabase) {
+    this.db = database;
+  }
+
+  async initializeDatabase(): Promise<void> {
+    if (!this.db) return;
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS agent_audit_trail (
+        id TEXT PRIMARY KEY,
+        agent_did TEXT NOT NULL,
+        tool TEXT NOT NULL,
+        arguments_hash TEXT NOT NULL,
+        result_hash TEXT NOT NULL,
+        chain_hash TEXT NOT NULL,
+        previous_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `);
+  }
+
+  private argsHash(args: Record<string, unknown>): string {
+    return createHash('sha256').update(JSON.stringify(args)).digest('hex');
+  }
+
+  private resultHash(result: Record<string, unknown>): string {
+    return createHash('sha256').update(JSON.stringify(result)).digest('hex');
+  }
+
+  private async writeToDb(record: AuditRecord): Promise<void> {
+    if (!this.db) return;
+    try {
+      await this.db.execute(
+        `INSERT INTO agent_audit_trail (id, agent_did, tool, arguments_hash, result_hash, chain_hash, previous_hash, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          record.id,
+          record.agentDid,
+          record.tool,
+          this.argsHash(record.args),
+          this.resultHash(record.result),
+          record.hash,
+          record.previousHash,
+          record.timestamp,
+        ],
+      );
+    } catch (err) {
+      console.warn(
+        `[AUDIT] PostgreSQL write failed for ${record.id}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  async loadFromDatabase(): Promise<void> {
+    if (!this.db) return;
+    try {
+      const { rows } = await this.db.query<{
+        id: string;
+        agent_did: string;
+        tool: string;
+        arguments_hash: string;
+        result_hash: string;
+        chain_hash: string;
+        previous_hash: string;
+        created_at: string;
+      }>(
+        `SELECT id, agent_did, tool, arguments_hash, result_hash, chain_hash, previous_hash, created_at
+         FROM agent_audit_trail ORDER BY created_at ASC`,
+      );
+      for (const row of rows) {
+        const record: AuditRecord = {
+          id: row.id,
+          timestamp: row.created_at,
+          agentDid: row.agent_did,
+          tool: row.tool,
+          args: {},
+          result: {},
+          previousHash: row.previous_hash,
+          hash: row.chain_hash,
+        };
+        this.records.push(record);
+      }
+    } catch {
+      // fall back to empty in-memory state
+    }
+  }
 
   record(agentDid: string, tool: string, args: Record<string, unknown>, result: Record<string, unknown>): AuditRecord {
     const previousHash = this.records.length > 0
@@ -30,7 +125,18 @@ export class AgentAuditTrail {
     };
 
     this.records.push(record);
+
+    // Write-through to PostgreSQL
+    const writePromise = this.writeToDb(record);
+    this.pendingWrites.push(writePromise);
+
     return record;
+  }
+
+  async flush(): Promise<void> {
+    const pending = [...this.pendingWrites];
+    this.pendingWrites = [];
+    await Promise.allSettled(pending);
   }
 
   verify(): IntegrityResult {

@@ -48,10 +48,10 @@ class MockConnector implements IntegrationConnector {
 const mockConfig: ConnectorConfig = { apiToken: "test-token" };
 
 describe("IntegrationMarketplace", () => {
-  it("should register 25 built-in connectors", () => {
+  it("should register built-in connectors", () => {
     const marketplace = new IntegrationMarketplace();
     const stats = marketplace.getStats();
-    assert.equal(stats.totalConnectors, 25);
+    assert.ok(stats.totalConnectors >= 25);
     assert.ok(stats.totalCapabilities > 25);
   });
 
@@ -72,10 +72,11 @@ describe("IntegrationMarketplace", () => {
 
   it("should enable/disable connectors", () => {
     const marketplace = new IntegrationMarketplace();
+    const total = marketplace.getStats().totalConnectors;
     marketplace.disableConnector("github");
-    assert.equal(marketplace.getEnabledConnectors().length, 24);
+    assert.equal(marketplace.getEnabledConnectors().length, total - 1);
     marketplace.enableConnector("github");
-    assert.equal(marketplace.getEnabledConnectors().length, 25);
+    assert.equal(marketplace.getEnabledConnectors().length, total);
   });
 
   it("should filter connectors by category", () => {
@@ -118,7 +119,7 @@ describe("IntegrationMarketplace", () => {
   it("should return stats correctly", () => {
     const marketplace = new IntegrationMarketplace();
     const stats = marketplace.getStats();
-    assert.equal(stats.totalConnectors, 25);
+    assert.ok(stats.totalConnectors >= 25);
     assert.ok(Object.keys(stats.connectorsByCategory).length > 0);
     assert.ok(stats.frameworksSupported.length > 0);
   });

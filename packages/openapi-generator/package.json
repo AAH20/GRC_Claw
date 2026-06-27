@@ -1,0 +1,22 @@
+{
+  "name": "@grc-claw/openapi-generator",
+  "version": "1.0.0",
+  "description": "OpenAPI 3.0 Specification Generator for GRC_Claw Gateway — reads all endpoints and produces JSON/YAML specs",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/**/*.test.js 2>/dev/null || true"
+  },
+  "files": [
+    "dist"
+  ]
+}

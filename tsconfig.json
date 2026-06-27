@@ -61,6 +61,8 @@
     { "path": "./packages/vendor-risk-management" },
     { "path": "./packages/compliance-task-engine" },
     { "path": "./packages/employee-lifecycle" },
-    { "path": "./packages/drift-detector" }
+    { "path": "./packages/drift-detector" },
+    { "path": "./packages/agent-discovery" },
+    { "path": "./packages/openapi-generator" }
   ]
 }

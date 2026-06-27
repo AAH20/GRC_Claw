@@ -33,6 +33,16 @@ import {
   SalesforceConnector,
   HubSpotConnector,
   BambooHRConnector,
+  CrowdStrikeFalconConnector,
+  ServiceNowConnector,
+  SplunkConnector,
+  ConfluenceConnector,
+  NotionConnector,
+  BoxConnector,
+  DropboxConnector,
+  GoogleWorkspaceConnector,
+  Microsoft365Connector,
+  Auth0Connector,
 } from "./connectors/index.js";
 
 export interface CollectionJob {
@@ -81,6 +91,16 @@ export class IntegrationMarketplace {
       new SalesforceConnector(),
       new HubSpotConnector(),
       new BambooHRConnector(),
+      new CrowdStrikeFalconConnector(),
+      new ServiceNowConnector(),
+      new SplunkConnector(),
+      new ConfluenceConnector(),
+      new NotionConnector(),
+      new BoxConnector(),
+      new DropboxConnector(),
+      new GoogleWorkspaceConnector(),
+      new Microsoft365Connector(),
+      new Auth0Connector(),
     ];
     for (const connector of builtins) {
       this.registrations.set(connector.id, {

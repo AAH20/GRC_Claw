@@ -16,7 +16,11 @@ export type IntegrationCategory =
   | "ci_cd"
   | "container"
   | "infrastructure"
-  | "hr";
+  | "hr"
+  | "documentation"
+  | "workspace"
+  | "document_management"
+  | "file_storage";
 
 export type AuthType =
   | "api_key"
