@@ -62,6 +62,7 @@
     "packages/agent-audit-trail",
     "packages/integration-marketplace",
     "packages/terraform-provider",
+    "packages/rbac-multi-tenant",
     "packages/evidence-automation-engine",
     "packages/employee-lifecycle",
     "packages/vendor-risk-management",
