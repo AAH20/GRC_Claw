@@ -1,7 +1,7 @@
 {
-  "name": "@grc-claw/integration-marketplace",
+  "name": "@grc-claw/terraform-provider",
   "version": "1.0.0",
-  "description": "Marketplace of 100+ SaaS integrations for automated GRC evidence collection",
+  "description": "Terraform provider for GRC_Claw resources — manages frameworks, controls, evidence, risks, and agent policies as infrastructure-as-code",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
