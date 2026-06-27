@@ -1,0 +1,23 @@
+{
+  "name": "@grc-claw/oscal",
+  "version": "0.1.0",
+  "description": "NIST OSCAL 1.1.2 I/O for GRC_Claw — FedRAMP Rev 5, CMMC 2.0, SSP/POA&M/SAR export",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --experimental-vm-modules ../../node_modules/.bin/jest"
+  },
+  "keywords": ["oscal", "fedramp", "cmmc", "nist", "grc", "compliance", "sp800-53"],
+  "license": "MIT"
+}
