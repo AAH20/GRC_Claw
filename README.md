@@ -12,9 +12,30 @@ Open-source GRC automation engine — 67 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (67 packages, 288,053 LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **132 agent tools** (124 real implementations), **83+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), and a **blockchain-style hash chain audit trail**.
+GRC_Claw is a TypeScript/Go monorepo (67 packages, 288,053 LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **163 agent tools** (124 real implementations), **130+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), and a **blockchain-style hash chain audit trail**.
 
 The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 26 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
+
+---
+
+## Install
+
+### npm (recommended)
+```bash
+npm install -g @grc-claw/cli
+```
+
+### Homebrew (macOS / Linux)
+```bash
+brew tap a2zsoc/grc https://github.com/AAH20/GRC_Claw
+brew install grc-claw
+```
+
+### From source
+```bash
+git clone https://github.com/AAH20/GRC_Claw
+cd GRC_Claw && npm install && npm run build
+```
 
 ---
 
@@ -45,7 +66,7 @@ grc sovereign init
 | Package | Description | Version |
 |---------|-------------|---------|
 | `@grc-claw/sdk` | TypeScript SDK for A2Z SOC platform | v0.8.0 |
-| `@grc-claw/cli` | GRC CLI — 16 commands | v0.8.0 |
+| `@grc-claw/cli` | GRC CLI — 18 commands | v0.8.0 |
 | `@grc-claw/mcp-server` | MCP server for Claude / AI assistant integration | v0.8.0 |
 | `@grc-claw/compliance-copilot` | VS Code extension — 11 rules, 6 languages | v0.8.0 |
 | `@grc-claw/agent-runtime` | 3-phase autonomous agent (plan → act → verify) | v0.8.0 |
@@ -107,6 +128,9 @@ The `terraform-provider-grc` (Go implementation) lets you manage GRC resources a
 
 - `grc_control` — declare a compliance control and its metadata
 - `grc_evidence` — attach an evidence artifact to a control with hash lineage
+- `grc_framework` — register a compliance framework with control mappings
+- `grc_risk` — define a risk scenario with FAIR quantification parameters
+- `grc_agent_policy` — configure autonomous agent guardrails and approval workflows
 
 ```hcl
 terraform {
@@ -168,11 +192,11 @@ grc agent run   # agent signs attestations automatically during verify phase
 
 ## CLI commands
 
-`@grc-claw/cli` ships 16 commands:
+`@grc-claw/cli` ships 18 commands:
 
 ```bash
 grc init                    # Scaffold grcfile.yaml + GitHub Actions workflow
-grc scan .                  # Codebase compliance scan
+grc scan .                  # Codebase compliance scan (12 rules, posture score)
 grc plan                    # Generate compliance remediation plan
 grc apply                   # Apply plan to GRC_Claw
 grc audit                   # Full compliance audit with evidence
@@ -181,9 +205,11 @@ grc drift                   # Detect compliance drift from baseline
 grc diff                    # Crosswalk delta between git refs or frameworks
 grc report                  # Generate evidence report
 grc doctor                  # Environment checks (add --fix to auto-remediate)
-grc iac-scan .              # Terraform / Kubernetes compliance scan
-grc pqc-scan .              # Post-quantum cryptography migration scan
+grc iac-scan .              # Terraform / Kubernetes compliance scan (8 rules)
+grc pqc-scan .              # Post-quantum cryptography migration scan (6 patterns)
 grc ai-bom generate         # AI Bill of Materials (EU AI Act Article 53)
+grc ai-bom publish          # Publish AI BOM to A2Z SOC registry
+grc frameworks list         # List available compliance framework packs
 grc agent run               # Launch autonomous 3-phase compliance agent
 grc sovereign init          # Write Ollama Docker Compose stack
 grc version                 # Print version
@@ -209,6 +235,51 @@ The agent maintains a **trust score** derived from behavioral signals. If the sc
 
 ---
 
+## Notification engine
+
+`@grc-claw/notification-engine` delivers compliance alerts across three channels:
+
+- **Slack** — Block Kit rich formatting via incoming webhooks
+- **Email** — raw SMTP with STARTTLS and AUTH LOGIN
+- **Microsoft Teams** — webhook cards with theme colors
+
+Includes rate limiting (per minute/hour/day), exponential backoff retry, delivery history, and delivery stats. Six built-in templates: compliance alert, drift alert, remediation complete, incident created, risk threshold exceeded, custom.
+
+---
+
+## Browser evidence collection
+
+`@grc-claw/browser-evidence` provides Playwright-based evidence collection for web application controls:
+
+- Dynamic Playwright import (graceful error if not installed)
+- Chromium launch with configurable headless, timeout, slowMo, userAgent, viewport
+- Full `BrowserAdapter` interface: `launch()`, `navigate()`, `screenshot()`, `getContent()`, `fillInput()`, `click()`, `getText()`, `elementExists()`
+
+---
+
+## Agent audit trail
+
+`@grc-claw/agent-audit-trail` maintains a blockchain-style hash chain for all agent actions:
+
+- Each record's SHA-256 hash includes the previous record's hash
+- Write-through to PostgreSQL for persistence
+- `verify()` validates entire chain integrity (genesis hash check, chain linkage, tamper detection)
+- `query()` supports filtering by agent DID, tool, date range, pagination
+- `export()` supports JSON and CSV formats
+
+---
+
+## Agent trust scoring
+
+`@grc-claw/agent-trust-score` derives behavioral trust signals from the audit trail:
+
+- Trust score derived from tool usage patterns, error rates, and approval compliance
+- Auto-pause when score drops below configured threshold
+- Destructive actions require explicit `approvalToken`
+- Trust profile persisted across sessions
+
+---
+
 ## A2Z SOC integration
 
 [A2Z SOC](https://a2zsoc.com) is the commercial platform built on top of GRC_Claw. It adds:
@@ -217,6 +288,10 @@ The agent maintains a **trust score** derived from behavioral signals. If the sc
 - Multi-tenant enterprise SIEM and SOC operations
 - Managed PostgreSQL evidence store
 - Production alerting, dashboards, and reporting
+- 669 page React dashboard with 182 components
+- 350+ navigation items across GRC, SOC, Enterprise, and PLG surfaces
+- vCISO marketplace, broker channels, PE cyber diligence
+- Learning center with training and certifications
 
 ```bash
 A2Z_SOC_BASE_URL=https://a2zsoc.com
@@ -224,6 +299,22 @@ A2Z_SOC_API_KEY=<your-key>
 ```
 
 See [a2zsoc.com](https://a2zsoc.com) for pricing and API key self-serve.
+
+---
+
+## Strategic moat roadmap
+
+GRC_Claw is designed to compound around assets that are hard to clone with capital alone:
+
+1. **Agentic assurance receipts** — every autonomous plan, tool call, remediation, exception, approval, and verification step should emit a signed, redacted receipt with intent, policy decision, evidence hash, control mapping, actor identity, timestamp, and replay-safe metadata.
+2. **Crosswalk network effects** — every new framework pack, mapping, audit exception, and customer evidence pattern should strengthen the shared control graph instead of living as one-off implementation work.
+3. **Evidence connector marketplace** — cloud, SaaS, SIEM, EDR, ticketing, source-control, IaC, browser, and local-agent collectors should plug into one evidence envelope format so third parties can build connectors without fragmenting audit semantics.
+4. **Regulated AI procurement wedge** — CMMC, NIST 800-171, ISO 42001, NIST AI RMF, EU AI Act, SOC 2, ISO 27001, FedRAMP, and defense/critical-infrastructure procurement packs should share one proof model instead of separate dashboards.
+5. **Auditor and verifier interfaces** — read-only proof rooms, OSCAL exports, verifiable credentials, RFC 3161 timestamp proofs, and evidence lineage APIs should let external auditors verify claims without trusting the application UI.
+6. **Sovereign and air-gap deployments** — the same engine should run hosted on A2Z SOC, self-hosted for enterprises, or fully local with Ollama/private models for defense, government, and regulated operators.
+7. **Benchmark intelligence** — anonymized, opt-in metrics for evidence freshness, remediation latency, control reuse, drift frequency, connector reliability, and audit readiness should become the industry reference layer.
+
+The anti-commoditization principle is simple: dashboards are copyable; a longitudinal, signed history of controls, evidence, agent actions, crosswalk decisions, and auditor-verified outcomes is not.
 
 ---
 
@@ -237,6 +328,8 @@ cd GRC_Claw
 npm install && npm run build
 npm run test:comprehensive
 ```
+
+**Test results:** 401+ tests passing, 0 failures.
 
 Repository: [github.com/AAH20/GRC_Claw](https://github.com/AAH20/GRC_Claw)
 
