@@ -8,9 +8,7 @@
     "build": "tsc",
     "test": "node --test dist/**/*.test.js"
   },
-  "dependencies": {
-    "@grc-claw/core": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.7.0"
   }
