@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Build all packages
-        run: npm run build --workspaces --if-present
+        run: npm run build
 
       - name: Verify publish readiness
         run: node scripts/verify-publish-readiness.mjs
