@@ -1,0 +1,17 @@
+{
+  "name": "@grc-claw/ai-governance",
+  "version": "0.8.0",
+  "description": "EU AI Act compliance and AI risk management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@grc-claw/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

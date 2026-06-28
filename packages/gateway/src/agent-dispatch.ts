@@ -202,6 +202,17 @@ const complianceTaskEngine = new ComplianceTaskEngine();
 const evidenceAutoEngine = new EvidenceAutomationEngine();
 const terraformProvider = new TerraformProvider();
 
+// --- New Enterprise Services ---
+import { ContinuousTrustEngine } from '@grc-claw/continuous-trust-engine';
+import { AgentCollaboration } from '@grc-claw/agent-collaboration';
+import { RegulatoryChangeManagement } from '@grc-claw/regulatory-change-management';
+import { AIGovernance } from '@grc-claw/ai-governance';
+
+const continuousTrustEngine = new ContinuousTrustEngine();
+const agentCollaboration = new AgentCollaboration();
+const regulatoryChangeMgmt = new RegulatoryChangeManagement();
+const aiGovernance = new AIGovernance();
+
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
 }
@@ -290,7 +301,11 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('employee.') ||
     tool.startsWith('task.') ||
     tool.startsWith('evidence_auto.') ||
-    tool.startsWith('terraform.')
+    tool.startsWith('terraform.') ||
+    tool.startsWith('trust.') ||
+    tool.startsWith('collaboration.') ||
+    tool.startsWith('regulatory.') ||
+    tool.startsWith('ai_governance.')
   );
 }
 
@@ -3062,6 +3077,79 @@ export async function dispatchBuiltinGrcTool(
       } catch (err: any) {
         return { ok: false, error: err.message ?? 'terraform_import_failed', timestamp: new Date().toISOString() };
       }
+    }
+
+    // ─── Continuous Trust Engine Tools ─────────────────────────────────────
+    case 'trust.get_score': {
+      const score = continuousTrustEngine.getScore();
+      return { ok: true, score, timestamp: new Date().toISOString() };
+    }
+    case 'trust.get_history': {
+      const hours = Number(args.hours ?? 24);
+      const history = continuousTrustEngine.getHistory(hours);
+      return { ok: true, history, count: history.length, timestamp: new Date().toISOString() };
+    }
+    case 'trust.get_alerts': {
+      const alerts = continuousTrustEngine.getAlerts();
+      return { ok: true, alerts, count: alerts.length, timestamp: new Date().toISOString() };
+    }
+    case 'trust.register_signal': {
+      const signal = args.signal as import('@grc-claw/continuous-trust-engine').TrustSignal;
+      continuousTrustEngine.registerSignal(signal);
+      return { ok: true, message: 'Signal registered', timestamp: new Date().toISOString() };
+    }
+
+    // ─── Agent Collaboration Tools ─────────────────────────────────────────
+    case 'collaboration.get_sessions': {
+      const sessions = agentCollaboration.getActiveSessions();
+      return { ok: true, sessions, count: sessions.length, timestamp: new Date().toISOString() };
+    }
+    case 'collaboration.get_agents': {
+      const requiredCaps = (args.requiredCapabilities as string[]) ?? [];
+      const agents = agentCollaboration.getAvailableAgents(requiredCaps);
+      return { ok: true, agents, count: agents.length, timestamp: new Date().toISOString() };
+    }
+    case 'collaboration.submit_task': {
+      const task = args.task as import('@grc-claw/agent-collaboration').CollaborationTask;
+      const sessionId = agentCollaboration.submitTask(task);
+      return { ok: true, sessionId, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Regulatory Change Management Tools ─────────────────────────────────
+    case 'regulatory.get_changes': {
+      const framework = args.framework as string | undefined;
+      const severity = args.severity as string | undefined;
+      const status = args.status as string | undefined;
+      const changes = regulatoryChangeMgmt.getChanges({ framework, severity, status });
+      return { ok: true, changes, count: changes.length, timestamp: new Date().toISOString() };
+    }
+    case 'regulatory.get_gaps': {
+      const framework = args.framework as string | undefined;
+      const status = args.status as string | undefined;
+      const gaps = regulatoryChangeMgmt.getGaps({ framework, status });
+      return { ok: true, gaps, count: gaps.length, timestamp: new Date().toISOString() };
+    }
+    case 'regulatory.analyze_change': {
+      const changeId = String(args.changeId ?? '');
+      const analysis = await regulatoryChangeMgmt.analyzeChange(changeId);
+      return { ok: true, analysis, timestamp: new Date().toISOString() };
+    }
+
+    // ─── AI Governance Tools ───────────────────────────────────────────────
+    case 'ai_governance.get_systems': {
+      const riskClass = args.riskClass as string | undefined;
+      const status = args.status as string | undefined;
+      const systems = aiGovernance.getSystems({ riskClass, status });
+      return { ok: true, systems, count: systems.length, timestamp: new Date().toISOString() };
+    }
+    case 'ai_governance.get_dashboard': {
+      const dashboard = aiGovernance.getDashboardData();
+      return { ok: true, dashboard, timestamp: new Date().toISOString() };
+    }
+    case 'ai_governance.register_system': {
+      const system = args.system as import('@grc-claw/ai-governance').AISystem;
+      aiGovernance.registerSystem(system);
+      return { ok: true, message: 'AI system registered', timestamp: new Date().toISOString() };
     }
 
     default:

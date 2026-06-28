@@ -37,7 +37,11 @@
     "test:zk": "npm run test -w @grc-claw/zk-compliance",
     "test:marketplace": "npm run test -w @grc-claw/trust-marketplace",
     "test:mcp": "npm run test -w @grc-claw/mcp-server",
-    "test:all": "npm run build && echo 'All 38 packages built successfully'"
+    "test:continuous-trust": "npm run test -w @grc-claw/continuous-trust-engine",
+    "test:agent-collab": "npm run test -w @grc-claw/agent-collaboration",
+    "test:regulatory-mgmt": "npm run test -w @grc-claw/regulatory-change-management",
+    "test:ai-governance": "npm run test -w @grc-claw/ai-governance",
+    "test:all": "npm run build && echo 'All 42 packages built successfully'"
   },
   "engines": {
     "node": ">=20"

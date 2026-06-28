@@ -1,6 +1,6 @@
 # GRC_Claw
 
-Open-source GRC automation engine — 67 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
+Open-source GRC automation engine — 71 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -12,7 +12,7 @@ Open-source GRC automation engine — 67 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (67 packages, 288,053 LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **163 agent tools** (124 real implementations), **130+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), and a **blockchain-style hash chain audit trail**.
+GRC_Claw is a TypeScript/Go monorepo (71 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **163 agent tools** (124 real implementations), **130+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), and a **blockchain-style hash chain audit trail**.
 
 The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 26 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
@@ -61,7 +61,7 @@ grc sovereign init
 
 ---
 
-## Packages (26 published · 41 private)
+## Packages (26 published · 45 private)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -91,8 +91,12 @@ grc sovereign init
 | `@grc-claw/a2z-connector` | A2Z SOC platform API bridge | v0.8.0 |
 | `@grc-claw/core` | Canonical events, GRCEngineFacade | v0.8.0 |
 | `@grc-claw/gateway` | HTTP/WebSocket gateway daemon | v0.8.0 |
+| `@grc-claw/continuous-trust-engine` | Dynamic trust scoring across evidence, controls, agents, risk, and behavior | internal |
+| `@grc-claw/agent-collaboration` | Multi-agent collaboration sessions, capability matching, and consensus workflows | internal |
+| `@grc-claw/regulatory-change-management` | Regulatory source tracking, impact analysis, timelines, and remediation gaps | internal |
+| `@grc-claw/ai-governance` | AI system inventory, EU AI Act risk classification, assessments, and monitoring | internal |
 
-The remaining 41 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
+The remaining 45 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 
 ---
 
@@ -226,6 +230,19 @@ grc version                 # Print version
 3. **Verify** — collects evidence, issues verifiable credentials, updates trust score
 
 The agent maintains a **trust score** derived from behavioral signals. If the score drops below the configured threshold, the agent auto-pauses and requires human review before continuing. Destructive actions require an explicit `approvalToken`.
+
+---
+
+## Agentic assurance receipts
+
+`@grc-claw/evidence` now exposes an auditor-safe receipt primitive for agentic systems:
+
+- `createAssuranceEnvelope(...)` builds a redacted receipt from action-ledger intent, policy decision, and result events.
+- `verifyAssuranceEnvelope(...)` checks required ledger hashes, identity metadata, timestamps, and payload-redaction markers.
+- `hashAssuranceEnvelope(...)` produces a deterministic SHA-256 receipt fingerprint for proof rooms, export APIs, and auditor portals.
+- `redactAssuranceEnvelopeForSharing(...)` returns a share-safe version for third-party verification.
+
+The gateway records these envelopes around supervised agent actions and exposes the assurance graph through `/api/assurance`.
 
 ---
 

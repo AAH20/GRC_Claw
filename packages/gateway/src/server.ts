@@ -57,6 +57,10 @@ import { OpenAPIGenerator } from '@grc-claw/openapi-generator';
 import { AgentDiscoveryScanner } from '@grc-claw/agent-discovery';
 import { RBACEngine, type JWTPayload } from '@grc-claw/rbac-multi-tenant';
 import { TerraformProvider } from '@grc-claw/terraform-provider';
+import { ContinuousTrustEngine } from '@grc-claw/continuous-trust-engine';
+import { AgentCollaboration } from '@grc-claw/agent-collaboration';
+import { RegulatoryChangeManagement } from '@grc-claw/regulatory-change-management';
+import { AIGovernance } from '@grc-claw/ai-governance';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -218,6 +222,12 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const employeeLifecycle = new EmployeeLifecycleEngine();
   const complianceTaskEngine = new ComplianceTaskEngine();
   const evidenceAutoEngine = new EvidenceAutomationEngine();
+
+  // --- New Enterprise Services ---
+  const continuousTrustEngine = new ContinuousTrustEngine();
+  const agentCollaboration = new AgentCollaboration();
+  const regulatoryChangeMgmt = new RegulatoryChangeManagement();
+  const aiGovernance = new AIGovernance();
 
   // ─── Drift Detector ─────────────────────────────────────────────────
   const driftControlEvaluator: ControlEvaluator = {
@@ -2744,6 +2754,102 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const states = terraformProvider.listStates();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, resourceTypes: types, dataSourceTypes: dataTypes, states, count: states.length }));
+      return;
+    }
+
+    // ─── Continuous Trust Engine ──────────────────────────────────────────
+    if (path === '/api/trust/score' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const score = continuousTrustEngine.getScore();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, score }));
+      return;
+    }
+
+    if (path === '/api/trust/history' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const trustUrl = new URL(req.url ?? '', 'http://local');
+      const hours = Number(trustUrl.searchParams.get('hours') ?? 24);
+      const history = continuousTrustEngine.getHistory(hours);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, history, count: history.length }));
+      return;
+    }
+
+    if (path === '/api/trust/alerts' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const alerts = continuousTrustEngine.getAlerts();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, alerts, count: alerts.length }));
+      return;
+    }
+
+    // ─── Agent Collaboration ──────────────────────────────────────────────
+    if (path === '/api/collaboration/sessions' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const sessions = agentCollaboration.getActiveSessions();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, sessions, count: sessions.length }));
+      return;
+    }
+
+    if (path === '/api/collaboration/agents' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const agents = agentCollaboration.getAvailableAgents([]);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, agents, count: agents.length }));
+      return;
+    }
+
+    // ─── Regulatory Change Management ─────────────────────────────────────
+    if (path === '/api/regulatory/changes' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const regUrl = new URL(req.url ?? '', 'http://local');
+      const framework = regUrl.searchParams.get('framework') ?? undefined;
+      const severity = regUrl.searchParams.get('severity') ?? undefined;
+      const status = regUrl.searchParams.get('status') ?? undefined;
+      const changes = regulatoryChangeMgmt.getChanges({ framework, severity, status });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, changes, count: changes.length }));
+      return;
+    }
+
+    if (path === '/api/regulatory/gaps' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const gapsUrl = new URL(req.url ?? '', 'http://local');
+      const framework = gapsUrl.searchParams.get('framework') ?? undefined;
+      const status = gapsUrl.searchParams.get('status') ?? undefined;
+      const gaps = regulatoryChangeMgmt.getGaps({ framework, status });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, gaps, count: gaps.length }));
+      return;
+    }
+
+    if (path === '/api/regulatory/sources' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const sources = regulatoryChangeMgmt.getSources();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, sources, count: sources.length }));
+      return;
+    }
+
+    // ─── AI Governance ────────────────────────────────────────────────────
+    if (path === '/api/ai-governance/systems' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const aiUrl = new URL(req.url ?? '', 'http://local');
+      const riskClass = aiUrl.searchParams.get('riskClass') ?? undefined;
+      const status = aiUrl.searchParams.get('status') ?? undefined;
+      const systems = aiGovernance.getSystems({ riskClass, status });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, systems, count: systems.length }));
+      return;
+    }
+
+    if (path === '/api/ai-governance/dashboard' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const dashboard = aiGovernance.getDashboardData();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, dashboard }));
       return;
     }
 
