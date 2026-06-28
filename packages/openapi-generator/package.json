@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/openapi-generator",
-  "version": "1.0.0",
-  "description": "OpenAPI 3.0 Specification Generator for GRC_Claw Gateway — reads all endpoints and produces JSON/YAML specs",
+  "version": "0.8.0",
+  "description": "OpenAPI 3.0 Specification Generator for GRC_Claw Gateway \u2014 reads all endpoints and produces JSON/YAML specs",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,5 +18,12 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
+  }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/agent-discovery",
-  "version": "1.0.0",
-  "description": "AI Agent Discovery Scanner — detects unauthorized AI agents, scans MCP connections, inventories agent configurations, and generates risk-scored reports",
+  "version": "0.8.0",
+  "description": "AI Agent Discovery Scanner \u2014 detects unauthorized AI agents, scans MCP connections, inventories agent configurations, and generates risk-scored reports",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,5 +18,12 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
+  }
 }

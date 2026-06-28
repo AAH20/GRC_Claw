@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/frameworks",
-  "version": "2.0.0",
+  "version": "0.8.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,5 +22,9 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

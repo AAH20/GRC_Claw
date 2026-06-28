@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/evidence-collector",
-  "version": "1.0.0",
+  "version": "0.8.0",
   "description": "Automated compliance evidence collection from real systems",
   "license": "MIT",
   "type": "module",
@@ -21,5 +21,9 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

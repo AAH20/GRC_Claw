@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/compliance-copilot",
   "version": "0.8.0",
-  "description": "Compliance Copilot — IDE Integration, PR Gates, CLI, and Chat Bot",
+  "description": "Compliance Copilot \u2014 IDE Integration, PR Gates, CLI, and Chat Bot",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,5 +26,9 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

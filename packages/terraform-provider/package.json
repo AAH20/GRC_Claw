@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/terraform-provider",
   "version": "1.0.0",
-  "description": "Terraform provider for GRC_Claw resources — manages frameworks, controls, evidence, risks, and agent policies as infrastructure-as-code",
+  "description": "Terraform provider for GRC_Claw resources \u2014 manages frameworks, controls, evidence, risks, and agent policies as infrastructure-as-code",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,5 +22,6 @@
   "devDependencies": {
     "typescript": "^5.7.0",
     "tsx": "^4.19.0"
-  }
+  },
+  "private": true
 }

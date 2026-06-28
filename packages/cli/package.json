@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/cli",
   "version": "0.8.0",
-  "description": "GRC_Claw CLI — grc scan, grc apply, grc report, grc diff",
+  "description": "GRC_Claw CLI \u2014 grc scan, grc apply, grc report, grc diff",
   "publishConfig": {
     "access": "public"
   },
@@ -25,5 +25,9 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

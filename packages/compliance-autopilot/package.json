@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/compliance-autopilot",
-  "version": "1.0.0",
-  "description": "Autonomous compliance maintenance — monitor, detect, remediate, verify, report, audit",
+  "version": "0.8.0",
+  "description": "Autonomous compliance maintenance \u2014 monitor, detect, remediate, verify, report, audit",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,5 +21,9 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }
