@@ -11,6 +11,13 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@grc-claw/agent-collaboration": ["packages/agent-collaboration/src/index.ts"],
+      "@grc-claw/ai-governance": ["packages/ai-governance/src/index.ts"],
+      "@grc-claw/continuous-trust-engine": ["packages/continuous-trust-engine/src/index.ts"],
+      "@grc-claw/regulatory-change-management": ["packages/regulatory-change-management/src/index.ts"]
+    }
   }
 }

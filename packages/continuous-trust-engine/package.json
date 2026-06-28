@@ -1,0 +1,17 @@
+{
+  "name": "@grc-claw/continuous-trust-engine",
+  "version": "0.8.0",
+  "description": "Real-time trust scoring for compliance posture",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@grc-claw/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
