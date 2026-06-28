@@ -4,6 +4,9 @@
   "description": "Real-time trust scoring for compliance posture",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "node --test dist/**/*.test.js"
