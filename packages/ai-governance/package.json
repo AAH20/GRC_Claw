@@ -2,6 +2,7 @@
   "name": "@grc-claw/ai-governance",
   "version": "0.8.0",
   "description": "EU AI Act compliance and AI risk management",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "publishConfig": {
