@@ -38,7 +38,7 @@ import { AnomalyDetector } from '@grc-claw/ai-threat-detection';
 import { AISupplyChainSovereignty } from '@grc-claw/ai-supply-chain';
 import { FederatedComplianceMesh } from '@grc-claw/federated-compliance-mesh';
 import { AutoEvidenceCollector } from '@grc-claw/auto-evidence';
-import { BrowserEvidenceCollector } from '@grc-claw/browser-evidence';
+import { BrowserEvidenceCollector, PlaywrightAdapter, type PortalConfig } from '@grc-claw/browser-evidence';
 import { IncidentManager } from '@grc-claw/incident-response';
 import { GitHubPRReviewer, CICDComplianceGate } from '@grc-claw/dev-compliance';
 import { CompliancePipeline, GitOpsWorkflow } from '@grc-claw/grc-engineering';
@@ -2191,9 +2191,22 @@ export async function dispatchBuiltinGrcTool(
     case 'threat.get_findings': {
       try {
         const baselines = anomalyDetector.getBaselines();
+        const alertNodes = securityGraph.getNodesByType('alert');
+        const findings = alertNodes.map((node) => ({
+          id: node.id,
+          name: node.name,
+          severity: node.properties.severity ?? (node.riskScore >= 70 ? 'high' : node.riskScore >= 40 ? 'medium' : 'low'),
+          riskScore: node.riskScore,
+          controlId: node.properties.controlId ?? null,
+          description: node.properties.description ?? '',
+          tags: node.tags,
+          firstSeen: node.firstSeen,
+          lastSeen: node.lastSeen,
+        }));
         return {
           ok: true,
-          findings: [],
+          findings,
+          totalCount: findings.length,
           baselines: baselines.map(b => ({
             metric: b.metric,
             mean: b.mean,
@@ -2201,8 +2214,7 @@ export async function dispatchBuiltinGrcTool(
             sampleCount: b.sampleCount,
             lastUpdated: b.lastUpdated,
           })),
-          totalCount: 0,
-          message: 'No active threat findings. Update baselines with real metrics to enable anomaly detection.',
+          graphStats: securityGraph.getStats(),
           timestamp: new Date().toISOString(),
         };
       } catch (err: any) {
@@ -2421,33 +2433,85 @@ export async function dispatchBuiltinGrcTool(
         const portalUrl = String(args.portalUrl ?? '');
         const username = String(args.username ?? '');
         const password = String(args.password ?? '');
+        const screenshotPaths = Array.isArray(args.screenshotPaths) ? args.screenshotPaths as string[] : ['/'];
         if (!portalUrl) {
           return { ok: false, error: 'portalUrl_required', timestamp: new Date().toISOString() };
         }
+
+        const adapter = new PlaywrightAdapter({ headless: true });
+        const collector = new BrowserEvidenceCollector({ headless: true, retryCount: 2 }, adapter);
+        const portal: PortalConfig = {
+          name: portalName,
+          url: portalUrl,
+          authType: username ? 'basic' : 'api_key',
+          credentials: { username, password },
+          selectors: { login: 'input[type="text"], input[name="username"], #username' },
+          screenshotPaths,
+        };
+
+        const artifact = await collector.collectFromPortal(portal);
         return {
-          ok: false,
-          executionState: 'not_configured',
-          message: `Browser evidence collection for portal "${portalName}" requires a browser adapter (e.g., Playwright). Configure a headless browser environment to enable portal evidence collection.`,
+          ok: true,
+          artifactId: artifact.id,
           portalName,
           portalUrl,
-          timestamp: new Date().toISOString(),
+          screenshotHash: artifact.hash,
+          domSnapshotLength: artifact.domSnapshot.length,
+          structuredData: artifact.structuredData,
+          metadata: artifact.metadata,
+          timestamp: artifact.timestamp,
         };
       } catch (err: any) {
-        return { ok: false, error: err.message ?? 'browser_evidence_collect_failed', timestamp: new Date().toISOString() };
+        const msg = err.message ?? '';
+        if (msg.includes('Playwright is not installed')) {
+          return {
+            ok: false,
+            executionState: 'not_configured',
+            message: 'Playwright is not installed. Run: npm install playwright',
+            timestamp: new Date().toISOString(),
+          };
+        }
+        return { ok: false, error: msg || 'browser_evidence_collect_failed', timestamp: new Date().toISOString() };
       }
     }
     case 'browser_evidence.screenshot': {
       try {
         const portalName = String(args.portalName ?? 'unknown');
-        return {
-          ok: false,
-          executionState: 'not_configured',
-          message: `Browser screenshot for portal "${portalName}" requires a browser adapter (e.g., Playwright). Configure a headless browser environment to enable screenshot capture.`,
-          portalName,
-          timestamp: new Date().toISOString(),
-        };
+        const portalUrl = String(args.portalUrl ?? args.url ?? '');
+        if (!portalUrl) {
+          return { ok: false, error: 'url_required', timestamp: new Date().toISOString() };
+        }
+
+        const adapter = new PlaywrightAdapter({ headless: true });
+        await adapter.launch();
+        try {
+          await adapter.navigate(portalUrl);
+          const screenshotBuffer = await adapter.screenshot();
+          const { createHash } = await import('node:crypto');
+          const screenshotHash = createHash('sha256').update(screenshotBuffer).digest('hex');
+          return {
+            ok: true,
+            portalName,
+            portalUrl,
+            screenshotHash,
+            screenshotSize: screenshotBuffer.length,
+            screenshotBase64: screenshotBuffer.toString('base64'),
+            timestamp: new Date().toISOString(),
+          };
+        } finally {
+          await adapter.close();
+        }
       } catch (err: any) {
-        return { ok: false, error: err.message ?? 'browser_evidence_screenshot_failed', timestamp: new Date().toISOString() };
+        const msg = err.message ?? '';
+        if (msg.includes('Playwright is not installed')) {
+          return {
+            ok: false,
+            executionState: 'not_configured',
+            message: 'Playwright is not installed. Run: npm install playwright',
+            timestamp: new Date().toISOString(),
+          };
+        }
+        return { ok: false, error: msg || 'browser_evidence_screenshot_failed', timestamp: new Date().toISOString() };
       }
     }
     // ─── Incident Response Tools ──────────────────────────────────

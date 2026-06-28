@@ -70,6 +70,7 @@
     "@grc-claw/agent-discovery": "*",
     "@grc-claw/rbac-multi-tenant": "*",
     "@grc-claw/terraform-provider": "*",
+    "@grc-claw/notification-engine": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {
