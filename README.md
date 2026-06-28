@@ -14,13 +14,16 @@ Open-source GRC automation engine — 71 packages, 27,596 control mappings, auto
 
 GRC_Claw is a TypeScript/Go monorepo (71 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **163 agent tools** (124 real implementations), **130+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), and a **blockchain-style hash chain audit trail**.
 
-The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 26 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
+The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 32 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
 ---
 
 ## Install
 
 ### npm (recommended)
+
+v0.8.0 is live on the npm registry under the `@grc-claw/` scope.
+
 ```bash
 npm install -g @grc-claw/cli
 ```
@@ -61,7 +64,7 @@ grc sovereign init
 
 ---
 
-## Packages (26 published · 45 private)
+## Packages (32 published · 39 private)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -126,7 +129,7 @@ Install from the VS Code Marketplace or `code --install-extension grc-claw.compl
 
 ## Terraform provider
 
-The `terraform-provider-grc` (Go implementation) lets you manage GRC resources as infrastructure code.
+The `terraform-provider-grc` (Go implementation) lets you manage GRC resources as infrastructure code. The provider is published to the Terraform Registry at [`registry.terraform.io/providers/a2zsoc/grc`](https://registry.terraform.io/providers/a2zsoc/grc). Release automation uses `.goreleaser.yml` in `packages/terraform-provider/`.
 
 **Resources:**
 
@@ -140,7 +143,7 @@ The `terraform-provider-grc` (Go implementation) lets you manage GRC resources a
 terraform {
   required_providers {
     grc = {
-      source  = "registry.terraform.io/a2zsoc/grc"
+      source  = "registry.terraform.io/providers/a2zsoc/grc"
       version = "~> 0.8"
     }
   }
@@ -252,6 +255,21 @@ The gateway records these envelopes around supervised agent actions and exposes 
 
 ---
 
+## Cloud connectors (v9.0)
+
+`packages/cloud-connectors` gained four new integrations in v9.0:
+
+| Connector | File | What it collects |
+|-----------|------|-----------------|
+| **Jira** | `jira.ts` | Issues, projects, and workflow audit data for change management evidence |
+| **Linear** | `linear.ts` | Issues and cycles for engineering change tracking |
+| **CrowdStrike** | `crowdstrike.ts` | Endpoint detections, host inventory, and vulnerability findings |
+| **AWS Asset Inventory** | `aws-asset-inventory.ts` | EC2, S3, IAM, RDS, and Lambda asset discovery for cloud posture evidence |
+
+All connectors implement the standard `EvidenceConnector` interface and emit typed evidence envelopes compatible with `@grc-claw/evidence`.
+
+---
+
 ## Notification engine
 
 `@grc-claw/notification-engine` delivers compliance alerts across three channels:
@@ -348,7 +366,18 @@ npm run test:comprehensive
 
 **Test results:** 401+ tests passing, 0 failures.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, code style, and PR process.
+
 Repository: [github.com/AAH20/GRC_Claw](https://github.com/AAH20/GRC_Claw)
+
+---
+
+## Community
+
+- [COMMUNITY.md](COMMUNITY.md) — code of conduct, support channels, and community norms
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute, run tests, and submit PRs
+- [GitHub Discussions](https://github.com/AAH20/GRC_Claw/discussions) — questions, ideas, and show-and-tell
+- [GitHub Issues](https://github.com/AAH20/GRC_Claw/issues) — bug reports and feature requests
 
 ---
 
