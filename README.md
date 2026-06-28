@@ -9,7 +9,7 @@
 [![Agentic AI Security](https://img.shields.io/badge/Agentic%20AI-Secured-green)](docs/AGENTIC_AI_SECURITY.md)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2zsoc.com-red)](https://a2zsoc.com)
 
-**GRC_Claw** is a production-grade, open-source GRC (Governance, Risk & Compliance) platform with **66 packages**, **120+ agent tools**, **110+ HTTP endpoints**, **156 integration connectors**, **16 CLI commands**, and **PostgreSQL persistence**. It is the only open-source platform that combines agentic AI governance, compliance automation, risk quantification, and continuous monitoring in a single monorepo.
+**GRC_Claw** is a production-grade, open-source GRC (Governance, Risk & Compliance) platform with **67 packages**, **132 agent tools** (124 real implementations), **110+ HTTP endpoints**, **167 integration connectors**, **39 compliance framework packs**, **16 CLI commands**, and **PostgreSQL persistence**. It is the only open-source platform that combines agentic AI governance, compliance automation, risk quantification, and continuous monitoring in a single monorepo.
 
 Built on the [OpenClaw](https://github.com/openclaw/openclaw) daemon philosophy, GRC_Claw extends it into a full-stack GRC engine with RBAC multi-tenancy, Terraform provider for compliance-as-code, and optional integration with **[a2zsoc.com](https://a2zsoc.com)** for enterprise SOC operations.
 
@@ -575,8 +575,8 @@ npm install && npm run build && npm run test:comprehensive
 
 ### Completed
 
-- [x] 66 packages with 120+ agent tools
-- [x] 156 integration connectors
+- [x] 67 packages with 132 agent tools (124 real implementations)
+- [x] 167 integration connectors
 - [x] 16 CLI commands (scan, plan, apply, audit, report, init, iac-scan, pqc-scan, ai-bom, doctor, drift, diff, status, frameworks, version, sovereign init)
 - [x] RBAC multi-tenancy with JWT auth
 - [x] Terraform provider for compliance-as-code
@@ -610,7 +610,7 @@ npm install && npm run build && npm run test:comprehensive
 - [x] MCP server (16 tools)
 - [x] OpenAPI generator
 - [x] Agent discovery scanner
-- [x] 156 integration connectors
+- [x] 167 integration connectors
 
 ### Upcoming
 
@@ -621,7 +621,14 @@ npm install && npm run build && npm run test:comprehensive
 - [ ] Multi-framework compliance crosswalk UI
 - [ ] Vendor risk questionnaire auto-fill with AI
 - [ ] Board reporting with PDF export
-- [ ] Slack/Teams notification integration
+- [ ] Slack/Teams notification integration (notification-engine exists)
+- [ ] OAuth 2.0 flow for integration marketplace connectors
+- [ ] Real PaloAlto/Fortinet firewall SOAR integration
+- [ ] Real Azure Sentinel/Chronicle SOAR integration
+- [ ] Execution history store for SOAR playbooks
+- [ ] Multi-tenant audit portal for customers
+- [ ] Compliance simulator (what-if scenarios)
+- [ ] Real-time compliance drift alerting via notification engine
 
 ---
 
