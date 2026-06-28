@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/rbac-multi-tenant",
-  "version": "1.0.0",
+  "version": "0.8.0",
   "description": "RBAC engine with multi-tenant isolation for A2Z SOC platform",
   "license": "MIT",
   "type": "module",
@@ -22,5 +22,12 @@
   "devDependencies": {
     "typescript": "^5.7.0",
     "tsx": "^4.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

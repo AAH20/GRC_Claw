@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/aims",
-  "version": "2.0.0",
-  "description": "ISO/IEC 42001 AIMS — vendor gaps, clause map, technical controls for GRC_Claw",
+  "version": "0.8.0",
+  "description": "ISO/IEC 42001 AIMS \u2014 vendor gaps, clause map, technical controls for GRC_Claw",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,5 +24,9 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

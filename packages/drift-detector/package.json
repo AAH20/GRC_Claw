@@ -1,7 +1,7 @@
 {
   "name": "@grc-claw/drift-detector",
-  "version": "1.0.0",
-  "description": "Real-time compliance drift detection — monitors control posture changes, detects evidence gaps, and broadcasts drift alerts",
+  "version": "0.8.0",
+  "description": "Real-time compliance drift detection \u2014 monitors control posture changes, detects evidence gaps, and broadcasts drift alerts",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,5 +21,9 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }

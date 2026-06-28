@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/integration-marketplace",
-  "version": "1.0.0",
+  "version": "0.8.0",
   "description": "Marketplace of 100+ SaaS integrations for automated GRC evidence collection",
   "license": "MIT",
   "type": "module",
@@ -22,5 +22,12 @@
   "devDependencies": {
     "typescript": "^5.7.0",
     "tsx": "^4.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
   }
 }
