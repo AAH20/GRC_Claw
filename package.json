@@ -63,6 +63,7 @@
     "packages/integration-marketplace",
     "packages/terraform-provider",
     "packages/rbac-multi-tenant",
+    "packages/notification-engine",
     "packages/evidence-automation-engine",
     "packages/employee-lifecycle",
     "packages/vendor-risk-management",
