@@ -44,6 +44,7 @@
     { "path": "../openapi-generator" },
     { "path": "../agent-discovery" },
     { "path": "../rbac-multi-tenant" },
-    { "path": "../terraform-provider" }
+    { "path": "../terraform-provider" },
+    { "path": "../notification-engine" }
   ]
 }
