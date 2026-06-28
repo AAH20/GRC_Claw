@@ -2,6 +2,8 @@
 
 Manage A2Z SOC GRC controls and evidence as infrastructure-as-code using the `grc` Terraform provider.
 
+Published at: [registry.terraform.io/providers/a2zsoc/grc](https://registry.terraform.io/providers/a2zsoc/grc)
+
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads) >= 1.0

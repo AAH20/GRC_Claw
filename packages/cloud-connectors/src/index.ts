@@ -44,3 +44,11 @@ export { AwsSecurityHubConnector, AwsGuardDutyConnector } from "./providers/aws.
 export { AzureSentinelConnector, AzureDefenderConnector } from "./providers/azure.js";
 export { GcpChronicleConnector, GcpSecurityCommandCenterConnector } from "./providers/gcp.js";
 export type * from "./types.js";
+
+// Ticket & endpoint connectors
+export { fetchJiraSecurityEvidence } from "./jira.js";
+export type { JiraConfig, JiraEvidence } from "./jira.js";
+export { fetchLinearSecurityIssues } from "./linear.js";
+export type { LinearConfig, LinearEvidence } from "./linear.js";
+export { fetchCrowdStrikeDetections } from "./crowdstrike.js";
+export type { CrowdStrikeConfig, CsDetection } from "./crowdstrike.js";
