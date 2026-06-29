@@ -53,6 +53,10 @@
     { "path": "../compliance-knowledge-graph" },
     { "path": "../predictive-compliance" },
     { "path": "../compliance-marketplace" },
-    { "path": "../zero-trust-audit" }
+    { "path": "../zero-trust-audit" },
+    { "path": "../federated-learning" },
+    { "path": "../compliance-intelligence-api" },
+    { "path": "../autonomous-compliance-agent" },
+    { "path": "../compliance-digital-twin" }
   ]
 }

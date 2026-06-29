@@ -75,6 +75,10 @@
     { "path": "./packages/predictive-compliance" },
     { "path": "./packages/compliance-marketplace" },
     { "path": "./packages/zero-trust-audit" },
+    { "path": "./packages/federated-learning" },
+    { "path": "./packages/compliance-intelligence-api" },
+    { "path": "./packages/autonomous-compliance-agent" },
+    { "path": "./packages/compliance-digital-twin" },
     { "path": "./packages/gateway" }
   ]
 }

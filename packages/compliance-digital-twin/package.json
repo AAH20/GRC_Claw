@@ -1,0 +1,36 @@
+{
+  "name": "@grc-claw/compliance-digital-twin",
+  "version": "1.0.0",
+  "description": "Compliance digital twin for simulation, forecasting, and what-if analysis of compliance environments",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "grc",
+    "compliance",
+    "digital-twin",
+    "simulation",
+    "what-if-analysis",
+    "forecasting",
+    "compliance-engine"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grc-claw/grc-claw.git",
+    "directory": "packages/compliance-digital-twin"
+  }
+}

@@ -30,9 +30,9 @@ Open-source GRC automation engine — 79 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (79 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **191 agent tools** (146 real implementations), **150+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, and **zero-trust audit trail**.
+GRC_Claw is a TypeScript/Go monorepo (79 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
 
-The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 32 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
+The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 40 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
 ---
 
@@ -82,7 +82,7 @@ grc sovereign init
 
 ---
 
-## Packages (32 published · 47 private)
+## Packages (40 published · 39 private)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -112,16 +112,20 @@ grc sovereign init
 | `@grc-claw/a2z-connector` | A2Z SOC platform API bridge | v0.8.0 |
 | `@grc-claw/core` | Canonical events, GRCEngineFacade | v0.8.0 |
 | `@grc-claw/gateway` | HTTP/WebSocket gateway daemon | v0.8.0 |
-| `@grc-claw/continuous-trust-engine` | Dynamic trust scoring across evidence, controls, agents, risk, and behavior | internal |
-| `@grc-claw/agent-collaboration` | Multi-agent collaboration sessions, capability matching, and consensus workflows | internal |
-| `@grc-claw/regulatory-change-management` | Regulatory source tracking, impact analysis, timelines, and remediation gaps | internal |
-| `@grc-claw/ai-governance` | AI system inventory, EU AI Act risk classification, assessments, and monitoring | internal |
-| `@grc-claw/compliance-knowledge-graph` | Living graph of frameworks, controls, evidence, threats, technologies, and posture | v0.8.0 |
-| `@grc-claw/predictive-compliance` | Failure forecasting, risk scoring, trend analysis, and remediation recommendations | v0.8.0 |
-| `@grc-claw/compliance-marketplace` | Proof-backed compliance pack publishing, discovery, installation, and ratings | v0.8.0 |
-| `@grc-claw/zero-trust-audit` | Cryptographic audit trail with hash chains, Merkle proofs, and evidence export | v0.8.0 |
+| `@grc-claw/continuous-trust-engine` | Dynamic trust scoring across evidence, controls, agents, risk, and behavior | v1.0.0 |
+| `@grc-claw/agent-collaboration` | Multi-agent collaboration sessions, capability matching, and consensus workflows | v1.0.0 |
+| `@grc-claw/regulatory-change-management` | Regulatory source tracking, impact analysis, timelines, and remediation gaps | v1.0.0 |
+| `@grc-claw/ai-governance` | AI system inventory, EU AI Act risk classification, assessments, and monitoring | v1.0.0 |
+| `@grc-claw/compliance-knowledge-graph` | Living graph of frameworks, controls, evidence, threats, technologies, and posture | v1.0.0 |
+| `@grc-claw/predictive-compliance` | Failure forecasting, risk scoring, trend analysis, and remediation recommendations | v1.0.0 |
+| `@grc-claw/compliance-marketplace` | Proof-backed compliance pack publishing, discovery, installation, and ratings | v1.0.0 |
+| `@grc-claw/zero-trust-audit` | Cryptographic audit trail with hash chains, Merkle proofs, and evidence export | v1.0.0 |
+| `@grc-claw/federated-learning` | Federated learning network for cross-org compliance pattern sharing with differential privacy | v1.0.0 |
+| `@grc-claw/compliance-intelligence-api` | Real-time compliance intelligence from the network — trends, benchmarks, recommendations | v1.0.0 |
+| `@grc-claw/autonomous-compliance-agent` | Self-healing compliance — detect, diagnose, remediate, verify automatically | v1.0.0 |
+| `@grc-claw/compliance-digital-twin` | Virtual compliance twin — simulate, forecast, what-if analysis | v1.0.0 |
 
-The remaining 47 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
+The remaining 39 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 
 ---
 

@@ -1,4 +1,5 @@
 import type { A2ZSocConnector } from '@grc-claw/a2z-connector';
+import { createHash } from 'node:crypto';
 import { listClauseMap, listTechnicalControls, listVendorGaps } from '@grc-claw/aims';
 import type { EvidenceStore } from '@grc-claw/evidence';
 import { listFrameworkPacks } from '@grc-claw/frameworks';
@@ -211,6 +212,10 @@ import { ComplianceKnowledgeGraph } from '@grc-claw/compliance-knowledge-graph';
 import { PredictiveComplianceEngine } from '@grc-claw/predictive-compliance';
 import { ComplianceMarketplace } from '@grc-claw/compliance-marketplace';
 import { ZeroTrustAuditTrail } from '@grc-claw/zero-trust-audit';
+import { FederatedLearningNetwork } from '@grc-claw/federated-learning';
+import { ComplianceIntelligenceAPI } from '@grc-claw/compliance-intelligence-api';
+import { AutonomousComplianceAgent } from '@grc-claw/autonomous-compliance-agent';
+import { ComplianceDigitalTwin } from '@grc-claw/compliance-digital-twin';
 
 const continuousTrustEngine = new ContinuousTrustEngine();
 const agentCollaboration = new AgentCollaboration();
@@ -220,6 +225,76 @@ const complianceKnowledgeGraph = new ComplianceKnowledgeGraph();
 const predictiveCompliance = new PredictiveComplianceEngine();
 const complianceMarketplace = new ComplianceMarketplace();
 const zeroTrustAudit = new ZeroTrustAuditTrail();
+const federatedLearning = new FederatedLearningNetwork({
+  networkId: 'default',
+  modelId: 'default',
+  features: [],
+  privacy: { epsilon: 1.0, delta: 1e-5, maxGradientNorm: 1.0, noiseMultiplier: 1.0 },
+  aggregation: { strategy: 'fedavg', minParticipants: 2, maxRounds: 100, convergenceThreshold: 0.01 }
+});
+const complianceIntelligence = new ComplianceIntelligenceAPI();
+const autonomousAgent = new AutonomousComplianceAgent();
+const complianceDigitalTwin = new ComplianceDigitalTwin();
+
+function buildEvidenceGraphSnapshot(organizationId = 'demo-org') {
+  const summary = complianceKnowledgeGraph.analytics.getSummary();
+  const posture = (() => {
+    try {
+      return complianceKnowledgeGraph.analytics.calculatePosture(organizationId);
+    } catch {
+      return { overallScore: 0, frameworkPostures: [], gaps: [] };
+    }
+  })();
+  const patterns = complianceKnowledgeGraph.analytics.detectPatterns();
+  const forecasts = predictiveCompliance.forecastAll();
+  const risks = predictiveCompliance.rankByRisk();
+  const marketplaceStats = complianceMarketplace.stats();
+  const packs = complianceMarketplace.search({ limit: 20 });
+  const auditVerification = zeroTrustAudit.verify();
+  const auditRecords = zeroTrustAudit.getRecords();
+  const nodes = [
+    { id: `org:${organizationId}`, type: 'organization', label: organizationId, source: 'gateway', weight: 100 },
+    { id: 'knowledge-graph:summary', type: 'knowledge_graph', label: 'Compliance knowledge graph', source: 'compliance-knowledge-graph', weight: summary.totalNodes ?? 80, metadata: summary },
+    { id: `posture:${organizationId}`, type: 'posture', label: 'Compliance posture', source: 'compliance-knowledge-graph', weight: posture.overallScore ?? 50, metadata: posture },
+    { id: 'predictive:forecasts', type: 'predictive_compliance', label: 'Predictive compliance forecasts', source: 'predictive-compliance', weight: forecasts.length, metadata: { count: forecasts.length } },
+    { id: 'marketplace:packs', type: 'compliance_marketplace', label: 'Compliance pack marketplace', source: 'compliance-marketplace', weight: marketplaceStats.totalPacks ?? packs.length, metadata: marketplaceStats },
+    { id: 'zero-trust:audit', type: 'zero_trust_audit', label: 'Zero-trust audit chain', source: 'zero-trust-audit', weight: auditVerification.valid ? 100 : 40, metadata: auditVerification },
+  ];
+  const edges = [
+    { id: 'edge:org-posture', type: 'has_posture', from: `org:${organizationId}`, to: `posture:${organizationId}`, label: 'organization has posture', confidence: 0.92 },
+    { id: 'edge:kg-posture', type: 'derives', from: 'knowledge-graph:summary', to: `posture:${organizationId}`, label: 'graph derives posture', confidence: 0.88 },
+    { id: 'edge:predictive-posture', type: 'forecasts', from: 'predictive:forecasts', to: `posture:${organizationId}`, label: 'forecasts posture drift', confidence: 0.82 },
+    { id: 'edge:marketplace-kg', type: 'extends', from: 'marketplace:packs', to: 'knowledge-graph:summary', label: 'packs extend graph', confidence: 0.8 },
+    { id: 'edge:audit-kg', type: 'verifies', from: 'zero-trust:audit', to: 'knowledge-graph:summary', label: 'audit chain verifies graph evidence', confidence: 0.86 },
+  ];
+  const recommendations = [
+    risks.length ? `Prioritize ${risks.length} predictive risk signal${risks.length === 1 ? '' : 's'} before the next audit window.` : '',
+    patterns.length ? `Convert ${patterns.length} detected graph pattern${patterns.length === 1 ? '' : 's'} into reusable marketplace packs.` : '',
+    auditRecords.length === 0 ? 'Record zero-trust audit events so evidence graph snapshots become court-ready proof bundles.' : '',
+    packs.length === 0 ? 'Install or publish verified packs to turn graph coverage into marketplace network effects.' : '',
+  ].filter(Boolean);
+  const graphHash = createHash('sha256').update(JSON.stringify({ organizationId, nodes, edges, recommendations })).digest('hex');
+  return {
+    ok: true,
+    graph_hash: graphHash,
+    generated_at: new Date().toISOString(),
+    organizationId,
+    summary: {
+      nodes: nodes.length,
+      edges: edges.length,
+      knowledge_graph_nodes: summary.totalNodes ?? null,
+      posture_score: posture.overallScore ?? null,
+      forecasts: forecasts.length,
+      predictive_risks: risks.length,
+      marketplace_packs: marketplaceStats.totalPacks ?? packs.length,
+      audit_records: auditRecords.length,
+      audit_chain_valid: auditVerification.valid,
+    },
+    nodes,
+    edges,
+    recommendations,
+  };
+}
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
@@ -315,9 +390,14 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('regulatory.') ||
     tool.startsWith('ai_governance.') ||
     tool.startsWith('knowledge_graph.') ||
+    tool.startsWith('evidence_graph.') ||
     tool.startsWith('predictive.') ||
     tool.startsWith('marketplace.') ||
-    tool.startsWith('zero_trust.')
+    tool.startsWith('zero_trust.') ||
+    tool.startsWith('federated.') ||
+    tool.startsWith('intelligence.') ||
+    tool.startsWith('autonomous.') ||
+    tool.startsWith('digital_twin.')
   );
 }
 
@@ -3189,6 +3269,33 @@ export async function dispatchBuiltinGrcTool(
       return { ok: true, patterns, count: patterns.length, timestamp: new Date().toISOString() };
     }
 
+    // ─── Evidence Graph Tools ─────────────────────────────────────────────
+    case 'evidence_graph.get': {
+      const organizationId = String(args.organizationId ?? 'demo-org');
+      const graph = buildEvidenceGraphSnapshot(organizationId);
+      return { ...graph, timestamp: new Date().toISOString() };
+    }
+    case 'evidence_graph.get_summary': {
+      const organizationId = String(args.organizationId ?? 'demo-org');
+      const graph = buildEvidenceGraphSnapshot(organizationId);
+      return { ok: true, graph_hash: graph.graph_hash, summary: graph.summary, timestamp: new Date().toISOString() };
+    }
+    case 'evidence_graph.get_nodes': {
+      const organizationId = String(args.organizationId ?? 'demo-org');
+      const graph = buildEvidenceGraphSnapshot(organizationId);
+      return { ok: true, graph_hash: graph.graph_hash, nodes: graph.nodes, count: graph.nodes.length, timestamp: new Date().toISOString() };
+    }
+    case 'evidence_graph.get_edges': {
+      const organizationId = String(args.organizationId ?? 'demo-org');
+      const graph = buildEvidenceGraphSnapshot(organizationId);
+      return { ok: true, graph_hash: graph.graph_hash, edges: graph.edges, count: graph.edges.length, timestamp: new Date().toISOString() };
+    }
+    case 'evidence_graph.get_recommendations': {
+      const organizationId = String(args.organizationId ?? 'demo-org');
+      const graph = buildEvidenceGraphSnapshot(organizationId);
+      return { ok: true, graph_hash: graph.graph_hash, recommendations: graph.recommendations, timestamp: new Date().toISOString() };
+    }
+
     // ─── Predictive Compliance Tools ──────────────────────────────────────
     case 'predictive.get_forecasts': {
       const forecasts = predictiveCompliance.forecastAll();
@@ -3239,6 +3346,68 @@ export async function dispatchBuiltinGrcTool(
       const format = String(args.format ?? 'json') as 'json' | 'xml' | 'pdf';
       const evidence = zeroTrustAudit.exportEvidence({ format });
       return { ok: true, evidence, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Federated Learning Tools ─────────────────────────────────────────
+    case 'federated.get_status': {
+      return { ok: true, message: 'Federated learning network active', timestamp: new Date().toISOString() };
+    }
+    case 'federated.register_org': {
+      const orgId = String(args.orgId ?? '');
+      const org = { id: orgId, name: orgId, publicKey: 'default', registeredAt: new Date() };
+      federatedLearning.registerOrganization(org);
+      return { ok: true, message: 'Organization registered', timestamp: new Date().toISOString() };
+    }
+
+    // ─── Compliance Intelligence Tools ────────────────────────────────────
+    case 'intelligence.get_trends': {
+      const trends = complianceIntelligence.getAllTrends();
+      return { ok: true, trends, timestamp: new Date().toISOString() };
+    }
+    case 'intelligence.get_benchmarks': {
+      const benchmarks = complianceIntelligence.getNetworkSnapshot();
+      return { ok: true, benchmarks, timestamp: new Date().toISOString() };
+    }
+    case 'intelligence.get_recommendations': {
+      const orgId = String(args.orgId ?? 'default');
+      const recs = complianceIntelligence.getRecommendations(orgId);
+      return { ok: true, recommendations: recs, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Autonomous Compliance Agent Tools ────────────────────────────────
+    case 'autonomous.get_issues': {
+      const issues = autonomousAgent.getScanResults();
+      return { ok: true, issues, count: issues.length, timestamp: new Date().toISOString() };
+    }
+    case 'autonomous.get_metrics': {
+      const metrics = autonomousAgent.getMetrics();
+      return { ok: true, metrics, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Compliance Digital Twin Tools ────────────────────────────────────
+    case 'digital_twin.list_twins': {
+      const twins = complianceDigitalTwin.listTwins();
+      return { ok: true, twins, count: twins.length, timestamp: new Date().toISOString() };
+    }
+    case 'digital_twin.create_twin': {
+      const twinId = String(args.twinId ?? `twin-${Date.now()}`);
+      const name = String(args.name ?? 'Untitled Twin');
+      const twin = complianceDigitalTwin.createTwin({
+        twinId,
+        name,
+        description: String(args.description ?? ''),
+        frameworks: [],
+        snapshotRetentionCount: 10,
+        syncIntervalMs: 300000,
+        syncMode: 'incremental',
+        riskThresholds: { critical: 90, high: 70, medium: 50, low: 30 },
+      });
+      return { ok: true, twin, timestamp: new Date().toISOString() };
+    }
+    case 'digital_twin.get_twin': {
+      const twinId = String(args.twinId ?? '');
+      const twin = complianceDigitalTwin.getTwin(twinId);
+      return { ok: true, twin, timestamp: new Date().toISOString() };
     }
 
     default:

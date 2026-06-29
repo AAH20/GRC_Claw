@@ -21,7 +21,11 @@
       "@grc-claw/compliance-knowledge-graph": ["packages/compliance-knowledge-graph/src/index.ts"],
       "@grc-claw/predictive-compliance": ["packages/predictive-compliance/src/index.ts"],
       "@grc-claw/compliance-marketplace": ["packages/compliance-marketplace/src/index.ts"],
-      "@grc-claw/zero-trust-audit": ["packages/zero-trust-audit/src/index.ts"]
+      "@grc-claw/zero-trust-audit": ["packages/zero-trust-audit/src/index.ts"],
+      "@grc-claw/federated-learning": ["packages/federated-learning/src/index.ts"],
+      "@grc-claw/compliance-intelligence-api": ["packages/compliance-intelligence-api/src/index.ts"],
+      "@grc-claw/autonomous-compliance-agent": ["packages/autonomous-compliance-agent/src/index.ts"],
+      "@grc-claw/compliance-digital-twin": ["packages/compliance-digital-twin/src/index.ts"]
     }
   }
 }
