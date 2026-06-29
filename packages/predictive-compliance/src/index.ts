@@ -1,50 +1,26 @@
 /**
  * @grc-claw/predictive-compliance
- * AI-powered predictive compliance engine that predicts compliance failures
- * before they happen using historical data, real-time monitoring, and risk scoring.
+ *
+ * AI/ML-powered predictive compliance engine that forecasts compliance failures
+ * before they happen by analyzing historical data, current posture, and external
+ * signals.
  */
 
 // ---------------------------------------------------------------------------
-// Types
+// Types & Interfaces
 // ---------------------------------------------------------------------------
 
-export type ComplianceStatus = "compliant" | "non_compliant" | "at_risk" | "unknown";
-
-export type SeverityLevel = "critical" | "high" | "medium" | "low" | "informational";
-
-export type TrendDirection = "improving" | "stable" | "degrading" | "volatile";
-
-export interface Control {
-  id: string;
-  frameworkId: string;
+/** Forecast for a single control's compliance outlook. */
+export interface ComplianceForecast {
   controlId: string;
-  name: string;
-  description: string;
-  status: ComplianceStatus;
-  lastAssessedAt: string;
-  nextAssessmentAt: string;
-  tags: string[];
-}
-
-export interface ComplianceEvent {
-  id: string;
-  controlId: string;
-  timestamp: string;
-  status: ComplianceStatus;
-  severity: SeverityLevel;
-  metadata: Record<string, unknown>;
-}
-
-export interface RiskScore {
-  controlId: string;
-  score: number;
+  probability: number;
+  timeframe: number;
   confidence: number;
   factors: RiskFactor[];
-  trend: TrendDirection;
-  predictedFailureDate: string | null;
-  updatedAt: string;
+  recommendations: Remediation[];
 }
 
+/** Individual risk factor contributing to a forecast. */
 export interface RiskFactor {
   name: string;
   weight: number;
@@ -52,511 +28,168 @@ export interface RiskFactor {
   description: string;
 }
 
-export interface TrendDataPoint {
-  timestamp: string;
-  value: number;
-}
-
-export interface TrendAnalysis {
-  controlId: string;
-  direction: TrendDirection;
-  slope: number;
-  volatility: number;
-  seasonality: SeasonalityPattern | null;
-  dataPoints: TrendDataPoint[];
-  analysisWindow: number;
-}
-
-export interface SeasonalityPattern {
-  period: number;
-  amplitude: number;
-  phase: number;
-}
-
-export interface ComplianceForecast {
-  controlId: string;
-  forecastDate: string;
-  predictions: ForecastPoint[];
-  confidenceLevel: number;
-  riskRating: SeverityLevel;
-  recommendedActions: RemediationAction[];
-  modelUsed: string;
-}
-
-export interface ForecastPoint {
-  timestamp: string;
-  predictedStatus: ComplianceStatus;
-  probability: number;
-  lowerBound: number;
-  upperBound: number;
-}
-
-export interface RemediationAction {
+/** Recommended remediation action. */
+export interface Remediation {
   id: string;
   title: string;
   description: string;
-  priority: SeverityLevel;
-  estimatedImpact: number;
+  priority: "critical" | "high" | "medium" | "low";
   estimatedEffort: number;
+  estimatedImpact: number;
   deadline: string;
 }
 
-export interface PredictionModel {
-  id: string;
-  name: string;
-  version: string;
-  train(data: TrainingData[]): void;
-  predict(features: FeatureVector): PredictionResult;
-  evaluate(testData: TrainingData[]): EvaluationResult;
-}
-
-export interface TrainingData {
-  features: FeatureVector;
-  label: ComplianceStatus;
+/** External or internal signal that influences risk posture. */
+export interface RiskSignal {
+  type: string;
+  severity: "critical" | "high" | "medium" | "low" | "informational";
+  source: string;
   timestamp: string;
+  metadata: Record<string, unknown>;
 }
 
-export interface FeatureVector {
+/** Trend analysis result for a tracked metric. */
+export interface TrendAnalysis {
+  metric: string;
+  direction: "improving" | "stable" | "degrading" | "volatile";
+  velocity: number;
+  acceleration: number;
+  prediction: DataPoint[];
+}
+
+/** Single timestamped measurement. */
+export interface DataPoint {
+  timestamp: string;
+  value: number;
+}
+
+/** Result of a Monte Carlo simulation. */
+export interface SimulationResult {
   controlId: string;
-  historicalComplianceRate: number;
-  daysSinceLastFailure: number;
-  averageRemediationTime: number;
-  controlComplexity: number;
-  organizationMaturity: number;
-  industryRiskBaseline: number;
-  recentAuditFindings: number;
-  patchVelocity: number;
-  changeFrequency: number;
+  iterations: number;
+  distribution: number[];
+  mean: number;
+  median: number;
+  stdDev: number;
+  percentiles: Record<string, number>;
+  confidenceInterval: { lower: number; upper: number };
+  estimatedTimeToFailure: number | null;
 }
 
-export interface PredictionResult {
-  status: ComplianceStatus;
-  probability: number;
-  confidence: number;
-  contributingFactors: string[];
-}
-
-export interface EvaluationResult {
-  accuracy: number;
-  precision: number;
-  recall: number;
-  f1Score: number;
-  auc: number;
-}
-
-export interface MonitoringSignal {
+/** Heat map cell for risk visualization. */
+export interface HeatMapCell {
   controlId: string;
+  inherentRisk: number;
+  residualRisk: number;
+  velocity: number;
+  quadrant: "critical" | "high" | "watch" | "low";
+}
+
+/** Time-series data point with metric name. */
+export interface TimeSeriesEntry {
   metric: string;
   value: number;
   timestamp: string;
-  source: string;
 }
 
-export interface EngineConfig {
-  predictionHorizonDays: number;
-  confidenceLevel: number;
-  riskScoreWeights: RiskScoreWeights;
-  trendAnalysisWindowDays: number;
-  minimumDataPoints: number;
-  models: PredictionModel[];
+/** Export format options. */
+export type ExportFormat = "json" | "csv";
+
+// ---------------------------------------------------------------------------
+// Errors
+// ---------------------------------------------------------------------------
+
+export class PredictiveComplianceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PredictiveComplianceError";
+  }
 }
 
-export interface RiskScoreWeights {
-  historicalFailureRate: number;
-  timeSinceLastAssessment: number;
-  remediationLag: number;
-  controlComplexity: number;
-  organizationalReadiness: number;
-}
-
-export interface ContinuousTrustEvent {
-  type: "trust_update" | "control_status_change" | "risk_threshold_exceeded";
-  controlId: string;
-  trustScore: number;
-  metadata: Record<string, unknown>;
-  timestamp: string;
-}
-
-// ---------------------------------------------------------------------------
-// Default Configuration
-// ---------------------------------------------------------------------------
-
-const DEFAULT_CONFIG: EngineConfig = {
-  predictionHorizonDays: 60,
-  confidenceLevel: 0.95,
-  riskScoreWeights: {
-    historicalFailureRate: 0.25,
-    timeSinceLastAssessment: 0.2,
-    remediationLag: 0.2,
-    controlComplexity: 0.15,
-    organizationalReadiness: 0.2,
-  },
-  trendAnalysisWindowDays: 180,
-  minimumDataPoints: 10,
-  models: [],
-};
-
-// ---------------------------------------------------------------------------
-// CompliancePredictor
-// ---------------------------------------------------------------------------
-
-export class CompliancePredictor {
-  private models: Map<string, PredictionModel> = new Map();
-  private activeModelId: string | null = null;
-
-  constructor(models: PredictionModel[] = []) {
-    for (const model of models) {
-      this.models.set(model.id, model);
-    }
-    if (models.length > 0) {
-      this.activeModelId = models[0].id;
-    }
-  }
-
-  registerModel(model: PredictionModel): void {
-    this.models.set(model.id, model);
-    if (this.activeModelId === null) {
-      this.activeModelId = model.id;
-    }
-  }
-
-  setActiveModel(modelId: string): void {
-    if (!this.models.has(modelId)) {
-      throw new Error(`Model "${modelId}" is not registered`);
-    }
-    this.activeModelId = modelId;
-  }
-
-  getActiveModel(): PredictionModel | null {
-    if (this.activeModelId === null) return null;
-    return this.models.get(this.activeModelId) ?? null;
-  }
-
-  trainActiveModel(data: TrainingData[]): void {
-    const model = this.getActiveModel();
-    if (model === null) {
-      throw new Error("No active model set. Register a model first.");
-    }
-    model.train(data);
-  }
-
-  predict(features: FeatureVector): PredictionResult {
-    const model = this.getActiveModel();
-    if (model === null) {
-      return this.fallbackPrediction(features);
-    }
-    return model.predict(features);
-  }
-
-  private fallbackPrediction(features: FeatureVector): PredictionResult {
-    const complianceRate = features.historicalComplianceRate;
-    const daysSinceFailure = features.daysSinceLastFailure;
-    const complexity = features.controlComplexity;
-
-    const baseProbability = complianceRate;
-    const timeDecay = Math.max(0, 1 - daysSinceFailure / 365);
-    const complexityPenalty = complexity * 0.1;
-
-    const failureProbability = Math.min(
-      1,
-      Math.max(0, (1 - baseProbability) + timeDecay * 0.1 + complexityPenalty)
-    );
-
-    let status: ComplianceStatus;
-    if (failureProbability > 0.7) status = "non_compliant";
-    else if (failureProbability > 0.4) status = "at_risk";
-    else status = "compliant";
-
-    return {
-      status,
-      probability: 1 - failureProbability,
-      confidence: Math.min(0.8, complianceRate * 0.9),
-      contributingFactors: [
-        "Historical compliance rate",
-        "Days since last failure",
-        "Control complexity",
-      ],
-    };
-  }
-
-  evaluateModel(modelId: string, testData: TrainingData[]): EvaluationResult | null {
-    const model = this.models.get(modelId);
-    if (!model) return null;
-    return model.evaluate(testData);
-  }
-
-  listModels(): PredictionModel[] {
-    return Array.from(this.models.values());
+export class InsufficientDataError extends PredictiveComplianceError {
+  constructor(metric: string, required: number, actual: number) {
+    super(`Insufficient data for metric "${metric}": need ${required}, have ${actual}`);
+    this.name = "InsufficientDataError";
   }
 }
 
 // ---------------------------------------------------------------------------
-// RiskScorer
+// TimeSeriesAnalyzer
 // ---------------------------------------------------------------------------
 
-export class RiskScorer {
-  private weights: RiskScoreWeights;
-  private scoreCache: Map<string, RiskScore> = new Map();
+/**
+ * Analyzes time-series data for trends, seasonality, anomalies, and forecasting.
+ */
+export class TimeSeriesAnalyzer {
+  private store: Map<string, DataPoint[]> = new Map();
 
-  constructor(weights: RiskScoreWeights = DEFAULT_CONFIG.riskScoreWeights) {
-    this.weights = weights;
+  /**
+   * Add a single data point for a given metric.
+   * @param metric - The metric name.
+   * @param value  - The numeric value.
+   * @param timestamp - ISO-8601 timestamp.
+   */
+  addDataPoint(metric: string, value: number, timestamp: string): void {
+    const points = this.store.get(metric) ?? [];
+    points.push({ timestamp, value });
+    points.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    this.store.set(metric, points);
   }
 
-  updateWeights(weights: Partial<RiskScoreWeights>): void {
-    this.weights = { ...this.weights, ...weights };
-  }
+  /**
+   * Detect the overall trend direction and velocity for a metric.
+   * @param metric - The metric to analyze.
+   * @returns TrendAnalysis or null if insufficient data.
+   */
+  detectTrend(metric: string): TrendAnalysis | null {
+    const points = this.store.get(metric);
+    if (!points || points.length < 3) return null;
 
-  calculateScore(
-    control: Control,
-    events: ComplianceEvent[],
-    trend: TrendAnalysis | null
-  ): RiskScore {
-    const controlEvents = events.filter((e) => e.controlId === control.id);
-    const failureCount = controlEvents.filter(
-      (e) => e.status === "non_compliant"
-    ).length;
-    const totalEvents = controlEvents.length || 1;
-    const historicalFailureRate = failureCount / totalEvents;
-
-    const now = Date.now();
-    const lastAssessed = new Date(control.lastAssessedAt).getTime();
-    const daysSinceAssessment = (now - lastAssessed) / (1000 * 60 * 60 * 24);
-    const assessmentRecency = Math.min(1, daysSinceAssessment / 90);
-
-    const remediationTimes = controlEvents
-      .filter((e) => e.status === "non_compliant")
-      .map((e) => {
-        const nextCompliant = controlEvents
-          .filter(
-            (ne) =>
-              ne.controlId === e.controlId &&
-              ne.status === "compliant" &&
-              new Date(ne.timestamp).getTime() > new Date(e.timestamp).getTime()
-          )
-          .sort(
-            (a, b) =>
-              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          )[0];
-        if (!nextCompliant) return 30;
-        return (
-          (new Date(nextCompliant.timestamp).getTime() -
-            new Date(e.timestamp).getTime()) /
-          (1000 * 60 * 60 * 24)
-        );
-      });
-    const avgRemediationTime =
-      remediationTimes.length > 0
-        ? remediationTimes.reduce((a, b) => a + b, 0) / remediationTimes.length
-        : 15;
-    const remediationLag = Math.min(1, avgRemediationTime / 60);
-
-    const complexityFactors = control.tags.length * 0.05 + (control.description.length > 200 ? 0.2 : 0);
-    const controlComplexity = Math.min(1, complexityFactors);
-
-    const maturityProxy =
-      1 -
-      (controlEvents.filter((e) => e.severity === "critical").length /
-        totalEvents);
-    const organizationalReadiness = Math.max(0, Math.min(1, maturityProxy));
-
-    const weightedScore =
-      historicalFailureRate * this.weights.historicalFailureRate +
-      assessmentRecency * this.weights.timeSinceLastAssessment +
-      remediationLag * this.weights.remediationLag +
-      controlComplexity * this.weights.controlComplexity +
-      organizationalReadiness * this.weights.organizationalReadiness;
-
-    const score = Math.min(1, Math.max(0, weightedScore));
-
-    const factors: RiskFactor[] = [
-      {
-        name: "Historical Failure Rate",
-        weight: this.weights.historicalFailureRate,
-        value: historicalFailureRate,
-        description: `Based on ${failureCount} failures out of ${totalEvents} events`,
-      },
-      {
-        name: "Assessment Recency",
-        weight: this.weights.timeSinceLastAssessment,
-        value: assessmentRecency,
-        description: `Last assessed ${Math.round(daysSinceAssessment)} days ago`,
-      },
-      {
-        name: "Remediation Lag",
-        weight: this.weights.remediationLag,
-        value: remediationLag,
-        description: `Average remediation takes ${Math.round(avgRemediationTime)} days`,
-      },
-      {
-        name: "Control Complexity",
-        weight: this.weights.controlComplexity,
-        value: controlComplexity,
-        description: `Complexity score based on tags and description`,
-      },
-      {
-        name: "Organizational Readiness",
-        weight: this.weights.organizationalReadiness,
-        value: organizationalReadiness,
-        description: `Maturity proxy from critical event ratio`,
-      },
-    ];
-
-    const trendDirection = trend?.direction ?? "stable";
-    const predictedFailureDate = this.predictFailureDate(score, trendDirection);
-
-    const riskScore: RiskScore = {
-      controlId: control.id,
-      score,
-      confidence: this.calculateConfidence(events.length),
-      factors,
-      trend: trendDirection,
-      predictedFailureDate,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.scoreCache.set(control.id, riskScore);
-    return riskScore;
-  }
-
-  getCachedScore(controlId: string): RiskScore | undefined {
-    return this.scoreCache.get(controlId);
-  }
-
-  clearCache(): void {
-    this.scoreCache.clear();
-  }
-
-  rankControls(controls: Control[], events: ComplianceEvent[]): RiskScore[] {
-    const scores = controls.map((control) => {
-      const score = this.scoreCache.get(control.id);
-      if (score) return score;
-      return this.calculateScore(control, events, null);
-    });
-    return scores.sort((a, b) => b.score - a.score);
-  }
-
-  private predictFailureDate(
-    score: number,
-    trend: TrendDirection
-  ): string | null {
-    if (score < 0.3) return null;
-
-    const baseDays = Math.round(180 * (1 - score));
-    let adjustedDays: number;
-    switch (trend) {
-      case "degrading":
-        adjustedDays = Math.round(baseDays * 0.6);
-        break;
-      case "improving":
-        adjustedDays = Math.round(baseDays * 1.5);
-        break;
-      case "volatile":
-        adjustedDays = Math.round(baseDays * 0.8);
-        break;
-      default:
-        adjustedDays = baseDays;
-    }
-
-    const failureDate = new Date();
-    failureDate.setDate(failureDate.getDate() + adjustedDays);
-    return failureDate.toISOString();
-  }
-
-  private calculateConfidence(dataPointCount: number): number {
-    return Math.min(0.99, 0.3 + (dataPointCount / 100) * 0.7);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// TrendAnalyzer
-// ---------------------------------------------------------------------------
-
-export class TrendAnalyzer {
-  private windowDays: number;
-  private minimumDataPoints: number;
-
-  constructor(
-    windowDays: number = DEFAULT_CONFIG.trendAnalysisWindowDays,
-    minimumDataPoints: number = DEFAULT_CONFIG.minimumDataPoints
-  ) {
-    this.windowDays = windowDays;
-    this.minimumDataPoints = minimumDataPoints;
-  }
-
-  analyze(
-    controlId: string,
-    events: ComplianceEvent[]
-  ): TrendAnalysis | null {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - this.windowDays);
-
-    const relevantEvents = events
-      .filter(
-        (e) =>
-          e.controlId === controlId &&
-          new Date(e.timestamp).getTime() >= cutoff.getTime()
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
-
-    if (relevantEvents.length < this.minimumDataPoints) {
-      return null;
-    }
-
-    const dataPoints: TrendDataPoint[] = relevantEvents.map((e) => ({
-      timestamp: e.timestamp,
-      value: this.statusToNumeric(e.status),
-    }));
-
-    const values = dataPoints.map((dp) => dp.value);
+    const values = points.map((p) => p.value);
     const n = values.length;
-    const xMean = (n - 1) / 2;
-    const yMean = values.reduce((a, b) => a + b, 0) / n;
 
-    let numerator = 0;
-    let denominator = 0;
-    for (let i = 0; i < n; i++) {
-      numerator += (i - xMean) * (values[i] - yMean);
-      denominator += (i - xMean) * (i - xMean);
-    }
-    const slope = denominator !== 0 ? numerator / denominator : 0;
+    const { slope } = linearRegression(values);
+    const mid = Math.floor(n / 2);
+    const firstHalfSlope = linearRegression(values.slice(0, mid)).slope;
+    const secondHalfSlope = linearRegression(values.slice(mid)).slope;
+    const acceleration = secondHalfSlope - firstHalfSlope;
 
-    const mean = yMean;
-    const variance =
-      values.reduce((sum, v) => sum + (v - mean) * (v - mean), 0) / n;
-    const volatility = Math.sqrt(variance);
+    const residuals = values.map((v, i) => v - (values[0] + slope * i));
+    const volatility = standardDeviation(residuals);
 
-    const direction = this.classifyDirection(slope, volatility);
-    const seasonality = this.detectSeasonality(values);
+    let direction: TrendAnalysis["direction"];
+    if (volatility > Math.abs(slope) * 2) direction = "volatile";
+    else if (slope > 0.01) direction = "improving";
+    else if (slope < -0.01) direction = "degrading";
+    else direction = "stable";
 
-    return {
-      controlId,
-      direction,
-      slope,
-      volatility,
-      seasonality,
-      dataPoints,
-      analysisWindow: this.windowDays,
-    };
+    const horizon = 30;
+    const prediction = forecastLinear(values, horizon, points[points.length - 1].timestamp);
+
+    return { metric, direction, velocity: slope, acceleration, prediction };
   }
 
-  detectSeasonality(values: number[]): SeasonalityPattern | null {
-    if (values.length < 14) return null;
+  /**
+   * Detect seasonality in a metric using autocorrelation.
+   * @param metric - The metric to analyze.
+   * @returns The detected period (in data points) or null.
+   */
+  detectSeasonality(metric: string): number | null {
+    const points = this.store.get(metric);
+    if (!points || points.length < 14) return null;
 
-    const n = values.length;
-    const mean = values.reduce((a, b) => a + b, 0) / n;
+    const values = points.map((p) => p.value);
+    const mean = avg(values);
     const centered = values.map((v) => v - mean);
 
     let bestPeriod = 0;
     let bestCorrelation = 0;
+    const maxPeriod = Math.min(Math.floor(values.length / 2), 60);
 
-    const maxPeriod = Math.min(Math.floor(n / 2), 30);
     for (let period = 2; period <= maxPeriod; period++) {
       let correlation = 0;
       let count = 0;
-      for (let i = 0; i < n - period; i++) {
+      for (let i = 0; i < centered.length - period; i++) {
         correlation += centered[i] * centered[i + period];
         count++;
       }
@@ -569,542 +202,754 @@ export class TrendAnalyzer {
       }
     }
 
-    if (Math.abs(bestCorrelation) < 0.3) return null;
-
-    return {
-      period: bestPeriod,
-      amplitude: Math.abs(bestCorrelation),
-      phase: 0,
-    };
+    return Math.abs(bestCorrelation) >= 0.3 ? bestPeriod : null;
   }
 
-  forecastFromTrend(
-    trend: TrendAnalysis,
-    horizonDays: number
-  ): TrendDataPoint[] {
-    const result: TrendDataPoint[] = [];
-    const lastPoint = trend.dataPoints[trend.dataPoints.length - 1];
-    const baseDate = new Date(lastPoint.timestamp);
+  /**
+   * Forecast future values for a metric.
+   * @param metric  - The metric to forecast.
+   * @param horizon - Number of steps ahead.
+   * @returns Array of predicted data points.
+   */
+  forecast(metric: string, horizon: number): DataPoint[] {
+    const points = this.store.get(metric);
+    if (!points || points.length < 3) {
+      throw new InsufficientDataError(metric, 3, points?.length ?? 0);
+    }
 
-    for (let d = 1; d <= horizonDays; d++) {
-      const date = new Date(baseDate);
-      date.setDate(date.getDate() + d);
+    const values = points.map((p) => p.value);
+    const lastTimestamp = points[points.length - 1].timestamp;
+    return forecastLinear(values, horizon, lastTimestamp);
+  }
 
-      let value = lastPoint.value + trend.slope * d;
+  /**
+   * Detect anomalies using Z-score method.
+   * @param metric     - The metric to scan.
+   * @param sensitivity - Z-score threshold (default 2.0).
+   * @returns Indices and values of anomalous data points.
+   */
+  detectAnomalies(
+    metric: string,
+    sensitivity: number = 2.0
+  ): Array<{ index: number; value: number; zscore: number }> {
+    const points = this.store.get(metric);
+    if (!points || points.length < 5) return [];
 
-      if (trend.seasonality) {
-        const seasonalComponent =
-          trend.seasonality.amplitude *
-          Math.sin((2 * Math.PI * d) / trend.seasonality.period +
-            trend.seasonality.phase);
-        value += seasonalComponent;
+    const values = points.map((p) => p.value);
+    const mean = avg(values);
+    const std = standardDeviation(values);
+    if (std === 0) return [];
+
+    const anomalies: Array<{ index: number; value: number; zscore: number }> = [];
+    for (let i = 0; i < values.length; i++) {
+      const zscore = (values[i] - mean) / std;
+      if (Math.abs(zscore) > sensitivity) {
+        anomalies.push({ index: i, value: values[i], zscore });
       }
-
-      value = Math.max(0, Math.min(1, value));
-
-      result.push({
-        timestamp: date.toISOString(),
-        value,
-      });
     }
-
-    return result;
+    return anomalies;
   }
 
-  private statusToNumeric(status: ComplianceStatus): number {
-    switch (status) {
-      case "compliant":
-        return 1;
-      case "at_risk":
-        return 0.5;
-      case "non_compliant":
-        return 0;
-      case "unknown":
-        return 0.5;
-      default:
-        return 0.5;
-    }
+  /** Get all stored metric names. */
+  getMetrics(): string[] {
+    return Array.from(this.store.keys());
   }
 
-  private classifyDirection(
-    slope: number,
-    volatility: number
-  ): TrendDirection {
-    if (volatility > 0.3) return "volatile";
-    if (slope > 0.01) return "improving";
-    if (slope < -0.01) return "degrading";
-    return "stable";
+  /** Get raw data points for a metric. */
+  getDataPoints(metric: string): DataPoint[] {
+    return [...(this.store.get(metric) ?? [])];
   }
 }
 
 // ---------------------------------------------------------------------------
-// ComplianceForecast
+// RiskScoringEngine
 // ---------------------------------------------------------------------------
 
-export class ComplianceForecastModel implements ComplianceForecast {
-  controlId: string;
-  forecastDate: string;
-  predictions: ForecastPoint[];
-  confidenceLevel: number;
-  riskRating: SeverityLevel;
-  recommendedActions: RemediationAction[];
-  modelUsed: string;
-
-  constructor(params: {
-    controlId: string;
-    forecastDate: string;
-    predictions: ForecastPoint[];
-    confidenceLevel: number;
-    riskRating: SeverityLevel;
-    recommendedActions: RemediationAction[];
-    modelUsed: string;
-  }) {
-    this.controlId = params.controlId;
-    this.forecastDate = params.forecastDate;
-    this.predictions = params.predictions;
-    this.confidenceLevel = params.confidenceLevel;
-    this.riskRating = params.riskRating;
-    this.recommendedActions = params.recommendedActions;
-    this.modelUsed = params.modelUsed;
+/**
+ * Calculates inherent risk, residual risk, risk velocity, and produces heat maps.
+ */
+export class RiskScoringEngine {
+  /**
+   * Calculate inherent risk for a control (0-1 scale).
+   * Considers probability of failure and impact.
+   */
+  calculateInherentRisk(control: {
+    failureProbability: number;
+    impact: number;
+    complexity: number;
+    exposure: number;
+  }): number {
+    const { failureProbability, impact, complexity, exposure } = control;
+    const raw = failureProbability * impact * 0.5 + complexity * 0.2 + exposure * 0.3;
+    return clamp(raw, 0, 1);
   }
 
-  getFailureProbability(): number {
-    const failurePoints = this.predictions.filter(
-      (p) => p.predictedStatus === "non_compliant"
+  /**
+   * Calculate residual risk after mitigations are applied.
+   * @param control     - The control with inherent risk factors.
+   * @param mitigations - Array of mitigation effectiveness values (0-1).
+   */
+  calculateResidualRisk(
+    control: {
+      failureProbability: number;
+      impact: number;
+      complexity: number;
+      exposure: number;
+    },
+    mitigations: number[]
+  ): number {
+    const inherent = this.calculateInherentRisk(control);
+    const mitigationFactor = mitigations.reduce(
+      (acc, m) => acc * (1 - clamp(m, 0, 1)),
+      1
     );
-    if (failurePoints.length === 0) return 0;
-    return failurePoints.reduce((max, p) => Math.max(max, p.probability), 0);
+    return clamp(inherent * mitigationFactor, 0, 1);
   }
 
-  getTimeToFailure(): number | null {
-    const firstFailure = this.predictions.find(
-      (p) => p.predictedStatus === "non_compliant" && p.probability > 0.5
-    );
-    if (!firstFailure) return null;
-    const now = new Date();
-    const failureDate = new Date(firstFailure.timestamp);
-    return Math.round(
-      (failureDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    );
+  /**
+   * Calculate how fast risk is changing per unit time.
+   * @param control - Object with historical risk scores as DataPoints.
+   */
+  calculateRiskVelocity(control: { riskHistory: DataPoint[] }): number {
+    if (control.riskHistory.length < 2) return 0;
+    const values = control.riskHistory.map((p) => p.value);
+    const { slope } = linearRegression(values);
+    return slope;
   }
 
-  getConfidenceInterval(
-    timestamp: string
-  ): { lower: number; upper: number } | null {
-    const point = this.predictions.find((p) => p.timestamp === timestamp);
-    if (!point) return null;
-    return { lower: point.lowerBound, upper: point.upperBound };
-  }
+  /**
+   * Generate a risk heat map from a set of controls.
+   * @param controls - Array of controls with risk data.
+   * @returns HeatMapCell array for visualization.
+   */
+  generateHeatMap(
+    controls: Array<{
+      id: string;
+      failureProbability: number;
+      impact: number;
+      complexity: number;
+      exposure: number;
+      mitigations: number[];
+      riskHistory: DataPoint[];
+    }>
+  ): HeatMapCell[] {
+    return controls.map((c) => {
+      const inherentRisk = this.calculateInherentRisk(c);
+      const residualRisk = this.calculateResidualRisk(c, c.mitigations);
+      const velocity = this.calculateRiskVelocity(c);
 
-  toJSON(): Record<string, unknown> {
-    return {
-      controlId: this.controlId,
-      forecastDate: this.forecastDate,
-      predictions: this.predictions,
-      confidenceLevel: this.confidenceLevel,
-      riskRating: this.riskRating,
-      recommendedActions: this.recommendedActions,
-      modelUsed: this.modelUsed,
-      failureProbability: this.getFailureProbability(),
-      timeToFailure: this.getTimeToFailure(),
-    };
-  }
-}
+      let quadrant: HeatMapCell["quadrant"];
+      if (residualRisk > 0.7 && velocity >= 0) quadrant = "critical";
+      else if (residualRisk > 0.7 && velocity < 0) quadrant = "high";
+      else if (residualRisk <= 0.7 && velocity >= 0) quadrant = "watch";
+      else quadrant = "low";
 
-// ---------------------------------------------------------------------------
-// PredictiveComplianceEngine
-// ---------------------------------------------------------------------------
-
-export class PredictiveComplianceEngine {
-  private config: EngineConfig;
-  private predictor: CompliancePredictor;
-  private riskScorer: RiskScorer;
-  private trendAnalyzer: TrendAnalyzer;
-  private controls: Map<string, Control> = new Map();
-  private events: ComplianceEvent[] = [];
-  private signals: MonitoringSignal[] = [];
-  private trustListeners: Array<(event: ContinuousTrustEvent) => void> = [];
-
-  constructor(config: Partial<EngineConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.predictor = new CompliancePredictor(this.config.models);
-    this.riskScorer = new RiskScorer(this.config.riskScoreWeights);
-    this.trendAnalyzer = new TrendAnalyzer(
-      this.config.trendAnalysisWindowDays,
-      this.config.minimumDataPoints
-    );
-  }
-
-  // -- Data Ingestion --
-
-  registerControl(control: Control): void {
-    this.controls.set(control.id, control);
-  }
-
-  registerControls(controls: Control[]): void {
-    for (const c of controls) {
-      this.controls.set(c.id, c);
-    }
-  }
-
-  ingestEvent(event: ComplianceEvent): void {
-    this.events.push(event);
-  }
-
-  ingestEvents(events: ComplianceEvent[]): void {
-    this.events.push(...events);
-  }
-
-  ingestSignal(signal: MonitoringSignal): void {
-    this.signals.push(signal);
-  }
-
-  ingestSignals(signals: MonitoringSignal[]): void {
-    this.signals.push(...signals);
-  }
-
-  // -- Model Management --
-
-  registerPredictionModel(model: PredictionModel): void {
-    this.predictor.registerModel(model);
-  }
-
-  setActiveModel(modelId: string): void {
-    this.predictor.setActiveModel(modelId);
-  }
-
-  trainModel(trainingData: TrainingData[]): void {
-    this.predictor.trainActiveModel(trainingData);
-  }
-
-  // -- Prediction & Analysis --
-
-  predictControl(controlId: string): PredictionResult | null {
-    const control = this.controls.get(controlId);
-    if (!control) return null;
-
-    const features = this.buildFeatureVector(control);
-    return this.predictor.predict(features);
-  }
-
-  scoreRisk(controlId: string): RiskScore | null {
-    const control = this.controls.get(controlId);
-    if (!control) return null;
-
-    const trend = this.trendAnalyzer.analyze(controlId, this.events);
-    return this.riskScorer.calculateScore(control, this.events, trend);
-  }
-
-  analyzeTrend(controlId: string): TrendAnalysis | null {
-    return this.trendAnalyzer.analyze(controlId, this.events);
-  }
-
-  generateForecast(controlId: string): ComplianceForecastModel | null {
-    const control = this.controls.get(controlId);
-    if (!control) return null;
-
-    const prediction = this.predictControl(controlId);
-    const riskScore = this.scoreRisk(controlId);
-    const trend = this.analyzeTrend(controlId);
-
-    const horizonDays = this.config.predictionHorizonDays;
-    const predictions = this.buildForecastPoints(
-      control,
-      prediction,
-      trend,
-      horizonDays
-    );
-
-    const riskRating = this.determineRiskRating(riskScore);
-    const actions = this.generateRemediationActions(
-      control,
-      riskScore,
-      trend,
-      prediction
-    );
-
-    const modelName = this.predictor.getActiveModel()?.name ?? "fallback";
-
-    return new ComplianceForecastModel({
-      controlId,
-      forecastDate: new Date().toISOString(),
-      predictions,
-      confidenceLevel: this.config.confidenceLevel,
-      riskRating,
-      recommendedActions: actions,
-      modelUsed: modelName,
+      return {
+        controlId: c.id,
+        inherentRisk,
+        residualRisk,
+        velocity,
+        quadrant,
+      };
     });
   }
+}
 
-  forecastAll(): ComplianceForecastModel[] {
-    const forecasts: ComplianceForecastModel[] = [];
-    for (const controlId of this.controls.keys()) {
-      const forecast = this.generateForecast(controlId);
-      if (forecast) {
-        forecasts.push(forecast);
-      }
+// ---------------------------------------------------------------------------
+// MonteCarloSimulator
+// ---------------------------------------------------------------------------
+
+/**
+ * Runs Monte Carlo simulations to estimate compliance failure distributions.
+ */
+export class MonteCarloSimulator {
+  /**
+   * Run a Monte Carlo simulation for a control.
+   * @param controlId  - The control identifier.
+   * @param iterations - Number of simulation iterations (default 10,000).
+   * @param parameters - Distribution parameters for the simulation.
+   */
+  simulate(
+    controlId: string,
+    iterations: number = 10_000,
+    parameters: {
+      meanFailureRate: number;
+      stdDevFailureRate: number;
+      impactMean: number;
+      impactStdDev: number;
+      seed?: number;
     }
-    return forecasts;
+  ): SimulationResult {
+    if (iterations < 100) {
+      throw new PredictiveComplianceError("Minimum 100 iterations required");
+    }
+
+    const rng = createRng(parameters.seed);
+    const distribution: number[] = [];
+
+    for (let i = 0; i < iterations; i++) {
+      const failureRate = clamp(
+        gaussianSample(rng, parameters.meanFailureRate, parameters.stdDevFailureRate),
+        0,
+        1
+      );
+      const impact = clamp(
+        gaussianSample(rng, parameters.impactMean, parameters.impactStdDev),
+        0,
+        1
+      );
+      distribution.push(failureRate * impact);
+    }
+
+    distribution.sort((a, b) => a - b);
+    const mean = avg(distribution);
+    const median = percentile(distribution, 50);
+    const stdDev = standardDeviation(distribution);
+
+    const percentiles: Record<string, number> = {};
+    for (const p of [5, 10, 25, 50, 75, 90, 95]) {
+      percentiles[`p${p}`] = percentile(distribution, p);
+    }
+
+    const ci = this.calculateConfidenceInterval(distribution, 0.95);
+    const estimatedTimeToFailure = this.estimateTimeToFailure(distribution);
+
+    return {
+      controlId,
+      iterations,
+      distribution,
+      mean,
+      median,
+      stdDev,
+      percentiles,
+      confidenceInterval: ci,
+      estimatedTimeToFailure,
+    };
   }
 
-  rankByRisk(): RiskScore[] {
-    return this.riskScorer.rankControls(
-      Array.from(this.controls.values()),
-      this.events
+  /**
+   * Generate a probability distribution summary from simulation results.
+   */
+  generateDistribution(
+    results: number[],
+    buckets: number = 20
+  ): Array<{ range: [number, number]; count: number; probability: number }> {
+    const min = results[0];
+    const max = results[results.length - 1];
+    const step = (max - min) / buckets;
+    const dist: Array<{ range: [number, number]; count: number; probability: number }> = [];
+
+    for (let i = 0; i < buckets; i++) {
+      const lo = min + i * step;
+      const hi = lo + step;
+      const count = results.filter((v) => v >= lo && (i === buckets - 1 ? v <= hi : v < hi)).length;
+      dist.push({ range: [lo, hi], count, probability: count / results.length });
+    }
+
+    return dist;
+  }
+
+  /**
+   * Calculate a confidence interval from sorted simulation results.
+   * @param results    - Sorted array of simulation values.
+   * @param confidence - Confidence level (e.g. 0.95).
+   */
+  calculateConfidenceInterval(
+    results: number[],
+    confidence: number
+  ): { lower: number; upper: number } {
+    const alpha = (1 - confidence) / 2;
+    const lower = percentile(results, alpha * 100);
+    const upper = percentile(results, (1 - alpha) * 100);
+    return { lower, upper };
+  }
+
+  /**
+   * Estimate expected time to failure from simulation distribution.
+   * Returns null if risk is negligible (< 5th percentile).
+   */
+  estimateTimeToFailure(results: number[]): number | null {
+    const p5 = percentile(results, 5);
+    if (p5 < 0.05) return null;
+
+    const mean = avg(results);
+    const daysPerUnitRisk = 365;
+    return Math.round(daysPerUnitRisk * (1 - mean));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PredictiveEngine
+// ---------------------------------------------------------------------------
+
+/**
+ * Main orchestrator that combines forecasting, risk scoring, anomaly detection,
+ * and remediation recommendations into a unified predictive compliance engine.
+ */
+export class PredictiveEngine {
+  private timeSeries: TimeSeriesAnalyzer;
+  private riskEngine: RiskScoringEngine;
+  private simulator: MonteCarloSimulator;
+  private forecasts: Map<string, ComplianceForecast> = new Map();
+
+  constructor() {
+    this.timeSeries = new TimeSeriesAnalyzer();
+    this.riskEngine = new RiskScoringEngine();
+    this.simulator = new MonteCarloSimulator();
+  }
+
+  /**
+   * Analyze a single control and predict its failure probability.
+   * @param controlId      - The control identifier.
+   * @param historicalData - Past compliance data points.
+   * @returns ComplianceForecast with probability, factors, and recommendations.
+   */
+  analyzeControl(
+    controlId: string,
+    historicalData: DataPoint[] = []
+  ): ComplianceForecast {
+    if (historicalData.length < 3) {
+      // Return a default forecast when insufficient data
+      return {
+        controlId,
+        probability: 0.5,
+        timeframe: 90,
+        confidence: 0.3,
+        factors: [{
+          name: "insufficient_data",
+          weight: 1.0,
+          value: 0.5,
+          description: "Insufficient historical data for accurate prediction",
+        }],
+        recommendations: [{
+          id: `rec-${controlId}-data`,
+          title: "Collect more data",
+          description: `Control ${controlId} needs at least 3 historical data points for accurate prediction.`,
+          priority: "medium" as const,
+          estimatedEffort: 8,
+          estimatedImpact: 0.3,
+          deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        }],
+      };
+    }
+
+    const metric = `control_${controlId}`;
+    for (const dp of historicalData) {
+      this.timeSeries.addDataPoint(metric, dp.value, dp.timestamp);
+    }
+
+    const trend = this.timeSeries.detectTrend(metric);
+    const values = historicalData.map((dp) => dp.value);
+    const currentPosture = values[values.length - 1];
+    const failureRate = 1 - currentPosture;
+
+    const factors: RiskFactor[] = [
+      {
+        name: "Current Posture",
+        weight: 0.35,
+        value: currentPosture,
+        description: `Current compliance level at ${(currentPosture * 100).toFixed(1)}%`,
+      },
+      {
+        name: "Historical Failure Rate",
+        weight: 0.25,
+        value: failureRate,
+        description: `Based on ${historicalData.length} historical data points`,
+      },
+      {
+        name: "Trend Velocity",
+        weight: 0.2,
+        value: trend ? Math.abs(trend.velocity) : 0,
+        description: trend
+          ? `Trend is ${trend.direction} at velocity ${trend.velocity.toFixed(4)}`
+          : "Insufficient data for trend analysis",
+      },
+      {
+        name: "Volatility",
+        weight: 0.2,
+        value: trend ? Math.abs(trend.velocity + trend.acceleration) * 0.5 : 0.5,
+        description: "Measure of score instability",
+      },
+    ];
+
+    const weightedRisk = factors.reduce(
+      (sum, f) => sum + f.weight * (1 - f.value),
+      0
+    );
+    const probability = clamp(weightedRisk, 0, 1);
+    const confidence = clamp(0.5 + historicalData.length / 100, 0, 0.99);
+
+    const forecast: ComplianceForecast = {
+      controlId,
+      probability,
+      timeframe: 90,
+      confidence,
+      factors,
+      recommendations: this.generateRecommendations(controlId, probability, trend),
+    };
+
+    this.forecasts.set(controlId, forecast);
+    return forecast;
+  }
+
+  /**
+   * Analyze an entire framework and return risk assessments for all controls.
+   * @param frameworkId - The framework identifier.
+   * @param controls    - Map of controlId to historical data.
+   */
+  analyzeFramework(
+    frameworkId: string,
+    controls: Map<string, DataPoint[]>
+  ): Map<string, ComplianceForecast> {
+    const results = new Map<string, ComplianceForecast>();
+    for (const [controlId, data] of controls) {
+      try {
+        results.set(controlId, this.analyzeControl(controlId, data));
+      } catch {
+        // Skip controls with insufficient data
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Organization-wide compliance forecast aggregating all known controls.
+   * @param orgData - Map of controlId to historical data arrays.
+   */
+  analyzeOrganization(
+    orgData: Map<string, DataPoint[]>
+  ): {
+    overallRisk: number;
+    controlsAtRisk: number;
+    criticalControls: string[];
+    forecasts: Map<string, ComplianceForecast>;
+  } {
+    const forecasts = new Map<string, ComplianceForecast>();
+    const criticalControls: string[] = [];
+
+    for (const [controlId, data] of orgData) {
+      try {
+        const forecast = this.analyzeControl(controlId, data);
+        forecasts.set(controlId, forecast);
+        if (forecast.probability > 0.7) {
+          criticalControls.push(controlId);
+        }
+      } catch {
+        // Skip controls with insufficient data
+      }
+    }
+
+    const probabilities = Array.from(forecasts.values()).map((f) => f.probability);
+    const overallRisk = probabilities.length > 0 ? avg(probabilities) : 0;
+    const controlsAtRisk = probabilities.filter((p) => p > 0.5).length;
+
+    return { overallRisk, controlsAtRisk, criticalControls, forecasts };
+  }
+
+  /**
+   * Detect anomalies across time-series data.
+   * @param timeSeriesData - Array of time-series entries.
+   * @param sensitivity    - Z-score threshold.
+   */
+  detectAnomalies(
+    timeSeriesData: TimeSeriesEntry[],
+    sensitivity: number = 2.0
+  ): Map<string, Array<{ index: number; value: number; zscore: number }>> {
+    const byMetric = new Map<string, TimeSeriesEntry[]>();
+    for (const entry of timeSeriesData) {
+      const arr = byMetric.get(entry.metric) ?? [];
+      arr.push(entry);
+      byMetric.set(entry.metric, arr);
+    }
+
+    for (const [metric, entries] of byMetric) {
+      for (const e of entries) {
+        this.timeSeries.addDataPoint(metric, e.value, e.timestamp);
+      }
+    }
+
+    const results = new Map<string, Array<{ index: number; value: number; zscore: number }>>();
+    for (const metric of byMetric.keys()) {
+      const anomalies = this.timeSeries.detectAnomalies(metric, sensitivity);
+      if (anomalies.length > 0) {
+        results.set(metric, anomalies);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Generate a risk score for a control based on weighted factors.
+   * @param controlId - The control identifier.
+   * @param factors   - Array of risk factors with weights and values.
+   */
+  generateRiskScore(
+    controlId: string,
+    factors: RiskFactor[]
+  ): { score: number; level: "critical" | "high" | "medium" | "low" } {
+    const totalWeight = factors.reduce((s, f) => s + f.weight, 0);
+    const score =
+      totalWeight > 0
+        ? factors.reduce((s, f) => s + f.weight * (1 - f.value), 0) / totalWeight
+        : 0;
+
+    let level: "critical" | "high" | "medium" | "low";
+    if (score > 0.75) level = "critical";
+    else if (score > 0.5) level = "high";
+    else if (score > 0.25) level = "medium";
+    else level = "low";
+
+    return { score: clamp(score, 0, 1), level };
+  }
+
+  /**
+   * Generate AI-powered remediation recommendations from a forecast.
+   * @param forecast - The compliance forecast to act on.
+   */
+  recommendRemediation(forecast: ComplianceForecast): Remediation[] {
+    return forecast.recommendations;
+  }
+
+  /**
+   * Track a metric over time and return trend analysis.
+   * @param metric     - The metric name.
+   * @param dataPoints - Historical data points.
+   */
+  trackTrend(
+    metric: string,
+    dataPoints: DataPoint[]
+  ): TrendAnalysis | null {
+    for (const dp of dataPoints) {
+      this.timeSeries.addDataPoint(metric, dp.value, dp.timestamp);
+    }
+    return this.timeSeries.detectTrend(metric);
+  }
+
+  /**
+   * Export all stored forecasts in the specified format.
+   * @param format - "json" or "csv".
+   */
+  exportForecast(format: ExportFormat): string {
+    const forecasts = Array.from(this.forecasts.values());
+
+    if (format === "json") {
+      return JSON.stringify(forecasts, null, 2);
+    }
+
+    if (forecasts.length === 0) return "";
+
+    const headers = [
+      "controlId",
+      "probability",
+      "timeframe",
+      "confidence",
+      "recommendationCount",
+    ];
+    const rows = forecasts.map((f) =>
+      [
+        f.controlId,
+        f.probability.toFixed(4),
+        f.timeframe.toString(),
+        f.confidence.toFixed(4),
+        f.recommendations.length.toString(),
+      ].join(",")
+    );
+    return [headers.join(","), ...rows].join("\n");
+  }
+
+  /** Access the underlying TimeSeriesAnalyzer. */
+  get timeSeriesAnalyzer(): TimeSeriesAnalyzer {
+    return this.timeSeries;
+  }
+
+  /** Access the underlying RiskScoringEngine. */
+  get riskScoringEngine(): RiskScoringEngine {
+    return this.riskEngine;
+  }
+
+  /** Access the underlying MonteCarloSimulator. */
+  get monteCarloSimulator(): MonteCarloSimulator {
+    return this.simulator;
+  }
+
+  /**
+   * Return all stored forecasts.
+   */
+  forecastAll(): ComplianceForecast[] {
+    return Array.from(this.forecasts.values());
+  }
+
+  /**
+   * Rank all forecasts by risk score (descending).
+   */
+  rankByRisk(): ComplianceForecast[] {
+    return Array.from(this.forecasts.values()).sort(
+      (a, b) => b.probability - a.probability
     );
   }
 
-  // -- Continuous Trust Integration --
-
-  onTrustEvent(listener: (event: ContinuousTrustEvent) => void): void {
-    this.trustListeners.push(listener);
-  }
-
-  emitTrustEvent(event: ContinuousTrustEvent): void {
-    for (const listener of this.trustListeners) {
-      try {
-        listener(event);
-      } catch {
-        // Listener errors should not break the engine
-      }
-    }
-  }
-
-  processTrustUpdate(
+  /**
+   * Generate a forecast for a specific control.
+   * Alias for analyzeControl.
+   */
+  generateForecast(
     controlId: string,
-    trustScore: number
-  ): PredictionResult | null {
-    const control = this.controls.get(controlId);
-    if (!control) return null;
-
-    const prediction = this.predictControl(controlId);
-    if (prediction && prediction.status === "non_compliant") {
-      this.emitTrustEvent({
-        type: "risk_threshold_exceeded",
-        controlId,
-        trustScore,
-        metadata: {
-          predictedStatus: prediction.status,
-          probability: prediction.probability,
-        },
-        timestamp: new Date().toISOString(),
-      });
-    }
-    return prediction;
-  }
-
-  // -- Diagnostics --
-
-  getControlCount(): number {
-    return this.controls.size;
-  }
-
-  getEventCount(): number {
-    return this.events.length;
-  }
-
-  getSignalCount(): number {
-    return this.signals.length;
+    historicalData?: DataPoint[]
+  ): ComplianceForecast {
+    return this.analyzeControl(controlId, historicalData ?? []);
   }
 
   // -- Private Helpers --
 
-  private buildFeatureVector(control: Control): FeatureVector {
-    const controlEvents = this.events.filter(
-      (e) => e.controlId === control.id
-    );
-    const failureEvents = controlEvents.filter(
-      (e) => e.status === "non_compliant"
-    );
-
-    const historicalComplianceRate =
-      controlEvents.length > 0
-        ? 1 - failureEvents.length / controlEvents.length
-        : 0.5;
-
-    const lastFailure = failureEvents
-      .sort(
-        (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      )[0];
-    const daysSinceLastFailure = lastFailure
-      ? (Date.now() - new Date(lastFailure.timestamp).getTime()) /
-        (1000 * 60 * 60 * 24)
-      : 365;
-
-    const remediationTimes = failureEvents.map((fe) => {
-      const nextCompliant = controlEvents
-        .filter(
-          (e) =>
-            e.status === "compliant" &&
-            new Date(e.timestamp).getTime() > new Date(fe.timestamp).getTime()
-        )
-        .sort(
-          (a, b) =>
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        )[0];
-      if (!nextCompliant) return 30;
-      return (
-        (new Date(nextCompliant.timestamp).getTime() -
-          new Date(fe.timestamp).getTime()) /
-        (1000 * 60 * 60 * 24)
-      );
-    });
-    const averageRemediationTime =
-      remediationTimes.length > 0
-        ? remediationTimes.reduce((a, b) => a + b, 0) / remediationTimes.length
-        : 15;
-
-    const controlSignals = this.signals.filter(
-      (s) => s.controlId === control.id
-    );
-    const patchVelocity =
-      controlSignals.filter((s) => s.metric === "patch_applied").length;
-    const changeFrequency =
-      controlSignals.filter((s) => s.metric === "config_change").length;
-
-    return {
-      controlId: control.id,
-      historicalComplianceRate,
-      daysSinceLastFailure,
-      averageRemediationTime,
-      controlComplexity: control.tags.length * 0.1,
-      organizationMaturity: 0.6,
-      industryRiskBaseline: 0.3,
-      recentAuditFindings: failureEvents.length,
-      patchVelocity,
-      changeFrequency,
-    };
-  }
-
-  private buildForecastPoints(
-    control: Control,
-    prediction: PredictionResult | null,
-    trend: TrendAnalysis | null,
-    horizonDays: number
-  ): ForecastPoint[] {
-    const points: ForecastPoint[] = [];
+  private generateRecommendations(
+    controlId: string,
+    probability: number,
+    trend: TrendAnalysis | null
+  ): Remediation[] {
+    const recs: Remediation[] = [];
     const now = new Date();
-    const baseProbability = prediction?.probability ?? 0.5;
 
-    for (let d = 0; d <= horizonDays; d += 7) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + d);
-
-      let decayedProbability = baseProbability;
-      if (trend) {
-        decayedProbability += trend.slope * d;
-      }
-      decayedProbability = Math.max(0, Math.min(1, decayedProbability));
-
-      const uncertainty = (d / horizonDays) * 0.2 * (1 - (prediction?.confidence ?? 0.5));
-      const lowerBound = Math.max(0, decayedProbability - uncertainty);
-      const upperBound = Math.min(1, decayedProbability + uncertainty);
-
-      let status: ComplianceStatus;
-      if (decayedProbability > 0.7) status = "compliant";
-      else if (decayedProbability > 0.4) status = "at_risk";
-      else status = "non_compliant";
-
-      points.push({
-        timestamp: date.toISOString(),
-        predictedStatus: status,
-        probability: decayedProbability,
-        lowerBound,
-        upperBound,
+    if (probability > 0.7) {
+      recs.push({
+        id: `rec-${controlId}-critical`,
+        title: "Immediate intervention required",
+        description: `Control ${controlId} has a ${(probability * 100).toFixed(0)}% failure probability. Escalate to compliance team immediately.`,
+        priority: "critical",
+        estimatedEffort: 8,
+        estimatedImpact: 0.4,
+        deadline: new Date(now.getTime() + 3 * 86400000).toISOString(),
       });
-    }
-
-    return points;
-  }
-
-  private determineRiskRating(
-    riskScore: RiskScore | null
-  ): SeverityLevel {
-    if (!riskScore) return "low";
-    const s = riskScore.score;
-    if (s >= 0.8) return "critical";
-    if (s >= 0.6) return "high";
-    if (s >= 0.4) return "medium";
-    if (s >= 0.2) return "low";
-    return "informational";
-  }
-
-  private generateRemediationActions(
-    control: Control,
-    riskScore: RiskScore | null,
-    trend: TrendAnalysis | null,
-    prediction: PredictionResult | null
-  ): RemediationAction[] {
-    const actions: RemediationAction[] = [];
-
-    if (riskScore && riskScore.score > 0.5) {
-      actions.push({
-        id: `rem-${control.id}-immediate`,
-        title: `Immediate review of ${control.name}`,
-        description:
-          `Control "${control.name}" has a risk score of ${(riskScore.score * 100).toFixed(0)}%. Conduct an immediate compliance review.`,
-        priority: riskScore.score > 0.7 ? "critical" : "high",
-        estimatedImpact: 0.3,
-        estimatedEffort: 2,
-        deadline: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-      });
-    }
-
-    if (trend && trend.direction === "degrading") {
-      actions.push({
-        id: `rem-${control.id}-trend`,
-        title: `Address degrading trend for ${control.name}`,
-        description:
-          `Compliance trend is degrading with a slope of ${trend.slope.toFixed(4)}. Investigate root cause and implement corrective measures.`,
+    } else if (probability > 0.5) {
+      recs.push({
+        id: `rec-${controlId}-high`,
+        title: "Schedule remediation review",
+        description: `Control ${controlId} is at risk with ${(probability * 100).toFixed(0)}% failure probability.`,
         priority: "high",
-        estimatedImpact: 0.25,
         estimatedEffort: 4,
-        deadline: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1000
-        ).toISOString(),
+        estimatedImpact: 0.3,
+        deadline: new Date(now.getTime() + 14 * 86400000).toISOString(),
       });
     }
 
-    if (
-      prediction &&
-      prediction.status === "at_risk" &&
-      prediction.probability < 0.5
-    ) {
-      actions.push({
-        id: `rem-${control.id}-preventive`,
-        title: `Preventive action for ${control.name}`,
-        description:
-          `Control is predicted to become non-compliant with ${(prediction.probability * 100).toFixed(0)}% confidence. Implement preventive controls.`,
+    if (trend?.direction === "degrading") {
+      recs.push({
+        id: `rec-${controlId}-trend`,
+        title: "Investigate root cause of degrading trend",
+        description: `Compliance trend for ${controlId} is degrading at velocity ${trend.velocity.toFixed(4)}. Root cause analysis recommended.`,
+        priority: "high",
+        estimatedEffort: 6,
+        estimatedImpact: 0.25,
+        deadline: new Date(now.getTime() + 7 * 86400000).toISOString(),
+      });
+    }
+
+    if (trend?.direction === "volatile") {
+      recs.push({
+        id: `rec-${controlId}-volatile`,
+        title: "Stabilize control monitoring",
+        description: `Metric for ${controlId} shows high volatility. Implement tighter monitoring thresholds.`,
         priority: "medium",
-        estimatedImpact: 0.2,
         estimatedEffort: 3,
-        deadline: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-      });
-    }
-
-    const daysSinceAssessment =
-      (Date.now() - new Date(control.lastAssessedAt).getTime()) /
-      (1000 * 60 * 60 * 24);
-    if (daysSinceAssessment > 60) {
-      actions.push({
-        id: `rem-${control.id}-reassess`,
-        title: `Schedule reassessment for ${control.name}`,
-        description:
-          `Control has not been assessed for ${Math.round(daysSinceAssessment)} days. Schedule a reassessment to update compliance status.`,
-        priority: "medium",
         estimatedImpact: 0.15,
-        estimatedEffort: 1,
-        deadline: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1000
-        ).toISOString(),
+        deadline: new Date(now.getTime() + 21 * 86400000).toISOString(),
       });
     }
 
-    return actions;
+    return recs;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Utility Functions
+// ---------------------------------------------------------------------------
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function avg(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
+function standardDeviation(values: number[]): number {
+  if (values.length < 2) return 0;
+  const mean = avg(values);
+  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
+function percentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+function linearRegression(values: number[]): { slope: number; intercept: number } {
+  const n = values.length;
+  if (n < 2) return { slope: 0, intercept: values[0] ?? 0 };
+
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+
+  for (let i = 0; i < n; i++) {
+    sumX += i;
+    sumY += values[i];
+    sumXY += i * values[i];
+    sumXX += i * i;
+  }
+
+  const denom = n * sumXX - sumX * sumX;
+  if (denom === 0) return { slope: 0, intercept: sumY / n };
+
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  return { slope, intercept };
+}
+
+function forecastLinear(
+  values: number[],
+  horizon: number,
+  lastTimestamp: string
+): DataPoint[] {
+  const { slope, intercept } = linearRegression(values);
+  const n = values.length;
+  const lastDate = new Date(lastTimestamp);
+  const result: DataPoint[] = [];
+
+  for (let i = 1; i <= horizon; i++) {
+    const date = new Date(lastDate.getTime() + i * 86400000);
+    const predicted = intercept + slope * (n - 1 + i);
+    result.push({
+      timestamp: date.toISOString(),
+      value: clamp(predicted, 0, 1),
+    });
+  }
+
+  return result;
+}
+
+function gaussianSample(rng: () => number, mean: number, stdDev: number): number {
+  const u1 = rng();
+  const u2 = rng();
+  const z = Math.sqrt(-2 * Math.log(u1 || 1e-10)) * Math.cos(2 * Math.PI * u2);
+  return mean + z * stdDev;
+}
+
+function createRng(seed?: number): () => number {
+  if (seed === undefined) return Math.random;
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+/** Alias for backward compatibility */
+export { PredictiveEngine as PredictiveComplianceEngine };

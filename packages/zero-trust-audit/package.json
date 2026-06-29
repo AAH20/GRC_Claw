@@ -1,31 +1,26 @@
 {
   "name": "@grc-claw/zero-trust-audit",
-  "version": "0.9.0",
-  "description": "Zero-trust audit trail with cryptographic hash chaining, Merkle trees, digital signatures, and court-admissible evidence export",
+  "version": "0.8.0",
+  "description": "Cryptographic audit trail with hash chains, Merkle proofs, and evidence export",
+  "license": "MIT",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc",
-    "test": "node --test dist/**/*.test.js"
-  },
-  "keywords": [
-    "audit-trail",
-    "zero-trust",
-    "cryptographic",
-    "merkle-tree",
-    "hash-chain",
-    "digital-signature",
-    "compliance",
-    "evidence",
-    "court-admissible",
-    "immutable"
-  ],
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
-  }
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^20.14.0"
+  },
+  "files": ["dist"]
 }
