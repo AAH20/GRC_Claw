@@ -1,0 +1,19 @@
+{
+  "name": "@grc-claw/policy-engine",
+  "version": "0.8.0",
+  "description": "Compliance-as-Code: validate .grc-policy.yaml against your org posture",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "keywords": ["grc", "compliance", "policy", "gitops"],
+  "license": "MIT",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

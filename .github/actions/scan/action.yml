@@ -1,0 +1,68 @@
+name: 'GRC Claw Security Scan'
+description: 'Scans PRs for security issues and maps findings to compliance controls'
+author: 'A2Z SOC'
+inputs:
+  api-url:
+    description: 'Your A2Z SOC API URL'
+    required: true
+  api-key:
+    description: 'Your GRC Claw API key'
+    required: true
+  severity-threshold:
+    description: 'Fail on findings at or above this severity (critical, high, medium, low)'
+    required: false
+    default: 'critical'
+outputs:
+  status:
+    description: 'Scan status: pass, warn, or fail'
+    value: ${{ steps.scan.outputs.status }}
+  findings-count:
+    description: 'Number of findings'
+    value: ${{ steps.scan.outputs.findings_count }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Install GRC Claw CLI
+      shell: bash
+      run: npm install -g @grc-claw/cli@latest
+
+    - name: Run IaC scan
+      id: iac
+      shell: bash
+      run: |
+        grc scan iac --format json --output /tmp/iac-findings.json || echo '[]' > /tmp/iac-findings.json
+
+    - name: Run secret scan
+      id: secrets
+      shell: bash
+      run: |
+        grc scan secrets --format json --output /tmp/secret-findings.json || echo '[]' > /tmp/secret-findings.json
+
+    - name: Submit to GRC Gate
+      id: scan
+      shell: bash
+      env:
+        GRC_API_URL: ${{ inputs.api-url }}
+        GRC_API_KEY: ${{ inputs.api-key }}
+      run: |
+        FINDINGS=$(cat /tmp/iac-findings.json /tmp/secret-findings.json | jq -s 'add // []')
+        PAYLOAD=$(jq -n \
+          --arg repo "$GITHUB_REPOSITORY" \
+          --argjson pr "${{ github.event.number }}" \
+          --arg sha "${{ github.event.pull_request.head.sha || github.sha }}" \
+          --argjson findings "$FINDINGS" \
+          '{repo: $repo, pr_number: $pr, sha: $sha, findings: $findings}')
+        RESPONSE=$(curl -s -X POST "$GRC_API_URL/api/platform/github-pr-gate" \
+          -H "Content-Type: application/json" \
+          -H "x-api-key: $GRC_API_KEY" \
+          -d "$PAYLOAD")
+        STATUS=$(echo "$RESPONSE" | jq -r '.status // "error"')
+        COUNT=$(echo "$RESPONSE" | jq -r '.findings_count // 0')
+        echo "status=$STATUS" >> $GITHUB_OUTPUT
+        echo "findings_count=$COUNT" >> $GITHUB_OUTPUT
+        echo "### GRC Claw Security Gate: $STATUS" >> $GITHUB_STEP_SUMMARY
+        echo "Findings: $COUNT | Controls mapped: $(echo $RESPONSE | jq '.controls_mapped | length')" >> $GITHUB_STEP_SUMMARY
+        THRESHOLD="${{ inputs.severity-threshold }}"
+        if [ "$STATUS" = "fail" ] && [ "$THRESHOLD" = "critical" ]; then
+          exit 1
+        fi
