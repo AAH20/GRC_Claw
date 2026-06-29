@@ -1598,3 +1598,4 @@ export class ComplianceKnowledgeGraph {
     return this.edges.size;
   }
 }
+// v0.9.0
