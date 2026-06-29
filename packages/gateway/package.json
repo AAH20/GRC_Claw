@@ -79,6 +79,10 @@
     "@grc-claw/predictive-compliance": "*",
     "@grc-claw/compliance-marketplace": "*",
     "@grc-claw/zero-trust-audit": "*",
+    "@grc-claw/federated-learning": "*",
+    "@grc-claw/compliance-intelligence-api": "*",
+    "@grc-claw/autonomous-compliance-agent": "*",
+    "@grc-claw/compliance-digital-twin": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

@@ -1,0 +1,42 @@
+{
+  "name": "@grc-claw/federated-learning",
+  "version": "1.0.0",
+  "description": "Federated learning network for compliance pattern sharing without raw data exposure",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src/"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "federated-learning",
+    "compliance",
+    "privacy",
+    "differential-privacy",
+    "secure-aggregation",
+    "grc",
+    "governance"
+  ],
+  "dependencies": {
+    "@grc-claw/types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
