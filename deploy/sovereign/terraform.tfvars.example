@@ -1,0 +1,21 @@
+# GRC Claw Sovereign Deployment — Configuration
+cloud_provider = "aws"          # aws | azure | gcp
+region         = "me-south-1"   # Your target region
+environment    = "production"
+domain         = "grc.yourcompany.com"
+
+# Instance sizing
+instance_type  = "t3.xlarge"    # Minimum: t3.large (4 vCPU, 8GB RAM)
+disk_size_gb   = 100
+
+# Sovereign mode LLM
+ollama_model   = "llama3.1:8b"  # or "mistral", "llama3.1:70b" for better quality
+
+# Backup storage (S3-compatible)
+backup_bucket  = "your-grc-backups"
+backup_region  = "me-south-1"
+
+# Notifications (optional)
+smtp_host      = "smtp.yourcompany.com"
+smtp_port      = 587
+smtp_user      = "grc-notify@yourcompany.com"
