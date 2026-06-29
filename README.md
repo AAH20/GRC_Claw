@@ -838,6 +838,71 @@ The acquisition-grade thesis: the platform becomes difficult to compete with whe
 
 ---
 
+## Phase 36 graph-first review: from broad platform to category-control system
+
+This phase used the live codebase-memory graph before editing the roadmap. The current A2Z SOC + GRC_Claw workspace indexed to **24,873 graph nodes**, **76,888 edges**, **575 route nodes**, and high-cohesion GRC_Claw clusters around the gateway, agent dispatch, framework packs, evidence graph, marketplace, digital twin, predictive compliance, cloud connectors, Helm, Terraform, and MCP surfaces.
+
+The important finding is blunt: breadth is no longer the scarce asset. The scarce asset is **proof density**. A2Z SOC and GRC_Claw should now optimize every product surface around one question: can a buyer, auditor, prime contractor, regulator, insurer, or AI governance team verify the claim without trusting the UI?
+
+Priority improvements to exceed proprietary and open-source GRC projects:
+
+1. **Make Evidence Graph coverage a release gate**
+   - Every new route, gateway tool, MCP method, connector, marketplace automation, agent action, control test, risk forecast, and export should emit a deterministic graph object.
+   - CI should report graph coverage: routes with proof paths, tools with policy receipts, controls with evidence writers, packs with signed provenance, and exports with verifier links.
+   - This turns engineering velocity into compounding trust assets instead of feature sprawl.
+
+2. **Turn Agent Policy Firewall into the runtime moat**
+   - Treat MCP tools, browser agents, cloud connectors, CLI commands, SOAR playbooks, and remediation bots as untrusted actuators until the firewall approves them.
+   - Require tenant scope, role, sandbox policy, idempotency key, replay window, tool risk, blast radius, data boundary, approval threshold, expected control impact, and rollback plan.
+   - Emit `intent`, `decision`, `execution`, `result`, and `verifier_receipt` objects for every action.
+
+3. **Package CMMC / NIST 800-171 / ISO 42001 as the flagship paid workflow**
+   - Build the defense procurement cockpit around CUI boundary, SSP, POA&M, SPRS, FedRAMP inheritance, SBOM, AI-BOM, AI inventory, supplier risk, incident history, sovereign deployment, and agent receipts.
+   - The buyer promise should be: **shorten procurement, answer primes faster, and prove agentic AI governance with audit-safe evidence.**
+   - A2Z SOC should own the hosted cockpit; GRC_Claw should own the local/offline execution engine.
+
+4. **Make GRC Copilot proof-native**
+   - Natural-language compliance answers should be generated from graph paths, not loose prose.
+   - Every answer should cite control IDs, framework mappings, evidence hashes, graph object IDs, policy decisions, risk economics, owner, deadline, and verifier-room export.
+   - Unsupported answers should degrade into “missing evidence” tasks instead of confident text.
+
+5. **Upgrade the marketplace into a regulated automation supply chain**
+   - Every pack and automation should include signed provenance, maintainer identity, required scopes, test fixtures, control mappings, graph outputs, rollback plan, semantic versioning, dependency policy, verifier score, and revenue share.
+   - Marketplace code should only execute through the Agent Policy Firewall and should only publish value when it writes Evidence Graph objects.
+   - This is the compliance equivalent of Terraform Registry plus GitHub Actions plus auditor trust.
+
+6. **Create verifier rooms as the commercial network**
+   - Auditors, customers, primes, MSPs, brokers, insurers, PE diligence teams, and regulators should get scoped rooms that expose graph paths, redacted evidence, signed receipts, control crosswalks, risk economics, and export packets.
+   - Every verifier review, acceptance, rejection, and comment should feed back into trust score and benchmark intelligence.
+   - The network effect is not the account; it is the history of third-party verification.
+
+7. **Build benchmark intelligence from outcomes, not vanity metrics**
+   - Aggregate opt-in anonymized metrics: audit cycle time, evidence freshness, remediation latency, vendor response time, procurement blocker frequency, policy denial rate, automation success, verifier acceptance, and control reuse.
+   - Attach benchmarks to product recommendations and Copilot answers.
+   - This becomes a proprietary dataset that open-source projects cannot bootstrap and incumbents cannot buy instantly.
+
+8. **Use sovereign, offline, and post-quantum proof as the long-horizon trust chain**
+   - Wire zero-trust audit trail, RFC 3161 timestamps, ZK bundles, verifiable credentials, sovereign deployment, local models, and post-quantum crypto planning into procurement packets and verifier rooms.
+   - The message for regulated buyers is durable: trust claims should survive vendor change, model change, cloud boundary change, and cryptographic-era change.
+
+9. **Simplify navigation around durable buyer jobs**
+   - Primary A2Z SOC navigation should bias toward Evidence Graph, Agent Policy Firewall, Defense Procurement, Verifier Rooms, Trust Score, Audit Trail, Vendor Risk, Employee Lifecycle, Predictive Compliance, Automation Marketplace, GRC Copilot, and Sovereign Deployment.
+   - Duplicate demos, seasonal pages, and isolated feature pages should roll up under hubs.
+   - The platform should feel like a mission control system, not a feature museum.
+
+Immediate execution order:
+
+- **48 hours:** add graph coverage checks and proof-path fixtures for gateway tools, A2Z SOC APIs, and the most valuable paid pages. **Implemented first slice:** `npm run graph:coverage` now verifies required graph/proof packages, Evidence Graph HTTP routes, `evidence_graph.*` gateway tools, action-ledger lifecycle events, assurance envelope receipts, and the CMMC / NIST 800-171 / ISO 42001 roadmap wedge.
+- **7 days:** make Agent Policy Firewall v1 mandatory for gateway/MCP tool execution and emit receipts for every action.
+- **14 days:** make GRC Copilot proof-native with missing-evidence fallbacks and verifier-room export.
+- **30 days:** ship the CMMC / NIST 800-171 / ISO 42001 procurement cockpit as the paid flagship.
+- **60 days:** launch verifier rooms and signed automation marketplace revenue share.
+- **90 days:** expose benchmark intelligence across dashboards, Copilot, exports, and sales packets.
+
+The category-control thesis: proprietary competitors can outspend UI development, and open-source projects can copy utilities. What compounds defensibly is the graph of signed evidence, governed agent actions, verified packs, procurement packets, third-party verifier outcomes, and benchmark intelligence. A2Z SOC should own the hosted trust network; GRC_Claw should be the open, inspectable engine that proves the network is real.
+
+---
+
 ## Contributing
 
 GRC_Claw is MIT-licensed. PRs welcome — framework packs, language rules for the VS Code extension, additional Terraform resources, and connector implementations are the highest-value contributions.
