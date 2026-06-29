@@ -979,7 +979,7 @@ Highest-leverage improvements, ordered by defensibility:
 
 Immediate implementation ladder:
 
-- **48 hours:** extend `npm run graph:coverage` from existence checks to coverage ratios: route-to-proof, tool-to-policy, Copilot-to-evidence, marketplace-to-signed-pack, procurement-to-export.
+- **48 hours:** extend `npm run graph:coverage` from existence checks to coverage ratios: route-to-proof, tool-to-policy, Copilot-to-evidence, marketplace-to-signed-pack, procurement-to-export. **Implemented first slice:** the gate now reports thresholded coverage ratios for proof routes, policy-governed tools, proof-native Copilot, signed marketplace supply, procurement/export readiness, verifier/export surfaces, and benchmark intelligence.
 - **7 days:** implement Verified Trust Transaction schema and make gateway/MCP tools emit it behind a compatibility flag.
 - **14 days:** make GRC Copilot refuse unsupported answers and produce missing-evidence tasks with suggested connectors/automations.
 - **30 days:** ship the CMMC / NIST 800-171 / ISO 42001 procurement cockpit as a paid flagship workflow with packet exports.
