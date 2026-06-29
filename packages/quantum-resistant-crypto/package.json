@@ -1,0 +1,39 @@
+{
+  "name": "@grc-claw/quantum-resistant-crypto",
+  "version": "1.0.0",
+  "description": "Quantum-resistant cryptography package providing NIST-approved post-quantum algorithms for future-proof compliance data security",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "quantum-resistant",
+    "post-quantum",
+    "cryptography",
+    "CRYSTALS-Kyber",
+    "CRYSTALS-Dilithium",
+    "NIST",
+    "compliance",
+    "GRC",
+    "security"
+  ],
+  "author": "A2Z SOC",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

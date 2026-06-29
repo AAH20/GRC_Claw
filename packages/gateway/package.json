@@ -83,6 +83,10 @@
     "@grc-claw/compliance-intelligence-api": "*",
     "@grc-claw/autonomous-compliance-agent": "*",
     "@grc-claw/compliance-digital-twin": "*",
+    "@grc-claw/quantum-resistant-crypto": "*",
+    "@grc-claw/natural-language-compliance": "*",
+    "@grc-claw/compliance-automation-marketplace": "*",
+    "@grc-claw/real-time-compliance-monitor": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

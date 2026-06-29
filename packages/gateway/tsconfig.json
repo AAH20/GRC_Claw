@@ -57,6 +57,10 @@
     { "path": "../federated-learning" },
     { "path": "../compliance-intelligence-api" },
     { "path": "../autonomous-compliance-agent" },
-    { "path": "../compliance-digital-twin" }
+    { "path": "../compliance-digital-twin" },
+    { "path": "../quantum-resistant-crypto" },
+    { "path": "../natural-language-compliance" },
+    { "path": "../compliance-automation-marketplace" },
+    { "path": "../real-time-compliance-monitor" }
   ]
 }
