@@ -1,6 +1,6 @@
 # GRC_Claw
 
-Open-source GRC automation engine — 75 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
+Open-source GRC automation engine — 79 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -10,11 +10,29 @@ Open-source GRC automation engine — 75 packages, 27,596 control mappings, auto
 
 ---
 
+## What's New in v10.0
+
+| Feature | Description |
+|---------|-------------|
+| **ZK Audit Bundle** | SHA-256 Merkle tree + RFC 3161 TSA timestamp (FreeTSA.org); public `/verify` endpoint for auditor-safe proof |
+| **FAIR Risk Quantification** | EAL = (TEF × Vuln%) × (Primary + Secondary Loss); dollar-denominated risk tiers |
+| **STRIDE Threat Modeling** | Claude-backed `stride_matrix` JSON output with MITRE ATT&CK mappings |
+| **Trust Score Badge** | 5-factor score (evidence 25%, vuln 25%, controls 20%, training 15%, incidents 15%) → 0–100 with A/B/C/D/F grade + embeddable SVG badge |
+| **Pack Marketplace** | Community GRC pack submission and catalog (YAML schema with control mappings) |
+| **Continuous Control Testing** | 5 built-in SOC 2 tests, automated via cron |
+| **Evidence Daemon** | Auto-pulls GitHub branch protection (CC8.1) and Okta MFA (CC6.1) every 24 h |
+| **Shared Answer Library** | SHA-256 keyed, confidence scoring (0.5 → 0.99 via votes), cross-org knowledge sharing |
+| **Regulatory Deadline Engine** | Auto-creates tasks at 90/60/30 days before regulation deadlines |
+| **Standards Exports** | OCSF 1.1 (`ocsf.ts`), STIX 2.1 (`stix.ts`), SARIF 2.1.0 (`sarif.ts`) added to `packages/oscal` |
+| **Cloud Connectors** | Jira, Linear, CrowdStrike, AWS Asset Inventory — see [Cloud connectors](#cloud-connectors-v100-) below |
+
+---
+
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (75 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **191 agent tools** (146 real implementations), **150+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, and **zero-trust audit trail**.
+GRC_Claw is a TypeScript/Go monorepo (79 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **191 agent tools** (146 real implementations), **150+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, and **zero-trust audit trail**.
 
-The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 36 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
+The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 32 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
 ---
 
@@ -64,7 +82,7 @@ grc sovereign init
 
 ---
 
-## Packages (36 published · 39 private)
+## Packages (32 published · 47 private)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -103,7 +121,7 @@ grc sovereign init
 | `@grc-claw/compliance-marketplace` | Proof-backed compliance pack publishing, discovery, installation, and ratings | v0.8.0 |
 | `@grc-claw/zero-trust-audit` | Cryptographic audit trail with hash chains, Merkle proofs, and evidence export | v0.8.0 |
 
-The remaining 39 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
+The remaining 47 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 
 ---
 
@@ -259,9 +277,9 @@ The gateway records these envelopes around supervised agent actions and exposes 
 
 ---
 
-## Cloud connectors (v9.0)
+## Cloud connectors (v10.0)
 
-`packages/cloud-connectors` gained four new integrations in v9.0:
+`packages/cloud-connectors` gained four new integrations in v10.0:
 
 | Connector | File | What it collects |
 |-----------|------|-----------------|
@@ -271,6 +289,134 @@ The gateway records these envelopes around supervised agent actions and exposes 
 | **AWS Asset Inventory** | `aws-asset-inventory.ts` | EC2, S3, IAM, RDS, and Lambda asset discovery for cloud posture evidence |
 
 All connectors implement the standard `EvidenceConnector` interface and emit typed evidence envelopes compatible with `@grc-claw/evidence`.
+
+---
+
+## Standards exports (OSCAL / OCSF / STIX / SARIF)
+
+`packages/oscal/src` ships four standards export modules:
+
+| Module | Standard | File |
+|--------|----------|------|
+| OSCAL | OSCAL 1.1.2 SSP, POA&M, Component Definition | `oscal.ts` |
+| OCSF | Open Cybersecurity Schema Framework 1.1 | `ocsf.ts` |
+| STIX | STIX 2.1 threat intelligence bundles | `stix.ts` |
+| SARIF | Static Analysis Results Interchange Format 2.1.0 | `sarif.ts` |
+
+All four are consumed by the CLI (`grc report`) and the MCP server, and can be imported directly from `@grc-claw/oscal`.
+
+---
+
+## ZK Audit Bundle
+
+`packages/zk-compliance` produces a cryptographically verifiable audit bundle:
+
+- SHA-256 Merkle tree over all evidence records in a compliance period
+- RFC 3161 timestamp from FreeTSA.org embedded in the bundle (ASN.1/DER format)
+- Public `/verify` endpoint returns `{ valid: true, root, timestamp, chain }` — auditors can verify without raw data access
+- Compatible with the zero-trust audit room and `@grc-claw/zero-trust-audit`
+
+---
+
+## FAIR Risk Quantification
+
+`@grc-claw/risk-quantification` calculates dollar-denominated risk using the FAIR model:
+
+```
+EAL = (TEF × Vulnerability%) × (Primary Loss + Secondary Loss)
+```
+
+- Input: threat event frequency, vulnerability rate, primary/secondary loss magnitudes
+- Output: expected annual loss in USD with confidence intervals (Monte Carlo simulation)
+- Risk tiers: Critical / High / Medium / Low with color-coded thresholds
+- Integrated into the agent verify phase and the CLI `grc audit` command
+
+---
+
+## STRIDE Threat Modeling
+
+The agent runtime now generates structured threat models via Claude:
+
+- Accepts an architecture description (system prompt or YAML component list)
+- Outputs a `stride_matrix` JSON: each threat category (Spoofing, Tampering, Repudiation, Information Disclosure, DoS, Elevation of Privilege) mapped to affected components with MITRE ATT&CK technique IDs
+- Threat entries automatically link to GRC_Claw controls and produce remediation tasks
+- Accessible via `grc agent run` and the MCP `stride_threat_model` tool
+
+---
+
+## Trust Score Badge
+
+`@grc-claw/continuous-trust-engine` computes a 0–100 trust score from five weighted factors:
+
+| Factor | Weight |
+|--------|--------|
+| Evidence freshness | 25% |
+| Vulnerability exposure | 25% |
+| Control test pass rate | 20% |
+| Training completion | 15% |
+| Incident transparency | 15% |
+
+- Grade: A (90–100), B (80–89), C (70–79), D (60–69), F (<60)
+- Embeddable SVG badge at `/api/trust-score/badge.svg`
+- Score is signed, decomposable into proof objects, and exportable to buyer portals
+
+---
+
+## Pack Marketplace
+
+`@grc-claw/compliance-marketplace` is a community GRC pack registry:
+
+- YAML schema with control mappings, evidence collectors, remediation playbooks, and semantic versioning
+- Pack submission via `grc marketplace publish`
+- Discovery and installation via `grc marketplace install <pack-name>`
+- Signed provenance, ratings, and maintainer reputation per pack
+
+---
+
+## Continuous Control Testing
+
+Five built-in SOC 2 control tests run automatically on a configurable cron schedule:
+
+1. MFA enforcement check (CC6.1)
+2. Encryption at rest verification (CC6.7)
+3. Audit log retention check (CC7.2)
+4. Access review completeness (CC6.3)
+5. Incident response test (CC7.3)
+
+Results feed directly into the Trust Score and the evidence vault.
+
+---
+
+## Evidence Daemon
+
+An always-on background process auto-collects evidence every 24 hours:
+
+- **GitHub branch protection** → maps to SOC 2 CC8.1 (change management)
+- **Okta MFA status** → maps to SOC 2 CC6.1 (logical access)
+
+Evidence is hashed, timestamped, and written to the evidence vault with full lineage. Configure via `grc.config.yaml` under `evidence_daemon`.
+
+---
+
+## Shared Answer Library
+
+Cross-organization compliance knowledge sharing:
+
+- Answers keyed by SHA-256 hash of the question text
+- Confidence scoring from 0.50 (single unverified answer) to 0.99 (high-vote consensus)
+- Votes from verified organizations increase confidence; contradictions trigger review
+- Accessible via the MCP `answer_library_lookup` tool and `@grc-claw/compliance-knowledge-graph`
+
+---
+
+## Regulatory Deadline Engine
+
+`@grc-claw/regulatory-change-management` auto-creates tasks ahead of regulatory deadlines:
+
+- Monitors tracked regulation dates (e.g., DORA go-live, NIS2 review cycles, CMMC assessment windows)
+- Creates remediation tasks at 90, 60, and 30 days before each deadline
+- Tasks link to affected controls, evidence gaps, and responsible owners
+- Integrates with the notification engine for Slack/Email/Teams alerts
 
 ---
 
@@ -377,6 +523,47 @@ Near-term execution order:
 - **Next 6 months:** make CMMC/NIST 800-171 + ISO 42001 the flagship procurement bundle.
 
 The strategic line: proprietary incumbents can outspend a feature sprint, and open-source projects can copy isolated utilities. The hard-to-copy asset is the networked history of signed evidence, control mappings, agent receipts, verified packs, customer benchmarks, and auditor trust.
+
+---
+
+## Graph-backed next moves: acquisition-grade monopoly path
+
+A June 2026 graph-first audit of the combined A2Z SOC + GRC_Claw codebase shows the moat is no longer missing breadth. The platform already has hundreds of GRC, SOC, trust, marketplace, risk, threat-modeling, ZK audit, MCP, and procurement surfaces. The next advantage comes from turning those surfaces into compounding engines that competitors cannot clone by shipping another UI.
+
+Highest-leverage improvements:
+
+1. **Unify every proof surface into an Evidence Graph API**
+   Merge evidence vault entries, control tests, trust scores, ZK audit bundles, risk scenarios, threat models, marketplace packs, agent receipts, and framework mappings into one queryable graph. A2Z SOC should expose this as a hosted verifier API; GRC_Claw should expose the local engine. The buyer outcome: "show me every claim, control, proof, agent action, and downstream dependency behind this trust score."
+
+2. **Turn Pack Marketplace into a signed compliance supply chain**
+   The marketplace should not be a content catalog. Every pack should include signed provenance, tests, control mappings, evidence collectors, remediation playbooks, maintainer reputation, semantic versioning, dependency rules, revenue share, and verifier results. This creates the HashiCorp/Terraform-registry style network effect for compliance.
+
+3. **Ship an Agent Policy Firewall as the default gateway mode**
+   MCP, browser agents, IDE agents, cloud agents, SOAR workflows, and remediation bots should pass through a policy firewall with scope checks, approval thresholds, idempotency keys, tool risk scoring, replay prevention, and receipt export. Agent harness teams can build orchestration; they will not want to build audit-grade governance from scratch.
+
+4. **Make Trust Score explainable, signed, and portable**
+   The trust score should become a public, embeddable, signed credential backed by evidence freshness, control-test results, vulnerability exposure, training completion, incident transparency, and procurement readiness. Every score should be decomposable into proof objects and exportable to buyer portals, auditors, brokers, and marketplace listings.
+
+5. **Build the CMMC / NIST 800-171 / ISO 42001 procurement lane**
+   Package SPRS scoring, SSP/POA&M generation, CUI boundary mapping, supplier risk, AI system inventory, SBOM/AI-BOM, FedRAMP inheritance, and agent-action receipts into a single defense-industrial-base readiness workflow. This is the fastest wedge into cybersecurity, GRC, agentic AI governance, and procurement budgets at once.
+
+6. **Add predictive compliance economics everywhere**
+   Risk quantification should not live as a separate calculator. Every control, evidence gap, vendor issue, failed test, and agent exception should produce dollarized exposure, remediation cost, time-to-audit impact, and expected-loss reduction. This moves the product from "compliance tracking" to CFO-visible risk economics.
+
+7. **Convert threat modeling into live control generation**
+   STRIDE outputs should automatically create controls, tests, evidence requirements, remediation tasks, and framework mappings. The monopoly move is closing the loop from architecture description → threat model → controls → evidence → auditor proof → trust score.
+
+8. **Create a verifier network, not just tenant dashboards**
+   Auditors, customers, brokers, MSPs, PE diligence teams, and primes should be able to verify claims through scoped rooms without seeing raw tenant data. This makes A2Z SOC the trust clearinghouse while GRC_Claw remains the inspectable execution layer.
+
+Immediate execution priority:
+
+- **Week 1:** normalize Trust Score, ZK Audit Bundle, Control Tests, Risk Quantification, Threat Modeling, and Pack Marketplace outputs into one Evidence Graph schema. **Implemented first slice:** A2Z SOC now exposes `/api/platform/evidence-graph/*` and GRC_Claw exposes `/api/evidence-graph/*`.
+- **Week 2:** expose matching `evidence_graph.*` tools in GRC_Claw for agent/MCP callers. **Implemented first slice:** `evidence_graph.get`, `get_summary`, `get_nodes`, `get_edges`, and `get_recommendations`.
+- **Week 3:** add signed pack verification and maintainer reputation to the marketplace.
+- **Week 4:** ship the CMMC/NIST 800-171/ISO 42001 procurement cockpit with SSP, POA&M, SPRS, AI inventory, supplier evidence, and agent receipts.
+
+The acquisition-grade thesis: the most valuable asset is not the code count, page count, or number of framework packs. It is the accumulated, signed, cross-tenant map of which controls, evidence, tests, agents, vendors, and remediation paths actually survive audits and procurement reviews.
 
 ---
 
