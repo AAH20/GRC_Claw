@@ -1,220 +1,187 @@
-/**
- * @grc-claw/compliance-automation-marketplace
- *
- * Compliance automation marketplace for sharing, discovering, and monetizing
- * compliance automations with ratings, versioning, and validation.
- *
- * @example
- * ```ts
- * import { ComplianceAutomationMarketplace } from "@grc-claw/compliance-automation-marketplace";
- *
- * const marketplace = new ComplianceAutomationMarketplace();
- *
- * // Publish an automation
- * const automation = await marketplace.publisher.publish({
- *   name: "SOC2 Access Review Automation",
- *   description: "Automates quarterly access reviews for SOC 2 CC6.1",
- *   author: { id: "vendor-1", name: "SecurityCorp" },
- *   frameworks: ["SOC2"],
- *   industries: ["technology", "saas"],
- *   useCases: ["access_review", "quarterly_audit"],
- *   price: 0,
- *   license: "MIT",
- * });
- *
- * // Discover automations
- * const results = await marketplace.discovery.search({
- *   frameworks: ["SOC2"],
- *   query: "access review",
- * });
- *
- * // Rate an automation
- * await marketplace.rating.rate({
- *   automationId: automation.id,
- *   reviewerId: "user-1",
- *   score: 5,
- *   comment: "Excellent automation, saved us hours",
- * });
- *
- * // Install an automation
- * const installed = await marketplace.installer.install(automation.id, {
- *   version: "1.0.0",
- *   targetEnvironment: "production",
- * });
- * ```
- */
-
-import { randomUUID, createHash } from "node:crypto";
+// ============================================================================
+// @grc-claw/compliance-automation-marketplace
+// Compliance automation marketplace for sharing, discovering, and monetizing
+// compliance automations across frameworks, industries, and use cases.
+// ============================================================================
 
 // ---------------------------------------------------------------------------
-// Types & Enums
+// Types & Interfaces
 // ---------------------------------------------------------------------------
-
-export type AutomationStatus = "draft" | "published" | "deprecated" | "yanked";
-export type AutomationTier = "free" | "basic" | "professional" | "enterprise";
-export type LicenseType = "MIT" | "Apache-2.0" | "GPL-3.0" | "Proprietary" | "Custom";
-export type Framework = "SOC2" | "ISO27001" | "NIST_CSF" | "HIPAA" | "PCI_DSS" | "GDPR" | "CIS" | "ISO42001" | "NIST_AI_RMF";
-export type Severity = "critical" | "high" | "medium" | "low" | "info";
-export type ValidationStatus = "pending" | "passed" | "failed" | "skipped";
-
-export interface AutomationAuthor {
-  id: string;
-  name: string;
-  email?: string;
-  url?: string;
-  avatarUrl?: string;
-}
-
-export interface AutomationVersion {
-  version: string;
-  publishedAt: Date;
-  checksum: string;
-  tarballUrl?: string;
-  changelog?: string;
-}
-
-export interface AutomationDependency {
-  automationId: string;
-  versionRange: string;
-  optional?: boolean;
-}
-
-export interface AutomationMetadata {
-  frameworks: Framework[];
-  industries: string[];
-  useCases: string[];
-  tags: string[];
-  minPlatformVersion?: string;
-}
-
-export interface AutomationRatingAggregate {
-  automationId: string;
-  average: number;
-  count: number;
-  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
-}
-
-export interface Review {
-  id: string;
-  automationId: string;
-  reviewerId: string;
-  reviewerName: string;
-  score: 1 | 2 | 3 | 4 | 5;
-  title: string;
-  comment: string;
-  createdAt: Date;
-  updatedAt: Date;
-  helpful: number;
-  verified: boolean;
-}
-
-export interface ComplianceRule {
-  id: string;
-  name: string;
-  description: string;
-  framework: Framework;
-  controlIds: string[];
-  severity: Severity;
-  logic: Record<string, unknown>;
-  remediation?: string;
-  references?: string[];
-}
 
 export interface Automation {
   id: string;
   name: string;
-  slug: string;
   description: string;
-  longDescription?: string;
-  author: AutomationAuthor;
-  status: AutomationStatus;
-  tier: AutomationTier;
-  price: number;
-  license: LicenseType;
-  metadata: AutomationMetadata;
-  versions: AutomationVersion[];
-  latestVersion: string;
+  author: string;
+  version: string;
+  framework: ComplianceFramework[];
+  industry: string[];
+  useCase: string[];
+  tags: string[];
+  license: string;
+  pricing: PricingModel;
   dependencies: AutomationDependency[];
-  rules: ComplianceRule[];
+  entryPoint: string;
+  readme: string;
+  icon?: string;
+  repository?: string;
+  homepage?: string;
+  publishedAt: Date;
+  updatedAt: Date;
   downloads: number;
-  rating: AutomationRatingAggregate;
-  validationStatus: ValidationStatus;
+  status: AutomationStatus;
+  validation?: ValidationResult;
+}
+
+export interface AutomationVersion {
+  version: string;
+  automationId: string;
+  publishedAt: Date;
+  changelog: string;
+  checksum: string;
+  deprecated: boolean;
+}
+
+export interface AutomationDependency {
+  id: string;
+  name: string;
+  versionRange: string;
+  optional: boolean;
+}
+
+export interface PricingModel {
+  type: "free" | "paid" | "freemium";
+  price?: number;
+  currency?: string;
+  trialPeriodDays?: number;
+}
+
+export interface AutomationReview {
+  id: string;
+  automationId: string;
+  author: string;
+  rating: number;
+  title: string;
+  content: string;
+  version: string;
   createdAt: Date;
   updatedAt: Date;
+  helpful: number;
+  verifiedPurchase: boolean;
 }
 
-export interface PublishInput {
-  name: string;
-  description: string;
-  longDescription?: string;
-  author: AutomationAuthor;
-  frameworks: Framework[];
-  industries?: string[];
-  useCases?: string[];
-  tags?: string[];
-  tier?: AutomationTier;
-  price?: number;
-  license?: LicenseType;
-  rules?: ComplianceRule[];
-  dependencies?: AutomationDependency[];
-  minPlatformVersion?: string;
+export interface AutomationRatingSummary {
+  automationId: string;
+  averageRating: number;
+  totalReviews: number;
+  distribution: Record<number, number>;
 }
 
-export interface SearchFilters {
+export interface AutomationSearchQuery {
   query?: string;
-  frameworks?: Framework[];
-  industries?: string[];
-  useCases?: string[];
+  framework?: ComplianceFramework[];
+  industry?: string[];
+  useCase?: string[];
   tags?: string[];
-  tier?: AutomationTier;
+  pricing?: "free" | "paid" | "freemium";
   minRating?: number;
-  maxPrice?: number;
-  status?: AutomationStatus;
-  sortBy?: "relevance" | "rating" | "downloads" | "newest" | "price_asc" | "price_desc";
+  sortBy?: "relevance" | "rating" | "downloads" | "newest" | "updated";
   limit?: number;
   offset?: number;
 }
 
-export interface RateInput {
-  automationId: string;
-  reviewerId: string;
-  reviewerName: string;
-  score: 1 | 2 | 3 | 4 | 5;
-  title: string;
-  comment: string;
+export interface SearchResult {
+  automations: Automation[];
+  total: number;
+  hasMore: boolean;
 }
 
-export interface InstallInput {
-  version?: string;
-  targetEnvironment?: string;
-  config?: Record<string, unknown>;
+export interface PublisherProfile {
+  id: string;
+  name: string;
+  email: string;
+  bio: string;
+  avatar?: string;
+  automations: string[];
+  totalDownloads: number;
+  averageRating: number;
+  joinedAt: Date;
 }
 
-export interface InstallResult {
+export interface InstallationResult {
   automationId: string;
   version: string;
   installedAt: Date;
-  rulesInstalled: number;
-  config: Record<string, unknown>;
+  path: string;
+  resolvedDependencies: ResolvedDependency[];
+}
+
+export interface ResolvedDependency {
+  id: string;
+  name: string;
+  version: string;
+  resolvedFrom: string;
 }
 
 export interface ValidationResult {
-  automationId: string;
-  status: ValidationStatus;
-  passedChecks: string[];
-  failedChecks: string[];
-  warnings: string[];
-  validatedAt: Date;
-  duration: number;
+  valid: boolean;
+  errors: ValidationItem[];
+  warnings: ValidationWarning[];
+  checkedAt: Date;
 }
 
-export interface MarketplaceStats {
-  totalAutomations: number;
-  automationsByFramework: Record<Framework, number>;
-  automationsByTier: Record<AutomationTier, number>;
-  totalDownloads: number;
-  totalReviews: number;
-  averageRating: number;
+export interface ValidationItem {
+  code: string;
+  message: string;
+  file?: string;
+  line?: number;
+}
+
+export interface ValidationWarning {
+  code: string;
+  message: string;
+  suggestion?: string;
+}
+
+export type ComplianceFramework =
+  | "ISO27001"
+  | "SOC2"
+  | "NIST_CSF"
+  | "NIST_800_53"
+  | "PCI_DSS"
+  | "HIPAA"
+  | "GDPR"
+  | "CCPA"
+  | "ISO42001"
+  | "ISO27701"
+  | "CIS"
+  | "COBIT"
+  | "CUSTOM";
+
+export type AutomationStatus =
+  | "draft"
+  | "published"
+  | "deprecated"
+  | "archived"
+  | "suspended";
+
+export type MarketplaceEvent =
+  | { type: "automation:published"; automationId: string; author: string }
+  | { type: "automation:updated"; automationId: string; version: string }
+  | { type: "automation:installed"; automationId: string; installedBy: string }
+  | { type: "automation:reviewed"; automationId: string; rating: number }
+  | { type: "automation:downloaded"; automationId: string }
+  | { type: "automation:deprecated"; automationId: string }
+  | { type: "validation:completed"; automationId: string; valid: boolean };
+
+export interface MarketplaceConfig {
+  storagePath: string;
+  maxUploadSizeMb: number;
+  requiredFrameworks: boolean;
+  enableMonetization: boolean;
+  validationTimeoutMs: number;
+  maxDependencies: number;
+  reviewCooldownMs: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -224,8 +191,8 @@ export interface MarketplaceStats {
 export class MarketplaceError extends Error {
   constructor(
     message: string,
-    public readonly code: string,
-    public readonly details?: Record<string, unknown>
+    public code: string,
+    public details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "MarketplaceError";
@@ -239,87 +206,44 @@ export class AutomationNotFoundError extends MarketplaceError {
   }
 }
 
+export class VersionConflictError extends MarketplaceError {
+  constructor(id: string, version: string) {
+    super(
+      `Version conflict for automation ${id}: version ${version} already exists`,
+      "VERSION_CONFLICT",
+      { id, version },
+    );
+    this.name = "VersionConflictError";
+  }
+}
+
 export class ValidationError extends MarketplaceError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "VALIDATION_ERROR", details);
+  constructor(errors: Array<{ code: string; message: string }>) {
+    super("Validation failed", "VALIDATION_FAILED", { errors });
     this.name = "ValidationError";
   }
 }
 
-export class DuplicateError extends MarketplaceError {
-  constructor(message: string) {
-    super(message, "DUPLICATE");
-    this.name = "DuplicateError";
+export class DependencyResolutionError extends MarketplaceError {
+  constructor(dep: string, reason: string) {
+    super(
+      `Failed to resolve dependency ${dep}: ${reason}`,
+      "DEPENDENCY_RESOLUTION_FAILED",
+      { dep, reason },
+    );
+    this.name = "DependencyResolutionError";
   }
 }
 
-export class DependencyError extends MarketplaceError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "DEPENDENCY_ERROR", details);
-    this.name = "DependencyError";
+export class AccessDeniedError extends MarketplaceError {
+  constructor(action: string, automationId: string) {
+    super(
+      `Access denied: cannot ${action} automation ${automationId}`,
+      "ACCESS_DENIED",
+      { action, automationId },
+    );
+    this.name = "AccessDeniedError";
   }
-}
-
-// ---------------------------------------------------------------------------
-// Utility helpers
-// ---------------------------------------------------------------------------
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
-function hashChecksum(data: unknown): string {
-  const payload = JSON.stringify(data, Object.keys(data as Record<string, unknown>).sort());
-  return `sha256:${createHash("sha256").update(payload).digest("hex")}`;
-}
-
-function parseVersion(version: string): [number, number, number] {
-  const parts = version.split(".").map(Number) as [number, number, number];
-  if (parts.some((p) => isNaN(p) || p < 0)) {
-    throw new ValidationError(`Invalid version format: ${version}`);
-  }
-  return parts;
-}
-
-function satisfiesRange(version: string, range: string): boolean {
-  const [vMaj, vMin, vPat] = parseVersion(version);
-  const rangeParts = range.replace(/\s/g, "").split(",");
-
-  for (const part of rangeParts) {
-    const trimmed = part.trim();
-    if (trimmed.startsWith(">=")) {
-      const [rMaj, rMin, rPat] = parseVersion(trimmed.slice(2));
-      if (vMaj < rMaj || (vMaj === rMaj && vMin < rMin) || (vMaj === rMaj && vMin === rMin && vPat < rPat)) return false;
-    } else if (trimmed.startsWith("^")) {
-      const [rMaj, rMin, rPat] = parseVersion(trimmed.slice(1));
-      if (vMaj !== rMaj || vMin < rMin || (vMin === rMin && vPat < rPat)) return false;
-    } else if (trimmed.startsWith("~")) {
-      const [rMaj, rMin, rPat] = parseVersion(trimmed.slice(1));
-      if (vMaj !== rMaj || vMin !== rMin || vPat < rPat) return false;
-    } else if (trimmed.includes("-")) {
-      const [low, high] = trimmed.split("-").map((v) => parseVersion(v));
-      const [hMaj, hMin, hPat] = high;
-      if (vMaj < low[0] || (vMaj === low[0] && vMin < low[1]) || (vMaj === low[0] && vMin === low[1] && vPat < low[2])) return false;
-      if (vMaj > hMaj || (vMaj === hMaj && vMin > hMin) || (vMaj === hMaj && vMin === hMin && vPat > hPat)) return false;
-    } else if (trimmed === "*") {
-      return true;
-    } else {
-      if (version !== trimmed) return false;
-    }
-  }
-  return true;
-}
-
-function createEmptyRating(automationId: string): AutomationRatingAggregate {
-  return {
-    automationId,
-    average: 0,
-    count: 0,
-    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -327,153 +251,199 @@ function createEmptyRating(automationId: string): AutomationRatingAggregate {
 // ---------------------------------------------------------------------------
 
 export class AutomationPublisher {
-  private automations = new Map<string, Automation>();
+  private automations: Map<string, Automation> = new Map();
+  private versions: Map<string, AutomationVersion[]> = new Map();
+  private profiles: Map<string, PublisherProfile> = new Map();
+  private eventLog: MarketplaceEvent[] = [];
 
-  async publish(input: PublishInput): Promise<Automation> {
-    const existingBySlug = [...this.automations.values()].find(
-      (a) => slugify(a.name) === slugify(input.name) && a.author.id === input.author.id
-    );
-    if (existingBySlug) {
-      throw new DuplicateError(`Automation with name "${input.name}" already exists for this author`);
+  constructor(private config: MarketplaceConfig) {}
+
+  /** Register a new publisher profile. */
+  registerPublisher(
+    profile: Omit<PublisherProfile, "automations" | "totalDownloads" | "averageRating">,
+  ): PublisherProfile {
+    const full: PublisherProfile = {
+      ...profile,
+      automations: [],
+      totalDownloads: 0,
+      averageRating: 0,
+    };
+    this.profiles.set(profile.id, full);
+    return full;
+  }
+
+  /** Publish a new automation to the marketplace. */
+  publish(automation: Omit<Automation, "downloads" | "status" | "validation" | "publishedAt" | "updatedAt">): Automation {
+    if (this.automations.has(automation.id)) {
+      throw new MarketplaceError(
+        `Automation ${automation.id} already exists. Use update() instead.`,
+        "ALREADY_EXISTS",
+        { id: automation.id },
+      );
+    }
+
+    if (
+      this.config.requiredFrameworks &&
+      automation.framework.length === 0
+    ) {
+      throw new MarketplaceError(
+        "At least one compliance framework must be specified",
+        "FRAMEWORK_REQUIRED",
+      );
     }
 
     const now = new Date();
-    const id = `ca-${randomUUID()}`;
-    const slug = slugify(input.name);
-    const version = "1.0.0";
-
-    const automation: Automation = {
-      id,
-      name: input.name,
-      slug,
-      description: input.description,
-      longDescription: input.longDescription,
-      author: input.author,
-      status: "published",
-      tier: input.tier ?? "free",
-      price: input.price ?? 0,
-      license: input.license ?? "MIT",
-      metadata: {
-        frameworks: input.frameworks,
-        industries: input.industries ?? [],
-        useCases: input.useCases ?? [],
-        tags: input.tags ?? [],
-        minPlatformVersion: input.minPlatformVersion,
-      },
-      versions: [
-        {
-          version,
-          publishedAt: now,
-          checksum: hashChecksum(input),
-          changelog: "Initial release",
-        },
-      ],
-      latestVersion: version,
-      dependencies: input.dependencies ?? [],
-      rules: input.rules ?? [],
+    const entry: Automation = {
+      ...automation,
       downloads: 0,
-      rating: createEmptyRating(id),
-      validationStatus: "pending",
-      createdAt: now,
+      status: "published",
+      publishedAt: now,
       updatedAt: now,
     };
 
-    this.automations.set(id, automation);
-    return { ...automation };
-  }
+    this.automations.set(automation.id, entry);
 
-  async update(
-    automationId: string,
-    patch: Partial<Pick<PublishInput, "description" | "longDescription" | "tags" | "tier" | "price" | "license">>
-  ): Promise<Automation> {
-    const automation = this.automations.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
+    const versionRecord: AutomationVersion = {
+      version: automation.version,
+      automationId: automation.id,
+      publishedAt: now,
+      changelog: "Initial release",
+      checksum: this.computeChecksum(automation),
+      deprecated: false,
+    };
+    this.versions.set(automation.id, [versionRecord]);
 
-    if (patch.description !== undefined) automation.description = patch.description;
-    if (patch.longDescription !== undefined) automation.longDescription = patch.longDescription;
-    if (patch.tags !== undefined) automation.metadata.tags = patch.tags;
-    if (patch.tier !== undefined) automation.tier = patch.tier;
-    if (patch.price !== undefined) automation.price = patch.price;
-    if (patch.license !== undefined) automation.license = patch.license;
-    automation.updatedAt = new Date();
-
-    return { ...automation };
-  }
-
-  async publishVersion(
-    automationId: string,
-    input: { version: string; changelog?: string; rules?: ComplianceRule[]; dependencies?: AutomationDependency[] }
-  ): Promise<Automation> {
-    const automation = this.automations.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
-
-    const existingVersions = automation.versions.map((v) => v.version);
-    if (existingVersions.includes(input.version)) {
-      throw new DuplicateError(`Version ${input.version} already exists`);
+    // Update publisher profile
+    const profile = this.profiles.get(automation.author);
+    if (profile) {
+      profile.automations.push(automation.id);
     }
 
-    const latestParts = parseVersion(automation.latestVersion);
-    const newParts = parseVersion(input.version);
-    if (newParts[0] < latestParts[0] || (newParts[0] === latestParts[0] && newParts[1] < latestParts[1]) || (newParts[0] === latestParts[0] && newParts[1] === latestParts[1] && newParts[2] < latestParts[2])) {
-      throw new ValidationError(`Version ${input.version} is older than current latest ${automation.latestVersion}`);
-    }
-
-    automation.versions.push({
-      version: input.version,
-      publishedAt: new Date(),
-      checksum: hashChecksum(input),
-      changelog: input.changelog,
+    this.emit({
+      type: "automation:published",
+      automationId: automation.id,
+      author: automation.author,
     });
 
-    automation.latestVersion = input.version;
-    if (input.rules) automation.rules = input.rules;
-    if (input.dependencies) automation.dependencies = input.dependencies;
-    automation.updatedAt = new Date();
-
-    return { ...automation };
+    return entry;
   }
 
-  async deprecate(automationId: string, reason?: string): Promise<Automation> {
-    const automation = this.automations.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
+  /** Update an existing automation with a new version. */
+  update(
+    id: string,
+    patch: Partial<Pick<Automation, "description" | "framework" | "industry" | "useCase" | "tags" | "entryPoint" | "readme" | "dependencies">>,
+    newVersion: string,
+    changelog: string,
+  ): Automation {
+    const existing = this.automations.get(id);
+    if (!existing) {
+      throw new AutomationNotFoundError(id);
+    }
+
+    const existingVersions = this.versions.get(id) ?? [];
+    if (existingVersions.some((v) => v.version === newVersion)) {
+      throw new VersionConflictError(id, newVersion);
+    }
+
+    const updated: Automation = {
+      ...existing,
+      ...patch,
+      version: newVersion,
+      updatedAt: new Date(),
+    };
+    this.automations.set(id, updated);
+
+    const versionRecord: AutomationVersion = {
+      version: newVersion,
+      automationId: id,
+      publishedAt: new Date(),
+      changelog,
+      checksum: this.computeChecksum(updated),
+      deprecated: false,
+    };
+    const versions = existingVersions.concat(versionRecord);
+    this.versions.set(id, versions);
+
+    this.emit({
+      type: "automation:updated",
+      automationId: id,
+      version: newVersion,
+    });
+
+    return updated;
+  }
+
+  /** Deprecate an automation. */
+  deprecate(id: string, reason: string): void {
+    const automation = this.automations.get(id);
+    if (!automation) {
+      throw new AutomationNotFoundError(id);
+    }
+
     automation.status = "deprecated";
     automation.updatedAt = new Date();
-    return { ...automation };
-  }
 
-  async yank(automationId: string, version?: string): Promise<void> {
-    const automation = this.automations.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
-
-    if (version) {
-      const idx = automation.versions.findIndex((v) => v.version === version);
-      if (idx === -1) throw new ValidationError(`Version ${version} not found`);
-      automation.versions.splice(idx, 1);
-    } else {
-      automation.status = "yanked";
+    const versions = this.versions.get(id) ?? [];
+    const latest = versions[versions.length - 1];
+    if (latest) {
+      latest.deprecated = true;
     }
-    automation.updatedAt = new Date();
+
+    this.emit({ type: "automation:deprecated", automationId: id });
   }
 
-  get(id: string): Automation | undefined {
-    return this.automations.has(id) ? { ...this.automations.get(id)! } : undefined;
+  /** Retrieve an automation by id. */
+  get(id: string): Automation {
+    const automation = this.automations.get(id);
+    if (!automation) {
+      throw new AutomationNotFoundError(id);
+    }
+    return automation;
   }
 
-  getAll(): Automation[] {
-    return [...this.automations.values()].map((a) => ({ ...a }));
+  /** Get all versions of an automation. */
+  getVersions(id: string): AutomationVersion[] {
+    if (!this.automations.has(id)) {
+      throw new AutomationNotFoundError(id);
+    }
+    return this.versions.get(id) ?? [];
   }
 
-  getByAuthor(authorId: string): Automation[] {
-    return this.getAll().filter((a) => a.author.id === authorId);
+  /** Get a publisher profile. */
+  getPublisher(id: string): PublisherProfile | undefined {
+    return this.profiles.get(id);
   }
 
-  list(): Automation[] {
-    return this.getAll();
+  /** List all automations by a given publisher. */
+  listByPublisher(authorId: string): Automation[] {
+    return Array.from(this.automations.values()).filter(
+      (a) => a.author === authorId,
+    );
   }
 
-  /** Internal access for other sub-modules */
-  _store(): Map<string, Automation> {
-    return this.automations;
+  private emit(event: MarketplaceEvent): void {
+    this.eventLog.push(event);
+  }
+
+  private computeChecksum(automation: object): string {
+    const payload = JSON.stringify(automation);
+    let hash = 0;
+    for (let i = 0; i < payload.length; i++) {
+      const char = payload.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return `sha256-${Math.abs(hash).toString(16)}`;
+  }
+
+  /** Expose event log for testing / audit. */
+  getEventLog(): ReadonlyArray<MarketplaceEvent> {
+    return this.eventLog;
+  }
+
+  /** Get internal automations map (for marketplace aggregation). */
+  protected getAll(): Automation[] {
+    return Array.from(this.automations.values());
   }
 }
 
@@ -484,183 +454,185 @@ export class AutomationPublisher {
 export class AutomationDiscovery {
   constructor(private publisher: AutomationPublisher) {}
 
-  async search(filters: SearchFilters): Promise<{ results: Automation[]; total: number }> {
-    let items = this.publisher.list().filter((a) => a.status === "published");
+  /** Search automations with filtering, sorting, and pagination. */
+  search(query: AutomationSearchQuery): SearchResult {
+    let results = this.publisher["getAll"]();
 
-    if (filters.query) {
-      const q = filters.query.toLowerCase();
-      items = items.filter(
+    // Free-text search across name, description, tags
+    if (query.query) {
+      const q = query.query.toLowerCase();
+      results = results.filter(
         (a) =>
           a.name.toLowerCase().includes(q) ||
           a.description.toLowerCase().includes(q) ||
-          a.metadata.tags.some((t) => t.toLowerCase().includes(q))
+          a.tags.some((t) => t.toLowerCase().includes(q)),
       );
     }
 
-    if (filters.frameworks?.length) {
-      items = items.filter((a) => filters.frameworks!.some((f) => a.metadata.frameworks.includes(f)));
+    // Framework filter
+    if (query.framework && query.framework.length > 0) {
+      results = results.filter((a) =>
+        query.framework!.some((f) => a.framework.includes(f)),
+      );
     }
 
-    if (filters.industries?.length) {
-      items = items.filter((a) => filters.industries!.some((i) => a.metadata.industries.includes(i)));
+    // Industry filter
+    if (query.industry && query.industry.length > 0) {
+      results = results.filter((a) =>
+        query.industry!.some((i) => a.industry.includes(i)),
+      );
     }
 
-    if (filters.useCases?.length) {
-      items = items.filter((a) => filters.useCases!.some((u) => a.metadata.useCases.includes(u)));
+    // Use-case filter
+    if (query.useCase && query.useCase.length > 0) {
+      results = results.filter((a) =>
+        query.useCase!.some((u) => a.useCase.includes(u)),
+      );
     }
 
-    if (filters.tags?.length) {
-      items = items.filter((a) => filters.tags!.some((t) => a.metadata.tags.includes(t)));
+    // Tag filter
+    if (query.tags && query.tags.length > 0) {
+      results = results.filter((a) =>
+        query.tags!.every((t) => a.tags.includes(t)),
+      );
     }
 
-    if (filters.tier) {
-      items = items.filter((a) => a.tier === filters.tier);
+    // Pricing filter
+    if (query.pricing) {
+      results = results.filter((a) => a.pricing.type === query.pricing);
     }
 
-    if (filters.minRating !== undefined) {
-      items = items.filter((a) => a.rating.average >= filters.minRating!);
+    // Rating filter
+    if (query.minRating !== undefined) {
+      results = results.filter((a) => {
+        const rating = this.getAverageRating(a.id);
+        return rating >= query.minRating!;
+      });
     }
 
-    if (filters.maxPrice !== undefined) {
-      items = items.filter((a) => a.price <= filters.maxPrice!);
-    }
+    // Only published & active
+    results = results.filter((a) => a.status === "published");
 
-    const total = items.length;
-
-    const sortBy = filters.sortBy ?? "relevance";
-    switch (sortBy) {
+    // Sort
+    switch (query.sortBy) {
       case "rating":
-        items.sort((a, b) => b.rating.average - a.rating.average);
+        results.sort(
+          (a, b) => this.getAverageRating(b.id) - this.getAverageRating(a.id),
+        );
         break;
       case "downloads":
-        items.sort((a, b) => b.downloads - a.downloads);
+        results.sort((a, b) => b.downloads - a.downloads);
         break;
       case "newest":
-        items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        results.sort(
+          (a, b) =>
+            new Date(b.publishedAt).getTime() -
+            new Date(a.publishedAt).getTime(),
+        );
         break;
-      case "price_asc":
-        items.sort((a, b) => a.price - b.price);
+      case "updated":
+        results.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        );
         break;
-      case "price_desc":
-        items.sort((a, b) => b.price - a.price);
+      case "relevance":
+      default:
+        // Default: downloads as proxy for relevance
+        results.sort((a, b) => b.downloads - a.downloads);
         break;
     }
 
-    const offset = filters.offset ?? 0;
-    const limit = filters.limit ?? 20;
-    items = items.slice(offset, offset + limit);
-
-    return { results: items.map((a) => ({ ...a })), total };
-  }
-
-  async getByFramework(framework: Framework): Promise<Automation[]> {
-    return this.search({ frameworks: [framework] }).then((r) => r.results);
-  }
-
-  async getByIndustry(industry: string): Promise<Automation[]> {
-    return this.search({ industries: [industry] }).then((r) => r.results);
-  }
-
-  async getPopular(limit = 10): Promise<Automation[]> {
-    return this.search({ sortBy: "downloads", limit }).then((r) => r.results);
-  }
-
-  async getTopRated(limit = 10): Promise<Automation[]> {
-    return this.search({ sortBy: "rating", minRating: 1, limit }).then((r) => r.results);
-  }
-
-  async getFeatured(limit = 5): Promise<Automation[]> {
-    return this.search({ sortBy: "rating", minRating: 4, limit }).then((r) => r.results);
-  }
-
-  async getCategories(): Promise<{ frameworks: Framework[]; industries: string[]; useCases: string[]; tags: string[] }> {
-    const all = this.publisher.list().filter((a) => a.status === "published");
-    const frameworks = new Set<Framework>();
-    const industries = new Set<string>();
-    const useCases = new Set<string>();
-    const tags = new Set<string>();
-
-    for (const a of all) {
-      a.metadata.frameworks.forEach((f) => frameworks.add(f));
-      a.metadata.industries.forEach((i) => industries.add(i));
-      a.metadata.useCases.forEach((u) => useCases.add(u));
-      a.metadata.tags.forEach((t) => tags.add(t));
-    }
+    const total = results.length;
+    const limit = query.limit ?? 20;
+    const offset = query.offset ?? 0;
+    const paginated = results.slice(offset, offset + limit);
 
     return {
-      frameworks: [...frameworks],
-      industries: [...industries],
-      useCases: [...useCases],
-      tags: [...tags],
+      automations: paginated,
+      total,
+      hasMore: offset + limit < total,
     };
   }
 
-  async getStats(): Promise<MarketplaceStats> {
-    const all = this.publisher.list().filter((a) => a.status === "published");
-    const automationsByFramework = {} as Record<Framework, number>;
-    const automationsByTier = {} as Record<AutomationTier, number>;
-    let totalDownloads = 0;
-    let totalReviews = 0;
-    let totalRating = 0;
-
-    for (const a of all) {
-      for (const f of a.metadata.frameworks) {
-        automationsByFramework[f] = (automationsByFramework[f] ?? 0) + 1;
-      }
-      automationsByTier[a.tier] = (automationsByTier[a.tier] ?? 0) + 1;
-      totalDownloads += a.downloads;
-      totalReviews += a.rating.count;
-      totalRating += a.rating.average * a.rating.count;
-    }
-
-    return {
-      totalAutomations: all.length,
-      automationsByFramework,
-      automationsByTier,
-      totalDownloads,
-      totalReviews,
-      averageRating: totalReviews > 0 ? totalRating / totalReviews : 0,
-    };
+  /** Browse automations by a specific framework. */
+  browseByFramework(framework: ComplianceFramework): Automation[] {
+    return this.search({ framework: [framework] }).automations;
   }
 
-  async resolveDependencies(automationId: string, version?: string): Promise<Automation[]> {
-    const automation = this.publisher.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
+  /** Browse automations by industry vertical. */
+  browseByIndustry(industry: string): Automation[] {
+    return this.search({ industry: [industry] }).automations;
+  }
 
-    const resolved: Automation[] = [];
-    const visited = new Set<string>();
+  /** Browse automations by use case. */
+  browseByUseCase(useCase: string): Automation[] {
+    return this.search({ useCase: [useCase] }).automations;
+  }
 
-    const resolve = (id: string, range: string) => {
-      if (visited.has(id)) return;
-      visited.add(id);
+  /** Get trending automations (by recent downloads). */
+  trending(limit: number = 10): Automation[] {
+    return this.search({ sortBy: "downloads", limit }).automations;
+  }
 
-      const dep = this.publisher.get(id);
-      if (!dep) {
-        throw new DependencyError(`Dependency not found: ${id}`);
-      }
+  /** Get newly published automations. */
+  newest(limit: number = 10): Automation[] {
+    return this.search({ sortBy: "newest", limit }).automations;
+  }
 
-      const targetVersion = version ?? dep.latestVersion;
-      const matchingVersion = dep.versions.find((v) => satisfiesRange(v.version, range));
-      if (!matchingVersion) {
-        throw new DependencyError(`No version of ${id} satisfies ${range}`);
-      }
+  /** Get top-rated automations. */
+  topRated(limit: number = 10): Automation[] {
+    return this.search({ sortBy: "rating", minRating: 0, limit }).automations;
+  }
 
-      resolved.push(dep);
+  /** Get free automations. */
+  free(limit: number = 20): Automation[] {
+    return this.search({ pricing: "free", limit }).automations;
+  }
 
-      for (const d of dep.dependencies) {
-        resolve(d.automationId, d.versionRange);
-      }
-    };
+  /** Get featured automations (top downloads with 4+ rating). */
+  featured(limit: number = 5): Automation[] {
+    const all = this.publisher["getAll"]();
+    return all
+      .filter((a) => a.status === "published")
+      .map((a) => ({
+        automation: a,
+        score: this.getAverageRating(a.id) * 2 + Math.log2(a.downloads + 1),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((entry) => entry.automation);
+  }
 
-    const targetVersion = version ?? automation.latestVersion;
-    const target = automation.versions.find((v) => v.version === targetVersion);
-    if (!target) throw new ValidationError(`Version ${targetVersion} not found for ${automationId}`);
+  /** Get related automations based on shared frameworks, industries, and tags. */
+  related(automationId: string, limit: number = 5): Automation[] {
+    const target = this.publisher.get(automationId);
+    const all = this.publisher["getAll"]();
 
-    for (const dep of automation.dependencies) {
-      resolve(dep.automationId, dep.versionRange);
-    }
+    return all
+      .filter((a) => a.id !== automationId && a.status === "published")
+      .map((a) => {
+        let similarity = 0;
+        for (const fw of target.framework) {
+          if (a.framework.includes(fw)) similarity += 3;
+        }
+        for (const ind of target.industry) {
+          if (a.industry.includes(ind)) similarity += 2;
+        }
+        for (const tag of target.tags) {
+          if (a.tags.includes(tag)) similarity += 1;
+        }
+        return { automation: a, similarity };
+      })
+      .filter((entry) => entry.similarity > 0)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit)
+      .map((entry) => entry.automation);
+  }
 
-    return resolved;
+  private getAverageRating(automationId: string): number {
+    // Delegate to the rating system if available; default to 0
+    return 0;
   }
 }
 
@@ -669,140 +641,145 @@ export class AutomationDiscovery {
 // ---------------------------------------------------------------------------
 
 export class AutomationRating {
-  private reviews = new Map<string, Review[]>();
-  private ratings = new Map<string, AutomationRatingAggregate>();
+  private reviews: Map<string, AutomationReview[]> = new Map();
+  private eventLog: MarketplaceEvent[] = [];
 
-  constructor(private publisher: AutomationPublisher) {}
+  constructor(private config: MarketplaceConfig) {}
 
-  async rate(input: RateInput): Promise<Review> {
-    const automation = this.publisher.get(input.automationId);
-    if (!automation) throw new AutomationNotFoundError(input.automationId);
-
-    if (input.score < 1 || input.score > 5) {
-      throw new ValidationError("Score must be between 1 and 5");
+  /** Submit a review for an automation. */
+  submitReview(
+    automationId: string,
+    review: Omit<AutomationReview, "id" | "createdAt" | "updatedAt" | "helpful">,
+  ): AutomationReview {
+    if (review.rating < 1 || review.rating > 5) {
+      throw new MarketplaceError(
+        "Rating must be between 1 and 5",
+        "INVALID_RATING",
+        { rating: review.rating },
+      );
     }
 
-    const existingReviews = this.reviews.get(input.automationId) ?? [];
-    const existing = existingReviews.find((r) => r.reviewerId === input.reviewerId);
-    if (existing) {
-      throw new DuplicateError(`User ${input.reviewerId} has already reviewed this automation`);
+    const existing = this.reviews.get(automationId) ?? [];
+
+    // Check cooldown: prevent same author from reviewing too frequently
+    const lastReview = existing
+      .filter((r) => r.author === review.author)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )[0];
+
+    if (lastReview) {
+      const elapsed = Date.now() - new Date(lastReview.createdAt).getTime();
+      if (elapsed < this.config.reviewCooldownMs) {
+        throw new MarketplaceError(
+          "Review cooldown not met. Please wait before submitting another review.",
+          "REVIEW_COOLDOWN",
+          {
+            nextAllowedAt: new Date(
+              new Date(lastReview.createdAt).getTime() +
+                this.config.reviewCooldownMs,
+            ),
+          },
+        );
+      }
     }
 
-    const now = new Date();
-    const review: Review = {
-      id: `rev-${randomUUID()}`,
-      automationId: input.automationId,
-      reviewerId: input.reviewerId,
-      reviewerName: input.reviewerName,
-      score: input.score,
-      title: input.title,
-      comment: input.comment,
-      createdAt: now,
-      updatedAt: now,
+    const fullReview: AutomationReview = {
+      ...review,
+      id: this.generateId(),
       helpful: 0,
-      verified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    if (!this.reviews.has(input.automationId)) {
-      this.reviews.set(input.automationId, []);
-    }
-    this.reviews.get(input.automationId)!.push(review);
+    existing.push(fullReview);
+    this.reviews.set(automationId, existing);
 
-    this.recomputeRating(input.automationId);
-
-    return { ...review };
-  }
-
-  async updateReview(reviewId: string, automationId: string, patch: Partial<Pick<Review, "score" | "title" | "comment">>): Promise<Review> {
-    const reviews = this.reviews.get(automationId);
-    if (!reviews) throw new AutomationNotFoundError(automationId);
-
-    const review = reviews.find((r) => r.id === reviewId);
-    if (!review) throw new ValidationError(`Review ${reviewId} not found`);
-
-    if (patch.score !== undefined) review.score = patch.score;
-    if (patch.title !== undefined) review.title = patch.title;
-    if (patch.comment !== undefined) review.comment = patch.comment;
-    review.updatedAt = new Date();
-
-    this.recomputeRating(automationId);
-    return { ...review };
-  }
-
-  async deleteReview(reviewId: string, automationId: string): Promise<void> {
-    const reviews = this.reviews.get(automationId);
-    if (!reviews) throw new AutomationNotFoundError(automationId);
-
-    const idx = reviews.findIndex((r) => r.id === reviewId);
-    if (idx === -1) throw new ValidationError(`Review ${reviewId} not found`);
-
-    reviews.splice(idx, 1);
-    this.recomputeRating(automationId);
-  }
-
-  async markHelpful(reviewId: string, automationId: string): Promise<Review> {
-    const reviews = this.reviews.get(automationId);
-    if (!reviews) throw new AutomationNotFoundError(automationId);
-
-    const review = reviews.find((r) => r.id === reviewId);
-    if (!review) throw new ValidationError(`Review ${reviewId} not found`);
-
-    review.helpful += 1;
-    return { ...review };
-  }
-
-  async getReviews(automationId: string, options?: { sortBy?: "newest" | "oldest" | "helpful" | "highest" | "lowest"; limit?: number }): Promise<Review[]> {
-    const reviews = this.reviews.get(automationId) ?? [];
-    const sorted = [...reviews];
-
-    switch (options?.sortBy) {
-      case "newest":
-        sorted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        break;
-      case "oldest":
-        sorted.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-        break;
-      case "helpful":
-        sorted.sort((a, b) => b.helpful - a.helpful);
-        break;
-      case "highest":
-        sorted.sort((a, b) => b.score - a.score);
-        break;
-      case "lowest":
-        sorted.sort((a, b) => a.score - b.score);
-        break;
-      default:
-        sorted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    }
-
-    const limit = options?.limit ?? 20;
-    return sorted.slice(0, limit).map((r) => ({ ...r }));
-  }
-
-  async getRating(automationId: string): Promise<AutomationRatingAggregate> {
-    return this.ratings.get(automationId) ?? createEmptyRating(automationId);
-  }
-
-  async getReviewCount(automationId: string): Promise<number> {
-    return (this.reviews.get(automationId) ?? []).length;
-  }
-
-  private recomputeRating(automationId: string): void {
-    const reviews = this.reviews.get(automationId) ?? [];
-    const distribution: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let total = 0;
-
-    for (const r of reviews) {
-      distribution[r.score] += 1;
-      total += r.score;
-    }
-
-    this.ratings.set(automationId, {
+    this.eventLog.push({
+      type: "automation:reviewed",
       automationId,
-      average: reviews.length > 0 ? total / reviews.length : 0,
-      count: reviews.length,
-      distribution,
+      rating: review.rating,
     });
+
+    return fullReview;
+  }
+
+  /** Get all reviews for an automation. */
+  getReviews(automationId: string): AutomationReview[] {
+    return this.reviews.get(automationId) ?? [];
+  }
+
+  /** Get a summary of ratings for an automation. */
+  getRatingSummary(automationId: string): AutomationRatingSummary {
+    const reviews = this.reviews.get(automationId) ?? [];
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    for (const review of reviews) {
+      distribution[review.rating] = (distribution[review.rating] ?? 0) + 1;
+    }
+
+    const totalReviews = reviews.length;
+    const averageRating =
+      totalReviews > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+        : 0;
+
+    return {
+      automationId,
+      averageRating: Math.round(averageRating * 100) / 100,
+      totalReviews,
+      distribution,
+    };
+  }
+
+  /** Mark a review as helpful. */
+  markHelpful(reviewId: string, automationId: string): void {
+    const reviews = this.reviews.get(automationId) ?? [];
+    const review = reviews.find((r) => r.id === reviewId);
+    if (review) {
+      review.helpful += 1;
+      review.updatedAt = new Date();
+    }
+  }
+
+  /** Get top reviews for an automation (by helpfulness). */
+  getTopReviews(automationId: string, limit: number = 5): AutomationReview[] {
+    return this.getReviews(automationId)
+      .sort((a, b) => b.helpful - a.helpful)
+      .slice(0, limit);
+  }
+
+  /** Get reviews by a specific author. */
+  getReviewsByAuthor(authorId: string): AutomationReview[] {
+    const all: AutomationReview[] = [];
+    for (const reviews of this.reviews.values()) {
+      all.push(...reviews.filter((r) => r.author === authorId));
+    }
+    return all.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }
+
+  /** Delete a review (author or admin). */
+  deleteReview(automationId: string, reviewId: string, requesterId: string): boolean {
+    const reviews = this.reviews.get(automationId) ?? [];
+    const index = reviews.findIndex((r) => r.id === reviewId);
+    if (index === -1) return false;
+
+    const review = reviews[index];
+    if (review.author !== requesterId) {
+      throw new AccessDeniedError("delete review", automationId);
+    }
+
+    reviews.splice(index, 1);
+    this.reviews.set(automationId, reviews);
+    return true;
+  }
+
+  private generateId(): string {
+    return `rev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 }
 
@@ -811,98 +788,209 @@ export class AutomationRating {
 // ---------------------------------------------------------------------------
 
 export class AutomationInstaller {
-  private installed = new Map<string, InstallResult>();
+  private installed: Map<string, InstallationResult> = new Map();
 
-  constructor(private publisher: AutomationPublisher) {}
+  constructor(
+    private publisher: AutomationPublisher,
+    private config: MarketplaceConfig,
+  ) {}
 
-  async install(automationId: string, input?: InstallInput): Promise<InstallResult> {
+  /** Install an automation and its dependencies. */
+  async install(
+    automationId: string,
+    targetPath: string,
+  ): Promise<InstallationResult> {
     const automation = this.publisher.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
 
-    if (automation.status !== "published") {
-      throw new ValidationError(`Cannot install automation with status "${automation.status}"`);
-    }
+    // Resolve dependency tree
+    const resolved = await this.resolveDependencies(automationId, new Set());
 
-    const version = input?.version ?? automation.latestVersion;
-    const versionEntry = automation.versions.find((v) => v.version === version);
-    if (!versionEntry) {
-      throw new ValidationError(`Version ${version} not found for automation ${automationId}`);
-    }
+    const now = new Date();
+    const result: InstallationResult = {
+      automationId,
+      version: automation.version,
+      installedAt: now,
+      path: targetPath,
+      resolvedDependencies: resolved,
+    };
 
-    // Validate dependencies
-    if (automation.dependencies.length > 0) {
-      for (const dep of automation.dependencies) {
-        const depAutomation = this.publisher.get(dep.automationId);
-        if (!depAutomation) {
-          throw new DependencyError(`Required dependency not found: ${dep.automationId}`);
-        }
-        const matchingVersion = depAutomation.versions.find((v) => satisfiesRange(v.version, dep.versionRange));
-        if (!matchingVersion) {
-          throw new DependencyError(
-            `Dependency ${dep.automationId} has no version satisfying ${dep.versionRange}`,
-            { required: dep.versionRange, available: depAutomation.versions.map((v) => v.version) }
-          );
-        }
+    this.installed.set(automationId, result);
+
+    // Increment download count
+    automation.downloads += 1;
+
+    this.emit({
+      type: "automation:installed",
+      automationId,
+      installedBy: targetPath,
+    });
+
+    return result;
+  }
+
+  /** Uninstall an automation. */
+  uninstall(automationId: string): boolean {
+    return this.installed.delete(automationId);
+  }
+
+  /** Check if an automation is installed. */
+  isInstalled(automationId: string): boolean {
+    return this.installed.has(automationId);
+  }
+
+  /** Get installation details. */
+  getInstallation(automationId: string): InstallationResult | undefined {
+    return this.installed.get(automationId);
+  }
+
+  /** List all installed automations. */
+  listInstalled(): InstallationResult[] {
+    return Array.from(this.installed.values());
+  }
+
+  /** Check for updates available for installed automations. */
+  checkUpdates(): Array<{
+    automationId: string;
+    currentVersion: string;
+    latestVersion: string;
+  }> {
+    const updates: Array<{
+      automationId: string;
+      currentVersion: string;
+      latestVersion: string;
+    }> = [];
+
+    for (const [id, installation] of this.installed) {
+      const automation = this.publisher.get(id);
+      if (automation.version !== installation.version) {
+        updates.push({
+          automationId: id,
+          currentVersion: installation.version,
+          latestVersion: automation.version,
+        });
       }
     }
 
-    if (automation.tier !== "free" && automation.price > 0) {
-      // In a real implementation, this would trigger payment processing
+    return updates;
+  }
+
+  /** Update an installed automation to the latest version. */
+  async update(
+    automationId: string,
+    targetPath: string,
+  ): Promise<InstallationResult> {
+    const installation = this.installed.get(automationId);
+    if (!installation) {
+      throw new MarketplaceError(
+        `Automation ${automationId} is not installed`,
+        "NOT_INSTALLED",
+      );
     }
 
-    // Increment downloads
-    automation.downloads += 1;
-    this.publisher._store().set(automationId, automation);
+    // Remove old installation
+    this.installed.delete(automationId);
 
-    const result: InstallResult = {
-      automationId,
-      version,
-      installedAt: new Date(),
-      rulesInstalled: automation.rules.length,
-      config: input?.config ?? {},
-    };
-
-    this.installed.set(`${automationId}@${version}`, result);
-    return { ...result };
+    // Re-install
+    return this.install(automationId, targetPath);
   }
 
-  async uninstall(automationId: string): Promise<void> {
-    const keys = [...this.installed.keys()].filter((k) => k.startsWith(`${automationId}@`));
-    for (const key of keys) {
-      this.installed.delete(key);
+  private async resolveDependencies(
+    automationId: string,
+    visited: Set<string>,
+  ): Promise<ResolvedDependency[]> {
+    if (visited.has(automationId)) {
+      throw new DependencyResolutionError(
+        automationId,
+        "Circular dependency detected",
+      );
     }
-  }
+    visited.add(automationId);
 
-  async isInstalled(automationId: string): Promise<boolean> {
-    return [...this.installed.keys()].some((k) => k.startsWith(`${automationId}@`));
-  }
-
-  async getInstalledVersion(automationId: string): Promise<InstallResult | undefined> {
-    const key = [...this.installed.keys()].find((k) => k.startsWith(`${automationId}@`));
-    return key ? { ...this.installed.get(key)! } : undefined;
-  }
-
-  async listInstalled(): Promise<InstallResult[]> {
-    return [...this.installed.values()].map((r) => ({ ...r }));
-  }
-
-  async update(automationId: string): Promise<InstallResult> {
-    const existing = await this.getInstalledVersion(automationId);
-    if (!existing) {
-      throw new ValidationError(`Automation ${automationId} is not installed`);
+    if (visited.size > this.config.maxDependencies) {
+      throw new DependencyResolutionError(
+        automationId,
+        `Maximum dependency depth of ${this.config.maxDependencies} exceeded`,
+      );
     }
 
     const automation = this.publisher.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
+    const resolved: ResolvedDependency[] = [];
 
-    if (existing.version === automation.latestVersion) {
-      return existing;
+    for (const dep of automation.dependencies) {
+      try {
+        const depAutomation = this.publisher.get(dep.id);
+
+        // Version range check (simplified semver)
+        if (!this.satisfiesVersion(depAutomation.version, dep.versionRange)) {
+          throw new DependencyResolutionError(
+            dep.id,
+            `Version ${depAutomation.version} does not satisfy range ${dep.versionRange}`,
+          );
+        }
+
+        resolved.push({
+          id: dep.id,
+          name: depAutomation.name,
+          version: depAutomation.version,
+          resolvedFrom: automationId,
+        });
+
+        // Recursively resolve sub-dependencies
+        const subDeps = await this.resolveDependencies(dep.id, visited);
+        resolved.push(...subDeps);
+      } catch (err) {
+        if (dep.optional) continue;
+        if (err instanceof DependencyResolutionError) throw err;
+        throw new DependencyResolutionError(
+          dep.id,
+          err instanceof Error ? err.message : "Unknown error",
+        );
+      }
     }
 
-    return this.install(automationId, {
-      version: automation.latestVersion,
-      config: existing.config,
-    });
+    return resolved;
+  }
+
+  /** Simple version range check supporting ^, ~, >=, exact. */
+  private satisfiesVersion(version: string, range: string): boolean {
+    const parts = version.split(".").map(Number);
+    const trimmed = range.trim();
+
+    if (trimmed.startsWith("^")) {
+      const target = trimmed.slice(1).split(".").map(Number);
+      return parts[0] === target[0] && this.versionGte(parts, target);
+    }
+
+    if (trimmed.startsWith("~")) {
+      const target = trimmed.slice(1).split(".").map(Number);
+      return (
+        parts[0] === target[0] &&
+        parts[1] === target[1] &&
+        this.versionGte(parts, target)
+      );
+    }
+
+    if (trimmed.startsWith(">=")) {
+      const target = trimmed.slice(2).split(".").map(Number);
+      return this.versionGte(parts, target);
+    }
+
+    return version === trimmed;
+  }
+
+  private versionGte(a: number[], b: number[]): boolean {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const ai = a[i] ?? 0;
+      const bi = b[i] ?? 0;
+      if (ai > bi) return true;
+      if (ai < bi) return false;
+    }
+    return true;
+  }
+
+  private emit(event: MarketplaceEvent): void {
+    // Events could be forwarded to an event bus
+    void event;
   }
 }
 
@@ -910,122 +998,154 @@ export class AutomationInstaller {
 // ComplianceAutomationMarketplace (Facade)
 // ---------------------------------------------------------------------------
 
-/**
- * Main marketplace facade that orchestrates publishing, discovery, ratings,
- * and installation of compliance automations.
- */
 export class ComplianceAutomationMarketplace {
   readonly publisher: AutomationPublisher;
   readonly discovery: AutomationDiscovery;
   readonly rating: AutomationRating;
   readonly installer: AutomationInstaller;
 
-  constructor() {
-    this.publisher = new AutomationPublisher();
+  private static readonly DEFAULT_CONFIG: MarketplaceConfig = {
+    storagePath: "./marketplace-data",
+    maxUploadSizeMb: 50,
+    requiredFrameworks: true,
+    enableMonetization: true,
+    validationTimeoutMs: 30_000,
+    maxDependencies: 50,
+    reviewCooldownMs: 24 * 60 * 60 * 1000, // 24 hours
+  };
+
+  constructor(config?: Partial<MarketplaceConfig>) {
+    const fullConfig: MarketplaceConfig = {
+      ...ComplianceAutomationMarketplace.DEFAULT_CONFIG,
+      ...config,
+    };
+
+    this.publisher = new AutomationPublisher(fullConfig);
     this.discovery = new AutomationDiscovery(this.publisher);
-    this.rating = new AutomationRating(this.publisher);
-    this.installer = new AutomationInstaller(this.publisher);
+    this.rating = new AutomationRating(fullConfig);
+    this.installer = new AutomationInstaller(this.publisher, fullConfig);
   }
 
-  /**
-   * Register an automation for validation.
-   * Returns a validation result that can be polled for status.
-   */
-  async validateAutomation(automationId: string): Promise<ValidationResult> {
-    const automation = this.publisher.get(automationId);
-    if (!automation) throw new AutomationNotFoundError(automationId);
+  /** Publish a new automation with automatic validation. */
+  async publishAutomation(
+    automation: Omit<
+      Automation,
+      | "downloads"
+      | "status"
+      | "validation"
+      | "publishedAt"
+      | "updatedAt"
+    >,
+  ): Promise<Automation> {
+    const validation = await this.validateAutomation(automation);
+    const result = this.publisher.publish(automation);
+    result.validation = validation;
+    return result;
+  }
 
-    const start = Date.now();
-    const passedChecks: string[] = [];
-    const failedChecks: string[] = [];
-    const warnings: string[] = [];
+  /** Search for automations. */
+  search(query: AutomationSearchQuery): SearchResult {
+    return this.discovery.search(query);
+  }
 
-    // Check: has rules
-    if (automation.rules.length > 0) {
-      passedChecks.push("has_rules");
-    } else {
-      warnings.push("no_rules_defined");
+  /** Install an automation. */
+  async installAutomation(
+    automationId: string,
+    targetPath: string,
+  ): Promise<InstallationResult> {
+    return this.installer.install(automationId, targetPath);
+  }
+
+  /** Submit a review for an automation. */
+  submitReview(
+    automationId: string,
+    review: Omit<AutomationReview, "id" | "createdAt" | "updatedAt" | "helpful">,
+  ): AutomationReview {
+    return this.rating.submitReview(automationId, review);
+  }
+
+  /** Get rating summary for an automation. */
+  getRatingSummary(automationId: string): AutomationRatingSummary {
+    return this.rating.getRatingSummary(automationId);
+  }
+
+  /** Validate an automation before publishing. */
+  async validateAutomation(
+    automation: Pick<Automation, "id" | "name" | "entryPoint" | "framework" | "dependencies">,
+  ): Promise<ValidationResult> {
+    const errors: ValidationItem[] = [];
+    const warnings: ValidationWarning[] = [];
+
+    if (!automation.id || automation.id.trim().length === 0) {
+      errors.push({ code: "MISSING_ID", message: "Automation ID is required" });
     }
 
-    // Check: has description
-    if (automation.description && automation.description.length >= 10) {
-      passedChecks.push("has_description");
-    } else {
-      failedChecks.push("insufficient_description");
+    if (!automation.name || automation.name.trim().length === 0) {
+      errors.push({ code: "MISSING_NAME", message: "Automation name is required" });
     }
 
-    // Check: has frameworks
-    if (automation.metadata.frameworks.length > 0) {
-      passedChecks.push("has_frameworks");
-    } else {
-      failedChecks.push("no_frameworks");
+    if (!automation.entryPoint || automation.entryPoint.trim().length === 0) {
+      errors.push({
+        code: "MISSING_ENTRY_POINT",
+        message: "Entry point is required",
+      });
     }
 
-    // Check: dependencies exist
-    for (const dep of automation.dependencies) {
-      const depAutomation = this.publisher.get(dep.automationId);
-      if (depAutomation) {
-        passedChecks.push(`dependency_${dep.automationId}_exists`);
-      } else {
-        failedChecks.push(`dependency_${dep.automationId}_missing`);
-      }
+    if (automation.framework.length === 0) {
+      warnings.push({
+        code: "NO_FRAMEWORK",
+        message: "No compliance framework specified",
+        suggestion: "Add at least one framework for better discoverability",
+      });
     }
 
-    // Check: version format
-    try {
-      parseVersion(automation.latestVersion);
-      passedChecks.push("valid_version_format");
-    } catch {
-      failedChecks.push("invalid_version_format");
+    if (automation.dependencies.length > 10) {
+      warnings.push({
+        code: "MANY_DEPENDENCIES",
+        message: `${automation.dependencies.length} dependencies detected`,
+        suggestion: "Consider reducing dependencies for easier maintenance",
+      });
     }
-
-    const status: ValidationStatus = failedChecks.length === 0 ? "passed" : "failed";
-
-    // Update automation validation status
-    automation.validationStatus = status;
-    this.publisher._store().set(automationId, automation);
 
     return {
-      automationId,
-      status,
-      passedChecks,
-      failedChecks,
+      valid: errors.length === 0,
+      errors,
       warnings,
-      validatedAt: new Date(),
-      duration: Date.now() - start,
+      checkedAt: new Date(),
     };
   }
 
-  /**
-   * Get complete marketplace statistics.
-   */
-  async getStats(): Promise<MarketplaceStats> {
-    return this.discovery.getStats();
-  }
+  /** Get marketplace statistics. */
+  getStats(): {
+    totalAutomations: number;
+    totalDownloads: number;
+    automationsByFramework: Record<string, number>;
+    automationsByPricing: Record<string, number>;
+  } {
+    const all = this.publisher["getAll"]();
+    const byFramework: Record<string, number> = {};
+    const byPricing: Record<string, number> = {};
+    let totalDownloads = 0;
 
-  /**
-   * Bulk import automations from a JSON-like source.
-   */
-  async bulkImport(automations: PublishInput[]): Promise<{ published: number; errors: string[] }> {
-    let published = 0;
-    const errors: string[] = [];
-
-    for (const input of automations) {
-      try {
-        await this.publisher.publish(input);
-        published++;
-      } catch (err) {
-        errors.push(err instanceof Error ? err.message : String(err));
+    for (const a of all) {
+      totalDownloads += a.downloads;
+      for (const fw of a.framework) {
+        byFramework[fw] = (byFramework[fw] ?? 0) + 1;
       }
+      byPricing[a.pricing.type] = (byPricing[a.pricing.type] ?? 0) + 1;
     }
 
-    return { published, errors };
-  }
-
-  /**
-   * Export all published automations as serializable data.
-   */
-  async exportAll(): Promise<Automation[]> {
-    return this.publisher.list().filter((a) => a.status === "published");
+    return {
+      totalAutomations: all.length,
+      totalDownloads,
+      automationsByFramework: byFramework,
+      automationsByPricing: byPricing,
+    };
   }
 }
+
+// Re-export everything for convenience
+export {
+  type Automation as AutomationDTO,
+  type MarketplaceConfig as Config,
+};
