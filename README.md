@@ -1,12 +1,29 @@
-# GRC_Claw
+# GRC_Claw v12.0
 
-Open-source GRC automation engine — 85 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
+Open-source GRC automation engine — 84 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 [![GitHub](https://img.shields.io/badge/GitHub-AAH20%2FGRC__Claw-181717?logo=github)](https://github.com/AAH20/GRC_Claw)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2zsoc.com-red)](https://a2zsoc.com)
+
+---
+
+## What's New in v12.0
+
+| Feature | Description |
+|---------|-------------|
+| **GRC Copilot** | Natural Language Compliance Query Engine — chat UI powered by Claude, full session history, ask compliance questions in plain English and receive control-mapped, evidence-linked answers |
+| **Real-Time Compliance Feed** | Live event stream aggregating KEV alerts, regulatory deadlines, evidence expiry warnings, control failures, and remediation triggers — 10-second polling with push delivery |
+| **Compliance Digital Twin** | Pre-audit simulation engine: Claude acts as auditor to produce predicted pass / qualified / fail verdicts plus detailed findings before the real audit window opens |
+| **AI Governance Registry** | EU AI Act risk tier classification (minimal / limited / high / unacceptable) with full NIST AI RMF mapping, inventory tracking, and assessment workflows for every AI system in scope |
+| **Quantum-Resistant Crypto Planner** | PQC vulnerability scanner across codebase and infrastructure, paired with a NIST PQC migration roadmap generator (ML-KEM-768, ML-DSA-65) and prioritized remediation tasks |
+| **Federated Compliance Mesh** | Multi-subsidiary posture management — aggregate controls, evidence, gaps, and risk across legal entities into a single consolidated compliance dashboard |
+| **Predictive Compliance AI** | 90-day evidence velocity forecast per control with nightly gap detection, failure probability scoring, and proactive remediation recommendations before audit windows open |
+| **Employee Lifecycle Automation** | Okta offboarding detection triggers automatic deprovisioning evidence collection mapped to CC6.2 / CC6.3, closing the most common SOC 2 access-control audit gap automatically |
+| **Third-Party Vendor Risk Feed** | Continuous CVE monitoring per vendor via NVD API, vendor breach acknowledgment workflows, and risk-scored vendor posture updates pushed to the evidence graph in real time |
+| **Zero-Trust Immutable Audit Trail** | SHA-256 Merkle-chained append-only log with RFC 3161 TSA timestamps (FreeTSA.org) — every compliance event is cryptographically sequenced and verifiable by external auditors without raw data access |
 
 ---
 
@@ -17,7 +34,7 @@ Open-source GRC automation engine — 85 packages, 27,596 control mappings, auto
 | **GitHub PR Security Gate** | Composite GitHub Action (`GRC_Claw/.github/actions/scan/action.yml`) — IaC scan + secret detection on every PR, posts GitHub check runs, maps findings directly to SOC 2 controls |
 | **`@grc-claw/policy-engine`** | Compliance-as-Code: `.grc-policy.yaml` parser, `validatePolicy()`, `generatePolicyTemplate()`, and continuous drift detection against live control state |
 | **Sovereign Deployment Kit** | Production-grade Terraform (AWS VPC / EC2 / EIP / S3 / IAM) + Docker Compose (Supabase self-hosted, Ollama LLM, Nginx TLS, Certbot, nightly S3 backups) in `GRC_Claw/deploy/sovereign/` — supports UAE, KSA, India, EU financial services, and US government air-gapped deployments |
-| **New packages (85 total)** | `evidence-graph`, `policy-engine`, `federated-compliance-mesh`, `federated-learning`, `quantum-resistant-crypto`, `natural-language-compliance`, `predictive-compliance`, and more — up from 79 in v10.0 |
+| **New packages (84 total)** | `evidence-graph`, `policy-engine`, `federated-compliance-mesh`, `federated-learning`, `quantum-resistant-crypto`, `natural-language-compliance`, `predictive-compliance`, and more — up from 79 in v10.0 |
 
 ---
 
@@ -41,9 +58,9 @@ Open-source GRC automation engine — 85 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (85 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **Evidence Graph object plane**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
+GRC_Claw is a TypeScript/Go monorepo (84 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **Evidence Graph object plane**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
 
-The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 32 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
+The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships **32 packages** to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
 ---
 
@@ -93,7 +110,7 @@ grc sovereign init
 
 ---
 
-## Packages (40 listed · 45 private — 85 total)
+## Packages (40 listed · 44 private — 84 total)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -141,7 +158,7 @@ grc sovereign init
 | `@grc-claw/compliance-automation-marketplace` | Share, discover, and monetize compliance automations — ratings, reviews, versioning | v1.0.0 |
 | `@grc-claw/real-time-compliance-monitor` | Live compliance dashboards, alerts, SLA monitoring, trend analysis | v1.0.0 |
 
-The remaining 45 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
+The remaining 44 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 
 ---
 
@@ -687,7 +704,7 @@ The strategic line: the code can be copied, isolated features can be copied, and
 
 ## Post-v11.0 acquisition-grade moat: what to build next
 
-The current platform now has the breadth most GRC startups spend years trying to assemble: open-source execution engine, hosted A2Z SOC control plane, 27,596 control mappings, 85 package families, PR security gates, policy-as-code, Evidence Graph object plane, post-quantum crypto, natural-language compliance, automation marketplace, real-time monitoring, sovereign deployment, and live proof-producing A2Z SOC surfaces.
+The current platform now has the breadth most GRC startups spend years trying to assemble: open-source execution engine, hosted A2Z SOC control plane, 27,596 control mappings, 84 package families, PR security gates, policy-as-code, Evidence Graph object plane, post-quantum crypto, natural-language compliance, automation marketplace, real-time monitoring, sovereign deployment, and live proof-producing A2Z SOC surfaces.
 
 The next step is to stop treating those capabilities as separate modules and turn them into a single compounding trust operating system.
 
