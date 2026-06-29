@@ -27,6 +27,9 @@ jobs:
 
       - run: npm install
 
+      - name: Graph/proof coverage gate
+        run: npm run graph:coverage
+
       - name: TypeScript type check
         run: npx tsc --noEmit
 

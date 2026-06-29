@@ -14,6 +14,7 @@
     "build:console": "npm run build -w @grc-claw/console",
     "gateway": "npm run start -w @grc-claw/gateway",
     "doctor": "npm run doctor -w @grc-claw/gateway",
+    "graph:coverage": "node scripts/graph-proof-coverage.mjs",
     "test": "npm run test -w @grc-claw/ingest",
     "test:iso42001": "bash scripts/test-iso-42001.sh",
     "test:byoc": "bash scripts/test-byoc-connectors.sh",
