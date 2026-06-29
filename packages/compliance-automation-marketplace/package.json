@@ -1,49 +1,33 @@
 {
   "name": "@grc-claw/compliance-automation-marketplace",
   "version": "1.0.0",
-  "description": "Compliance automation marketplace for sharing, discovering, and monetizing compliance automations with ratings, versioning, and validation",
+  "description": "Compliance automation marketplace for sharing, discovering, and monetizing compliance automations",
   "license": "MIT",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc --watch",
-    "clean": "rm -rf dist",
-    "lint": "tsc --noEmit",
-    "test": "node --import tsx --test src/**/*.test.ts"
-  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "keywords": [
-    "grc",
-    "compliance",
-    "marketplace",
-    "automation",
-    "sharing",
-    "monetization",
-    "security"
-  ],
-  "author": "A2Z SOC",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "typecheck": "tsc --noEmit"
+  },
   "publishConfig": {
     "access": "public"
   },
+  "keywords": [
+    "compliance",
+    "automation",
+    "marketplace",
+    "GRC",
+    "ISO27001",
+    "SOC2",
+    "NIST",
+    "publishing"
+  ],
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "tsx": "^4.19.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/AAH20/GRC_Claw"
+    "typescript": "^5.4.0"
   }
 }
