@@ -158,7 +158,7 @@ export function evidenceGraphId(prefix: string, value: unknown): string {
 export function evidenceObjectHash(
   object: Omit<EvidenceGraphObject, 'objectHash' | 'createdAt' | 'updatedAt'> | EvidenceGraphObject,
 ): string {
-  const { objectHash: _objectHash, updatedAt: _updatedAt, ...hashable } = object as EvidenceGraphObject;
+  const { objectHash: _objectHash, createdAt: _createdAt, updatedAt: _updatedAt, ...hashable } = object as EvidenceGraphObject;
   return sha256(hashable);
 }
 
