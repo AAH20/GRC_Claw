@@ -216,6 +216,10 @@ import { FederatedLearningNetwork } from '@grc-claw/federated-learning';
 import { ComplianceIntelligenceAPI } from '@grc-claw/compliance-intelligence-api';
 import { AutonomousComplianceAgent } from '@grc-claw/autonomous-compliance-agent';
 import { ComplianceDigitalTwin } from '@grc-claw/compliance-digital-twin';
+import { QuantumResistantCrypto } from '@grc-claw/quantum-resistant-crypto';
+import { NaturalLanguageCompliance } from '@grc-claw/natural-language-compliance';
+import { ComplianceAutomationMarketplace } from '@grc-claw/compliance-automation-marketplace';
+import { RealTimeComplianceMonitor } from '@grc-claw/real-time-compliance-monitor';
 
 const continuousTrustEngine = new ContinuousTrustEngine();
 const agentCollaboration = new AgentCollaboration();
@@ -235,6 +239,10 @@ const federatedLearning = new FederatedLearningNetwork({
 const complianceIntelligence = new ComplianceIntelligenceAPI();
 const autonomousAgent = new AutonomousComplianceAgent();
 const complianceDigitalTwin = new ComplianceDigitalTwin();
+const quantumCrypto = new QuantumResistantCrypto();
+const nlCompliance = new NaturalLanguageCompliance();
+const automationMarketplace = new ComplianceAutomationMarketplace();
+const realTimeMonitor = new RealTimeComplianceMonitor({ framework: 'default' });
 
 function buildEvidenceGraphSnapshot(organizationId = 'demo-org') {
   const summary = complianceKnowledgeGraph.analytics.getSummary();
@@ -397,7 +405,11 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('federated.') ||
     tool.startsWith('intelligence.') ||
     tool.startsWith('autonomous.') ||
-    tool.startsWith('digital_twin.')
+    tool.startsWith('digital_twin.') ||
+    tool.startsWith('quantum.') ||
+    tool.startsWith('nl_compliance.') ||
+    tool.startsWith('automation_marketplace.') ||
+    tool.startsWith('realtime_monitor.')
   );
 }
 
@@ -3408,6 +3420,73 @@ export async function dispatchBuiltinGrcTool(
       const twinId = String(args.twinId ?? '');
       const twin = complianceDigitalTwin.getTwin(twinId);
       return { ok: true, twin, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Quantum-Resistant Crypto Tools ───────────────────────────────────
+    case 'quantum.generate_key_material': {
+      const keyMaterial = await quantumCrypto.generateFullKeyMaterial();
+      return { ok: true, keyMaterial, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Natural Language Compliance Tools ────────────────────────────────
+    case 'nl_compliance.ask': {
+      const question = String(args.question ?? '');
+      const answer = nlCompliance.ask(question);
+      return { ok: true, answer, timestamp: new Date().toISOString() };
+    }
+    case 'nl_compliance.follow_up': {
+      const followUpQuestion = String(args.question ?? '');
+      const sessionId = String(args.sessionId ?? 'default');
+      const answer = nlCompliance.followUp(sessionId, followUpQuestion);
+      return { ok: true, answer, timestamp: new Date().toISOString() };
+    }
+    case 'nl_compliance.generate_report': {
+      const framework = String(args.framework ?? 'soc2') as any;
+      const report = nlCompliance.generateReport([framework]);
+      return { ok: true, report, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Compliance Automation Marketplace Tools ──────────────────────────
+    case 'automation_marketplace.get_stats': {
+      const publisherList = automationMarketplace.publisher.list();
+      const stats = { total: publisherList.length, published: publisherList.filter((a: any) => a.status === 'published').length };
+      return { ok: true, stats, timestamp: new Date().toISOString() };
+    }
+    case 'automation_marketplace.search': {
+      const framework = args.framework as string | undefined;
+      const industry = args.industry as string | undefined;
+      const result = await automationMarketplace.discovery.search({ frameworks: framework ? [framework as any] : undefined, industries: industry ? [industry] : undefined });
+      return { ok: true, automations: result.results, count: result.total, timestamp: new Date().toISOString() };
+    }
+    case 'automation_marketplace.install': {
+      const automationId = String(args.automationId ?? '');
+      const version = args.version as string | undefined;
+      const result = await automationMarketplace.installer.install(automationId, { version });
+      return { ok: true, result, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Real-Time Compliance Monitor Tools ───────────────────────────────
+    case 'realtime_monitor.get_status': {
+      const slaStatus = realTimeMonitor.slaMonitor.getStatus();
+      const breaches = realTimeMonitor.slaMonitor.getBreaches();
+      const status = { slaStatus: Object.fromEntries(slaStatus), breachCount: breaches.length };
+      return { ok: true, status, timestamp: new Date().toISOString() };
+    }
+    case 'realtime_monitor.get_alerts': {
+      const alerts = realTimeMonitor.alertEngine.getAlerts();
+      return { ok: true, alerts, count: alerts.length, timestamp: new Date().toISOString() };
+    }
+    case 'realtime_monitor.create_dashboard': {
+      const dashboardName = String(args.name ?? 'Default Dashboard');
+      const dashboardId = `dashboard-${Date.now()}`;
+      realTimeMonitor.dashboard.createDashboard({
+        id: dashboardId,
+        name: dashboardName,
+        description: '',
+        widgets: [],
+        refreshIntervalMs: 30000,
+      });
+      return { ok: true, dashboard: { id: dashboardId, name: dashboardName }, timestamp: new Date().toISOString() };
     }
 
     default:

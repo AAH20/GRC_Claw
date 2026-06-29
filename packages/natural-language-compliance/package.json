@@ -1,0 +1,35 @@
+{
+  "name": "@grc-claw/natural-language-compliance",
+  "version": "1.0.0",
+  "description": "Natural language compliance querying — ask compliance questions in plain English and get structured answers.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "grc",
+    "compliance",
+    "natural-language",
+    "nlp",
+    "controls",
+    "audit",
+    "iso-27001",
+    "soc2",
+    "nist"
+  ],
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

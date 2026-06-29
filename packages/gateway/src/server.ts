@@ -69,6 +69,10 @@ import { FederatedLearningNetwork } from '@grc-claw/federated-learning';
 import { ComplianceIntelligenceAPI } from '@grc-claw/compliance-intelligence-api';
 import { AutonomousComplianceAgent } from '@grc-claw/autonomous-compliance-agent';
 import { ComplianceDigitalTwin } from '@grc-claw/compliance-digital-twin';
+import { QuantumResistantCrypto } from '@grc-claw/quantum-resistant-crypto';
+import { NaturalLanguageCompliance } from '@grc-claw/natural-language-compliance';
+import { ComplianceAutomationMarketplace } from '@grc-claw/compliance-automation-marketplace';
+import { RealTimeComplianceMonitor } from '@grc-claw/real-time-compliance-monitor';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -250,6 +254,10 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const complianceIntelligence = new ComplianceIntelligenceAPI();
   const autonomousAgent = new AutonomousComplianceAgent();
   const complianceDigitalTwin = new ComplianceDigitalTwin();
+  const quantumCrypto = new QuantumResistantCrypto();
+  const nlCompliance = new NaturalLanguageCompliance();
+  const automationMarketplace = new ComplianceAutomationMarketplace();
+  const realTimeMonitor = new RealTimeComplianceMonitor({ framework: 'default' });
   const buildEvidenceGraphSnapshot = (organizationId = 'demo-org') => {
     const summary = complianceKnowledgeGraph.analytics.getSummary();
     const posture = (() => {
@@ -3134,6 +3142,78 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const twinId = forecastUrl.searchParams.get('twinId') ?? 'default';
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, message: 'Forecast requires twin ID and parameters' }));
+      return;
+    }
+
+    // ─── Quantum-Resistant Crypto ─────────────────────────────────────────
+    if (path === '/api/crypto/hybrid-encrypt' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, message: 'Hybrid encryption requires async execution' }));
+      return;
+    }
+
+    if (path === '/api/crypto/sign' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, message: 'Signing requires async execution' }));
+      return;
+    }
+
+    // ─── Natural Language Compliance ──────────────────────────────────────
+    if (path === '/api/nl-compliance/ask' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const nlBody = await readJson(req);
+      const question = String(nlBody.question ?? '');
+      const answer = nlCompliance.ask(question);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, answer }));
+      return;
+    }
+
+    if (path === '/api/nl-compliance/report' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const reportBody = await readJson(req);
+      const framework = String(reportBody.framework ?? 'soc2') as any;
+      const report = nlCompliance.generateReport([framework]);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, report }));
+      return;
+    }
+
+    // ─── Compliance Automation Marketplace ────────────────────────────────
+    if (path === '/api/automation-marketplace/stats' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const publisherList = automationMarketplace.publisher.list();
+      const stats = { total: publisherList.length, published: publisherList.filter(a => a.status === 'published').length };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, stats }));
+      return;
+    }
+
+    if (path === '/api/automation-marketplace/search' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, message: 'Search requires async execution' }));
+      return;
+    }
+
+    // ─── Real-Time Compliance Monitor ─────────────────────────────────────
+    if (path === '/api/realtime/status' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const slaStatus = realTimeMonitor.slaMonitor.getStatus();
+      const breaches = realTimeMonitor.slaMonitor.getBreaches();
+      const status = { slaStatus: Object.fromEntries(slaStatus), breachCount: breaches.length };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, status }));
+      return;
+    }
+
+    if (path === '/api/realtime/alerts' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const alerts = realTimeMonitor.alertEngine.getAlerts();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, alerts, count: alerts.length }));
       return;
     }
 

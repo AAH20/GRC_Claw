@@ -25,7 +25,11 @@
       "@grc-claw/federated-learning": ["packages/federated-learning/src/index.ts"],
       "@grc-claw/compliance-intelligence-api": ["packages/compliance-intelligence-api/src/index.ts"],
       "@grc-claw/autonomous-compliance-agent": ["packages/autonomous-compliance-agent/src/index.ts"],
-      "@grc-claw/compliance-digital-twin": ["packages/compliance-digital-twin/src/index.ts"]
+      "@grc-claw/compliance-digital-twin": ["packages/compliance-digital-twin/src/index.ts"],
+      "@grc-claw/quantum-resistant-crypto": ["packages/quantum-resistant-crypto/src/index.ts"],
+      "@grc-claw/natural-language-compliance": ["packages/natural-language-compliance/src/index.ts"],
+      "@grc-claw/compliance-automation-marketplace": ["packages/compliance-automation-marketplace/src/index.ts"],
+      "@grc-claw/real-time-compliance-monitor": ["packages/real-time-compliance-monitor/src/index.ts"]
     }
   }
 }

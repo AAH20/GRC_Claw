@@ -79,6 +79,10 @@
     { "path": "./packages/compliance-intelligence-api" },
     { "path": "./packages/autonomous-compliance-agent" },
     { "path": "./packages/compliance-digital-twin" },
+    { "path": "./packages/quantum-resistant-crypto" },
+    { "path": "./packages/natural-language-compliance" },
+    { "path": "./packages/compliance-automation-marketplace" },
+    { "path": "./packages/real-time-compliance-monitor" },
     { "path": "./packages/gateway" }
   ]
 }

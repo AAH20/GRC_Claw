@@ -1,12 +1,23 @@
 # GRC_Claw
 
-Open-source GRC automation engine — 79 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
+Open-source GRC automation engine — 84 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 [![GitHub](https://img.shields.io/badge/GitHub-AAH20%2FGRC__Claw-181717?logo=github)](https://github.com/AAH20/GRC_Claw)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2zsoc.com-red)](https://a2zsoc.com)
+
+---
+
+## What's New in v11.0
+
+| Feature | Description |
+|---------|-------------|
+| **GitHub PR Security Gate** | Composite GitHub Action (`GRC_Claw/.github/actions/scan/action.yml`) — IaC scan + secret detection on every PR, posts GitHub check runs, maps findings directly to SOC 2 controls |
+| **`@grc-claw/policy-engine`** | Compliance-as-Code: `.grc-policy.yaml` parser, `validatePolicy()`, `generatePolicyTemplate()`, and continuous drift detection against live control state |
+| **Sovereign Deployment Kit** | Production-grade Terraform (AWS VPC / EC2 / EIP / S3 / IAM) + Docker Compose (Supabase self-hosted, Ollama LLM, Nginx TLS, Certbot, nightly S3 backups) in `GRC_Claw/deploy/sovereign/` — supports UAE, KSA, India, EU financial services, and US government air-gapped deployments |
+| **New packages (84 total)** | `policy-engine`, `federated-compliance-mesh`, `federated-learning`, `quantum-resistant-crypto`, `natural-language-compliance`, `predictive-compliance`, and more — up from 79 in v10.0 |
 
 ---
 
@@ -30,7 +41,7 @@ Open-source GRC automation engine — 79 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (79 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
+GRC_Claw is a TypeScript/Go monorepo (84 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
 
 The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 40 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
@@ -82,7 +93,7 @@ grc sovereign init
 
 ---
 
-## Packages (40 published · 39 private)
+## Packages (44 published · 39 private)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -124,6 +135,10 @@ grc sovereign init
 | `@grc-claw/compliance-intelligence-api` | Real-time compliance intelligence from the network — trends, benchmarks, recommendations | v1.0.0 |
 | `@grc-claw/autonomous-compliance-agent` | Self-healing compliance — detect, diagnose, remediate, verify automatically | v1.0.0 |
 | `@grc-claw/compliance-digital-twin` | Virtual compliance twin — simulate, forecast, what-if analysis | v1.0.0 |
+| `@grc-claw/quantum-resistant-crypto` | NIST FIPS 203/204 post-quantum cryptography (Kyber + Dilithium + hybrid mode) | v1.0.0 |
+| `@grc-claw/natural-language-compliance` | Ask compliance questions in plain English — 7 intents, 8 frameworks, 8 languages | v1.0.0 |
+| `@grc-claw/compliance-automation-marketplace` | Share, discover, and monetize compliance automations — ratings, reviews, versioning | v1.0.0 |
+| `@grc-claw/real-time-compliance-monitor` | Live compliance dashboards, alerts, SLA monitoring, trend analysis | v1.0.0 |
 
 The remaining 39 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 
@@ -205,6 +220,45 @@ docker compose -f docker-compose.sovereign.yml up
 ```
 
 `grc sovereign init` generates a Docker Compose stack with Ollama pre-configured as the sole LLM backend. The `@grc-claw/connectors` package enforces the routing — any call that would otherwise reach OpenAI or Anthropic is redirected to `http://localhost:11434`.
+
+---
+
+## Sovereign Deployment Kit
+
+`GRC_Claw/deploy/sovereign/` is a production-grade, data-residency-first deployment kit for regulated and air-gapped environments.
+
+### What it ships
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Terraform** | AWS VPC, EC2, EIP, S3, IAM | Provisions an isolated cloud footprint — network, compute, static IP, encrypted object store, and least-privilege roles |
+| **Docker Compose** | Supabase (self-hosted), Ollama, Nginx, Certbot | Full application stack with TLS termination, local LLM inference, and PostgreSQL-backed evidence storage |
+| **Nightly S3 backup** | `scripts/` cron job | Encrypts and uploads the evidence vault to your private S3 bucket every night |
+| **Nginx TLS** | `nginx/` config + Certbot | Automatic certificate issuance and renewal — no manual certificate management |
+
+### Supported deployment targets
+
+- **UAE / KSA** — data residency in AWS me-south-1 / me-central-1, compliant with UAE PDPL and KSA NDMO requirements
+- **India** — data stored in AWS ap-south-1, aligned with DPDP Act locality requirements
+- **EU financial services** — AWS eu-central-1 / eu-west-1, satisfying DORA, GDPR, and EBA cloud-outsourcing guidelines
+- **US government / air-gapped** — no outbound internet required; Ollama handles all LLM inference locally; Supabase and evidence vault run entirely on-prem
+
+### Quick start
+
+```bash
+# 1. Provision cloud infrastructure
+cd GRC_Claw/deploy/sovereign
+cp terraform.tfvars.example terraform.tfvars   # fill in your AWS account, region, key pair
+terraform init && terraform apply
+
+# 2. Launch the full application stack on the provisioned host
+docker compose -f docker-compose.yml up -d
+
+# 3. Bootstrap GRC_Claw against the sovereign stack
+SOVEREIGN_MODE=true GRC_SOVEREIGN_URL=https://<your-eip> grc sovereign init
+```
+
+**Data residency guarantee:** with `SOVEREIGN_MODE=true` and the sovereign stack running, zero compliance data, evidence, or LLM prompts leave the designated cloud region or on-prem boundary. The `@grc-claw/connectors` package enforces this at the network layer.
 
 ---
 
@@ -568,6 +622,65 @@ Immediate execution priority:
 - **Week 4:** ship the CMMC/NIST 800-171/ISO 42001 procurement cockpit with SSP, POA&M, SPRS, AI inventory, supplier evidence, and agent receipts.
 
 The acquisition-grade thesis: the most valuable asset is not the code count, page count, or number of framework packs. It is the accumulated, signed, cross-tenant map of which controls, evidence, tests, agents, vendors, and remediation paths actually survive audits and procurement reviews.
+
+---
+
+## 2026 graph-backed acquisition moat priorities
+
+The latest graph-first review of A2Z SOC + GRC_Claw shows the platform is already wide enough to compete with proprietary GRC suites and open-source compliance automation projects. The next move is not adding more disconnected pages. It is turning the existing route, package, connector, and evidence surface area into compounding infrastructure that gets stronger with every tenant, audit, pack, PR, agent action, and verifier interaction.
+
+Recommended improvement order:
+
+1. **Evidence Graph as the permanent system of record**
+   - Promote `/api/platform/evidence-graph/*` and `/api/evidence-graph/*` from feature endpoints into the core data plane.
+   - Every trust score, control test, questionnaire answer, vendor claim, PR gate result, SaaS finding, attack-surface scan, data-store classification, ZK bundle, and agent action should write graph nodes and signed edges.
+   - Winning outcome: auditors and buyers can ask "why should I trust this claim?" and receive a scoped, cryptographically linked proof path instead of screenshots.
+
+2. **Agent Policy Firewall before agent orchestration**
+   - Make the gateway enforce scope, tenant boundaries, tool risk, approval thresholds, sandbox policy, idempotency, replay protection, receipt generation, and blast-radius scoring before any MCP/tool/browser/cloud action runs.
+   - This is the irreplaceable layer above generic agent harnesses: harness teams optimize execution; GRC_Claw governs whether execution is allowed, provable, reversible, and audit-safe.
+
+3. **CMMC / NIST 800-171 / ISO 42001 procurement cockpit**
+   - Productize SSP, POA&M, SPRS scoring, CUI boundary mapping, AI system inventory, supplier evidence, SBOM/AI-BOM, FedRAMP inheritance, and agent receipts in one workflow.
+   - This is the fastest route into defense industrial base, AI procurement, cybersecurity, and GRC budgets because it connects compliance proof to purchase permission.
+
+4. **Signed pack marketplace with maintainer reputation**
+   - Treat compliance packs like a regulated software supply chain: signed provenance, semantic versions, tests, control mappings, evidence collectors, remediation playbooks, dependency metadata, maintainer trust, verifier results, and revenue share.
+   - This creates a Terraform Registry-style network effect for compliance: developers contribute packs, auditors verify packs, A2Z SOC monetizes trust distribution.
+
+5. **Verifier network and audit rooms**
+   - Add scoped verifier rooms for auditors, customers, brokers, MSPs, PE diligence teams, primes, and regulators.
+   - The moat is not another dashboard. The moat is becoming the clearinghouse where external parties verify evidence without raw tenant data leakage.
+
+6. **PR-to-proof engineering compliance**
+   - Expand the GitHub PR Security Gate, VS Code Compliance Copilot, Terraform provider, and CLI into one developer compliance lane.
+   - Every code change should be able to produce control mappings, evidence deltas, risk deltas, policy exceptions, and auditor-readable receipts.
+
+7. **Live exposure collectors as evidence generators**
+   - Convert SaaS Discovery, External Attack Surface Scan, Data Store Risk Classification, cloud connectors, SIEM/EDR sources, and browser evidence into first-class evidence graph writers.
+   - This makes A2Z SOC more than a questionnaire platform: it becomes the continuously refreshed truth layer behind GRC claims.
+
+8. **Risk economics everywhere**
+   - Attach dollarized exposure, remediation cost, expected-loss reduction, audit-delay cost, and procurement-blocker severity to every evidence gap, failed test, vendor issue, agent exception, and control weakness.
+   - Proprietary incumbents sell workflow. The differentiated product sells CFO-visible risk reduction.
+
+9. **Agent memory and behavioral anomaly attestations**
+   - Persist agent decisions, approvals, denied actions, drift signals, model/provider changes, policy overrides, and unusual behavior as signed governance receipts.
+   - This creates a defensible AI governance primitive that stays relevant as agent frameworks change.
+
+10. **Gateway modularity and contract hardening**
+    - The graph shows `@grc-claw/gateway` as the central hotspot. Preserve the gateway as the product control plane, but split route registration, policy evaluation, agent dispatch, evidence graph writes, connector lifecycle, and verifier exports behind stable interfaces.
+    - Add route contract tests and golden evidence fixtures so the gateway can grow without becoming fragile.
+
+Execution focus:
+
+- **This week:** make all new A2Z SOC proof-producing surfaces write Evidence Graph objects, not just local API responses.
+- **Next 30 days:** ship Agent Policy Firewall v1 with signed receipts and route-level contract tests.
+- **Next 60 days:** launch the CMMC/NIST 800-171/ISO 42001 procurement cockpit as the flagship paid lane.
+- **Next 90 days:** publish the signed pack marketplace with verifier badges and maintainer reputation.
+- **Next 6 months:** build the verifier network and anonymized benchmark layer so the platform compounds from real audit outcomes.
+
+The strategic line: the code can be copied, isolated features can be copied, and dashboards can be outspent. The durable asset is the proof network: signed evidence, crosswalk semantics, policy-governed agent actions, verified packs, live exposure telemetry, procurement artifacts, auditor trust, and benchmark data accumulating in one graph.
 
 ---
 
