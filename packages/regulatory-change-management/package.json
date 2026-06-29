@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/regulatory-change-management",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Automated tracking of regulatory changes and impact analysis",
   "license": "MIT",
   "main": "dist/index.js",
