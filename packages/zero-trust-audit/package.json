@@ -1,6 +1,6 @@
 {
   "name": "@grc-claw/zero-trust-audit",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Zero-trust audit trail with cryptographic hash chaining, Merkle trees, digital signatures, and court-admissible evidence export",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
