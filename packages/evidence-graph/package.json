@@ -1,0 +1,32 @@
+{
+  "name": "@grc-claw/evidence-graph",
+  "version": "1.0.0",
+  "description": "Evidence Graph object envelope, deterministic hashing, and snapshot builder for GRC_Claw and A2Z SOC interoperability",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
+  }
+}

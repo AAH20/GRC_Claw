@@ -1,7 +1,7 @@
 import type { A2ZSocConnector } from '@grc-claw/a2z-connector';
-import { createHash } from 'node:crypto';
 import { listClauseMap, listTechnicalControls, listVendorGaps } from '@grc-claw/aims';
 import type { EvidenceStore } from '@grc-claw/evidence';
+import { buildEvidenceGraphSnapshot as buildEvidenceGraphObjectSnapshot, edgeObject, nodeObject } from '@grc-claw/evidence-graph';
 import { listFrameworkPacks } from '@grc-claw/frameworks';
 import {
   dispatchConnectorTool,
@@ -260,36 +260,124 @@ function buildEvidenceGraphSnapshot(organizationId = 'demo-org') {
   const packs = complianceMarketplace.search({ limit: 20 });
   const auditVerification = zeroTrustAudit.verify();
   const auditRecords = zeroTrustAudit.getRecords();
-  const nodes = [
-    { id: `org:${organizationId}`, type: 'organization', label: organizationId, source: 'gateway', weight: 100 },
-    { id: 'knowledge-graph:summary', type: 'knowledge_graph', label: 'Compliance knowledge graph', source: 'compliance-knowledge-graph', weight: summary.totalNodes ?? 80, metadata: summary },
-    { id: `posture:${organizationId}`, type: 'posture', label: 'Compliance posture', source: 'compliance-knowledge-graph', weight: posture.overallScore ?? 50, metadata: posture },
-    { id: 'predictive:forecasts', type: 'predictive_compliance', label: 'Predictive compliance forecasts', source: 'predictive-compliance', weight: forecasts.length, metadata: { count: forecasts.length } },
-    { id: 'marketplace:packs', type: 'compliance_marketplace', label: 'Compliance pack marketplace', source: 'compliance-marketplace', weight: marketplaceStats.totalPacks ?? packs.length, metadata: marketplaceStats },
-    { id: 'zero-trust:audit', type: 'zero_trust_audit', label: 'Zero-trust audit chain', source: 'zero-trust-audit', weight: auditVerification.valid ? 100 : 40, metadata: auditVerification },
-  ];
-  const edges = [
-    { id: 'edge:org-posture', type: 'has_posture', from: `org:${organizationId}`, to: `posture:${organizationId}`, label: 'organization has posture', confidence: 0.92 },
-    { id: 'edge:kg-posture', type: 'derives', from: 'knowledge-graph:summary', to: `posture:${organizationId}`, label: 'graph derives posture', confidence: 0.88 },
-    { id: 'edge:predictive-posture', type: 'forecasts', from: 'predictive:forecasts', to: `posture:${organizationId}`, label: 'forecasts posture drift', confidence: 0.82 },
-    { id: 'edge:marketplace-kg', type: 'extends', from: 'marketplace:packs', to: 'knowledge-graph:summary', label: 'packs extend graph', confidence: 0.8 },
-    { id: 'edge:audit-kg', type: 'verifies', from: 'zero-trust:audit', to: 'knowledge-graph:summary', label: 'audit chain verifies graph evidence', confidence: 0.86 },
-  ];
   const recommendations = [
     risks.length ? `Prioritize ${risks.length} predictive risk signal${risks.length === 1 ? '' : 's'} before the next audit window.` : '',
     patterns.length ? `Convert ${patterns.length} detected graph pattern${patterns.length === 1 ? '' : 's'} into reusable marketplace packs.` : '',
     auditRecords.length === 0 ? 'Record zero-trust audit events so evidence graph snapshots become court-ready proof bundles.' : '',
     packs.length === 0 ? 'Install or publish verified packs to turn graph coverage into marketplace network effects.' : '',
   ].filter(Boolean);
-  const graphHash = createHash('sha256').update(JSON.stringify({ organizationId, nodes, edges, recommendations })).digest('hex');
-  return {
-    ok: true,
-    graph_hash: graphHash,
-    generated_at: new Date().toISOString(),
-    organizationId,
-    summary: {
-      nodes: nodes.length,
-      edges: edges.length,
+  const graphObjects = [
+    nodeObject({
+      orgSlug: organizationId,
+      graphId: `org:${organizationId}`,
+      objectType: 'organization',
+      label: organizationId,
+      source: 'agent-dispatch',
+      weight: 100,
+      payload: { organizationId },
+    }),
+    nodeObject({
+      orgSlug: organizationId,
+      graphId: 'knowledge-graph:summary',
+      objectType: 'knowledge_graph',
+      label: 'Compliance knowledge graph',
+      source: 'compliance-knowledge-graph',
+      weight: summary.totalNodes ?? 80,
+      payload: summary as unknown as Record<string, unknown>,
+    }),
+    nodeObject({
+      orgSlug: organizationId,
+      graphId: `posture:${organizationId}`,
+      objectType: 'posture',
+      label: 'Compliance posture',
+      source: 'compliance-knowledge-graph',
+      weight: posture.overallScore ?? 50,
+      payload: posture as unknown as Record<string, unknown>,
+    }),
+    nodeObject({
+      orgSlug: organizationId,
+      graphId: 'predictive:forecasts',
+      objectType: 'predictive_compliance',
+      label: 'Predictive compliance forecasts',
+      source: 'predictive-compliance',
+      weight: forecasts.length,
+      payload: { count: forecasts.length, risks: risks.length },
+    }),
+    nodeObject({
+      orgSlug: organizationId,
+      graphId: 'marketplace:packs',
+      objectType: 'compliance_marketplace',
+      label: 'Compliance pack marketplace',
+      source: 'compliance-marketplace',
+      weight: marketplaceStats.totalPacks ?? packs.length,
+      payload: marketplaceStats as unknown as Record<string, unknown>,
+    }),
+    nodeObject({
+      orgSlug: organizationId,
+      graphId: 'zero-trust:audit',
+      objectType: 'zero_trust_audit',
+      label: 'Zero-trust audit chain',
+      source: 'zero-trust-audit',
+      weight: auditVerification.valid ? 100 : 40,
+      payload: auditVerification as unknown as Record<string, unknown>,
+    }),
+    edgeObject({
+      orgSlug: organizationId,
+      graphId: 'edge:org-posture',
+      objectType: 'has_posture',
+      label: 'organization has posture',
+      source: 'agent-dispatch',
+      fromId: `org:${organizationId}`,
+      toId: `posture:${organizationId}`,
+      confidence: 0.92,
+    }),
+    edgeObject({
+      orgSlug: organizationId,
+      graphId: 'edge:kg-posture',
+      objectType: 'derives',
+      label: 'graph derives posture',
+      source: 'compliance-knowledge-graph',
+      fromId: 'knowledge-graph:summary',
+      toId: `posture:${organizationId}`,
+      confidence: 0.88,
+    }),
+    edgeObject({
+      orgSlug: organizationId,
+      graphId: 'edge:predictive-posture',
+      objectType: 'forecasts',
+      label: 'forecasts posture drift',
+      source: 'predictive-compliance',
+      fromId: 'predictive:forecasts',
+      toId: `posture:${organizationId}`,
+      confidence: 0.82,
+    }),
+    edgeObject({
+      orgSlug: organizationId,
+      graphId: 'edge:marketplace-kg',
+      objectType: 'extends',
+      label: 'packs extend graph',
+      source: 'compliance-marketplace',
+      fromId: 'marketplace:packs',
+      toId: 'knowledge-graph:summary',
+      confidence: 0.8,
+    }),
+    edgeObject({
+      orgSlug: organizationId,
+      graphId: 'edge:audit-kg',
+      objectType: 'verifies',
+      label: 'audit chain verifies graph evidence',
+      source: 'zero-trust-audit',
+      fromId: 'zero-trust:audit',
+      toId: 'knowledge-graph:summary',
+      confidence: 0.86,
+    }),
+  ];
+
+  return buildEvidenceGraphObjectSnapshot({
+    orgSlug: organizationId,
+    objects: graphObjects,
+    recommendations,
+    extraSummary: {
       knowledge_graph_nodes: summary.totalNodes ?? null,
       posture_score: posture.overallScore ?? null,
       forecasts: forecasts.length,
@@ -298,10 +386,7 @@ function buildEvidenceGraphSnapshot(organizationId = 'demo-org') {
       audit_records: auditRecords.length,
       audit_chain_valid: auditVerification.valid,
     },
-    nodes,
-    edges,
-    recommendations,
-  };
+  });
 }
 
 export function setSecurityGraph(graph: SecurityGraph): void {

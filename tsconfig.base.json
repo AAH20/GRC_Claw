@@ -26,6 +26,7 @@
       "@grc-claw/compliance-intelligence-api": ["packages/compliance-intelligence-api/src/index.ts"],
       "@grc-claw/autonomous-compliance-agent": ["packages/autonomous-compliance-agent/src/index.ts"],
       "@grc-claw/compliance-digital-twin": ["packages/compliance-digital-twin/src/index.ts"],
+      "@grc-claw/evidence-graph": ["packages/evidence-graph/src/index.ts"],
       "@grc-claw/quantum-resistant-crypto": ["packages/quantum-resistant-crypto/src/index.ts"],
       "@grc-claw/natural-language-compliance": ["packages/natural-language-compliance/src/index.ts"],
       "@grc-claw/compliance-automation-marketplace": ["packages/compliance-automation-marketplace/src/index.ts"],

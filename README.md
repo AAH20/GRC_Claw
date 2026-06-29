@@ -1,6 +1,6 @@
 # GRC_Claw
 
-Open-source GRC automation engine — 84 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
+Open-source GRC automation engine — 85 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -17,7 +17,7 @@ Open-source GRC automation engine — 84 packages, 27,596 control mappings, auto
 | **GitHub PR Security Gate** | Composite GitHub Action (`GRC_Claw/.github/actions/scan/action.yml`) — IaC scan + secret detection on every PR, posts GitHub check runs, maps findings directly to SOC 2 controls |
 | **`@grc-claw/policy-engine`** | Compliance-as-Code: `.grc-policy.yaml` parser, `validatePolicy()`, `generatePolicyTemplate()`, and continuous drift detection against live control state |
 | **Sovereign Deployment Kit** | Production-grade Terraform (AWS VPC / EC2 / EIP / S3 / IAM) + Docker Compose (Supabase self-hosted, Ollama LLM, Nginx TLS, Certbot, nightly S3 backups) in `GRC_Claw/deploy/sovereign/` — supports UAE, KSA, India, EU financial services, and US government air-gapped deployments |
-| **New packages (84 total)** | `policy-engine`, `federated-compliance-mesh`, `federated-learning`, `quantum-resistant-crypto`, `natural-language-compliance`, `predictive-compliance`, and more — up from 79 in v10.0 |
+| **New packages (85 total)** | `evidence-graph`, `policy-engine`, `federated-compliance-mesh`, `federated-learning`, `quantum-resistant-crypto`, `natural-language-compliance`, `predictive-compliance`, and more — up from 79 in v10.0 |
 
 ---
 
@@ -41,7 +41,7 @@ Open-source GRC automation engine — 84 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (84 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
+GRC_Claw is a TypeScript/Go monorepo (85 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **207 agent tools** (162 real implementations), **170+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **Evidence Graph object plane**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, **zero-trust audit trail**, **federated learning network**, **compliance intelligence API**, **autonomous compliance agent**, and **compliance digital twin**.
 
 The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 32 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
@@ -93,7 +93,7 @@ grc sovereign init
 
 ---
 
-## Packages (39 listed · 45 private — 84 total)
+## Packages (40 listed · 45 private — 85 total)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -131,6 +131,7 @@ grc sovereign init
 | `@grc-claw/predictive-compliance` | Failure forecasting, risk scoring, trend analysis, and remediation recommendations | v1.0.0 |
 | `@grc-claw/compliance-marketplace` | Proof-backed compliance pack publishing, discovery, installation, and ratings | v1.0.0 |
 | `@grc-claw/zero-trust-audit` | Cryptographic audit trail with hash chains, Merkle proofs, and evidence export | v1.0.0 |
+| `@grc-claw/evidence-graph` | Deterministic graph-object envelope, hashing, and snapshot builder for gateway/MCP proof paths | v1.0.0 |
 | `@grc-claw/federated-learning` | Federated learning network for cross-org compliance pattern sharing with differential privacy | v1.0.0 |
 | `@grc-claw/compliance-intelligence-api` | Real-time compliance intelligence from the network — trends, benchmarks, recommendations | v1.0.0 |
 | `@grc-claw/autonomous-compliance-agent` | Self-healing compliance — detect, diagnose, remediate, verify automatically | v1.0.0 |
@@ -686,7 +687,7 @@ The strategic line: the code can be copied, isolated features can be copied, and
 
 ## Post-v11.0 acquisition-grade moat: what to build next
 
-The current platform now has the breadth most GRC startups spend years trying to assemble: open-source execution engine, hosted A2Z SOC control plane, 27,596 control mappings, 84 package families, PR security gates, policy-as-code, evidence graph endpoints, post-quantum crypto, natural-language compliance, automation marketplace, real-time monitoring, sovereign deployment, and live proof-producing A2Z SOC surfaces.
+The current platform now has the breadth most GRC startups spend years trying to assemble: open-source execution engine, hosted A2Z SOC control plane, 27,596 control mappings, 85 package families, PR security gates, policy-as-code, Evidence Graph object plane, post-quantum crypto, natural-language compliance, automation marketplace, real-time monitoring, sovereign deployment, and live proof-producing A2Z SOC surfaces.
 
 The next step is to stop treating those capabilities as separate modules and turn them into a single compounding trust operating system.
 
@@ -694,7 +695,7 @@ Highest-leverage improvements, ordered by defensibility:
 
 1. **Evidence Graph object plane as the canonical truth layer**
    - A2Z SOC now has a durable `evidence_graph_objects` layer with graph IDs, source references, object hashes, control mappings, confidence, and metadata.
-   - GRC_Claw should mirror this as a local `@grc-claw/evidence-graph` package with append-only graph-object writes, deterministic hashes, offline export, and gateway/MCP tools.
+   - GRC_Claw now mirrors this as a local `@grc-claw/evidence-graph` package with graph-object writes, deterministic hashes, normalized snapshots, and gateway/MCP tools.
    - Every package should emit graph objects: PR gates, policy engine, PQC scans, natural-language compliance answers, marketplace automations, real-time monitor alerts, sovereign deployment attestations, and agent receipts.
 
 2. **Agent Policy Firewall as the default gateway runtime**
@@ -739,7 +740,7 @@ Highest-leverage improvements, ordered by defensibility:
 
 Immediate implementation ladder:
 
-- **Week 1:** create `@grc-claw/evidence-graph` and make gateway `evidence_graph.*` use the same graph-object envelope as A2Z SOC.
+- **Week 1:** create `@grc-claw/evidence-graph` and make gateway `evidence_graph.*` use the same graph-object envelope as A2Z SOC. **Implemented first slice:** HTTP `/api/evidence-graph/*` and agent `evidence_graph.*` now share deterministic graph-object snapshots.
 - **Week 2:** ship Agent Policy Firewall v1 for gateway + MCP tools, with intent/decision/result receipts.
 - **Week 3:** make PR gate, policy engine, PQC scan, natural-language compliance, marketplace automations, and real-time monitor write graph objects.
 - **Week 4:** launch the defense procurement cockpit around CMMC/NIST 800-171/ISO 42001.
