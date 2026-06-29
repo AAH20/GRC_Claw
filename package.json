@@ -41,7 +41,8 @@
     "test:agent-collab": "npm run test -w @grc-claw/agent-collaboration",
     "test:regulatory-mgmt": "npm run test -w @grc-claw/regulatory-change-management",
     "test:ai-governance": "npm run test -w @grc-claw/ai-governance",
-    "test:all": "npm run build && echo 'All 42 packages built successfully'"
+    "test:knowledge-graph": "npm run test -w @grc-claw/compliance-knowledge-graph",
+    "test:all": "npm run build && echo 'All 75 packages built successfully'"
   },
   "engines": {
     "node": ">=20"

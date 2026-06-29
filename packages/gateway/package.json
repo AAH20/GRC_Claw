@@ -75,6 +75,10 @@
     "@grc-claw/rbac-multi-tenant": "*",
     "@grc-claw/terraform-provider": "*",
     "@grc-claw/notification-engine": "*",
+    "@grc-claw/compliance-knowledge-graph": "*",
+    "@grc-claw/predictive-compliance": "*",
+    "@grc-claw/compliance-marketplace": "*",
+    "@grc-claw/zero-trust-audit": "*",
     "ws": "^8.18.0"
   },
   "devDependencies": {

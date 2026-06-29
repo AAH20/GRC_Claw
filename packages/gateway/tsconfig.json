@@ -49,6 +49,10 @@
     { "path": "../agent-discovery" },
     { "path": "../rbac-multi-tenant" },
     { "path": "../terraform-provider" },
-    { "path": "../notification-engine" }
+    { "path": "../notification-engine" },
+    { "path": "../compliance-knowledge-graph" },
+    { "path": "../predictive-compliance" },
+    { "path": "../compliance-marketplace" },
+    { "path": "../zero-trust-audit" }
   ]
 }
