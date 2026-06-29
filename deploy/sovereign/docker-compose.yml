@@ -1,0 +1,111 @@
+# GRC Claw Sovereign Stack — Docker Compose
+# Run with: docker compose up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL (Supabase-compatible)
+  postgres:
+    image: supabase/postgres:15.6.1.142
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Supabase Auth
+  supabase-auth:
+    image: supabase/gotrue:v2.151.0
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@postgres:5432/postgres
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Ollama — local LLM (sovereign mode, no Anthropic API)
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # GRC Claw API
+  grc-api:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./api:/app
+    environment:
+      SUPABASE_URL: http://supabase-auth:9999
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      ANTHROPIC_API_KEY: ""
+      OLLAMA_URL: http://ollama:11434
+      SOVEREIGN_MODE: "true"
+      NODE_ENV: production
+    depends_on:
+      - postgres
+      - ollama
+    command: node server.js
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - certbot_data:/var/www/certbot
+    depends_on:
+      - grc-api
+      - supabase-auth
+
+  # Certbot — automated TLS
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./nginx/certs:/etc/letsencrypt
+      - certbot_data:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${ADMIN_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN}
+
+  # Nightly backup
+  backup:
+    image: amazon/aws-cli:latest
+    restart: "no"
+    environment:
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+    volumes:
+      - pg_data:/data/postgres:ro
+    command: >
+      sh -c "pg_dump postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres | gzip | aws s3 cp - s3://${BACKUP_BUCKET}/$(date +%Y%m%d-%H%M%S).sql.gz"
+
+volumes:
+  pg_data:
+  ollama_data:
+  certbot_data:
