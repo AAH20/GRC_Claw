@@ -30,6 +30,7 @@
     "@grc-claw/agent-runtime": "*",
     "@grc-claw/core": "*",
     "@grc-claw/evidence": "*",
+    "@grc-claw/evidence-graph": "*",
     "@grc-claw/frameworks": "*",
     "@grc-claw/framework-crosswalk": "*",
     "@grc-claw/chat-grc": "*",

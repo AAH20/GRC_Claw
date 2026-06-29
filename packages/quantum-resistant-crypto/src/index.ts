@@ -57,16 +57,29 @@ const DEFAULT_CONFIG: CryptoConfig = {
 // ─── Kyber KEM ────────────────────────────────────────────────────────────────
 
 export class KyberKEM {
-  constructor(private readonly securityLevel: 1 | 3 | 5 = 3) {}
+  constructor(private securityLevel: 1 | 3 | 5 = 3) {}
+
+  private sizes(): { publicKey: number; privateKey: number; ciphertext: number } {
+    switch (this.securityLevel) {
+      case 1:
+        return { publicKey: 800, privateKey: 1632, ciphertext: 768 };
+      case 5:
+        return { publicKey: 1568, privateKey: 3168, ciphertext: 1568 };
+      case 3:
+      default:
+        return { publicKey: 1184, privateKey: 2400, ciphertext: 1088 };
+    }
+  }
 
   async generateKeyPair(): Promise<KyberKeyPair> {
-    const publicKey = randomBytes(1184);
-    const privateKey = randomBytes(2400);
+    const sizes = this.sizes();
+    const publicKey = randomBytes(sizes.publicKey);
+    const privateKey = randomBytes(sizes.privateKey);
     return { publicKey, privateKey };
   }
 
   async encapsulate(_publicKey: Uint8Array): Promise<KyberEncapsulation> {
-    const ciphertext = randomBytes(1088);
+    const ciphertext = randomBytes(this.sizes().ciphertext);
     const sharedSecret = randomBytes(32);
     return { ciphertext, sharedSecret };
   }
@@ -79,16 +92,29 @@ export class KyberKEM {
 // ─── Dilithium Signature ──────────────────────────────────────────────────────
 
 export class DilithiumSignature {
-  constructor(private readonly securityLevel: 2 | 3 | 5 = 3) {}
+  constructor(private securityLevel: 2 | 3 | 5 = 3) {}
+
+  private sizes(): { publicKey: number; privateKey: number; signature: number } {
+    switch (this.securityLevel) {
+      case 2:
+        return { publicKey: 1312, privateKey: 2528, signature: 2420 };
+      case 5:
+        return { publicKey: 2592, privateKey: 4864, signature: 4595 };
+      case 3:
+      default:
+        return { publicKey: 1952, privateKey: 4000, signature: 3293 };
+    }
+  }
 
   async generateKeyPair(): Promise<DilithiumKeyPair> {
-    const publicKey = randomBytes(1952);
-    const privateKey = randomBytes(4032);
+    const sizes = this.sizes();
+    const publicKey = randomBytes(sizes.publicKey);
+    const privateKey = randomBytes(sizes.privateKey);
     return { publicKey, privateKey };
   }
 
   async sign(_message: Uint8Array, _privateKey: Uint8Array): Promise<Uint8Array> {
-    return randomBytes(3293);
+    return randomBytes(this.sizes().signature);
   }
 
   async verify(_signature: Uint8Array, _message: Uint8Array, _publicKey: Uint8Array): Promise<boolean> {
