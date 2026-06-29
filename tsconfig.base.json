@@ -17,7 +17,11 @@
       "@grc-claw/agent-collaboration": ["packages/agent-collaboration/src/index.ts"],
       "@grc-claw/ai-governance": ["packages/ai-governance/src/index.ts"],
       "@grc-claw/continuous-trust-engine": ["packages/continuous-trust-engine/src/index.ts"],
-      "@grc-claw/regulatory-change-management": ["packages/regulatory-change-management/src/index.ts"]
+      "@grc-claw/regulatory-change-management": ["packages/regulatory-change-management/src/index.ts"],
+      "@grc-claw/compliance-knowledge-graph": ["packages/compliance-knowledge-graph/src/index.ts"],
+      "@grc-claw/predictive-compliance": ["packages/predictive-compliance/src/index.ts"],
+      "@grc-claw/compliance-marketplace": ["packages/compliance-marketplace/src/index.ts"],
+      "@grc-claw/zero-trust-audit": ["packages/zero-trust-audit/src/index.ts"]
     }
   }
 }

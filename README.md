@@ -1,6 +1,6 @@
 # GRC_Claw
 
-Open-source GRC automation engine — 71 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
+Open-source GRC automation engine — 75 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -12,9 +12,9 @@ Open-source GRC automation engine — 71 packages, 27,596 control mappings, auto
 
 ## What it is
 
-GRC_Claw is a TypeScript/Go monorepo (71 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **163 agent tools** (124 real implementations), **130+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), and a **blockchain-style hash chain audit trail**.
+GRC_Claw is a TypeScript/Go monorepo (75 packages, 288,053+ LOC) that turns compliance operations into code. The core is a **27,596-mapping crosswalk corpus** spanning 13 frameworks and 824 controls — the machine-readable layer that lets the SDK, CLI, VS Code extension, and Terraform provider all speak the same control language. An autonomous agent runtime (3-phase plan → act → verify, with trust scoring and auto-pause) ties it together for continuous compliance monitoring. The platform ships with **168 integration connectors**, **191 agent tools** (146 real implementations), **150+ HTTP endpoints**, **18 CLI commands**, **PostgreSQL persistence**, **RBAC multi-tenancy**, **notification engine** (Slack/Email/Teams), **browser-based evidence collection** (Playwright), **blockchain-style hash chain audit trail**, **compliance knowledge graph**, **predictive compliance engine**, **compliance marketplace**, and **zero-trust audit trail**.
 
-The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 32 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
+The project follows an **open-core model**: GRC_Claw is MIT-licensed and ships 36 packages to npm under the `@grc-claw/` scope. The commercial layer is **[A2Z SOC](https://a2zsoc.com)** — a hosted SOC platform that consumes the GRC_Claw engine for production security operations, SIEM, and enterprise multi-tenancy. You can run GRC_Claw fully standalone, or point it at A2Z SOC for the cloud control plane.
 
 ---
 
@@ -64,7 +64,7 @@ grc sovereign init
 
 ---
 
-## Packages (32 published · 39 private)
+## Packages (36 published · 39 private)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -98,8 +98,12 @@ grc sovereign init
 | `@grc-claw/agent-collaboration` | Multi-agent collaboration sessions, capability matching, and consensus workflows | internal |
 | `@grc-claw/regulatory-change-management` | Regulatory source tracking, impact analysis, timelines, and remediation gaps | internal |
 | `@grc-claw/ai-governance` | AI system inventory, EU AI Act risk classification, assessments, and monitoring | internal |
+| `@grc-claw/compliance-knowledge-graph` | Living graph of frameworks, controls, evidence, threats, technologies, and posture | v0.8.0 |
+| `@grc-claw/predictive-compliance` | Failure forecasting, risk scoring, trend analysis, and remediation recommendations | v0.8.0 |
+| `@grc-claw/compliance-marketplace` | Proof-backed compliance pack publishing, discovery, installation, and ratings | v0.8.0 |
+| `@grc-claw/zero-trust-audit` | Cryptographic audit trail with hash chains, Merkle proofs, and evidence export | v0.8.0 |
 
-The remaining 45 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
+The remaining 39 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 
 ---
 
@@ -350,6 +354,29 @@ GRC_Claw is designed to compound around assets that are hard to clone with capit
 7. **Benchmark intelligence** — anonymized, opt-in metrics for evidence freshness, remediation latency, control reuse, drift frequency, connector reliability, and audit readiness should become the industry reference layer.
 
 The anti-commoditization principle is simple: dashboards are copyable; a longitudinal, signed history of controls, evidence, agent actions, crosswalk decisions, and auditor-verified outcomes is not.
+
+---
+
+## 2026-2030 monopoly-grade build priorities
+
+The next moat is not another dashboard. It is a compounding trust network where A2Z SOC is the hosted control plane and GRC_Claw is the open, inspectable execution engine.
+
+1. **Compliance knowledge graph** — unify frameworks, controls, evidence, threats, assets, vendors, AI systems, regulations, and remediation history into one traversable graph. The graph should answer "what changed, who is affected, what evidence proves it, and which customers can reuse it?"
+2. **Proof-backed pack marketplace** — let auditors, MSPs, defense contractors, cloud specialists, and industry experts publish signed compliance packs with tests, mappings, evidence collectors, remediation playbooks, pricing, ratings, and provenance.
+3. **Predictive compliance engine** — forecast audit failure, evidence staleness, control drift, regulator-change impact, vendor risk, and remediation cost before the audit window. The product should sell prevention, not just reporting.
+4. **Zero-trust audit room** — replace static trust centers with a verifier portal where buyers and auditors can inspect signed receipts, OSCAL exports, verifiable credentials, change history, redacted evidence lineage, and exception approvals without raw-data access.
+5. **Agent policy firewall** — govern every MCP/tool/agent action with allowlists, approval thresholds, blast-radius scoring, tenant scope, idempotency, replay prevention, and receipt generation. This is the security layer agent harness teams will need but rarely want to build.
+6. **Defense procurement lane** — package CMMC, NIST 800-171, FedRAMP, ISO 42001, SBOM, AI BOM, supplier risk, and sovereign deployment into one acquisition-ready path for defense industrial base, critical infrastructure, and government-adjacent vendors.
+7. **Benchmark data network** — aggregate opt-in, anonymized metrics for evidence freshness, audit duration, remediation latency, control reuse, connector reliability, and regulatory-change exposure. Over time, these benchmarks become harder to copy than the software.
+
+Near-term execution order:
+
+- **First 30 days:** ship the knowledge graph and zero-trust audit room as visible A2Z SOC surfaces backed by GRC_Claw packages.
+- **Next 60 days:** turn compliance packs into a marketplace with signed provenance, ratings, and revenue share.
+- **Next 90 days:** add predictive compliance scoring to every dashboard, MCP response, and audit export.
+- **Next 6 months:** make CMMC/NIST 800-171 + ISO 42001 the flagship procurement bundle.
+
+The strategic line: proprietary incumbents can outspend a feature sprint, and open-source projects can copy isolated utilities. The hard-to-copy asset is the networked history of signed evidence, control mappings, agent receipts, verified packs, customer benchmarks, and auditor trust.
 
 ---
 

@@ -70,6 +70,11 @@
     { "path": "./packages/openapi-generator" },
     { "path": "./packages/terraform-provider" },
     { "path": "./packages/rbac-multi-tenant" },
+    { "path": "./packages/notification-engine" },
+    { "path": "./packages/compliance-knowledge-graph" },
+    { "path": "./packages/predictive-compliance" },
+    { "path": "./packages/compliance-marketplace" },
+    { "path": "./packages/zero-trust-audit" },
     { "path": "./packages/gateway" }
   ]
 }

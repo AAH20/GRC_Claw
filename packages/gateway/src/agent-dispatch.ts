@@ -207,11 +207,19 @@ import { ContinuousTrustEngine } from '@grc-claw/continuous-trust-engine';
 import { AgentCollaboration } from '@grc-claw/agent-collaboration';
 import { RegulatoryChangeManagement } from '@grc-claw/regulatory-change-management';
 import { AIGovernance } from '@grc-claw/ai-governance';
+import { ComplianceKnowledgeGraph } from '@grc-claw/compliance-knowledge-graph';
+import { PredictiveComplianceEngine } from '@grc-claw/predictive-compliance';
+import { ComplianceMarketplace } from '@grc-claw/compliance-marketplace';
+import { ZeroTrustAuditTrail } from '@grc-claw/zero-trust-audit';
 
 const continuousTrustEngine = new ContinuousTrustEngine();
 const agentCollaboration = new AgentCollaboration();
 const regulatoryChangeMgmt = new RegulatoryChangeManagement();
 const aiGovernance = new AIGovernance();
+const complianceKnowledgeGraph = new ComplianceKnowledgeGraph();
+const predictiveCompliance = new PredictiveComplianceEngine();
+const complianceMarketplace = new ComplianceMarketplace();
+const zeroTrustAudit = new ZeroTrustAuditTrail();
 
 export function setSecurityGraph(graph: SecurityGraph): void {
   securityGraph = graph;
@@ -305,7 +313,11 @@ export function isBuiltinGrcTool(tool: string): boolean {
     tool.startsWith('trust.') ||
     tool.startsWith('collaboration.') ||
     tool.startsWith('regulatory.') ||
-    tool.startsWith('ai_governance.')
+    tool.startsWith('ai_governance.') ||
+    tool.startsWith('knowledge_graph.') ||
+    tool.startsWith('predictive.') ||
+    tool.startsWith('marketplace.') ||
+    tool.startsWith('zero_trust.')
   );
 }
 
@@ -3150,6 +3162,83 @@ export async function dispatchBuiltinGrcTool(
       const system = args.system as import('@grc-claw/ai-governance').AISystem;
       aiGovernance.registerSystem(system);
       return { ok: true, message: 'AI system registered', timestamp: new Date().toISOString() };
+    }
+
+    // ─── Compliance Knowledge Graph Tools ──────────────────────────────────
+    case 'knowledge_graph.get_summary': {
+      const summary = complianceKnowledgeGraph.analytics.getSummary();
+      return { ok: true, summary, timestamp: new Date().toISOString() };
+    }
+    case 'knowledge_graph.get_posture': {
+      const organizationId = String(args.organizationId ?? 'demo-org');
+      const posture = complianceKnowledgeGraph.analytics.calculatePosture(organizationId);
+      return { ok: true, posture, timestamp: new Date().toISOString() };
+    }
+    case 'knowledge_graph.find_crosswalk': {
+      const from = String(args.from ?? '');
+      const to = String(args.to ?? '');
+      const mappings = to
+        ? complianceKnowledgeGraph.query
+            .getCrosswalk(from)
+            .filter((mapping) => mapping.targetFrameworkId === to || mapping.targetControlId === to)
+        : complianceKnowledgeGraph.query.getCrosswalk(from);
+      return { ok: true, mappings, count: mappings.length, timestamp: new Date().toISOString() };
+    }
+    case 'knowledge_graph.detect_patterns': {
+      const patterns = complianceKnowledgeGraph.analytics.detectPatterns();
+      return { ok: true, patterns, count: patterns.length, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Predictive Compliance Tools ──────────────────────────────────────
+    case 'predictive.get_forecasts': {
+      const forecasts = predictiveCompliance.forecastAll();
+      return { ok: true, forecasts, count: forecasts.length, timestamp: new Date().toISOString() };
+    }
+    case 'predictive.get_risks': {
+      const risks = predictiveCompliance.rankByRisk();
+      return { ok: true, risks, count: risks.length, timestamp: new Date().toISOString() };
+    }
+    case 'predictive.predict_failure': {
+      const controlId = String(args.controlId ?? '');
+      const forecast = predictiveCompliance.generateForecast(controlId);
+      return { ok: true, forecast, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Compliance Marketplace Tools ─────────────────────────────────────
+    case 'marketplace.get_stats': {
+      const stats = complianceMarketplace.stats();
+      return { ok: true, stats, timestamp: new Date().toISOString() };
+    }
+    case 'marketplace.discover_packs': {
+      const framework = args.framework as string | undefined;
+      const industry = args.industry as string | undefined;
+      const packs = complianceMarketplace.search({
+        frameworks: framework ? [framework] : undefined,
+        industries: industry ? [industry] : undefined,
+        limit: Number(args.limit ?? 50),
+      });
+      return { ok: true, packs, count: packs.length, timestamp: new Date().toISOString() };
+    }
+    case 'marketplace.install_pack': {
+      const packId = String(args.packId ?? '');
+      const version = args.version as string | undefined;
+      const result = complianceMarketplace.install(packId, version);
+      return { ok: true, result, timestamp: new Date().toISOString() };
+    }
+
+    // ─── Zero Trust Audit Tools ───────────────────────────────────────────
+    case 'zero_trust.verify_chain': {
+      const verification = zeroTrustAudit.verify();
+      return { ok: true, verification, timestamp: new Date().toISOString() };
+    }
+    case 'zero_trust.get_records': {
+      const records = zeroTrustAudit.getRecords();
+      return { ok: true, records, count: records.length, timestamp: new Date().toISOString() };
+    }
+    case 'zero_trust.export_evidence': {
+      const format = String(args.format ?? 'json') as 'json' | 'xml' | 'pdf';
+      const evidence = zeroTrustAudit.exportEvidence({ format });
+      return { ok: true, evidence, timestamp: new Date().toISOString() };
     }
 
     default:

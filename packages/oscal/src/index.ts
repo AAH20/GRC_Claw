@@ -280,3 +280,8 @@ export class OscalExporter {
 }
 
 export { CONTROL_CROSSWALK };
+
+// OCSF 1.1, STIX 2.1, SARIF 2.1.0 standards export modules
+export * from './ocsf';
+export * from './stix';
+export * from './sarif';

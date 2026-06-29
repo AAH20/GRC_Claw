@@ -61,6 +61,10 @@ import { ContinuousTrustEngine } from '@grc-claw/continuous-trust-engine';
 import { AgentCollaboration } from '@grc-claw/agent-collaboration';
 import { RegulatoryChangeManagement } from '@grc-claw/regulatory-change-management';
 import { AIGovernance } from '@grc-claw/ai-governance';
+import { ComplianceKnowledgeGraph } from '@grc-claw/compliance-knowledge-graph';
+import { PredictiveComplianceEngine } from '@grc-claw/predictive-compliance';
+import { ComplianceMarketplace } from '@grc-claw/compliance-marketplace';
+import { ZeroTrustAuditTrail } from '@grc-claw/zero-trust-audit';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1 * 1024 * 1024;
@@ -228,6 +232,10 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
   const agentCollaboration = new AgentCollaboration();
   const regulatoryChangeMgmt = new RegulatoryChangeManagement();
   const aiGovernance = new AIGovernance();
+  const complianceKnowledgeGraph = new ComplianceKnowledgeGraph();
+  const predictiveCompliance = new PredictiveComplianceEngine();
+  const complianceMarketplace = new ComplianceMarketplace();
+  const zeroTrustAudit = new ZeroTrustAuditTrail();
 
   // ─── Drift Detector ─────────────────────────────────────────────────
   const driftControlEvaluator: ControlEvaluator = {
@@ -2850,6 +2858,98 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const dashboard = aiGovernance.getDashboardData();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, dashboard }));
+      return;
+    }
+
+    // ─── Compliance Knowledge Graph ───────────────────────────────────────
+    if (path === '/api/knowledge-graph/summary' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const summary = complianceKnowledgeGraph.analytics.getSummary();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, summary }));
+      return;
+    }
+
+    if (path === '/api/knowledge-graph/posture' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const postureUrl = new URL(req.url ?? '', 'http://local');
+      const organizationId = postureUrl.searchParams.get('organizationId') ?? 'demo-org';
+      const posture = complianceKnowledgeGraph.analytics.calculatePosture(organizationId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, posture }));
+      return;
+    }
+
+    if (path === '/api/knowledge-graph/crosswalk' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const crosswalkUrl = new URL(req.url ?? '', 'http://local');
+      const from = crosswalkUrl.searchParams.get('from') ?? '';
+      const to = crosswalkUrl.searchParams.get('to') ?? '';
+      const mappings = to
+        ? complianceKnowledgeGraph.query
+            .getCrosswalk(from)
+            .filter((mapping) => mapping.targetFrameworkId === to || mapping.targetControlId === to)
+        : complianceKnowledgeGraph.query.getCrosswalk(from);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, mappings, count: mappings.length }));
+      return;
+    }
+
+    // ─── Predictive Compliance ────────────────────────────────────────────
+    if (path === '/api/predictive/forecasts' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const forecasts = predictiveCompliance.forecastAll();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, forecasts, count: forecasts.length }));
+      return;
+    }
+
+    if (path === '/api/predictive/risks' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const risks = predictiveCompliance.rankByRisk();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, risks, count: risks.length }));
+      return;
+    }
+
+    // ─── Compliance Marketplace ───────────────────────────────────────────
+    if (path === '/api/marketplace/stats' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const stats = complianceMarketplace.stats();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, stats }));
+      return;
+    }
+
+    if (path === '/api/marketplace/packs' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const marketplaceUrl = new URL(req.url ?? '', 'http://local');
+      const framework = marketplaceUrl.searchParams.get('framework') ?? undefined;
+      const industry = marketplaceUrl.searchParams.get('industry') ?? undefined;
+      const packs = complianceMarketplace.search({
+        frameworks: framework ? [framework] : undefined,
+        industries: industry ? [industry] : undefined,
+        limit: Number(marketplaceUrl.searchParams.get('limit') ?? 50),
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, packs, count: packs.length }));
+      return;
+    }
+
+    // ─── Zero Trust Audit ─────────────────────────────────────────────────
+    if (path === '/api/audit/verify' && req.method === 'POST') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const verification = zeroTrustAudit.verify();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, verification }));
+      return;
+    }
+
+    if (path === '/api/audit/records' && req.method === 'GET') {
+      if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
+      const records = zeroTrustAudit.getRecords();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, records, count: records.length }));
       return;
     }
 

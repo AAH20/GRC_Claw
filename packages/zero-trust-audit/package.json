@@ -1,0 +1,31 @@
+{
+  "name": "@grc-claw/zero-trust-audit",
+  "version": "0.8.0",
+  "description": "Zero-trust audit trail with cryptographic hash chaining, Merkle trees, digital signatures, and court-admissible evidence export",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "keywords": [
+    "audit-trail",
+    "zero-trust",
+    "cryptographic",
+    "merkle-tree",
+    "hash-chain",
+    "digital-signature",
+    "compliance",
+    "evidence",
+    "court-admissible",
+    "immutable"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
