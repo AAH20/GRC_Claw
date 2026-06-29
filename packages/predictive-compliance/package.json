@@ -1,35 +1,26 @@
 {
   "name": "@grc-claw/predictive-compliance",
-  "version": "0.9.0",
-  "description": "AI-powered predictive compliance engine that predicts compliance failures before they happen",
+  "version": "0.8.0",
+  "description": "Failure forecasting, risk scoring, trend analysis, and remediation recommendations",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^20.14.0"
   },
-  "keywords": [
-    "grc",
-    "compliance",
-    "predictive",
-    "risk-scoring",
-    "continuous-trust",
-    "ai"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/grc-claw/grc-claw.git",
-    "directory": "packages/predictive-compliance"
-  }
+  "files": ["dist"]
 }

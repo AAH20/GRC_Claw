@@ -1,140 +1,140 @@
-/**
- * @grc-claw/compliance-marketplace
- *
- * Compliance-as-code marketplace for sharing, discovering, and monetizing
- * compliance rules, templates, and automation packs.
- */
-
 import { randomUUID } from "node:crypto";
 
 // ---------------------------------------------------------------------------
-// Types & Enums
+// Types
 // ---------------------------------------------------------------------------
 
-export type PackStatus = "draft" | "published" | "deprecated" | "yanked";
-export type LicenseType = "MIT" | "Apache-2.0" | "Proprietary" | "Custom";
-export type PackTier = "free" | "basic" | "professional" | "enterprise";
+/** Supported compliance frameworks. */
+export type Framework =
+  | "SOC2"
+  | "ISO27001"
+  | "NIST-CSF"
+  | "NIST-800-53"
+  | "HIPAA"
+  | "PCI-DSS"
+  | "GDPR"
+  | "FedRAMP"
+  | "CIS"
+  | "custom";
 
-export interface PackAuthor {
+/** Pricing tier for marketplace items. */
+export type PricingTier = "free" | "standard" | "premium" | "enterprise";
+
+/** Status of a marketplace listing. */
+export type ListingStatus = "draft" | "pending" | "published" | "suspended" | "archived";
+
+/** Payment method. */
+export type PaymentMethod = "invoice" | "card" | "ach" | "wire";
+
+/** Export format for compliance packs. */
+export type ExportFormat = "json" | "yaml" | "csv";
+
+/** A single compliance control within a pack. */
+export interface ComplianceControl {
   id: string;
   name: string;
-  email?: string;
-  url?: string;
-}
-
-export interface PackVersion {
-  version: string;
-  publishedAt: Date;
-  checksum: string;
-  tarballUrl?: string;
-}
-
-export interface PackDependency {
-  packId: string;
-  versionRange: string;
-}
-
-export interface PackMetadata {
-  frameworks: string[];
-  industries: string[];
-  useCases: string[];
+  description: string;
+  framework: Framework;
+  category: string;
+  implementation: string;
+  evidence: string[];
+  automations: string[];
   tags: string[];
 }
 
-export interface PackRatingAggregate {
-  packId: string;
-  average: number;
-  count: number;
-  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
-}
-
+/** Review left by a user. */
 export interface Review {
   id: string;
-  packId: string;
-  authorId: string;
-  rating: 1 | 2 | 3 | 4 | 5;
-  title: string;
-  body: string;
+  userId: string;
+  rating: number;
+  comment: string;
   createdAt: Date;
-  updatedAt: Date;
-  helpful: number;
 }
 
-export interface ComplianceRule {
+/** Analytics for a marketplace item. */
+export interface ItemAnalytics {
+  views: number;
+  installs: number;
+  uninstalls: number;
+  revenue: number;
+  ratingDistribution: Record<number, number>;
+  topReferrers: string[];
+  monthlyTrend: { month: string; installs: number }[];
+}
+
+/** A marketplace item representing a compliance pack. */
+export interface MarketplaceItem {
   id: string;
   name: string;
   description: string;
-  framework: string;
-  severity: "critical" | "high" | "medium" | "low" | "info";
-  logic: Record<string, unknown>;
-  remediation?: string;
-  references?: string[];
-}
-
-export interface CompliancePack {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  longDescription?: string;
-  author: PackAuthor;
-  status: PackStatus;
-  tier: PackTier;
-  price: number;
-  license: LicenseType;
-  metadata: PackMetadata;
-  versions: PackVersion[];
-  latestVersion: string;
-  dependencies: PackDependency[];
-  rules: ComplianceRule[];
-  downloads: number;
-  rating: PackRatingAggregate;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface InstallResult {
-  packId: string;
+  author: string;
   version: string;
-  installedAt: Date;
-  rulesInstalled: number;
+  price: number;
+  tier: PricingTier;
+  rating: number;
+  downloads: number;
+  tags: string[];
+  framework: Framework;
+  controls: ComplianceControl[];
+  evidence: string[];
+  reviews: Review[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface PublishInput {
+/** A listing in the marketplace. */
+export interface MarketplaceListing {
+  item: MarketplaceItem;
+  status: ListingStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  analytics: ItemAnalytics;
+}
+
+/** A publisher (author) of compliance packs. */
+export interface Publisher {
+  id: string;
   name: string;
-  description: string;
-  longDescription?: string;
-  author: PackAuthor;
-  tier?: PackTier;
-  price?: number;
-  license?: LicenseType;
-  metadata?: Partial<PackMetadata>;
-  dependencies?: PackDependency[];
-  rules: ComplianceRule[];
+  email: string;
+  verified: boolean;
+  rating: number;
+  items: string[];
+  createdAt: Date;
 }
 
-export interface DiscoveryFilter {
-  frameworks?: string[];
-  industries?: string[];
-  useCases?: string[];
-  tags?: string[];
-  tier?: PackTier;
-  minRating?: number;
-  query?: string;
-  sort?: "rating" | "downloads" | "newest" | "name";
-  limit?: number;
-  offset?: number;
+/** An installation record. */
+export interface Installation {
+  id: string;
+  orgId: string;
+  itemId: string;
+  installedAt: Date;
+  version: string;
+  active: boolean;
 }
 
-export interface MarketplaceStats {
-  totalPacks: number;
-  totalDownloads: number;
-  totalRules: number;
-  totalReviews: number;
+/** Invoice for a purchase. */
+export interface Invoice {
+  id: string;
+  orgId: string;
+  items: { itemId: string; name: string; price: number }[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  status: "pending" | "paid" | "cancelled";
+  createdAt: Date;
+}
+
+/** Discount code. */
+export interface DiscountCode {
+  code: string;
+  percentage: number;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: Date;
 }
 
 // ---------------------------------------------------------------------------
-// Error helpers
+// Errors
 // ---------------------------------------------------------------------------
 
 export class MarketplaceError extends Error {
@@ -147,734 +147,811 @@ export class MarketplaceError extends Error {
   }
 }
 
-export class PackNotFoundError extends MarketplaceError {
-  constructor(identifier: string) {
-    super(`Pack not found: ${identifier}`, "PACK_NOT_FOUND");
-    this.name = "PackNotFoundError";
-  }
-}
-
-export class VersionConflictError extends MarketplaceError {
-  constructor(
-    packId: string,
-    required: string,
-    available: string,
-  ) {
-    super(
-      `Version conflict for ${packId}: required ${required}, available ${available}`,
-      "VERSION_CONFLICT",
-    );
-    this.name = "VersionConflictError";
-  }
-}
-
-export class DependencyError extends MarketplaceError {
-  constructor(message: string) {
-    super(message, "DEPENDENCY_ERROR");
-    this.name = "DependencyError";
-  }
-}
-
-export class PublishError extends MarketplaceError {
-  constructor(message: string) {
-    super(message, "PUBLISH_ERROR");
-    this.name = "PublishError";
-  }
-}
-
 // ---------------------------------------------------------------------------
-// Helpers
+// CompliancePack
 // ---------------------------------------------------------------------------
 
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
-function parseSemver(version: string): [number, number, number] {
-  const parts = version.split(".").map(Number);
-  if (parts.length !== 3 || parts.some((p) => Number.isNaN(p) || p < 0)) {
-    throw new MarketplaceError(`Invalid semver: ${version}`, "INVALID_SEMVER");
-  }
-  return parts as [number, number, number];
-}
-
-function satisfiesRange(version: string, range: string): boolean {
-  const v = parseSemver(version);
-  const cleanRange = range.trim();
-
-  // Exact match
-  if (cleanRange === v.join(".")) return true;
-
-  // Major bump range (e.g. ^1.0.0)
-  if (cleanRange.startsWith("^")) {
-    const target = parseSemver(cleanRange.slice(1));
-    return v[0] === target[0] && versionGreaterOrEqual(v, target);
-  }
-
-  // Minor range (e.g. ~1.2.0)
-  if (cleanRange.startsWith("~")) {
-    const target = parseSemver(cleanRange.slice(1));
-    return (
-      v[0] === target[0] &&
-      v[1] === target[1] &&
-      versionGreaterOrEqual(v, target)
-    );
-  }
-
-  // Exact
-  const target = parseSemver(cleanRange);
-  return v[0] === target[0] && v[1] === target[1] && v[2] === target[2];
-}
-
-function versionGreaterOrEqual(
-  a: [number, number, number],
-  b: [number, number, number],
-): boolean {
-  if (a[0] !== b[0]) return a[0] > b[0];
-  if (a[1] !== b[1]) return a[1] > b[1];
-  return a[2] >= b[2];
-}
-
-function sortVersionsDescending(versions: PackVersion[]): PackVersion[] {
-  return [...versions].sort((a, b) => {
-    const pa = parseSemver(a.version);
-    const pb = parseSemver(b.version);
-    if (pa[0] !== pb[0]) return pb[0] - pa[0];
-    if (pa[1] !== pb[1]) return pb[1] - pa[1];
-    return pb[2] - pa[2];
-  });
-}
-
-// ---------------------------------------------------------------------------
-// CompliancePack model
-// ---------------------------------------------------------------------------
-
-export class CompliancePackModel implements CompliancePack {
+/**
+ * Represents a compliance pack that can be published to the marketplace.
+ * Provides methods for building, validating, importing, exporting, and
+ * comparing packs.
+ */
+export class CompliancePack {
   id: string;
   name: string;
-  slug: string;
   description: string;
-  longDescription?: string;
-  author: PackAuthor;
-  status: PackStatus;
-  tier: PackTier;
-  price: number;
-  license: LicenseType;
-  metadata: PackMetadata;
-  versions: PackVersion[];
-  latestVersion: string;
-  dependencies: PackDependency[];
-  rules: ComplianceRule[];
-  downloads: number;
-  rating: PackRatingAggregate;
-  createdAt: Date;
-  updatedAt: Date;
+  framework: Framework;
+  version: string;
+  controls: Map<string, ComplianceControl> = new Map();
 
-  constructor(input: PublishInput, id?: string) {
-    this.id = id ?? randomUUID();
-    this.name = input.name;
-    this.slug = slugify(input.name);
-    this.description = input.description;
-    this.longDescription = input.longDescription;
-    this.author = input.author;
-    this.status = "draft";
-    this.tier = input.tier ?? "free";
-    this.price = input.price ?? 0;
-    this.license = input.license ?? "MIT";
-    this.metadata = {
-      frameworks: input.metadata?.frameworks ?? [],
-      industries: input.metadata?.industries ?? [],
-      useCases: input.metadata?.useCases ?? [],
-      tags: input.metadata?.tags ?? [],
-    };
-    this.versions = [];
-    this.latestVersion = "";
-    this.dependencies = input.dependencies ?? [];
-    this.rules = [...input.rules];
-    this.downloads = 0;
-    this.rating = {
-      packId: this.id,
-      average: 0,
-      count: 0,
-      distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-    };
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+  constructor(name: string, description: string, framework: Framework) {
+    this.id = randomUUID();
+    this.name = name;
+    this.description = description;
+    this.framework = framework;
+    this.version = "1.0.0";
   }
 
-  /** Publish a new version of this pack. */
-  publishVersion(version: string, checksum: string, tarballUrl?: string): PackVersion {
-    if (this.versions.some((v) => v.version === version)) {
-      throw new PublishError(`Version ${version} already exists for pack ${this.slug}`);
+  /**
+   * Create a new compliance pack with initial controls.
+   */
+  static createPack(
+    name: string,
+    description: string,
+    framework: Framework,
+    controls: ComplianceControl[],
+  ): CompliancePack {
+    const pack = new CompliancePack(name, description, framework);
+    for (const control of controls) {
+      pack.addControl(control.id, control);
     }
-
-    const entry: PackVersion = {
-      version,
-      publishedAt: new Date(),
-      checksum,
-      tarballUrl,
-    };
-    this.versions.push(entry);
-    this.latestVersion = version;
-    this.status = "published";
-    this.updatedAt = new Date();
-    return entry;
-  }
-
-  /** Resolve a version by range or exact match. */
-  resolveVersion(range?: string): PackVersion {
-    const sorted = sortVersionsDescending(this.versions);
-    if (sorted.length === 0) {
-      throw new MarketplaceError(
-        `No versions published for pack ${this.slug}`,
-        "NO_VERSIONS",
-      );
-    }
-
-    if (!range || range === "latest") return sorted[0];
-
-    const match = sorted.find((v) => satisfiesRange(v.version, range));
-    if (!match) {
-      throw new VersionConflictError(this.id, range, this.latestVersion);
-    }
-    return match;
-  }
-
-  /** Check if a dependency range is satisfiable. */
-  checkDependency(dep: PackDependency): void {
-    // The pack itself is checked externally; here we just validate the range format.
-    if (!dep.versionRange || dep.versionRange.trim().length === 0) {
-      throw new DependencyError(
-        `Empty version range for dependency ${dep.packId}`,
-      );
-    }
-  }
-
-  toJSON(): CompliancePack {
-    return {
-      id: this.id,
-      name: this.name,
-      slug: this.slug,
-      description: this.description,
-      longDescription: this.longDescription,
-      author: this.author,
-      status: this.status,
-      tier: this.tier,
-      price: this.price,
-      license: this.license,
-      metadata: this.metadata,
-      versions: this.versions,
-      latestVersion: this.latestVersion,
-      dependencies: this.dependencies,
-      rules: this.rules,
-      downloads: this.downloads,
-      rating: this.rating,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-    };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// PackPublisher
-// ---------------------------------------------------------------------------
-
-export class PackPublisher {
-  private packs = new Map<string, CompliancePackModel>();
-
-  /** Register a new pack or overwrite an existing one. */
-  register(pack: CompliancePackModel): CompliancePackModel {
-    if (this.packs.has(pack.id)) {
-      throw new PublishError(`Pack ${pack.slug} is already registered (id=${pack.id})`);
-    }
-    this.packs.set(pack.id, pack);
     return pack;
   }
 
-  /** Get a pack by id. */
-  getPack(id: string): CompliancePackModel | undefined {
-    return this.packs.get(id);
+  /**
+   * Add or update a control in the pack.
+   */
+  addControl(controlId: string, control: Omit<ComplianceControl, "id"> & { id?: string }): void {
+    const fullControl: ComplianceControl = {
+      ...control,
+      id: controlId,
+    };
+    this.controls.set(controlId, fullControl);
   }
-
-  /** Get all registered packs. */
-  getAllPacks(): CompliancePackModel[] {
-    return Array.from(this.packs.values());
-  }
-
-  /** Remove a pack from the registry. */
-  unregister(id: string): boolean {
-    return this.packs.delete(id);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// PackDiscovery
-// ---------------------------------------------------------------------------
-
-export class PackDiscovery {
-  constructor(private readonly publisher: PackPublisher) {}
-
-  /** Search packs with filters. */
-  search(filters: DiscoveryFilter = {}): CompliancePackModel[] {
-    let results = this.publisher.getAllPacks().filter((p) => p.status === "published");
-
-    if (filters.frameworks && filters.frameworks.length > 0) {
-      results = results.filter((p) =>
-        filters.frameworks!.some((f) => p.metadata.frameworks.includes(f)),
-      );
-    }
-
-    if (filters.industries && filters.industries.length > 0) {
-      results = results.filter((p) =>
-        filters.industries!.some((i) => p.metadata.industries.includes(i)),
-      );
-    }
-
-    if (filters.useCases && filters.useCases.length > 0) {
-      results = results.filter((p) =>
-        filters.useCases!.some((u) => p.metadata.useCases.includes(u)),
-      );
-    }
-
-    if (filters.tags && filters.tags.length > 0) {
-      results = results.filter((p) =>
-        filters.tags!.some((t) => p.metadata.tags.includes(t)),
-      );
-    }
-
-    if (filters.tier) {
-      results = results.filter((p) => p.tier === filters.tier);
-    }
-
-    if (filters.minRating !== undefined) {
-      results = results.filter((p) => p.rating.average >= filters.minRating!);
-    }
-
-    if (filters.query) {
-      const q = filters.query.toLowerCase();
-      results = results.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.metadata.tags.some((t) => t.toLowerCase().includes(q)),
-      );
-    }
-
-    // Sort
-    const sortMode = filters.sort ?? "rating";
-    results.sort((a, b) => {
-      switch (sortMode) {
-        case "rating":
-          return b.rating.average - a.rating.average;
-        case "downloads":
-          return b.downloads - a.downloads;
-        case "newest":
-          return b.createdAt.getTime() - a.createdAt.getTime();
-        case "name":
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    });
-
-    // Paginate
-    const offset = filters.offset ?? 0;
-    const limit = filters.limit ?? 20;
-    return results.slice(offset, offset + limit);
-  }
-
-  /** Find a pack by slug or id. */
-  findByIdentifier(identifier: string): CompliancePackModel | undefined {
-    for (const pack of this.publisher.getAllPacks()) {
-      if (pack.id === identifier || pack.slug === identifier) return pack;
-    }
-    return undefined;
-  }
-
-  /** List all packs for a given framework. */
-  listByFramework(framework: string): CompliancePackModel[] {
-    return this.search({ frameworks: [framework], limit: 100 });
-  }
-
-  /** List all packs for a given industry. */
-  listByIndustry(industry: string): CompliancePackModel[] {
-    return this.search({ industries: [industry], limit: 100 });
-  }
-
-  /** Get featured / top-rated packs. */
-  featured(limit = 10): CompliancePackModel[] {
-    return this.search({ sort: "rating", limit });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// PackInstaller
-// ---------------------------------------------------------------------------
-
-export class PackInstaller {
-  private installed = new Map<string, InstallResult>();
-
-  constructor(
-    private readonly publisher: PackPublisher,
-    private readonly discovery: PackDiscovery,
-  ) {}
 
   /**
-   * Install a pack by id/slug, resolving dependencies recursively.
-   * Returns the full list of packs that were installed.
+   * Validate that the pack is complete and ready for publishing.
+   * Returns an array of validation errors (empty if valid).
    */
-  install(
-    identifier: string,
-    versionRange?: string,
-  ): InstallResult[] {
-    const pack = this.discovery.findByIdentifier(identifier);
-    if (!pack) throw new PackNotFoundError(identifier);
+  validatePack(): string[] {
+    const errors: string[] = [];
 
-    const results: InstallResult[] = [];
-    this.installWithDeps(pack, versionRange, results, new Set());
-    return results;
-  }
-
-  /** Uninstall a pack by id/slug. */
-  uninstall(identifier: string): boolean {
-    return this.installed.delete(identifier);
-  }
-
-  /** Get all installed packs. */
-  getInstalled(): InstallResult[] {
-    return Array.from(this.installed.values());
-  }
-
-  /** Check if a pack is installed. */
-  isInstalled(identifier: string): boolean {
-    return this.installed.has(identifier);
-  }
-
-  // -- private --
-
-  private installWithDeps(
-    pack: CompliancePackModel,
-    versionRange: string | undefined,
-    results: InstallResult[],
-    visited: Set<string>,
-  ): void {
-    if (visited.has(pack.id)) return;
-    visited.add(pack.id);
-
-    // Resolve dependencies first (depth-first)
-    for (const dep of pack.dependencies) {
-      const depPack = this.discovery.findByIdentifier(dep.packId);
-      if (!depPack) {
-        throw new DependencyError(
-          `Dependency "${dep.packId}" not found for pack ${pack.slug}`,
-        );
-      }
-      this.installWithDeps(depPack, dep.versionRange, results, visited);
+    if (!this.name.trim()) {
+      errors.push("Pack name is required");
+    }
+    if (!this.description.trim()) {
+      errors.push("Pack description is required");
+    }
+    if (this.controls.size === 0) {
+      errors.push("Pack must contain at least one control");
     }
 
-    const resolved = pack.resolveVersion(versionRange);
+    for (const [id, control] of this.controls) {
+      if (!control.name.trim()) {
+        errors.push(`Control ${id} is missing a name`);
+      }
+      if (!control.implementation.trim()) {
+        errors.push(`Control ${id} is missing an implementation`);
+      }
+      if (control.evidence.length === 0) {
+        errors.push(`Control ${id} has no evidence requirements`);
+      }
+    }
 
-    // Increment download counter
-    pack.downloads += 1;
+    return errors;
+  }
 
-    const result: InstallResult = {
-      packId: pack.id,
-      version: resolved.version,
-      installedAt: new Date(),
-      rulesInstalled: pack.rules.length,
+  /**
+   * Export the pack to the specified format.
+   */
+  exportPack(format: ExportFormat): string {
+    const data = {
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      framework: this.framework,
+      version: this.version,
+      controls: Array.from(this.controls.values()),
     };
 
-    this.installed.set(pack.id, result);
-    results.push(result);
+    switch (format) {
+      case "json":
+        return JSON.stringify(data, null, 2);
+      case "yaml":
+        return this.toYaml(data);
+      case "csv":
+        return this.toCsv(data.controls);
+      default:
+        throw new MarketplaceError(`Unsupported export format: ${format}`, "INVALID_FORMAT");
+    }
+  }
+
+  /**
+   * Import a pack from a JSON string.
+   */
+  static importPack(data: string): CompliancePack {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(data) as Record<string, unknown>;
+    } catch {
+      throw new MarketplaceError("Invalid JSON data for pack import", "INVALID_IMPORT");
+    }
+
+    const name = parsed.name as string;
+    const description = parsed.description as string;
+    const framework = parsed.framework as Framework;
+    const controls = parsed.controls as ComplianceControl[];
+
+    if (!name || !description || !framework) {
+      throw new MarketplaceError("Import data missing required fields", "INVALID_IMPORT");
+    }
+
+    return CompliancePack.createPack(name, description, framework, controls ?? []);
+  }
+
+  /**
+   * Compare this pack with another and return differences.
+   */
+  diffPack(other: CompliancePack): {
+    added: ComplianceControl[];
+    removed: ComplianceControl[];
+    modified: { controlId: string; ours: ComplianceControl; theirs: ComplianceControl }[];
+  } {
+    const added: ComplianceControl[] = [];
+    const removed: ComplianceControl[] = [];
+    const modified: { controlId: string; ours: ComplianceControl; theirs: ComplianceControl }[] = [];
+
+    for (const [id, theirs] of other.controls) {
+      const ours = this.controls.get(id);
+      if (!ours) {
+        added.push(theirs);
+      } else if (JSON.stringify(ours) !== JSON.stringify(theirs)) {
+        modified.push({ controlId: id, ours, theirs });
+      }
+    }
+
+    for (const [id] of this.controls) {
+      if (!other.controls.has(id)) {
+        removed.push(this.controls.get(id)!);
+      }
+    }
+
+    return { added, removed, modified };
+  }
+
+  /**
+   * Merge another pack into this one. Conflicts are resolved by taking
+   * the other pack's version of a control.
+   */
+  mergePack(other: CompliancePack): CompliancePack {
+    const merged = new CompliancePack(
+      `${this.name} + ${other.name}`,
+      `Merged pack combining ${this.name} and ${other.name}`,
+      this.framework,
+    );
+    merged.version = this.version;
+
+    for (const [id, control] of this.controls) {
+      merged.controls.set(id, { ...control });
+    }
+    for (const [id, control] of other.controls) {
+      merged.controls.set(id, { ...control });
+    }
+
+    return merged;
+  }
+
+  private toYaml(data: Record<string, unknown>, indent = 0): string {
+    const lines: string[] = [];
+    const prefix = "  ".repeat(indent);
+
+    for (const [key, value] of Object.entries(data)) {
+      if (Array.isArray(value)) {
+        lines.push(`${prefix}${key}:`);
+        for (const item of value) {
+          if (typeof item === "object" && item !== null) {
+            lines.push(`${prefix}  -`);
+            for (const [k, v] of Object.entries(item)) {
+              if (Array.isArray(v)) {
+                lines.push(`${prefix}    ${k}:`);
+                for (const sub of v) {
+                  lines.push(`${prefix}      - ${sub}`);
+                }
+              } else {
+                lines.push(`${prefix}    ${k}: ${v}`);
+              }
+            }
+          } else {
+            lines.push(`${prefix}  - ${item}`);
+          }
+        }
+      } else if (typeof value === "object" && value !== null) {
+        lines.push(`${prefix}${key}:`);
+        lines.push(this.toYaml(value as Record<string, unknown>, indent + 1));
+      } else {
+        lines.push(`${prefix}${key}: ${value}`);
+      }
+    }
+
+    return lines.join("\n");
+  }
+
+  private toCsv(controls: ComplianceControl[]): string {
+    const headers = ["id", "name", "framework", "category", "implementation", "evidence", "tags"];
+    const rows = controls.map((c) =>
+      [c.id, c.name, c.framework, c.category, c.implementation, c.evidence.join(";"), c.tags.join(";")]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    return [headers.join(","), ...rows].join("\n");
   }
 }
 
 // ---------------------------------------------------------------------------
-// PackRating
+// PricingEngine
 // ---------------------------------------------------------------------------
 
-export class PackRating {
-  private reviews = new Map<string, Review[]>();
+/**
+ * Handles pricing calculations, discounts, and invoicing.
+ */
+export class PricingEngine {
+  private discounts: Map<string, DiscountCode> = new Map();
 
-  /** Submit a review for a pack. */
-  submitReview(
-    packId: string,
-    authorId: string,
-    rating: 1 | 2 | 3 | 4 | 5,
-    title: string,
-    body: string,
-  ): Review {
-    const existing = this.reviews.get(packId) ?? [];
-    const duplicate = existing.find((r) => r.authorId === authorId);
-    if (duplicate) {
-      throw new PublishError(
-        `User ${authorId} has already reviewed pack ${packId}`,
+  private readonly tierMultipliers: Record<PricingTier, number> = {
+    free: 0,
+    standard: 1,
+    premium: 2.5,
+    enterprise: 5,
+  };
+
+  /**
+   * Calculate the price for a pack at the given tier.
+   */
+  calculatePrice(pack: CompliancePack, tier: PricingTier): number {
+    if (tier === "free") return 0;
+
+    const controlCount = pack.controls.size;
+    const basePrice = controlCount * 10;
+    const multiplier = this.tierMultipliers[tier];
+    return Math.round(basePrice * multiplier * 100) / 100;
+  }
+
+  /**
+   * Register a discount code.
+   */
+  registerDiscount(code: string, percentage: number, maxUses: number, expiresAt: Date): void {
+    this.discounts.set(code.toUpperCase(), {
+      code: code.toUpperCase(),
+      percentage,
+      maxUses,
+      usedCount: 0,
+      expiresAt,
+    });
+  }
+
+  /**
+   * Apply a discount code and return the discount percentage.
+   * Throws if the code is invalid, expired, or exhausted.
+   */
+  applyDiscount(code: string): number {
+    const discount = this.discounts.get(code.toUpperCase());
+    if (!discount) {
+      throw new MarketplaceError(`Invalid discount code: ${code}`, "INVALID_DISCOUNT");
+    }
+    if (discount.usedCount >= discount.maxUses) {
+      throw new MarketplaceError("Discount code has been exhausted", "DISCOUNT_EXHAUSTED");
+    }
+    if (new Date() > discount.expiresAt) {
+      throw new MarketplaceError("Discount code has expired", "DISCOUNT_EXPIRED");
+    }
+    discount.usedCount++;
+    return discount.percentage;
+  }
+
+  /**
+   * Generate an invoice for the given items.
+   */
+  generateInvoice(
+    orgId: string,
+    items: { itemId: string; name: string; price: number }[],
+    discountCode?: string,
+  ): Invoice {
+    const subtotal = items.reduce((sum, i) => sum + i.price, 0);
+    let discount = 0;
+
+    if (discountCode) {
+      try {
+        const pct = this.applyDiscount(discountCode);
+        discount = Math.round(subtotal * (pct / 100) * 100) / 100;
+      } catch {
+        // Invalid discount code — proceed without discount
+      }
+    }
+
+    return {
+      id: randomUUID(),
+      orgId,
+      items,
+      subtotal,
+      discount,
+      total: subtotal - discount,
+      status: "pending",
+      createdAt: new Date(),
+    };
+  }
+
+  /**
+   * Process a payment for an invoice.
+   */
+  processPayment(invoiceId: string, _method: PaymentMethod): { success: boolean; transactionId: string } {
+    // In production this would integrate with a payment provider.
+    return {
+      success: true,
+      transactionId: `txn_${invoiceId}_${randomUUID().slice(0, 8)}`,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MarketplaceRegistry
+// ---------------------------------------------------------------------------
+
+/**
+ * Manages publishers — registration, verification, and analytics.
+ */
+export class MarketplaceRegistry {
+  private publishers: Map<string, Publisher> = new Map();
+
+  /**
+   * Register a new publisher.
+   */
+  registerPublisher(publisher: Omit<Publisher, "verified" | "rating" | "items" | "createdAt">): Publisher {
+    if (this.publishers.has(publisher.id)) {
+      throw new MarketplaceError(`Publisher already registered: ${publisher.id}`, "DUPLICATE_PUBLISHER");
+    }
+
+    const full: Publisher = {
+      ...publisher,
+      verified: false,
+      rating: 0,
+      items: [],
+      createdAt: new Date(),
+    };
+    this.publishers.set(publisher.id, full);
+    return full;
+  }
+
+  /**
+   * Mark a publisher as verified.
+   */
+  verifyPublisher(id: string): Publisher {
+    const pub = this.publishers.get(id);
+    if (!pub) {
+      throw new MarketplaceError(`Publisher not found: ${id}`, "PUBLISHER_NOT_FOUND");
+    }
+    pub.verified = true;
+    return pub;
+  }
+
+  /**
+   * Get a publisher by ID.
+   */
+  getPublisher(id: string): Publisher {
+    const pub = this.publishers.get(id);
+    if (!pub) {
+      throw new MarketplaceError(`Publisher not found: ${id}`, "PUBLISHER_NOT_FOUND");
+    }
+    return pub;
+  }
+
+  /**
+   * List all registered publishers.
+   */
+  listPublishers(): Publisher[] {
+    return Array.from(this.publishers.values());
+  }
+
+  /**
+   * Get analytics for a specific publisher.
+   */
+  getPublisherAnalytics(id: string): { totalItems: number; verified: boolean; rating: number } {
+    const pub = this.getPublisher(id);
+    return {
+      totalItems: pub.items.length,
+      verified: pub.verified,
+      rating: pub.rating,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MarketplaceEngine
+// ---------------------------------------------------------------------------
+
+/**
+ * Core engine powering the compliance marketplace.
+ * Handles publishing, searching, installing, rating, and recommendations.
+ */
+export class MarketplaceEngine {
+  private listings: Map<string, MarketplaceListing> = new Map();
+  private installations: Map<string, Installation[]> = new Map();
+  private registry: MarketplaceRegistry;
+  private pricing: PricingEngine;
+
+  constructor(registry?: MarketplaceRegistry, pricing?: PricingEngine) {
+    this.registry = registry ?? new MarketplaceRegistry();
+    this.pricing = pricing ?? new PricingEngine();
+  }
+
+  /**
+   * Publish a compliance pack to the marketplace.
+   */
+  publishItem(pack: CompliancePack, authorId: string): MarketplaceListing {
+    const errors = pack.validatePack();
+    if (errors.length > 0) {
+      throw new MarketplaceError(
+        `Pack validation failed: ${errors.join(", ")}`,
+        "VALIDATION_FAILED",
       );
+    }
+
+    const publisher = this.registry.getPublisher(authorId);
+
+    const item: MarketplaceItem = {
+      id: pack.id,
+      name: pack.name,
+      description: pack.description,
+      author: publisher.name,
+      version: pack.version,
+      price: this.pricing.calculatePrice(pack, "standard"),
+      tier: "standard",
+      rating: 0,
+      downloads: 0,
+      tags: this.extractTags(pack),
+      framework: pack.framework,
+      controls: Array.from(pack.controls.values()),
+      evidence: Array.from(pack.controls.values()).flatMap((c) => c.evidence),
+      reviews: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const listing: MarketplaceListing = {
+      item,
+      status: "published",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      analytics: this.emptyAnalytics(),
+    };
+
+    this.listings.set(item.id, listing);
+    publisher.items.push(item.id);
+
+    return listing;
+  }
+
+  /**
+   * Search marketplace items by query string and optional filters.
+   */
+  searchItems(
+    query: string,
+    filters?: {
+      framework?: Framework;
+      tags?: string[];
+      minRating?: number;
+      maxPrice?: number;
+      tier?: PricingTier;
+    },
+  ): MarketplaceItem[] {
+    const lowerQuery = query.toLowerCase();
+
+    return Array.from(this.listings.values())
+      .filter((l) => l.status === "published")
+      .map((l) => l.item)
+      .filter((item) => {
+        const matchesQuery =
+          !query ||
+          item.name.toLowerCase().includes(lowerQuery) ||
+          item.description.toLowerCase().includes(lowerQuery) ||
+          item.tags.some((t) => t.toLowerCase().includes(lowerQuery));
+
+        const matchesFramework = !filters?.framework || item.framework === filters.framework;
+        const matchesTags =
+          !filters?.tags || filters.tags.every((t) => item.tags.includes(t));
+        const matchesRating = !filters?.minRating || item.rating >= filters.minRating;
+        const matchesPrice = filters?.maxPrice === undefined || item.price <= filters.maxPrice;
+        const matchesTier = !filters?.tier || item.tier === filters.tier;
+
+        return matchesQuery && matchesFramework && matchesTags && matchesRating && matchesPrice && matchesTier;
+      });
+  }
+
+  /**
+   * Get a single item by ID.
+   */
+  getItem(id: string): MarketplaceItem {
+    const listing = this.listings.get(id);
+    if (!listing) {
+      throw new MarketplaceError(`Item not found: ${id}`, "ITEM_NOT_FOUND");
+    }
+    return listing.item;
+  }
+
+  /**
+   * Install an item. Alias for installItem.
+   */
+  install(orgIdOrItemId: string, itemId?: string): Installation {
+    if (itemId) {
+      return this.installItem(orgIdOrItemId, itemId);
+    }
+    return this.installItem("default-org", orgIdOrItemId);
+  }
+
+  /**
+   * Install a marketplace item for an organization.
+   */
+  installItem(orgId: string, itemId: string): Installation {
+    const listing = this.listings.get(itemId);
+    if (!listing) {
+      throw new MarketplaceError(`Item not found: ${itemId}`, "ITEM_NOT_FOUND");
+    }
+
+    const orgInstalls = this.installations.get(orgId) ?? [];
+    const existing = orgInstalls.find((i) => i.itemId === itemId && i.active);
+    if (existing) {
+      throw new MarketplaceError("Item already installed for this organization", "ALREADY_INSTALLED");
+    }
+
+    const installation: Installation = {
+      id: randomUUID(),
+      orgId,
+      itemId,
+      installedAt: new Date(),
+      version: listing.item.version,
+      active: true,
+    };
+
+    orgInstalls.push(installation);
+    this.installations.set(orgId, orgInstalls);
+
+    listing.item.downloads++;
+    listing.analytics.installs++;
+
+    return installation;
+  }
+
+  /**
+   * Rate and review a marketplace item.
+   */
+  rateItem(itemId: string, userId: string, rating: number, comment: string): Review {
+    if (rating < 1 || rating > 5) {
+      throw new MarketplaceError("Rating must be between 1 and 5", "INVALID_RATING");
+    }
+
+    const listing = this.listings.get(itemId);
+    if (!listing) {
+      throw new MarketplaceError(`Item not found: ${itemId}`, "ITEM_NOT_FOUND");
+    }
+
+    const existingReview = listing.item.reviews.find((r) => r.userId === userId);
+    if (existingReview) {
+      throw new MarketplaceError("User has already reviewed this item", "DUPLICATE_REVIEW");
     }
 
     const review: Review = {
       id: randomUUID(),
-      packId,
-      authorId,
+      userId,
       rating,
-      title,
-      body,
+      comment,
       createdAt: new Date(),
-      updatedAt: new Date(),
-      helpful: 0,
     };
 
-    existing.push(review);
-    this.reviews.set(packId, existing);
+    listing.item.reviews.push(review);
+
+    // Recalculate average rating
+    const total = listing.item.reviews.reduce((sum, r) => sum + r.rating, 0);
+    listing.item.rating = Math.round((total / listing.item.reviews.length) * 10) / 10;
+
+    // Update distribution
+    const dist = listing.analytics.ratingDistribution;
+    dist[rating] = (dist[rating] ?? 0) + 1;
+
     return review;
   }
 
-  /** Update an existing review. */
-  updateReview(
-    reviewId: string,
-    patch: Partial<Pick<Review, "rating" | "title" | "body">>,
-  ): Review {
-    for (const reviews of this.reviews.values()) {
-      const review = reviews.find((r) => r.id === reviewId);
-      if (review) {
-        if (patch.rating !== undefined) review.rating = patch.rating;
-        if (patch.title !== undefined) review.title = patch.title;
-        if (patch.body !== undefined) review.body = patch.body;
-        review.updatedAt = new Date();
-        return review;
-      }
-    }
-    throw new MarketplaceError(`Review not found: ${reviewId}`, "REVIEW_NOT_FOUND");
+  /**
+   * Get AI-powered recommendations for an organization based on their
+   * existing installations and industry profile.
+   */
+  getRecommendations(orgId: string): MarketplaceItem[] {
+    const installed = this.installations.get(orgId) ?? [];
+    const installedFrameworks = new Set(
+      installed.map((i) => this.listings.get(i.itemId)?.item.framework).filter(Boolean),
+    );
+    const installedTags = new Set(
+      installed.flatMap((i) => this.listings.get(i.itemId)?.item.tags ?? []),
+    );
+
+    return Array.from(this.listings.values())
+      .filter((l) => l.status === "published")
+      .map((l) => l.item)
+      .filter((item) => !installed.some((i) => i.itemId === item.id))
+      .map((item) => {
+        let score = 0;
+        if (installedFrameworks.has(item.framework)) score += 3;
+        score += item.tags.filter((t) => installedTags.has(t)).length;
+        score += item.rating;
+        return { item, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+      .map((r) => r.item);
   }
 
-  /** Delete a review. */
-  deleteReview(reviewId: string): boolean {
-    for (const [packId, reviews] of this.reviews.entries()) {
-      const idx = reviews.findIndex((r) => r.id === reviewId);
-      if (idx !== -1) {
-        reviews.splice(idx, 1);
-        this.reviews.set(packId, reviews);
-        return true;
-      }
-    }
-    return false;
+  /**
+   * Get trending items based on recent downloads and ratings.
+   */
+  getTrending(): MarketplaceItem[] {
+    return Array.from(this.listings.values())
+      .filter((l) => l.status === "published")
+      .map((l) => l.item)
+      .sort((a, b) => b.downloads * b.rating - a.downloads * a.rating)
+      .slice(0, 20);
   }
 
-  /** Get all reviews for a pack. */
-  getReviews(packId: string): Review[] {
-    return this.reviews.get(packId) ?? [];
-  }
+  /**
+   * Browse items grouped by framework category.
+   */
+  getCategories(): Map<Framework, MarketplaceItem[]> {
+    const categories = new Map<Framework, MarketplaceItem[]>();
 
-  /** Get aggregate rating for a pack. */
-  getAggregateRating(packId: string): PackRatingAggregate {
-    const reviews = this.getReviews(packId);
-    const distribution: Record<1 | 2 | 3 | 4 | 5, number> = {
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-    };
-
-    let sum = 0;
-    for (const r of reviews) {
-      distribution[r.rating] += 1;
-      sum += r.rating;
+    for (const listing of this.listings.values()) {
+      if (listing.status !== "published") continue;
+      const existing = categories.get(listing.item.framework) ?? [];
+      existing.push(listing.item);
+      categories.set(listing.item.framework, existing);
     }
 
+    return categories;
+  }
+
+  /**
+   * Get featured items (highest rated + most downloaded).
+   */
+  getFeatured(): MarketplaceItem[] {
+    return Array.from(this.listings.values())
+      .filter((l) => l.status === "published" && l.item.rating >= 4)
+      .map((l) => l.item)
+      .sort((a, b) => b.downloads - a.downloads)
+      .slice(0, 10);
+  }
+
+  /**
+   * Update a marketplace item's metadata.
+   */
+  updateItem(id: string, updates: Partial<Pick<MarketplaceItem, "name" | "description" | "tags" | "version">>): MarketplaceItem {
+    const listing = this.listings.get(id);
+    if (!listing) {
+      throw new MarketplaceError(`Item not found: ${id}`, "ITEM_NOT_FOUND");
+    }
+
+    if (updates.name) listing.item.name = updates.name;
+    if (updates.description) listing.item.description = updates.description;
+    if (updates.tags) listing.item.tags = updates.tags;
+    if (updates.version) listing.item.version = updates.version;
+    listing.item.updatedAt = new Date();
+    listing.updatedAt = new Date();
+
+    return listing.item;
+  }
+
+  /**
+   * Remove an item from the marketplace (archives it).
+   */
+  removeItem(id: string): void {
+    const listing = this.listings.get(id);
+    if (!listing) {
+      throw new MarketplaceError(`Item not found: ${id}`, "ITEM_NOT_FOUND");
+    }
+    listing.status = "archived";
+    listing.updatedAt = new Date();
+  }
+
+  /**
+   * Get analytics for a specific item.
+   */
+  getAnalytics(itemId: string): ItemAnalytics {
+    const listing = this.listings.get(itemId);
+    if (!listing) {
+      throw new MarketplaceError(`Item not found: ${itemId}`, "ITEM_NOT_FOUND");
+    }
+    return listing.analytics;
+  }
+
+  /**
+   * Get marketplace statistics.
+   */
+  stats(): {
+    totalItems: number;
+    totalPacks: number;
+    publishedItems: number;
+    totalPublishers: number;
+    totalInstalls: number;
+  } {
+    const published = Array.from(this.listings.values()).filter(l => l.status === "published");
+    const totalInstalls = Array.from(this.listings.values()).reduce(
+      (sum, l) => sum + l.analytics.installs, 0
+    );
     return {
-      packId,
-      average: reviews.length > 0 ? sum / reviews.length : 0,
-      count: reviews.length,
-      distribution,
+      totalItems: this.listings.size,
+      totalPacks: this.listings.size,
+      publishedItems: published.length,
+      totalPublishers: this.registry.listPublishers().length,
+      totalInstalls,
     };
   }
 
-  /** Mark a review as helpful. */
-  markHelpful(reviewId: string): void {
-    for (const reviews of this.reviews.values()) {
-      const review = reviews.find((r) => r.id === reviewId);
-      if (review) {
-        review.helpful += 1;
-        return;
-      }
+  /**
+   * Search marketplace items with optional filters.
+   */
+  search(filters?: {
+    query?: string;
+    framework?: string;
+    frameworks?: string[];
+    industries?: string[];
+    limit?: number;
+  }): MarketplaceItem[] {
+    let items = Array.from(this.listings.values())
+      .filter(l => l.status === "published")
+      .map(l => l.item);
+
+    if (filters?.query) {
+      const q = filters.query.toLowerCase();
+      items = items.filter(item =>
+        item.name.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q)
+      );
     }
+
+    if (filters?.framework) {
+      items = items.filter(item => item.framework === filters.framework);
+    }
+
+    if (filters?.frameworks && filters.frameworks.length > 0) {
+      items = items.filter(item => filters.frameworks!.includes(item.framework));
+    }
+
+    if (filters?.limit) {
+      items = items.slice(0, filters.limit);
+    }
+
+    return items;
   }
 
-  /** Get top reviews by helpfulness. */
-  topReviews(packId: string, limit = 5): Review[] {
-    return this.getReviews(packId)
-      .sort((a, b) => b.helpful - a.helpful)
-      .slice(0, limit);
+  /** Expose the registry for external use. */
+  getRegistry(): MarketplaceRegistry {
+    return this.registry;
+  }
+
+  /** Expose the pricing engine for external use. */
+  getPricing(): PricingEngine {
+    return this.pricing;
+  }
+
+  private extractTags(pack: CompliancePack): string[] {
+    const tags = new Set<string>();
+    tags.add(pack.framework.toLowerCase());
+    for (const control of pack.controls.values()) {
+      for (const tag of control.tags) {
+        tags.add(tag);
+      }
+      tags.add(control.category.toLowerCase());
+    }
+    return Array.from(tags);
+  }
+
+  private emptyAnalytics(): ItemAnalytics {
+    return {
+      views: 0,
+      installs: 0,
+      uninstalls: 0,
+      revenue: 0,
+      ratingDistribution: {},
+      topReferrers: [],
+      monthlyTrend: [],
+    };
   }
 }
 
-// ---------------------------------------------------------------------------
-// ComplianceMarketplace (facade)
-// ---------------------------------------------------------------------------
-
-export class ComplianceMarketplace {
-  readonly publisher: PackPublisher;
-  readonly discovery: PackDiscovery;
-  readonly installer: PackInstaller;
-  readonly ratings: PackRating;
-
-  constructor() {
-    this.publisher = new PackPublisher();
-    this.discovery = new PackDiscovery(this.publisher);
-    this.installer = new PackInstaller(this.publisher, this.discovery);
-    this.ratings = new PackRating();
-  }
-
-  // -- Publishing ----------------------------------------------------------
-
-  /** Create, register, and optionally publish a new compliance pack. */
-  publishPack(
-    input: PublishInput,
-    version = "1.0.0",
-    checksum?: string,
-  ): CompliancePackModel {
-    const pack = new CompliancePackModel(input);
-    this.publisher.register(pack);
-    pack.publishVersion(version, checksum ?? randomUUID());
-    this.syncRating(pack);
-    return pack;
-  }
-
-  /** Publish a new version of an existing pack. */
-  publishNewVersion(
-    packId: string,
-    version: string,
-    checksum?: string,
-    tarballUrl?: string,
-  ): CompliancePackModel {
-    const pack = this.publisher.getPack(packId);
-    if (!pack) throw new PackNotFoundError(packId);
-    pack.publishVersion(version, checksum ?? randomUUID(), tarballUrl);
-    this.syncRating(pack);
-    return pack;
-  }
-
-  /** Deprecate a pack. */
-  deprecatePack(packId: string): void {
-    const pack = this.publisher.getPack(packId);
-    if (!pack) throw new PackNotFoundError(packId);
-    pack.status = "deprecated";
-    pack.updatedAt = new Date();
-  }
-
-  /** Yank (unpublish) a specific version. */
-  yankVersion(packId: string, version: string): void {
-    const pack = this.publisher.getPack(packId);
-    if (!pack) throw new PackNotFoundError(packId);
-    pack.versions = pack.versions.filter((v) => v.version !== version);
-    if (pack.versions.length === 0) {
-      pack.status = "yanked";
-      pack.latestVersion = "";
-    } else {
-      const sorted = sortVersionsDescending(pack.versions);
-      pack.latestVersion = sorted[0].version;
-    }
-    pack.updatedAt = new Date();
-  }
-
-  // -- Discovery -----------------------------------------------------------
-
-  /** Search packs with filters. */
-  search(filters?: DiscoveryFilter): CompliancePackModel[] {
-    return this.discovery.search(filters);
-  }
-
-  /** Get a pack by id or slug. */
-  getPack(identifier: string): CompliancePackModel | undefined {
-    return this.discovery.findByIdentifier(identifier);
-  }
-
-  /** List packs for a framework. */
-  listByFramework(framework: string): CompliancePackModel[] {
-    return this.discovery.listByFramework(framework);
-  }
-
-  /** List packs for an industry. */
-  listByIndustry(industry: string): CompliancePackModel[] {
-    return this.discovery.listByIndustry(industry);
-  }
-
-  /** Get featured packs. */
-  featured(limit?: number): CompliancePackModel[] {
-    return this.discovery.featured(limit);
-  }
-
-  // -- Installation --------------------------------------------------------
-
-  /** Install a pack by id or slug. */
-  install(identifier: string, versionRange?: string): InstallResult[] {
-    return this.installer.install(identifier, versionRange);
-  }
-
-  /** Uninstall a pack. */
-  uninstall(identifier: string): boolean {
-    return this.installer.uninstall(identifier);
-  }
-
-  /** List installed packs. */
-  installedPacks(): InstallResult[] {
-    return this.installer.getInstalled();
-  }
-
-  // -- Ratings -------------------------------------------------------------
-
-  /** Submit a review. */
-  reviewPack(
-    packId: string,
-    authorId: string,
-    rating: 1 | 2 | 3 | 4 | 5,
-    title: string,
-    body: string,
-  ): Review {
-    const review = this.ratings.submitReview(packId, authorId, rating, title, body);
-    const pack = this.publisher.getPack(packId);
-    if (pack) this.syncRating(pack);
-    return review;
-  }
-
-  /** Get reviews for a pack. */
-  getReviews(packId: string): Review[] {
-    return this.ratings.getReviews(packId);
-  }
-
-  /** Get aggregate rating. */
-  getRating(packId: string): PackRatingAggregate {
-    return this.ratings.getAggregateRating(packId);
-  }
-
-  // -- Analytics -----------------------------------------------------------
-
-  /** Get overall marketplace statistics. */
-  stats(): MarketplaceStats {
-    const packs = this.publisher.getAllPacks();
-    const totalDownloads = packs.reduce((sum, p) => sum + p.downloads, 0);
-    const totalRules = packs.reduce((sum, p) => sum + p.rules.length, 0);
-    let totalReviews = 0;
-    for (const pack of packs) {
-      totalReviews += this.ratings.getReviews(pack.id).length;
-    }
-    return {
-      totalPacks: packs.length,
-      totalDownloads,
-      totalRules,
-      totalReviews,
-    };
-  }
-
-  // -- private -------------------------------------------------------------
-
-  private syncRating(pack: CompliancePackModel): void {
-    const agg = this.ratings.getAggregateRating(pack.id);
-    pack.rating = agg;
-    pack.updatedAt = new Date();
-  }
-}
+/** Alias for backward compatibility */
+export { MarketplaceEngine as ComplianceMarketplace };
