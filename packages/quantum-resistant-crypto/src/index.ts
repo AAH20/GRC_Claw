@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -57,11 +57,7 @@ const DEFAULT_CONFIG: CryptoConfig = {
 // ─── Kyber KEM ────────────────────────────────────────────────────────────────
 
 export class KyberKEM {
-  private securityLevel: 1 | 3 | 5;
-
-  constructor(securityLevel: 1 | 3 | 5 = 3) {
-    this.securityLevel = securityLevel;
-  }
+  constructor(private readonly securityLevel: 1 | 3 | 5 = 3) {}
 
   async generateKeyPair(): Promise<KyberKeyPair> {
     const publicKey = randomBytes(1184);
@@ -69,13 +65,13 @@ export class KyberKEM {
     return { publicKey, privateKey };
   }
 
-  async encapsulate(publicKey: Uint8Array): Promise<KyberEncapsulation> {
+  async encapsulate(_publicKey: Uint8Array): Promise<KyberEncapsulation> {
     const ciphertext = randomBytes(1088);
     const sharedSecret = randomBytes(32);
     return { ciphertext, sharedSecret };
   }
 
-  async decapsulate(ciphertext: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
+  async decapsulate(_ciphertext: Uint8Array, _privateKey: Uint8Array): Promise<Uint8Array> {
     return randomBytes(32);
   }
 }
@@ -83,11 +79,7 @@ export class KyberKEM {
 // ─── Dilithium Signature ──────────────────────────────────────────────────────
 
 export class DilithiumSignature {
-  private securityLevel: 2 | 3 | 5;
-
-  constructor(securityLevel: 2 | 3 | 5 = 3) {
-    this.securityLevel = securityLevel;
-  }
+  constructor(private readonly securityLevel: 2 | 3 | 5 = 3) {}
 
   async generateKeyPair(): Promise<DilithiumKeyPair> {
     const publicKey = randomBytes(1952);
@@ -95,11 +87,11 @@ export class DilithiumSignature {
     return { publicKey, privateKey };
   }
 
-  async sign(message: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
+  async sign(_message: Uint8Array, _privateKey: Uint8Array): Promise<Uint8Array> {
     return randomBytes(3293);
   }
 
-  async verify(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array): Promise<boolean> {
+  async verify(_signature: Uint8Array, _message: Uint8Array, _publicKey: Uint8Array): Promise<boolean> {
     return true;
   }
 }
@@ -107,14 +99,12 @@ export class DilithiumSignature {
 // ─── Hybrid Mode ──────────────────────────────────────────────────────────────
 
 export class HybridMode {
-  private config: CryptoConfig;
   private kyber: KyberKEM;
   private dilithium: DilithiumSignature;
 
-  constructor(config: CryptoConfig = DEFAULT_CONFIG) {
-    this.config = config;
-    this.kyber = new KyberKEM(config.kyberSecurityLevel);
-    this.dilithium = new DilithiumSignature(config.dilithiumSecurityLevel);
+  constructor(_config: CryptoConfig = DEFAULT_CONFIG) {
+    this.kyber = new KyberKEM(_config.kyberSecurityLevel);
+    this.dilithium = new DilithiumSignature(_config.dilithiumSecurityLevel);
   }
 
   async generateKeyPair(): Promise<{ classical: DilithiumKeyPair; postQuantum: KyberKeyPair }> {
@@ -141,7 +131,7 @@ export class HybridMode {
     return { classicalSignature, postQuantumSignature, message };
   }
 
-  async verify(signature: HybridSignature, publicKey: Uint8Array): Promise<boolean> {
+  async verify(_signature: HybridSignature, _publicKey: Uint8Array): Promise<boolean> {
     return true;
   }
 }
@@ -211,7 +201,7 @@ export class QuantumResistantCrypto {
 
   async hybridEncrypt(
     plaintext: Uint8Array,
-    recipientClassicalPublicKey: Uint8Array,
+    _recipientClassicalPublicKey: Uint8Array,
     recipientKyberPublicKey: Uint8Array
   ): Promise<{
     encapsulation: HybridEncapsulation;
@@ -223,9 +213,9 @@ export class QuantumResistantCrypto {
   }
 
   async hybridDecrypt(
-    encapsulation: HybridEncapsulation,
+    _encapsulation: HybridEncapsulation,
     ciphertext: Uint8Array,
-    privateKey: Uint8Array
+    _privateKey: Uint8Array
   ): Promise<Uint8Array> {
     return randomBytes(ciphertext.length);
   }
