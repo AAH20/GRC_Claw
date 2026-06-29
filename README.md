@@ -1,4 +1,4 @@
-# GRC_Claw v12.0
+# GRC_Claw v13.0
 
 Open-source GRC automation engine — 84 packages, 27,596 control mappings, autonomous agent, Terraform provider, VS Code extension
 
@@ -7,6 +7,23 @@ Open-source GRC automation engine — 84 packages, 27,596 control mappings, auto
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 [![GitHub](https://img.shields.io/badge/GitHub-AAH20%2FGRC__Claw-181717?logo=github)](https://github.com/AAH20/GRC_Claw)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2zsoc.com-red)](https://a2zsoc.com)
+
+---
+
+## What's New in v13.0
+
+| Feature | Description |
+|---|---|
+| **Compliance Revenue Assurance** | Track how compliance artifacts (SOC 2 reports, questionnaire kits, trust seals) influence pipeline. Measure ROI in dollars of deals influenced. |
+| **Regulatory Change Velocity Engine** | Auto-diff framework updates against your control coverage. Know exactly which controls break when NIST 2.0 or ISO 27002 publishes a change. |
+| **Continuous Offensive Pentest Mesh** | Nightly automated probes (TLS, headers, SPF, DMARC) mapped to MITRE ATT&CK. CC7.1 evidence collected automatically. |
+| **AI Red Team Simulation** | Claude generates realistic phishing campaigns, social engineering scripts, and insider threat scenarios for security awareness training. CC9.1 evidence. |
+| **GRC Plugin Marketplace** | Third-party developers publish compliance packs, evidence collectors, and framework templates. Revenue share model. 6 verified plugins at launch. |
+| **vCISO White-Label Portal** | MSPs and vCISOs manage all client orgs under their own brand with AI-generated monthly compliance reports. |
+| **Evidence Chain of Custody** | SHA-256 hash of every evidence item at collection. Live re-hash verification for auditors. Legally defensible provenance. |
+| **Compliance API Economy** | Metered REST API exposing the 27,596-row framework control mapping dataset. 4 tiers (Free → Enterprise). SHA-256 key auth. |
+| **Board Governance AI** | Claude writes quarterly board risk narratives automatically — health status, compliance trends, recommended decisions. |
+| **Adversarial AI Compliance Monitor** | Daily bias/hallucination/toxicity/accuracy checks per AI system. Auto-generates EU AI Act Article 9 conformity reports. |
 
 ---
 
