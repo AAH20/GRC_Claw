@@ -684,6 +684,72 @@ The strategic line: the code can be copied, isolated features can be copied, and
 
 ---
 
+## Post-v11.0 acquisition-grade moat: what to build next
+
+The current platform now has the breadth most GRC startups spend years trying to assemble: open-source execution engine, hosted A2Z SOC control plane, 27,596 control mappings, 84 package families, PR security gates, policy-as-code, evidence graph endpoints, post-quantum crypto, natural-language compliance, automation marketplace, real-time monitoring, sovereign deployment, and live proof-producing A2Z SOC surfaces.
+
+The next step is to stop treating those capabilities as separate modules and turn them into a single compounding trust operating system.
+
+Highest-leverage improvements, ordered by defensibility:
+
+1. **Evidence Graph object plane as the canonical truth layer**
+   - A2Z SOC now has a durable `evidence_graph_objects` layer with graph IDs, source references, object hashes, control mappings, confidence, and metadata.
+   - GRC_Claw should mirror this as a local `@grc-claw/evidence-graph` package with append-only graph-object writes, deterministic hashes, offline export, and gateway/MCP tools.
+   - Every package should emit graph objects: PR gates, policy engine, PQC scans, natural-language compliance answers, marketplace automations, real-time monitor alerts, sovereign deployment attestations, and agent receipts.
+
+2. **Agent Policy Firewall as the default gateway runtime**
+   - Make every tool call pass through one policy firewall before execution: tenant scope, role, approval threshold, sandbox policy, idempotency key, replay check, data boundary, blast radius, and expected control impact.
+   - Emit three graph objects for every action: `intent`, `decision`, and `result`.
+   - This is the layer agent harness companies will struggle to copy because it requires GRC semantics, evidence lineage, tenancy, auditability, and tool governance at once.
+
+3. **Defense procurement cockpit**
+   - Turn CMMC, NIST 800-171, FedRAMP, ISO 42001, AI inventory, SBOM, AI-BOM, CUI boundary, supplier risk, SSP, POA&M, SPRS, and sovereign deploy into one acquisition workflow.
+   - The paid outcome is not “compliance dashboard”; it is “this vendor can pass procurement faster.”
+   - Add exports for auditor packet, prime-contractor packet, board packet, insurance packet, and government buyer packet.
+
+4. **Verifier network and scoped audit rooms**
+   - Build external verifier rooms for auditors, customers, MSPs, brokers, PE diligence teams, primes, and regulators.
+   - Each room should expose graph paths, redacted evidence, policy decisions, signed pack provenance, and risk economics without leaking raw tenant data.
+   - This turns A2Z SOC into the trust clearinghouse while GRC_Claw remains the inspectable local engine.
+
+5. **Signed automation marketplace**
+   - Upgrade `@grc-claw/compliance-automation-marketplace` from catalog to supply chain: signed automations, test fixtures, required scopes, control mappings, evidence outputs, maintainer trust, semantic versions, rollback plan, and revenue share.
+   - Let third parties sell automations that run only through the Agent Policy Firewall and write Evidence Graph objects.
+   - The marketplace becomes stronger as more auditors, MSPs, and specialists contribute verified automations.
+
+6. **Natural-language compliance with proof paths**
+   - Every answer from `@grc-claw/natural-language-compliance` should include citations to controls, graph objects, evidence hashes, policy decisions, risk economics, and exportable verifier links.
+   - The product should never merely “answer”; it should answer with an audit-safe graph path.
+
+7. **Real-time compliance monitor as graph signal router**
+   - `@grc-claw/real-time-compliance-monitor` should become the alert/event layer for graph changes: stale evidence, failed control test, SaaS risk spike, attack-surface regression, policy override, vendor issue, agent anomaly, or PQC migration blocker.
+   - Every alert should carry control impact, procurement impact, owner, deadline, expected loss, and recommended automation.
+
+8. **Quantum-resistant trust chain**
+   - `@grc-claw/quantum-resistant-crypto` should be wired into long-term audit artifacts: ZK audit bundles, verifier rooms, procurement packets, sovereign deployments, and evidence graph exports.
+   - The near-term value is migration readiness; the long-term value is durable proof for contracts, defense, finance, healthcare, and government buyers.
+
+9. **Benchmark and outcome data network**
+   - Aggregate opt-in, anonymized signals: audit duration, evidence freshness, remediation latency, control reuse, connector reliability, automation success rate, policy-denial rate, vendor response time, and procurement blockers.
+   - These benchmarks become the compounding asset proprietary incumbents cannot buy quickly and open-source clones cannot bootstrap alone.
+
+10. **Gateway modularization without weakening the gateway**
+    - Preserve `@grc-claw/gateway` as the product control plane, but split stable submodules for route registry, policy firewall, graph writer, verifier export, marketplace execution, connector lifecycle, and agent dispatch.
+    - Add golden contract tests for every gateway route and every MCP tool so the platform can grow without central-file fragility.
+
+Immediate implementation ladder:
+
+- **Week 1:** create `@grc-claw/evidence-graph` and make gateway `evidence_graph.*` use the same graph-object envelope as A2Z SOC.
+- **Week 2:** ship Agent Policy Firewall v1 for gateway + MCP tools, with intent/decision/result receipts.
+- **Week 3:** make PR gate, policy engine, PQC scan, natural-language compliance, marketplace automations, and real-time monitor write graph objects.
+- **Week 4:** launch the defense procurement cockpit around CMMC/NIST 800-171/ISO 42001.
+- **Weeks 5-8:** ship scoped verifier rooms and signed automation marketplace revenue share.
+- **Quarter 2:** add benchmark network APIs and anonymized outcome analytics.
+
+The practical acquisition thesis: buyers do not acquire “another GRC app.” They acquire a trust graph, a control-mapping corpus, a verifier network, a marketplace, a governed agent runtime, and the longitudinal evidence/outcome dataset that lets them dominate procurement, audit, insurance, and AI governance workflows.
+
+---
+
 ## Contributing
 
 GRC_Claw is MIT-licensed. PRs welcome — framework packs, language rules for the VS Code extension, additional Terraform resources, and connector implementations are the highest-value contributions.
