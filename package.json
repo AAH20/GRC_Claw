@@ -45,7 +45,11 @@
     "test:regulatory-mgmt": "npm run test -w @grc-claw/regulatory-change-management",
     "test:ai-governance": "npm run test -w @grc-claw/ai-governance",
     "test:knowledge-graph": "npm run test -w @grc-claw/compliance-knowledge-graph",
-    "test:all": "npm run build && echo 'All 75 packages built successfully'"
+    "test:firewall": "npm run test -w @grc-claw/agent-policy-firewall",
+    "test:procurement": "npm run test -w @grc-claw/defense-procurement",
+    "test:verifier": "npm run test -w @grc-claw/verifier-network",
+    "test:benchmark": "npm run test -w @grc-claw/benchmark-intelligence",
+    "test:all": "npm run build && echo 'All 89 packages built successfully'"
   },
   "engines": {
     "node": ">=20"

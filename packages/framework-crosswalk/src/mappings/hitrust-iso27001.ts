@@ -1,0 +1,38 @@
+import type { CrossMapping } from '../types.js';
+
+export const HITRUST_ISO27001_MAPPINGS: CrossMapping[] = [
+  { sourceFramework: 'hitrust', sourceControl: '01.c', targetFramework: 'iso27001', targetControl: 'A.5.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '01.d', targetFramework: 'iso27001', targetControl: 'A.5.2', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '01.e', targetFramework: 'iso27001', targetControl: 'A.5.3', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '02.a', targetFramework: 'iso27001', targetControl: 'A.6.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '02.b', targetFramework: 'iso27001', targetControl: 'A.6.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '02.c', targetFramework: 'iso27001', targetControl: 'A.6.3', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '03.a', targetFramework: 'iso27001', targetControl: 'A.7.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '03.b', targetFramework: 'iso27001', targetControl: 'A.7.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '04.a', targetFramework: 'iso27001', targetControl: 'A.8.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '04.b', targetFramework: 'iso27001', targetControl: 'A.8.2', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '04.c', targetFramework: 'iso27001', targetControl: 'A.8.3', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '05.a', targetFramework: 'iso27001', targetControl: 'A.8.8', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '05.b', targetFramework: 'iso27001', targetControl: 'A.8.9', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '05.c', targetFramework: 'iso27001', targetControl: 'A.8.10', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '06.a', targetFramework: 'iso27001', targetControl: 'A.8.15', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '06.b', targetFramework: 'iso27001', targetControl: 'A.8.16', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '07.a', targetFramework: 'iso27001', targetControl: 'A.8.20', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '07.b', targetFramework: 'iso27001', targetControl: 'A.8.21', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '08.a', targetFramework: 'iso27001', targetControl: 'A.9.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '08.b', targetFramework: 'iso27001', targetControl: 'A.9.2', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '09.a', targetFramework: 'iso27001', targetControl: 'A.10.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '09.b', targetFramework: 'iso27001', targetControl: 'A.10.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '10.a', targetFramework: 'iso27001', targetControl: 'A.11.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '10.b', targetFramework: 'iso27001', targetControl: 'A.11.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '11.a', targetFramework: 'iso27001', targetControl: 'A.12.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '11.b', targetFramework: 'iso27001', targetControl: 'A.12.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '12.a', targetFramework: 'iso27001', targetControl: 'A.13.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '12.b', targetFramework: 'iso27001', targetControl: 'A.13.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '13.a', targetFramework: 'iso27001', targetControl: 'A.14.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '13.b', targetFramework: 'iso27001', targetControl: 'A.14.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'hitrust', sourceControl: '14.a', targetFramework: 'iso27001', targetControl: 'A.15.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'hitrust', sourceControl: '14.b', targetFramework: 'iso27001', targetControl: 'A.15.2', confidence: 0.85, relationship: 'supports' },
+];
+
+export const HITRUST_PAIR = { source: 'hitrust', target: 'iso27001' };

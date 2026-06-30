@@ -1,0 +1,13 @@
+{
+  "name": "@grc-claw/agent-policy-firewall",
+  "version": "1.0.0",
+  "description": "Regulated execution boundary for all AI/MCP/browser/cloud/CLI/SOAR actions — sandbox policy, approval thresholds, tenant scope, replay prevention, blast-radius scoring, and signed receipt generation",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "license": "MIT"
+}
