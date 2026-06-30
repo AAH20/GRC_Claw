@@ -1,0 +1,36 @@
+import type { CrossMapping } from '../types.js';
+
+export const CSA_CCM_ISO27001_MAPPINGS: CrossMapping[] = [
+  { sourceFramework: 'csa_ccm', sourceControl: 'AIS-01', targetFramework: 'iso27001', targetControl: 'A.5.1', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'AIS-02', targetFramework: 'iso27001', targetControl: 'A.5.2', confidence: 0.80, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'AIS-03', targetFramework: 'iso27001', targetControl: 'A.5.3', confidence: 0.80, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'AIS-04', targetFramework: 'iso27001', targetControl: 'A.6.1', confidence: 0.85, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CCC-01', targetFramework: 'iso27001', targetControl: 'A.8.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CCC-02', targetFramework: 'iso27001', targetControl: 'A.8.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CCC-03', targetFramework: 'iso27001', targetControl: 'A.8.3', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CCC-04', targetFramework: 'iso27001', targetControl: 'A.8.8', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CCC-05', targetFramework: 'iso27001', targetControl: 'A.8.9', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CCC-06', targetFramework: 'iso27001', targetControl: 'A.8.10', confidence: 0.80, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CEK-01', targetFramework: 'iso27001', targetControl: 'A.10.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'CEK-02', targetFramework: 'iso27001', targetControl: 'A.10.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'DCB-01', targetFramework: 'iso27001', targetControl: 'A.11.1', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'DCB-02', targetFramework: 'iso27001', targetControl: 'A.11.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'DSP-01', targetFramework: 'iso27001', targetControl: 'A.12.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'DSP-02', targetFramework: 'iso27001', targetControl: 'A.12.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'GRC-01', targetFramework: 'iso27001', targetControl: 'A.13.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'GRC-02', targetFramework: 'iso27001', targetControl: 'A.13.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'IVS-01', targetFramework: 'iso27001', targetControl: 'A.14.1', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'IVS-02', targetFramework: 'iso27001', targetControl: 'A.14.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'LOG-01', targetFramework: 'iso27001', targetControl: 'A.15.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'LOG-02', targetFramework: 'iso27001', targetControl: 'A.15.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'SEF-01', targetFramework: 'iso27001', targetControl: 'A.16.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'SEF-02', targetFramework: 'iso27001', targetControl: 'A.16.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'STA-01', targetFramework: 'iso27001', targetControl: 'A.17.1', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'STA-02', targetFramework: 'iso27001', targetControl: 'A.17.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'TVM-01', targetFramework: 'iso27001', targetControl: 'A.18.1', confidence: 0.90, relationship: 'equivalent' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'TVM-02', targetFramework: 'iso27001', targetControl: 'A.18.2', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'UES-01', targetFramework: 'iso27001', targetControl: 'A.19.1', confidence: 0.85, relationship: 'supports' },
+  { sourceFramework: 'csa_ccm', sourceControl: 'UES-02', targetFramework: 'iso27001', targetControl: 'A.19.2', confidence: 0.85, relationship: 'supports' },
+];
+
+export const CSA_CCM_PAIR = { source: 'csa_ccm', target: 'iso27001' };

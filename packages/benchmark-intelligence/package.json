@@ -1,0 +1,13 @@
+{
+  "name": "@grc-claw/benchmark-intelligence",
+  "version": "1.0.0",
+  "description": "Opt-in anonymized outcome data — audit cycle time, remediation latency, vendor response, automation success, procurement blockers — proprietary dataset competitors cannot bootstrap",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "license": "MIT"
+}
