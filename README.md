@@ -10,6 +10,80 @@ Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings
 
 ---
 
+## Phase 35 moat roadmap — beyond acquired GRC platforms
+
+GRC_Claw should not try to be “another Vanta/Drata clone.” The defensible path is to become the **open evidence, control, and agent-assurance operating system** that proprietary GRC tools, AI harness teams, auditors, brokers, defense suppliers, and sovereign operators have to integrate with.
+
+This repo is already unusually positioned for that: the live A2Z SOC catalog exposes **824 Supabase-backed controls across 13 active frameworks** and **27,596 framework-control mappings**, while GRC_Claw already ships the local-first engine, MCP server, CLI, VS Code extension, Terraform provider, evidence graph, agent policy firewall, verifier network, benchmark intelligence, defense procurement package, sovereign deployment kit, and A2Z SOC bridge.
+
+### The five irreplaceable bets
+
+| Priority | Improvement | Why it becomes hard to compete with | Immediate implementation path |
+|---:|---|---|---|
+| 1 | **Control Graph + Evidence Passport standard** | Competitors can copy dashboards; they cannot quickly reproduce a normalized, versioned, auditor-usable graph of controls, evidence, mappings, owners, systems, and attestations. | Make `@grc-claw/frameworks`, `@grc-claw/framework-crosswalk`, `@grc-claw/evidence-graph`, `@grc-claw/zero-trust-audit`, and A2Z SOC `compliance_controls` / `framework_control_mappings` export one signed “passport” envelope. |
+| 2 | **Agent Assurance Firewall for every AI harness** | Agentic AI platforms need runtime trust, policy, audit, and kill-switch primitives. GRC_Claw can become the neutral guardrail layer that audits Cursor, OpenAI, Claude, LangGraph, CrewAI, internal copilots, and autonomous workflows. | Merge `agent-policy-firewall`, `agent-trust-score`, `agent-audit-trail`, `agent-identity`, `ai-governance`, and `mcp-server` into one installable `grc agent firewall` path. |
+| 3 | **Auditor / verifier network with cryptographic proofs** | Proprietary platforms own data silos; an open verifier network can own portable trust. The winner is the system auditors can verify without trusting the vendor. | Promote `verifier-network`, `trust-transaction`, `zk-compliance`, `agent_attestation_ledger`, `audit_network_*`, and `insurance_attestations` into a reference verifier protocol. |
+| 4 | **Procurement-grade AI + CMMC + defense passport** | Defense suppliers do not just need “compliance”; they need procurement evidence packages: CMMC, NIST 800-171, AI BOM, SBOM, incident history, export-control posture, and questionnaire answers. | Bind `defense-procurement`, `cmmc`, `ai_bom_registry`, `procurement_passports`, `passport_questionnaire_answers`, and OSCAL exports into a one-command `grc passport generate --buyer dod`. |
+| 5 | **Benchmark intelligence + regulatory change compounding loop** | Benchmarks and regulatory deltas compound with every customer and every framework update, creating a data moat that pure OSS projects cannot match. | Connect `benchmark-intelligence`, `regulatory-change-management`, `compliance-intelligence-api`, `peer_benchmark_snapshots`, `regulatory_changes`, and `org_regulatory_impacts` into paid A2Z SOC feeds. |
+
+### Product architecture that can create monopoly dynamics
+
+```mermaid
+flowchart LR
+  A["Open-source GRC_Claw engine"] --> B["Local evidence graph"]
+  B --> C["Signed control passport"]
+  C --> D["A2Z SOC cloud control plane"]
+  D --> E["Auditor / verifier network"]
+  D --> F["Benchmark + regulatory intelligence"]
+  D --> G["Procurement + insurance distribution"]
+  H["Agentic AI harnesses"] --> I["Agent Assurance Firewall"]
+  I --> B
+  I --> E
+```
+
+The monopoly dynamic is not “closed software.” It is **open primitive + proprietary network**:
+
+1. Developers adopt GRC_Claw because it is local-first, MIT-licensed, MCP-native, and useful without a sales call.
+2. Teams connect A2Z SOC when they need shared controls, paid framework catalog access, evidence history, benchmarks, verifier workflows, and procurement-ready exports.
+3. Auditors, brokers, MSPs, and defense buyers keep pulling more organizations into the same passport and verifier format.
+4. Every new framework mapping, evidence envelope, benchmark signal, and verifier event increases the value of the network.
+
+### Immediate 30-day engineering priorities
+
+1. **Ship `grc passport generate`**  
+   Generate a signed bundle containing framework coverage, evidence hashes, AI BOM, SBOM pointers, CMMC/NIST 800-171 status, questionnaire answers, and verifier links.
+
+2. **Ship `grc agent firewall install`**  
+   One command to wrap agent tool calls with policy decisions, trust scoring, audit ledger writes, and MCP-compatible attestations.
+
+3. **Unify framework catalogs**  
+   Treat the A2Z SOC Supabase control catalog as the source of truth, with offline snapshots for GRC_Claw. Add snapshot version, source hash, license tier, and mapping provenance.
+
+4. **Make verifier packets first-class**  
+   Every evidence artifact should be exportable as an auditor-safe proof: hash, timestamp, control IDs, owner, collection method, freshness, and redacted metadata.
+
+5. **Turn compliance data syndication into a paid API**  
+   Package control mappings, regulatory deltas, benchmark percentiles, and procurement questionnaire answers into metered API products for LegalTech, RegTech, MSP, broker, and defense supplier ecosystems.
+
+6. **Create a buyer-specific export matrix**  
+   Prebuilt exports for: SOC 2 auditor, ISO 27001 auditor, CMMC assessor, cyber insurer, enterprise procurement, AI governance board, MSP/vCISO, and defense prime.
+
+7. **Close the loop from runtime events to audit evidence**  
+   Normalize security events, agent decisions, CI/CD findings, cloud drift, questionnaire answers, and remediation jobs into the same evidence graph rather than separate dashboards.
+
+### Acquisition-grade differentiation checklist
+
+- **Data moat:** live framework catalog, mapping provenance, regulatory diffs, benchmark network.
+- **Protocol moat:** signed evidence passport, verifier packet, agent attestation ledger, MCP-native access.
+- **Distribution moat:** A2Z SOC hosted control plane, auditors, brokers, MSPs, defense procurement, insurance workflows.
+- **Open-source adoption moat:** CLI, SDK, MCP server, VS Code extension, Terraform provider, sovereign deployment.
+- **Trust moat:** zero-trust audit chain, RFC 3161 timestamping, verifier network, evidence chain of custody.
+- **AI-native moat:** agent policy firewall, AI BOM, ISO 42001, NIST AI RMF, EU AI Act, model/tool-call audit trail.
+
+If executed in this order, GRC_Claw becomes more than a compliance automation repo: it becomes the **portable trust layer for agentic AI, cybersecurity evidence, and procurement-grade governance**.
+
+---
+
 ## What's New in v14.0
 
 | Feature | Description |
