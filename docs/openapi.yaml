@@ -1,0 +1,4338 @@
+openapi: 3.1.0
+info:
+  title: GRC_Claw API
+  version: 1.0.0
+  description: The GRC_Claw Gateway API powers the OSS chassis for ISO 42001-compliant agentic AI. It provides evidence management,
+    framework crosswalks, control testing, risk quantification, trust scoring, agent runtime, compliance autopilot, knowledge
+    graphs, marketplace, and standards export endpoints.
+  contact:
+    name: GRC_Claw Team
+    url: https://github.com/grc-claw/grc-claw
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: http://127.0.0.1:18791
+  description: Local development gateway
+- url: https://{hostname}
+  description: Production
+  variables:
+    hostname:
+      default: gw.grc-claw.example.com
+security:
+- BearerToken: []
+- GrcClawTokenHeader: []
+tags:
+- name: Health
+  description: Service health and readiness
+- name: Evidence
+  description: Evidence collection, storage, verification, and export
+- name: Frameworks
+  description: Framework packs, crosswalks, and control catalogs
+- name: Control Testing
+  description: Control status management and compliance scans
+- name: Risk Quantification
+  description: FAIR analysis, Monte Carlo simulation, and risk registers
+- name: Trust Scoring
+  description: Agent trust scores, badges, and credential issuance
+- name: Agent Runtime
+  description: Agent invocation, sessions, identity, and policy execution
+- name: Verifier Network
+  description: Verifier rooms, events, acceptances, and exports
+- name: Benchmark Intelligence
+  description: Benchmark signals, aggregations, and recommendations
+- name: Defense Procurement
+  description: Defense packets, SPRS scoring, and POA&M management
+- name: Agent Policy Firewall
+  description: Policy evaluation, receipts, and firewall statistics
+- name: Compliance Autopilot
+  description: Automated compliance monitoring, gap detection, and remediation
+- name: Knowledge Graph
+  description: Compliance knowledge graph nodes, edges, and traversal
+- name: Marketplace
+  description: Integration packs, installation, and verification
+- name: Sovereign Deployment
+  description: Sovereign deployment status and configuration
+- name: Standards Exports
+  description: OSCAL, OCSF, STIX, and SARIF format exports
+- name: Connectors
+  description: BYOC connector management, LLM chat, and MCP tools
+- name: Entities
+  description: Multi-entity compliance management
+- name: Policies
+  description: Policy lifecycle, approval workflows, and attestation
+- name: Vendor Risk
+  description: Third-party risk management and monitoring
+- name: Employees
+  description: Employee lifecycle and access review
+- name: Tasks
+  description: Compliance task engine and analytics
+- name: Dashboard
+  description: Real-time compliance dashboards and KPIs
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Service health check
+      tags:
+      - Health
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/db/health:
+    get:
+      operationId: getDatabaseHealth
+      summary: Database health
+      tags:
+      - Health
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Prometheus metrics
+      tags:
+      - Health
+      security: []
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/evidence/attach:
+    post:
+      operationId: attachEvidence
+      summary: Attach evidence to a control
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceAttachRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceAttachResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence/store:
+    post:
+      operationId: storeEvidence
+      summary: Store evidence record
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceStoreRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceStoreResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence/read:
+    post:
+      operationId: readEvidence
+      summary: Read evidence for a control
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceReadRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceReadResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence/hash-chain-verify:
+    post:
+      operationId: verifyHashChain
+      summary: Verify hash chain integrity
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HashChainVerifyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence/generate-assurance-envelope:
+    post:
+      operationId: genAssuranceEnvelope
+      summary: Generate assurance envelope
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssuranceEnvelopeRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssuranceEnvelopeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence/collect:
+    post:
+      operationId: collectEvidence
+      summary: Collect from system adapters
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceCollectRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceCollectResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence/inventory:
+    post:
+      operationId: getEvidenceInventory
+      summary: List evidence inventory
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceInventoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence-automation/schedule:
+    post:
+      operationId: scheduleEvidence
+      summary: Schedule evidence collection
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceScheduleRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceScheduleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence-automation/run-now:
+    post:
+      operationId: runEvidenceNow
+      summary: Trigger immediate collection
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRunNowResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence-automation/history:
+    get:
+      operationId: getEvidenceHistory
+      summary: Job history
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence-automation/gaps:
+    get:
+      operationId: detectEvidenceGaps
+      summary: Detect gaps
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/evidence-automation/summary:
+    get:
+      operationId: getEvidenceSummary
+      summary: Summary
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/ingest/normalize:
+    post:
+      operationId: normalizeEvent
+      summary: Normalize security event
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestNormalizeRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/a2z/sync:
+    post:
+      operationId: syncA2Z
+      summary: Sync from A2Z SOC
+      tags:
+      - Evidence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/frameworks:
+    get:
+      operationId: listFrameworks
+      summary: List all framework packs
+      tags:
+      - Frameworks
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FrameworksListResponse'
+  /api/crosswalk/generate:
+    post:
+      operationId: genCrosswalk
+      summary: Generate crosswalk report
+      tags:
+      - Frameworks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrosswalkGenerateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrosswalkReportResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/crosswalk/overlaps:
+    post:
+      operationId: findOverlaps
+      summary: Find overlapping controls
+      tags:
+      - Frameworks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrosswalkOverlapsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrosswalkOverlapsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/crosswalk/coverage:
+    post:
+      operationId: calcCoverage
+      summary: Multi-framework coverage
+      tags:
+      - Frameworks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrosswalkCoverageRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrosswalkCoverageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/frameworks/check-control:
+    post:
+      operationId: checkControl
+      summary: Check control across frameworks
+      tags:
+      - Frameworks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FrameworkCheckControlRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/aims/vendor-gaps:
+    get:
+      operationId: listVendorGaps
+      summary: AI vendor gaps
+      tags:
+      - Frameworks
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+  /api/aims/technical-controls:
+    get:
+      operationId: listTechControls
+      summary: AIMS technical controls
+      tags:
+      - Frameworks
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+  /api/control/update-status:
+    post:
+      operationId: updateControlStatus
+      summary: Update control status
+      tags:
+      - Control Testing
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlUpdateStatusRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlUpdateStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/compliance/run-scan:
+    post:
+      operationId: runComplianceScan
+      summary: Run compliance scan
+      tags:
+      - Control Testing
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceScanRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceScanResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/compliance/get-posture:
+    post:
+      operationId: getCompliancePosture
+      summary: Get compliance posture
+      tags:
+      - Control Testing
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompliancePostureRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompliancePostureResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/risk/monte-carlo:
+    post:
+      operationId: runMonteCarlo
+      summary: Monte Carlo simulation
+      tags:
+      - Risk Quantification
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonteCarloRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonteCarloResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/risk/fair:
+    post:
+      operationId: runFAIR
+      summary: FAIR risk analysis
+      tags:
+      - Risk Quantification
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FAIRAnalysisRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAIRAnalysisResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/risk/register:
+    get:
+      operationId: getRiskRegister
+      summary: Risk register
+      tags:
+      - Risk Quantification
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskRegisterResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/risk/scenarios:
+    post:
+      operationId: addRiskScenario
+      summary: Add risk scenario
+      tags:
+      - Risk Quantification
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskScenarioRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskScenarioResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/risk/heatmap:
+    get:
+      operationId: getRiskHeatmap
+      summary: Risk heatmap
+      tags:
+      - Risk Quantification
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskHeatmapResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/assurance:
+    get:
+      operationId: getAssuranceSummary
+      summary: Assurance envelope summary
+      tags:
+      - Trust Scoring
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssuranceSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/trust-score/agent:
+    post:
+      operationId: getAgentTrustScore
+      summary: Calculate trust score
+      tags:
+      - Trust Scoring
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentTrustScoreRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTrustScoreResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/trust-score/badge:
+    post:
+      operationId: issueTrustBadge
+      summary: Issue trust badge
+      tags:
+      - Trust Scoring
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrustBadgeRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustBadgeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/trust-score/history:
+    get:
+      operationId: getTrustHistory
+      summary: Trust score history
+      tags:
+      - Trust Scoring
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: agentDid
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/agent/invoke:
+    post:
+      operationId: invokeAgentTool
+      summary: Invoke agent tool
+      tags:
+      - Agent Runtime
+      description: 'Execute through full policy pipeline: intent recording, assurance gate, exec policy, tool dispatch, result
+        recording.'
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInvokeRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentInvokeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /api/agent/session:
+    post:
+      operationId: getAgentSession
+      summary: Get session state
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentSessionRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentSessionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/agents:
+    get:
+      operationId: listAgents
+      summary: List agents
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createAgent
+      summary: Create agent
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/agents/{agentId}:
+    get:
+      operationId: getAgent
+      summary: Get agent
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      operationId: deleteAgent
+      summary: Delete agent
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/agents/{agentId}/trigger:
+    post:
+      operationId: triggerAgent
+      summary: Trigger agent
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentTriggerRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/identity/create-did:
+    post:
+      operationId: createAgentDID
+      summary: Create DID:GRC identity
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDIDRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/identity/issue-credential:
+    post:
+      operationId: issueCredential
+      summary: Issue credential
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCredentialRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/identity/verify-credential:
+    post:
+      operationId: verifyCredential
+      summary: Verify credential
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyCredentialRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/skills:
+    get:
+      operationId: listSkills
+      summary: List skills
+      tags:
+      - Agent Runtime
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+  /api/skills/{skillId}:
+    get:
+      operationId: getSkill
+      summary: Get skill
+      tags:
+      - Agent Runtime
+      security: []
+      parameters:
+      - name: skillId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/skills/run:
+    post:
+      operationId: runSkill
+      summary: Execute skill
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillRunRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/action-ledger:
+    get:
+      operationId: getActionLedger
+      summary: Action ledger events
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 100
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/discovery/scan:
+    post:
+      operationId: runDiscoveryScan
+      summary: Scan for agents
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/discovery/inventory:
+    get:
+      operationId: getInventory
+      summary: Agent inventory
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/discovery/risk-score/{agentId}:
+    get:
+      operationId: getDiscoveryRisk
+      summary: Risk score
+      tags:
+      - Agent Runtime
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/verifier/rooms:
+    get:
+      operationId: listVerifierRooms
+      summary: List rooms
+      tags:
+      - Verifier Network
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createRoom
+      summary: Create room
+      tags:
+      - Verifier Network
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifierRoomCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/verifier/events:
+    get:
+      operationId: listVerifierEvents
+      summary: List events
+      tags:
+      - Verifier Network
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/verifier/acceptance:
+    post:
+      operationId: submitAcceptance
+      summary: Submit acceptance
+      tags:
+      - Verifier Network
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifierAcceptanceRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/verifier/export:
+    post:
+      operationId: exportBundle
+      summary: Export bundle
+      tags:
+      - Verifier Network
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifierExportRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/benchmark/signals:
+    get:
+      operationId: listBenchmarkSignals
+      summary: List signals
+      tags:
+      - Benchmark Intelligence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/benchmark/aggregations:
+    get:
+      operationId: getAggregations
+      summary: Get aggregations
+      tags:
+      - Benchmark Intelligence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/benchmark/recommendations:
+    get:
+      operationId: getRecommendations
+      summary: Get recommendations
+      tags:
+      - Benchmark Intelligence
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/defense/packets:
+    get:
+      operationId: listPackets
+      summary: List defense packets
+      tags:
+      - Defense Procurement
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createPacket
+      summary: Create defense packet
+      tags:
+      - Defense Procurement
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefensePacketCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/defense/sprs:
+    get:
+      operationId: getSPRSScore
+      summary: Get SPRS score
+      tags:
+      - Defense Procurement
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/defense/poam:
+    get:
+      operationId: listPOAM
+      summary: List POA&M items
+      tags:
+      - Defense Procurement
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createPOAM
+      summary: Create POA&M
+      tags:
+      - Defense Procurement
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/POAMCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/firewall/evaluate:
+    post:
+      operationId: evaluatePolicy
+      summary: Evaluate policy
+      tags:
+      - Agent Policy Firewall
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyEvaluateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/firewall/receipts:
+    get:
+      operationId: listReceipts
+      summary: List receipts
+      tags:
+      - Agent Policy Firewall
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/firewall/stats:
+    get:
+      operationId: getFirewallStats
+      summary: Firewall stats
+      tags:
+      - Agent Policy Firewall
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/autopilot/run-cycle:
+    post:
+      operationId: runCycle
+      summary: Run autopilot cycle
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutopilotCycleRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/autopilot/status:
+    post:
+      operationId: getStatus
+      summary: Get status
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/autopilot/gaps:
+    get:
+      operationId: listGaps
+      summary: List compliance gaps
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/autopilot/remediations:
+    get:
+      operationId: listRemediations
+      summary: List remediations
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/autopilot/report:
+    post:
+      operationId: generateReport
+      summary: Generate report
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutopilotReportRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/accm/detect-gaps:
+    post:
+      operationId: detectACCMGaps
+      summary: Detect ACCM gaps
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/accm/remediate:
+    post:
+      operationId: runACCMRemediation
+      summary: ACCM remediation
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/accm/verify:
+    post:
+      operationId: verifyACCMRemediation
+      summary: Verify ACCM
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/accm/full-cycle:
+    post:
+      operationId: runACCMFullCycle
+      summary: ACCM full cycle
+      tags:
+      - Compliance Autopilot
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/knowledge-graph/summary:
+    get:
+      operationId: getSummary
+      summary: Graph summary
+      tags:
+      - Knowledge Graph
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/knowledge-graph/nodes:
+    get:
+      operationId: listNodes
+      summary: List nodes
+      tags:
+      - Knowledge Graph
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/knowledge-graph/edges:
+    get:
+      operationId: listEdges
+      summary: List edges
+      tags:
+      - Knowledge Graph
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/knowledge-graph/traverse:
+    post:
+      operationId: traverse
+      summary: Traverse graph
+      tags:
+      - Knowledge Graph
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphTraversalRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/knowledge-graph/posture:
+    post:
+      operationId: calcPosture
+      summary: Calculate posture
+      tags:
+      - Knowledge Graph
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphPostureRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/knowledge-graph/patterns:
+    get:
+      operationId: detectPatterns
+      summary: Detect patterns
+      tags:
+      - Knowledge Graph
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/marketplace/packs:
+    get:
+      operationId: listPacks
+      summary: List marketplace packs
+      tags:
+      - Marketplace
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/marketplace/install:
+    post:
+      operationId: installPack
+      summary: Install pack
+      tags:
+      - Marketplace
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceInstallRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/marketplace/verify:
+    post:
+      operationId: verifyPack
+      summary: Verify pack
+      tags:
+      - Marketplace
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceVerifyRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/marketplace/stats:
+    get:
+      operationId: getMarketplaceStats
+      summary: Stats
+      tags:
+      - Marketplace
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/marketplace/publish:
+    post:
+      operationId: publishPack
+      summary: Publish pack
+      tags:
+      - Marketplace
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplacePublishRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/sovereign/status:
+    get:
+      operationId: getSovereignStatus
+      summary: Status
+      tags:
+      - Sovereign Deployment
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/sovereign/config:
+    get:
+      operationId: getConfig
+      summary: Get config
+      tags:
+      - Sovereign Deployment
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      operationId: updateConfig
+      summary: Update config
+      tags:
+      - Sovereign Deployment
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SovereignConfigUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/supply-chain/verify:
+    post:
+      operationId: verifySupplyChain
+      summary: Verify supply chain
+      tags:
+      - Sovereign Deployment
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplyChainVerifyRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/exports/oscal:
+    post:
+      operationId: exportOSCAL
+      summary: Export OSCAL
+      tags:
+      - Standards Exports
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OSCALExportRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/exports/ocsf:
+    post:
+      operationId: exportOCSF
+      summary: Export OCSF
+      tags:
+      - Standards Exports
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OCSFExportRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/exports/stix:
+    post:
+      operationId: exportSTIX
+      summary: Export STIX
+      tags:
+      - Standards Exports
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/STIXExportRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/exports/sarif:
+    post:
+      operationId: exportSARIF
+      summary: Export SARIF
+      tags:
+      - Standards Exports
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SARIFExportRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/connectors:
+    get:
+      operationId: listConnectors
+      summary: List BYOC connectors
+      tags:
+      - Connectors
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+  /api/connectors/reload:
+    post:
+      operationId: reloadConnectors
+      summary: Reload connectors
+      tags:
+      - Connectors
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/connectors/llm/{providerId}/chat:
+    post:
+      operationId: llmChat
+      summary: LLM chat
+      tags:
+      - Connectors
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: providerId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LLMChatRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /api/connectors/mcp/{serverId}/tools:
+    get:
+      operationId: listMcpTools
+      summary: List MCP tools
+      tags:
+      - Connectors
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: serverId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/connectors/mcp/{serverId}/call:
+    post:
+      operationId: callMcpTool
+      summary: Call MCP tool
+      tags:
+      - Connectors
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: serverId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MCPCallRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /api/entities:
+    get:
+      operationId: listEntities
+      summary: List entities
+      tags:
+      - Entities
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createEntity
+      summary: Create entity
+      tags:
+      - Entities
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/entities/{entityId}:
+    get:
+      operationId: getEntity
+      summary: Get entity
+      tags:
+      - Entities
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/entities/{entityId}/relationships:
+    post:
+      operationId: addRelationship
+      summary: Add relationship
+      tags:
+      - Entities
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityRelationshipRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/entities/{entityId}/compliance:
+    get:
+      operationId: getEntityCompliance
+      summary: Compliance
+      tags:
+      - Entities
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/entities/consolidated-report:
+    get:
+      operationId: getConsolidatedReport
+      summary: Consolidated report
+      tags:
+      - Entities
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies:
+    get:
+      operationId: listPolicies
+      summary: List policies
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies/create:
+    post:
+      operationId: createPolicy
+      summary: Create policy
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies/{policyId}:
+    get:
+      operationId: getPolicy
+      summary: Get policy
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: policyId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies/{policyId}/approve:
+    post:
+      operationId: approvePolicy
+      summary: Approve policy
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: policyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyApprovalRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies/{policyId}/publish:
+    post:
+      operationId: publishPolicy
+      summary: Publish policy
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: policyId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies/{policyId}/attest:
+    post:
+      operationId: attestPolicy
+      summary: Attest policy
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: policyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyAttestRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/policies/stats:
+    get:
+      operationId: getPolicyStats
+      summary: Policy stats
+      tags:
+      - Policies
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/vendors:
+    get:
+      operationId: listVendors
+      summary: List vendors
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createVendor
+      summary: Create vendor
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/vendors/{vendorId}:
+    get:
+      operationId: getVendor
+      summary: Get vendor
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: vendorId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/vendors/{vendorId}/questionnaire:
+    post:
+      operationId: createQuestionnaire
+      summary: Questionnaire
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: vendorId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorQuestionnaireRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/vendors/{vendorId}/risk-score:
+    get:
+      operationId: getRiskScore
+      summary: Risk score
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: vendorId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/vendors/{vendorId}/monitor:
+    post:
+      operationId: startMonitoring
+      summary: Start monitoring
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: vendorId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/dashboard:
+    get:
+      operationId: getVendorDashboard
+      summary: Dashboard
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/vendor-risk/alerts:
+    get:
+      operationId: listAlerts
+      summary: Vendor alerts
+      tags:
+      - Vendor Risk
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees:
+    get:
+      operationId: listEmployees
+      summary: List employees
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createEmployee
+      summary: Create employee
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees/{employeeId}:
+    get:
+      operationId: getEmployee
+      summary: Get employee
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: employeeId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees/{employeeId}/onboard:
+    post:
+      operationId: onboardEmployee
+      summary: Onboard
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: employeeId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees/{employeeId}/offboard:
+    post:
+      operationId: offboardEmployee
+      summary: Offboard
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: employeeId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeOffboardRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees/{employeeId}/compliance-check:
+    post:
+      operationId: checkCompliance
+      summary: Compliance check
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: employeeId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees/compliance-dashboard:
+    get:
+      operationId: getEmpComplianceDash
+      summary: Dashboard
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/employees/access-review:
+    post:
+      operationId: createAccessReview
+      summary: Access review
+      tags:
+      - Employees
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessReviewCampaignRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/tasks:
+    get:
+      operationId: listTasks
+      summary: List tasks
+      tags:
+      - Tasks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createTask
+      summary: Create task
+      tags:
+      - Tasks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/tasks/{taskId}:
+    get:
+      operationId: getTask
+      summary: Get task
+      tags:
+      - Tasks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/tasks/{taskId}/status:
+    post:
+      operationId: updateTaskStatus
+      summary: Update status
+      tags:
+      - Tasks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStatusUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/tasks/bulk-from-findings:
+    post:
+      operationId: bulkFromFindings
+      summary: Bulk from findings
+      tags:
+      - Tasks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskBulkFromFindingsRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/tasks/analytics:
+    get:
+      operationId: getTaskAnalytics
+      summary: Analytics
+      tags:
+      - Tasks
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/dashboard/realtime:
+    get:
+      operationId: getRealtimeDashboard
+      summary: Realtime dashboard
+      tags:
+      - Dashboard
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/dashboard/trends:
+    get:
+      operationId: getTrends
+      summary: Trend data
+      tags:
+      - Dashboard
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/dashboard/alerts:
+    get:
+      operationId: getAlerts
+      summary: Active alerts
+      tags:
+      - Dashboard
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/dashboard/kpis:
+    get:
+      operationId: getKPIs
+      summary: Compliance KPIs
+      tags:
+      - Dashboard
+      security:
+      - BearerToken: []
+      - GrcClawTokenHeader: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token issued by GRC_Claw RBAC engine
+    GrcClawTokenHeader:
+      type: apiKey
+      in: header
+      name: X-GRC-Claw-Token
+      description: Simple token authentication (backward compatibility)
+  responses:
+    Unauthorized:
+      description: Authentication required
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Invalid request
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadGateway:
+      description: Upstream error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        field:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        service:
+          type: string
+        a2z_soc_mode:
+          type: string
+        agentic_ai_security:
+          type: boolean
+        cloud_security_integration:
+          type: boolean
+        iso_42001_aims:
+          type: boolean
+        byoc_connectors:
+          type: boolean
+        llm_providers:
+          type: integer
+        mcp_servers:
+          type: integer
+        cloud_sources:
+          type: array
+          items:
+            type: string
+        persistence:
+          type: string
+        soc_stream:
+          type: string
+    FrameworksListResponse:
+      type: object
+      properties:
+        packs:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              name:
+                type: string
+              version:
+                type: string
+              controlCount:
+                type: integer
+    EvidenceAttachRequest:
+      type: object
+      required:
+      - controlId
+      properties:
+        controlId:
+          type: string
+          example: ctrl-iso27001-a.5.1
+        uri:
+          type: string
+        content:
+          type: string
+        collectedAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          default: gateway
+        tenantId:
+          type: integer
+          default: 1
+    EvidenceAttachResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        executionState:
+          type: string
+          enum:
+          - recorded
+          - failed
+        evidence:
+          type: object
+          properties:
+            id:
+              type: string
+            sha256:
+              type: string
+            uri:
+              type: string
+        persisted:
+          type: boolean
+    EvidenceStoreRequest:
+      type: object
+      required:
+      - controlId
+      properties:
+        controlId:
+          type: string
+        uri:
+          type: string
+        content:
+          type: string
+        source:
+          type: string
+        collectedAt:
+          type: string
+        tenantId:
+          type: integer
+    EvidenceStoreResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        evidence:
+          type: object
+        stored:
+          type: boolean
+        persisted:
+          type: boolean
+    EvidenceReadRequest:
+      type: object
+      required:
+      - evidenceId
+      properties:
+        evidenceId:
+          type: string
+    EvidenceReadResponse:
+      type: object
+      properties:
+        evidenceId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+        count:
+          type: integer
+        source:
+          type: string
+    HashChainVerifyResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        checked:
+          type: integer
+        ledgerIntegrity:
+          type: string
+          enum:
+          - VALID
+          - COMPROMISED
+    AssuranceEnvelopeRequest:
+      type: object
+      properties:
+        intentEventId:
+          type: string
+        decisionEventId:
+          type: string
+        resultEventId:
+          type: string
+        agentDid:
+          type: string
+        riskScore:
+          type: number
+    AssuranceEnvelopeResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        envelope:
+          type: object
+    EvidenceCollectRequest:
+      type: object
+      properties:
+        framework:
+          type: string
+          default: SOC2
+        category:
+          type: string
+          default: mfa
+        controlId:
+          type: string
+    EvidenceCollectResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        result:
+          type: object
+    EvidenceInventoryResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        inventory:
+          type: array
+          items:
+            type: object
+        count:
+          type: integer
+    EvidenceScheduleRequest:
+      type: object
+      required:
+      - connectorId
+      - config
+      properties:
+        connectorId:
+          type: string
+        config:
+          type: object
+    EvidenceScheduleResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        schedule:
+          type: object
+    EvidenceRunNowResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        jobs:
+          type: array
+          items:
+            type: object
+        count:
+          type: integer
+    CrosswalkGenerateRequest:
+      type: object
+      required:
+      - source
+      - target
+      properties:
+        source:
+          type: string
+          example: soc2
+        target:
+          type: string
+          example: iso27001
+    CrosswalkReportResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        report:
+          type: object
+    CrosswalkOverlapsRequest:
+      type: object
+      properties:
+        framework1:
+          type: string
+        framework2:
+          type: string
+    CrosswalkOverlapsResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        overlaps:
+          type: array
+          items:
+            type: object
+    CrosswalkCoverageRequest:
+      type: object
+      properties:
+        controlIds:
+          type: array
+          items:
+            type: string
+        frameworks:
+          type: array
+          items:
+            type: string
+    CrosswalkCoverageResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        coverage:
+          type: object
+    FrameworkCheckControlRequest:
+      type: object
+      properties:
+        controlCode:
+          type: string
+        frameworkCode:
+          type: string
+    ControlUpdateStatusRequest:
+      type: object
+      required:
+      - controlId
+      - status
+      properties:
+        controlId:
+          type: string
+        status:
+          type: string
+        tenantId:
+          type: integer
+    ControlUpdateStatusResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        controlId:
+          type: string
+        status:
+          type: string
+        executionState:
+          type: string
+        persisted:
+          type: boolean
+    ComplianceScanRequest:
+      type: object
+      properties:
+        frameworkCode:
+          type: string
+    ComplianceScanResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        scanResults:
+          type: array
+          items:
+            type: object
+        summary:
+          type: object
+    CompliancePostureRequest:
+      type: object
+      properties:
+        framework:
+          type: string
+          default: iso27001
+    CompliancePostureResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        overallScore:
+          type: number
+        controlScores:
+          type: object
+        trend:
+          type: string
+    MonteCarloRequest:
+      type: object
+      required:
+      - scenario
+      properties:
+        scenario:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            threatFrequency:
+              type: object
+            lossMagnitude:
+              type: object
+        iterations:
+          type: integer
+          default: 10000
+        seed:
+          type: integer
+    MonteCarloResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        result:
+          type: object
+          properties:
+            iterations:
+              type: integer
+            meanLoss:
+              type: number
+            percentiles:
+              type: object
+    FAIRAnalysisRequest:
+      type: object
+      required:
+      - scenario
+      properties:
+        scenario:
+          type: object
+        iterations:
+          type: integer
+          default: 10000
+        seed:
+          type: integer
+    FAIRAnalysisResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        result:
+          type: object
+          properties:
+            fairScore:
+              type: number
+            lossExceedance:
+              type: object
+            riskRating:
+              type: string
+    RiskScenarioRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        threatFrequency:
+          type: object
+        lossMagnitude:
+          type: object
+        controls:
+          type: array
+          items:
+            type: string
+    RiskScenarioResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        entry:
+          type: object
+    RiskRegisterResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        entries:
+          type: array
+          items:
+            type: object
+        metrics:
+          type: object
+    RiskHeatmapResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        cells:
+          type: array
+          items:
+            type: object
+        axisLabels:
+          type: object
+    AgentTrustScoreRequest:
+      type: object
+      required:
+      - agentDid
+      properties:
+        agentDid:
+          type: string
+    AgentTrustScoreResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        agentDid:
+          type: string
+        trustScore:
+          type: number
+        factors:
+          type: object
+    TrustBadgeRequest:
+      type: object
+      required:
+      - agentDid
+      - framework
+      properties:
+        agentDid:
+          type: string
+        framework:
+          type: string
+        certifiedControls:
+          type: array
+          items:
+            type: string
+        toolTierAccess:
+          type: array
+          items:
+            type: string
+            enum:
+            - read
+            - write
+            - destructive
+    TrustBadgeResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        credentialType:
+          type: string
+        agentDid:
+          type: string
+        proofValue:
+          type: string
+        issuedAt:
+          type: string
+        expiresAt:
+          type: string
+    AgentInvokeRequest:
+      type: object
+      required:
+      - tool
+      properties:
+        tool:
+          type: string
+          description: Fully-qualified tool name (e.g., evidence.attach)
+        args:
+          type: object
+          default: {}
+        sessionId:
+          type: string
+        agentId:
+          type: string
+        idempotencyKey:
+          type: string
+        tenantId:
+          type: integer
+        approvalToken:
+          type: string
+    AgentInvokeResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        decision:
+          type: object
+        output:
+          type: object
+        action:
+          type: object
+        assurance:
+          type: object
+        assuranceReceipt:
+          type: object
+        audit:
+          type: array
+          items:
+            type: object
+    AgentSessionRequest:
+      type: object
+      required:
+      - sessionId
+      properties:
+        sessionId:
+          type: string
+    AgentSessionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        sessionId:
+          type: string
+        state:
+          type: object
+    AgentCreateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        tools:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+          default: true
+    AgentTriggerRequest:
+      type: object
+      properties:
+        context:
+          type: object
+    CreateDIDRequest:
+      type: object
+      properties:
+        controller:
+          type: string
+        tenantScope:
+          type: array
+          items:
+            type: string
+        sovereignBoundary:
+          type: string
+          enum:
+          - us-only
+          - eu-only
+          - global
+          - airgapped
+    IssueCredentialRequest:
+      type: object
+      properties:
+        agentDid:
+          type: string
+        framework:
+          type: string
+        certifiedControls:
+          type: array
+          items:
+            type: string
+        toolTierAccess:
+          type: array
+          items:
+            type: string
+    VerifyCredentialRequest:
+      type: object
+      properties:
+        agentDid:
+          type: string
+        framework:
+          type: string
+    SkillRunRequest:
+      type: object
+      required:
+      - skillId
+      - task
+      properties:
+        skillId:
+          type: string
+        task:
+          type: string
+        sessionId:
+          type: string
+        llmProviderId:
+          type: string
+        maxSteps:
+          type: integer
+        readOnlyTools:
+          type: boolean
+          default: true
+    VerifierRoomCreateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        maxParticipants:
+          type: integer
+    VerifierAcceptanceRequest:
+      type: object
+      required:
+      - evidenceBundleId
+      - acceptorDid
+      properties:
+        evidenceBundleId:
+          type: string
+        acceptorDid:
+          type: string
+        signature:
+          type: string
+        notes:
+          type: string
+    VerifierExportRequest:
+      type: object
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+        format:
+          type: string
+          enum:
+          - json
+          - pdf
+          default: json
+    DefensePacketCreateRequest:
+      type: object
+      required:
+      - name
+      - framework
+      properties:
+        name:
+          type: string
+        framework:
+          type: string
+        scope:
+          type: array
+          items:
+            type: string
+        controls:
+          type: array
+          items:
+            type: string
+    POAMCreateRequest:
+      type: object
+      required:
+      - controlId
+      - description
+      - dueDate
+      properties:
+        controlId:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        owner:
+          type: string
+    PolicyEvaluateRequest:
+      type: object
+      required:
+      - tool
+      - args
+      properties:
+        tool:
+          type: string
+        args:
+          type: object
+        sessionId:
+          type: string
+        agentDid:
+          type: string
+    AutopilotCycleRequest:
+      type: object
+      properties:
+        frameworks:
+          type: array
+          items:
+            type: string
+    AutopilotReportRequest:
+      type: object
+      properties:
+        framework:
+          type: string
+          default: iso27001
+    GraphTraversalRequest:
+      type: object
+      required:
+      - startNodeId
+      properties:
+        startNodeId:
+          type: string
+        direction:
+          type: string
+          enum:
+          - outbound
+          - inbound
+          - both
+          default: both
+        maxDepth:
+          type: integer
+          default: 3
+        edgeTypes:
+          type: array
+          items:
+            type: string
+    GraphPostureRequest:
+      type: object
+      required:
+      - organizationId
+      properties:
+        organizationId:
+          type: string
+    MarketplaceInstallRequest:
+      type: object
+      required:
+      - packId
+      properties:
+        packId:
+          type: string
+        version:
+          type: string
+    MarketplaceVerifyRequest:
+      type: object
+      required:
+      - packId
+      properties:
+        packId:
+          type: string
+    MarketplacePublishRequest:
+      type: object
+      required:
+      - name
+      - description
+      - category
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        version:
+          type: string
+        controls:
+          type: array
+          items:
+            type: string
+        author:
+          type: string
+    SovereignConfigUpdateRequest:
+      type: object
+      properties:
+        deploymentMode:
+          type: string
+        region:
+          type: string
+        encryptionAtRest:
+          type: boolean
+        airgapMode:
+          type: boolean
+    SupplyChainVerifyRequest:
+      type: object
+      properties:
+        artifactId:
+          type: string
+        buildHash:
+          type: string
+        publisher:
+          type: string
+    OSCALExportRequest:
+      type: object
+      properties:
+        framework:
+          type: string
+          default: iso27001
+        controlId:
+          type: string
+        includeEvidence:
+          type: boolean
+          default: true
+    OCSFExportRequest:
+      type: object
+      properties:
+        since:
+          type: string
+          format: date-time
+        eventType:
+          type: string
+        limit:
+          type: integer
+          default: 100
+    STIXExportRequest:
+      type: object
+      properties:
+        since:
+          type: string
+          format: date-time
+        threatType:
+          type: string
+    SARIFExportRequest:
+      type: object
+      properties:
+        framework:
+          type: string
+        severity:
+          type: array
+          items:
+            type: string
+    LLMChatRequest:
+      type: object
+      required:
+      - messages
+      properties:
+        messages:
+          type: array
+          items:
+            type: object
+            required:
+            - role
+            - content
+            properties:
+              role:
+                type: string
+                enum:
+                - system
+                - user
+                - assistant
+              content:
+                type: string
+        model:
+          type: string
+        maxTokens:
+          type: integer
+          default: 8192
+        temperature:
+          type: number
+    MCPCallRequest:
+      type: object
+      required:
+      - tool
+      properties:
+        tool:
+          type: string
+        arguments:
+          type: object
+        sessionId:
+          type: string
+        idempotencyKey:
+          type: string
+    EntityCreateRequest:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - subsidiary
+          - division
+          - branch
+          - joint_venture
+          - franchise
+        parentId:
+          type: string
+    EntityRelationshipRequest:
+      type: object
+      required:
+      - childEntityId
+      - relationshipType
+      properties:
+        childEntityId:
+          type: string
+        relationshipType:
+          type: string
+          enum:
+          - ownership
+          - subsidiary
+          - division
+          - branch
+          - joint_venture
+          - franchise
+    PolicyCreateRequest:
+      type: object
+      required:
+      - title
+      - category
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+          enum:
+          - security
+          - privacy
+          - operational
+          - compliance
+          - hr
+        owner:
+          type: string
+        content:
+          type: string
+        framework:
+          type: string
+    PolicyApprovalRequest:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            type: object
+        initiatedBy:
+          type: string
+          default: system
+    PolicyAttestRequest:
+      type: object
+      properties:
+        employees:
+          type: array
+          items:
+            type: object
+        dueDate:
+          type: string
+    VendorCreateRequest:
+      type: object
+      required:
+      - name
+      - domain
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        frameworks:
+          type: array
+          items:
+            type: string
+    VendorQuestionnaireRequest:
+      type: object
+      properties:
+        questionnaireId:
+          type: string
+          default: qt-sig-lite
+    EmployeeCreateRequest:
+      type: object
+      required:
+      - name
+      - email
+      - department
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        department:
+          type: string
+        role:
+          type: string
+    EmployeeOffboardRequest:
+      type: object
+      properties:
+        targetDate:
+          type: string
+          format: date-time
+    AccessReviewCampaignRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        scope:
+          type: array
+          items:
+            type: string
+        reviewers:
+          type: array
+          items:
+            type: string
+    TaskCreateRequest:
+      type: object
+      required:
+      - title
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        controlId:
+          type: string
+        framework:
+          type: string
+        priority:
+          type: string
+        assignee:
+          type: string
+    TaskStatusUpdateRequest:
+      type: object
+      required:
+      - action
+      properties:
+        action:
+          type: string
+          enum:
+          - start
+          - complete
+          - block
+          - cancel
+        reason:
+          type: string
+    TaskBulkFromFindingsRequest:
+      type: object
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+    IngestNormalizeRequest:
+      type: object
+      required:
+      - source
+      properties:
+        source:
+          type: string
+          enum:
+          - wazuh
+          - suricata
+          - snort
+          - elastic
+          - ufw
+          - aws
+          - azure
+          - gcp
+        payload:
+          type: object
+        tenantId:
+          type: integer
+          default: 1
