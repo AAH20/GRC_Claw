@@ -85,6 +85,10 @@
     { "path": "./packages/natural-language-compliance" },
     { "path": "./packages/compliance-automation-marketplace" },
     { "path": "./packages/real-time-compliance-monitor" },
+    { "path": "./packages/agent-policy-firewall" },
+    { "path": "./packages/defense-procurement" },
+    { "path": "./packages/verifier-network" },
+    { "path": "./packages/benchmark-intelligence" },
     { "path": "./packages/gateway" }
   ]
 }
