@@ -1730,6 +1730,52 @@ This release completes the developer experience: end-to-end integration tests ve
 
 ---
 
+## Zero-Budget Revenue Engine — $30K MRR in 30 Days
+
+The platform is technically superior. The problem is distribution. Here's the exact playbook to reach $30K MRR with zero paid ads.
+
+### The Math
+
+| Path | Customers | Avg MRR | Total |
+|------|-----------|---------|-------|
+| Broker/MGA batches (3 brokers × 10 clients) | 30 | $199 | $5,970 |
+| Vanta/Drata displacement (audit season) | 40 | $199 | $7,960 |
+| Founder-led DMs (1:1 close) | 50 | $79 | $3,950 |
+| MSP/vCISO white-label | 10 | $229 | $2,290 |
+| PE diligence motion | 5 | $499 | $2,495 |
+| Free scan → Starter → Pro upsell | 60 | $79 | $4,740 |
+| Add-ons (questionnaire, crosswalk) | 15 | $50 | $750 |
+| **Total** | **210** | | **$28,155** |
+
+### The 3 Channels That Actually Work
+
+**Channel 1: Broker/MGA B2B2B (Highest Leverage)**
+- Target: Cyber insurance brokers, MSPs, vCISOs
+- Offer: "Free compliance scan for your clients. 20% recurring commission."
+- Weekly quota: 3 broker intros/day = 15/week
+- One broker with 50 clients = 50 potential deals
+
+**Channel 2: Vanta/Drata Displacement**
+- Target: Companies paying $20K+/year for SOC 2 only
+- Offer: "20+ frameworks for $199/mo. 10x cheaper."
+- Weekly quota: 5 displacement DMs/day = 25/week
+- Audit season (Mar, Jun, Sep, Dec) = highest conversion
+
+**Channel 3: AI Citation (Compounding)**
+- Target: ChatGPT/Perplexity/Claude users asking "best GRC platform"
+- Action: Create comparison content that gets cited
+- Weekly quota: 2 AI citation replies/day = 14/week
+- Free, compounding traffic that builds over time
+
+### Documentation
+
+| Document | Purpose |
+|----------|---------|
+| `docs/ZERO-BUDGET-REVENUE-ENGINE.md` | Complete 30-day sprint plan with daily routines |
+| `docs/BROKER-OUTREACH-TEMPLATES.md` | 7 email/DM templates + 5 email nurture sequence |
+
+---
+
 ## Contributing
 
 GRC_Claw is MIT-licensed. PRs welcome — framework packs, language rules for the VS Code extension, additional Terraform resources, and connector implementations are the highest-value contributions.
