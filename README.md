@@ -990,6 +990,77 @@ The monopoly-grade thesis: A2Z SOC should own the hosted trust network; GRC_Claw
 
 ---
 
+## Phase 38 graph-first category control: the Trust Transaction Network
+
+This review again started from the codebase-memory graph, not a generic market checklist. The current indexed platform shape is large enough to make the next phase about leverage, not breadth: A2Z SOC indexed at **25,161 graph nodes** and **77,597 edges**, while standalone GRC_Claw indexed at **3,987 graph nodes** and **10,518 edges**. The earlier `graph:coverage` gate already proves the first slice of product discipline: route-to-proof, tool-to-policy, Copilot-to-evidence, marketplace-to-signed-pack, procurement-to-export, verifier/export, and benchmark-intelligence coverage all pass their configured thresholds.
+
+The market signal is also clear. Large buyers are paying for platforms that become control planes: multi-cloud security, AI runtime protection, AI governance, device/asset visibility, trust intelligence, and workflow ownership. GRC_Claw should not try to win by being “another open-source GRC toolkit.” It should become the local, inspectable trust engine behind a hosted A2Z SOC network that makes every compliance, security, AI, procurement, and agent action verifiable.
+
+Highest-leverage improvements to outrun proprietary platforms and open-source projects:
+
+1. **Trust Transaction Network**
+   - Promote the Verified Trust Transaction envelope into the platform primitive for every action: actor, tenant, tool, policy decision, model, data boundary, evidence hash, control mapping, verifier scope, risk score, cost impact, idempotency key, and export target.
+   - Store transactions as append-only proof objects that can power dashboards, Copilot answers, audits, procurement packets, marketplace scoring, and acquirer due diligence.
+   - This is the core monopoly mechanic: the more customers, agents, auditors, and automations use it, the harder it becomes to clone the trust history.
+
+2. **Proof-compiled Copilot**
+   - GRC Copilot should act like a compiler over graph paths. It should produce supported answers only when it can resolve controls, evidence, owners, freshness, risk economics, policy receipts, and verifier exports.
+   - Unsupported answers should become missing-evidence tasks with suggested connectors, marketplace packs, or manual collection steps.
+   - Proprietary vendors can ship chat. The durable moat is a Copilot that refuses theater and turns uncertainty into auditable work.
+
+3. **Agent Policy Firewall as the enterprise default**
+   - Make every MCP call, browser action, cloud connector, CLI task, SOAR playbook, remediation bot, and marketplace automation pass through the Agent Policy Firewall.
+   - Enforce sandbox policy, approval threshold, allowed actions, tenant scope, replay window, rollback plan, data boundary, and control impact before execution.
+   - A2Z SOC should sell this as the regulated execution boundary for agentic AI teams that cannot enter defense, finance, healthcare, or critical infrastructure without proof.
+
+4. **Defense Procurement Room**
+   - Package CMMC, NIST 800-171, ISO 42001, NIST AI RMF, SOC 2, FedRAMP inheritance, SBOM, AI-BOM, CUI boundary, SSP, POA&M, SPRS-style scoring, supplier risk, incident history, sovereign deployment, and agent receipts into one buyer-ready room.
+   - Add packet modes for prime contractor, government buyer, auditor, insurer, board, PE diligence, MSP, and vCISO.
+   - The paid outcome is faster procurement and fewer blocked deals, not prettier compliance posture.
+
+5. **Acquirer-grade diligence API**
+   - Add a redacted export that proves platform value: package graph, route graph, proof coverage, recurring evidence objects, control corpus, marketplace supply, verifier activity, benchmark density, tenant-safe usage, and revenue influence.
+   - Use this to make the company legible to strategic buyers while also helping enterprise customers justify renewal.
+   - If the platform can explain why it is hard to clone, it becomes easier to sell, finance, partner, and eventually acquire at a premium.
+
+6. **Regulated automation marketplace**
+   - Every pack should include signed provenance, maintainer identity, dependency policy, required scopes, test fixtures, rollback plan, semantic versioning, evidence outputs, compatibility matrix, verifier score, and revenue share.
+   - Marketplace actions should only run through the Agent Policy Firewall and should only count as valuable when they emit Trust Transactions and Evidence Graph objects.
+   - This makes GRC_Claw the open execution layer while A2Z SOC owns trust distribution and monetization.
+
+7. **Verifier network and acceptance memory**
+   - Give auditors, customers, primes, insurers, MSPs, PE teams, regulators, and boards scoped verifier rooms.
+   - Track acceptance, rejection, comments, export use, packet age, redactions, and follow-up tasks as signed events.
+   - The defensible asset is not a shared folder. It is longitudinal third-party acceptance memory tied to controls, evidence, and outcomes.
+
+8. **Outcome benchmark intelligence**
+   - Aggregate opt-in anonymized signals: audit cycle time, procurement delay, evidence freshness, remediation latency, vendor response time, automation success, policy denial rate, verifier acceptance, deal influence, and control reuse.
+   - Attach benchmarks to dashboards, Copilot answers, exports, and sales pages.
+   - Open-source projects can copy code. They cannot bootstrap trusted outcome data from real verifiers and procurement flows.
+
+9. **Sovereign/offline proof lane**
+   - Make local models, private LLM routing, offline evidence packs, immutable audit logs, timestamping, verifiable credentials, ZK audit bundles, and post-quantum readiness first-class.
+   - This keeps GRC_Claw relevant even as model providers, cloud rules, and AI governance standards change.
+   - The message for defense and regulated buyers: proof survives vendor churn, cloud churn, model churn, and cryptographic-era churn.
+
+10. **Navigation and packaging as a Trust OS**
+    - A2Z SOC navigation should collapse around Evidence Graph, Agent Policy Firewall, GRC Copilot, Defense Procurement, Verifier Rooms, Trust Score, Audit Trail, Vendor Risk, AI Governance, Automation Marketplace, Benchmark Intelligence, and Sovereign Deployment.
+    - Demos, duplicated dashboards, and seasonal surfaces should move under hubs or become proof-path support pages.
+    - The product should feel like an operating system for trust transactions, not a gallery of experiments.
+
+Immediate execution order:
+
+- **48 hours:** add a Trust Transaction schema package and make `graph:coverage` publish historical trend deltas, not only current pass/fail status. **Implemented first slice:** `@grc-claw/trust-transaction` now provides the canonical envelope, hashing, validation, redaction, policy/evidence/verifier fields, and Copilot proof guardrails; `npm run graph:coverage` now compares coverage ratios against `docs/graph-proof-coverage-history.json`, and `npm run graph:coverage:history` appends a new release baseline.
+- **7 days:** wire Trust Transaction receipts into gateway/MCP tools and Copilot answer metadata behind a compatibility flag.
+- **14 days:** make proof-compiled Copilot create missing-evidence tasks whenever a claim cannot be supported by graph paths.
+- **30 days:** ship the Defense Procurement Room as the paid flagship workflow for CMMC / NIST 800-171 / ISO 42001.
+- **60 days:** launch verifier rooms and signed marketplace revenue share around Trust Transaction acceptance.
+- **90 days:** expose benchmark intelligence inside Copilot, exports, sales packets, and customer renewal reports.
+
+The category-control thesis: A2Z SOC should own the hosted Trust Transaction Network; GRC_Claw should own the open, inspectable engine that proves the network is not marketing fiction. The winning asset is not the UI, the control catalog, or the chatbot. It is the compounding history of governed agent actions, signed evidence, accepted verifier packets, regulated automations, procurement outcomes, and benchmark intelligence.
+
+---
+
 ## Contributing
 
 GRC_Claw is MIT-licensed. PRs welcome — framework packs, language rules for the VS Code extension, additional Terraform resources, and connector implementations are the highest-value contributions.

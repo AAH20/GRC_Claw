@@ -1,0 +1,123 @@
+[
+  {
+    "checkedAt": "2026-06-30T00:00:00.000Z",
+    "ok": true,
+    "packages": 84,
+    "gatewayTools": 214,
+    "coverageGroups": [
+      {
+        "id": "route_to_proof",
+        "covered": 9,
+        "total": 9,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "tool_to_policy",
+        "covered": 9,
+        "total": 9,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "copilot_to_evidence",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "marketplace_to_signed_pack",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "procurement_to_export",
+        "covered": 7,
+        "total": 7,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "verifier_export",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "benchmark_intelligence",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      }
+    ]
+  },
+  {
+    "checkedAt": "2026-06-30T02:31:03.153Z",
+    "ok": true,
+    "packages": 85,
+    "gatewayTools": 214,
+    "coverageGroups": [
+      {
+        "id": "route_to_proof",
+        "covered": 9,
+        "total": 9,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "tool_to_policy",
+        "covered": 9,
+        "total": 9,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "copilot_to_evidence",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "marketplace_to_signed_pack",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "procurement_to_export",
+        "covered": 7,
+        "total": 7,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "verifier_export",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "benchmark_intelligence",
+        "covered": 6,
+        "total": 6,
+        "ratio": 1,
+        "ok": true
+      },
+      {
+        "id": "trust_transaction_network",
+        "covered": 7,
+        "total": 7,
+        "ratio": 1,
+        "ok": true
+      }
+    ]
+  }
+]

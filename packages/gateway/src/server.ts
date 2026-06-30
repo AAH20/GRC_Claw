@@ -3270,8 +3270,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
     // ─── Compliance Automation Marketplace ────────────────────────────────
     if (path === '/api/automation-marketplace/stats' && req.method === 'GET') {
       if (!authOk(req)) { res.writeHead(401); res.end(JSON.stringify({ error: 'unauthorized' })); return; }
-      const publisherList = automationMarketplace.publisher.list();
-      const stats = { total: publisherList.length, published: publisherList.filter(a => a.status === 'published').length };
+      const publisherList = automationMarketplace.discovery.search({ limit: 1000 }).automations;
+      const stats = { total: publisherList.length, published: publisherList.filter((automation) => automation.status === 'published').length };
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, stats }));
       return;

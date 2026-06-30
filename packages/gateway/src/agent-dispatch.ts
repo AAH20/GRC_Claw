@@ -3533,20 +3533,20 @@ export async function dispatchBuiltinGrcTool(
 
     // ─── Compliance Automation Marketplace Tools ──────────────────────────
     case 'automation_marketplace.get_stats': {
-      const publisherList = automationMarketplace.publisher.list();
-      const stats = { total: publisherList.length, published: publisherList.filter((a: any) => a.status === 'published').length };
+      const publisherList = automationMarketplace.discovery.search({ limit: 1000 }).automations;
+      const stats = { total: publisherList.length, published: publisherList.filter((automation) => automation.status === 'published').length };
       return { ok: true, stats, timestamp: new Date().toISOString() };
     }
     case 'automation_marketplace.search': {
       const framework = args.framework as string | undefined;
       const industry = args.industry as string | undefined;
-      const result = await automationMarketplace.discovery.search({ frameworks: framework ? [framework as any] : undefined, industries: industry ? [industry] : undefined });
-      return { ok: true, automations: result.results, count: result.total, timestamp: new Date().toISOString() };
+      const result = automationMarketplace.discovery.search({ framework: framework ? [framework as any] : undefined, industry: industry ? [industry] : undefined });
+      return { ok: true, automations: result.automations, count: result.total, timestamp: new Date().toISOString() };
     }
     case 'automation_marketplace.install': {
       const automationId = String(args.automationId ?? '');
-      const version = args.version as string | undefined;
-      const result = await automationMarketplace.installer.install(automationId, { version });
+      const targetPath = String(args.targetPath ?? `./marketplace-data/installations/${automationId}`);
+      const result = await automationMarketplace.installer.install(automationId, targetPath);
       return { ok: true, result, timestamp: new Date().toISOString() };
     }
 
