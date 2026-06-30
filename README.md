@@ -1,6 +1,6 @@
-# GRC_Claw v18.0
+# GRC_Claw v19.0
 
-Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 111 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring
+Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -1698,6 +1698,35 @@ This release completes the final gap: all monopoly pages are now accessible via 
 | **Real-Time Data** | 6 Supabase providers, no mocks | ✅ |
 | **Documentation** | 12,000+ lines across 15+ documents | ✅ |
 | **Navigation** | All pages wired, lazy-loaded, accessible | ✅ |
+| **Integration Tests** | 31 E2E tests, full pipeline verification | ✅ |
+| **Onboarding Guide** | 668-line developer guide, 30-min to productive | ✅ |
+
+---
+
+## What's New in v19.0 — Integration & Onboarding
+
+This release completes the developer experience: end-to-end integration tests verify every component works together, and a 668-line onboarding guide takes new developers from zero to productive in 30 minutes.
+
+| Feature | Description |
+|---------|-------------|
+| **Integration Test Suite** | 31 E2E tests across 6 describe blocks: Trust Transaction + Evidence Graph, Agent Policy Firewall + Trust Transaction, Verifier Network + Defense Procurement, Benchmark Intelligence + Trust Score, Framework Crosswalk + Evidence, Full Pipeline (Scan → Evidence → Crosswalk → Trust → Verifier). |
+| **Developer Onboarding Guide** | 668-line guide covering: prerequisites, clone/install, build, test, gateway startup, API exploration (5 curl examples), architecture overview, top 10 packages, development workflow, code style, common tasks (frameworks/connectors/CLI/API/tools), debugging tips, resources. |
+| **Full Pipeline Test** | Single comprehensive test chaining all 7 stages: firewall scan → evidence creation → crosswalk mapping → benchmark aggregation → trust score → verifier room → export packet, with cross-component integrity assertions. |
+
+---
+
+## v19.0 Documentation Suite
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `packages/grc-claw-v16/test/integration-e2e.test.ts` | 450+ | 31 E2E integration tests across 6 suites |
+| `docs/ONBOARDING.md` | 668 | Developer onboarding guide (30-min to productive) |
+| `src/pages/DeveloperPortalPage.tsx` | 785 | Interactive developer portal with API explorer |
+| `docs/CLI-REFERENCE.md` | 1,837 | Complete CLI documentation for all 27 commands |
+| `docs/PERFORMANCE-V17.md` | 1,031 | Performance SLOs and benchmarks |
+| `docs/openapi.yaml` | 2,800+ | OpenAPI 3.1 specification |
+| **Total new in v19.0** | **1,118** | **Integration tests + onboarding** |
+| **Grand total all docs** | **13,118+** | **Complete platform documentation** |
 
 ---
 
@@ -1712,7 +1741,7 @@ npm install && npm run build
 npm run test:comprehensive
 ```
 
-**Test results:** 722+ tests passing, 0 failures.
+**Test results:** 753+ tests passing, 0 failures.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, code style, and PR process.
 
