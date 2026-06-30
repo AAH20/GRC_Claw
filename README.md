@@ -1,6 +1,6 @@
-# GRC_Claw v20.0
+# GRC_Claw v21.0
 
-Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog
+Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -1812,6 +1812,34 @@ This release eliminates all remaining mock data from production code and adds a 
 | `docs/PERFORMANCE-V17.md` | 1,031 | Performance SLOs |
 | `docs/openapi.yaml` | 2,800+ | OpenAPI 3.1 specification |
 | **Grand total** | **13,500+** | **Complete platform documentation** |
+
+---
+
+## What's New in v21.0 — Security Audit & Cleanup
+
+This release adds a comprehensive security audit report documenting every security control, audit trail, and trust mechanism in the platform. Also removes the Digital Twin page (stub) and cleans up navigation.
+
+| Feature | Description |
+|---------|-------------|
+| **Security Audit Report** | 400+ line document covering: authentication (JWT, API key, DID:GRC), authorization (RBAC, tenant isolation, SoD), data encryption (AES-256, TLS 1.3, post-quantum), agent security (Policy Firewall, trust scoring, audit trail), compliance controls (20+ frameworks, 375+ mappings), infrastructure security (container hardening, K8s PSS, supply chain), sovereign deployment, risk quantification, incident response, and recommendations. |
+| **Digital Twin Removal** | Removed Compliance Digital Twin page (stub) from router, lazy imports, navigation, and sidebar. Cleaned up 4 references across App.tsx, lazyPages.tsx, hubNav.ts, siteNavigation.tsx. |
+| **New Pages Wired** | AI Assurance Passport, CMMC Procurement Readiness, Broker Trust Desk — all routed, lazy-loaded, and navigation-linked. |
+
+---
+
+## v21.0 Documentation Suite
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `docs/SECURITY-AUDIT.md` | 400+ | Comprehensive security audit report |
+| `CHANGELOG.md` | 400+ | Complete version history v10.0 → v20.0 |
+| `packages/grc-claw-v16/test/integration-e2e.test.ts` | 450+ | 31 E2E integration tests |
+| `docs/ONBOARDING.md` | 668 | Developer onboarding guide |
+| `src/pages/DeveloperPortalPage.tsx` | 785 | Interactive developer portal |
+| `docs/CLI-REFERENCE.md` | 1,837 | Complete CLI documentation |
+| `docs/PERFORMANCE-V17.md` | 1,031 | Performance SLOs |
+| `docs/openapi.yaml` | 2,800+ | OpenAPI 3.1 specification |
+| **Grand total** | **13,900+** | **Complete platform documentation** |
 
 ---
 
