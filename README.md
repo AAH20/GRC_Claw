@@ -1788,6 +1788,33 @@ The platform is technically superior. The problem is distribution. Here's the ex
 
 ---
 
+## What's New in v20.0 — Production Hardening
+
+This release eliminates all remaining mock data from production code and adds a complete version history. Every data path now flows through real implementations with graceful fallback.
+
+| Feature | Description |
+|---------|-------------|
+| **Mock Elimination** | 3 production mock functions replaced with real Supabase-backed implementations: `generateMockResponse` → LLM gateway, `mockTrustScoreFromTenantId` → trust_profiles table, `generateMockGraph` → security-graph API. All include fallback + warning logging. |
+| **CHANGELOG.md** | Complete version history from v10.0 to v20.0. Keep a Changelog format. Every version documented with features, improvements, bug fixes, and breaking changes. |
+| **Source Tagging** | All data providers now return `source: 'supabase' | 'fallback'` so callers know whether data is live or demo. SecurityGraphPage shows "Live" vs "Demo" badge. |
+
+---
+
+## v20.0 Documentation Suite
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `CHANGELOG.md` | 400+ | Complete version history v10.0 → v20.0 |
+| `packages/grc-claw-v16/test/integration-e2e.test.ts` | 450+ | 31 E2E integration tests |
+| `docs/ONBOARDING.md` | 668 | Developer onboarding guide |
+| `src/pages/DeveloperPortalPage.tsx` | 785 | Interactive developer portal |
+| `docs/CLI-REFERENCE.md` | 1,837 | Complete CLI documentation |
+| `docs/PERFORMANCE-V17.md` | 1,031 | Performance SLOs |
+| `docs/openapi.yaml` | 2,800+ | OpenAPI 3.1 specification |
+| **Grand total** | **13,500+** | **Complete platform documentation** |
+
+---
+
 ## Contributing
 
 GRC_Claw is MIT-licensed. PRs welcome — framework packs, language rules for the VS Code extension, additional Terraform resources, and connector implementations are the highest-value contributions.
