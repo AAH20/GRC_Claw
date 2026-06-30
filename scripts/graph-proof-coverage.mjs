@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
+const historyPath = path.join(root, 'docs/graph-proof-coverage-history.json');
 
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
 const exists = (relativePath) => fs.existsSync(path.join(root, relativePath));
@@ -109,6 +110,12 @@ const benchmarkSource = [
   packageSource('compliance-intelligence-api'),
   packageSource('real-time-compliance-monitor'),
   packageSource('continuous-trust-engine'),
+].join('\n');
+const trustTransactionSource = [
+  readme,
+  packageSource('trust-transaction'),
+  packageSource('evidence-graph'),
+  packageSource('evidence'),
 ].join('\n');
 
 const coverageTarget = (id, ok, evidence, remediation) => ({
@@ -241,6 +248,15 @@ const coverageGroups = [
     tokenTarget('benchmark:outcomes', benchmarkSource, ['benchmark', 'audit cycle time', 'remediation latency'], 2),
     tokenTarget('benchmark:signals', benchmarkSource, ['evidence freshness', 'policy denial', 'verifier acceptance'], 2),
   ]),
+  coverageGroup('trust_transaction_network', 0.8, [
+    packageTarget('trust-transaction'),
+    tokenTarget('trust_transaction:envelope', trustTransactionSource, ['TrustTransactionEnvelope', 'transactionHash', 'dataBoundary'], 3),
+    tokenTarget('trust_transaction:policy', trustTransactionSource, ['sandboxPolicy', 'approvalThreshold', 'rollbackPlanId'], 3),
+    tokenTarget('trust_transaction:evidence', trustTransactionSource, ['evidenceHash', 'graphObjectHash', 'controlIds'], 3),
+    tokenTarget('trust_transaction:verifier', trustTransactionSource, ['verifier_receipt', 'receiptHash', 'verifier_room'], 2),
+    tokenTarget('trust_transaction:copilot_guardrail', trustTransactionSource, ['copilot_answer', 'missing_evidence_task', 'copilot_answer_missing_proof'], 3),
+    tokenTarget('trust_transaction:exports', trustTransactionSource, ['procurement_packet', 'benchmark_api', 'diligence_api'], 3),
+  ]),
 ];
 
 const coverageChecks = coverageGroups.map((group) => ({
@@ -258,6 +274,7 @@ const evidenceGraphRoutesLegacy = [...gatewayServer.matchAll(/['"`](\/api\/evide
 
 const requiredPackages = [
   'evidence-graph',
+  'trust-transaction',
   'gateway',
   'mcp-server',
   'agent-runtime',
@@ -277,9 +294,9 @@ const checks = [
     remediation: 'Add "graph:coverage": "node scripts/graph-proof-coverage.mjs" to package.json.',
   },
   {
-    id: 'phase36_readme_present',
-    ok: readme.includes('Phase 36 graph-first review'),
-    remediation: 'Keep the Phase 36 graph-first moat review in README.md.',
+    id: 'phase38_readme_present',
+    ok: readme.includes('Phase 38 graph-first category control'),
+    remediation: 'Keep the Phase 38 Trust Transaction Network roadmap in README.md.',
   },
   {
     id: 'required_packages_present',
@@ -321,6 +338,20 @@ const checks = [
     ok: ['CMMC', 'NIST 800-171', 'ISO 42001'].every((token) => readme.includes(token)),
     remediation: 'README roadmap must keep the defense procurement cockpit wedge explicit.',
   },
+  {
+    id: 'trust_transaction_schema_package',
+    ok:
+      packages.includes('trust-transaction') &&
+      trustTransactionSource.includes('createTrustTransaction') &&
+      trustTransactionSource.includes('verifyTrustTransaction') &&
+      trustTransactionSource.includes('redactTrustTransactionForSharing'),
+    remediation: 'Trust Transaction schema, hashing, validation, and redaction package must remain available.',
+  },
+  {
+    id: 'graph_coverage_history_baseline',
+    ok: exists('docs/graph-proof-coverage-history.json'),
+    remediation: 'Keep docs/graph-proof-coverage-history.json so CI can compare graph coverage trends.',
+  },
   ...coverageChecks,
 ];
 
@@ -346,6 +377,33 @@ const summary = {
   checks: checks.map(({ id, ok, remediation }) => ({ id, ok, remediation: ok ? undefined : remediation })),
 };
 
+const loadHistory = () => {
+  if (!fs.existsSync(historyPath)) return [];
+  const parsed = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+  return Array.isArray(parsed) ? parsed : [];
+};
+
+const compactSummary = (input) => ({
+  checkedAt: input.checkedAt,
+  ok: input.ok,
+  packages: input.packages,
+  gatewayTools: input.gatewayTools,
+  coverageGroups: input.coverageGroups.map(({ id, covered, total, ratio, ok }) => ({ id, covered, total, ratio, ok })),
+});
+
+const latestHistory = loadHistory().at(-1);
+const coverageTrend = summary.coverageGroups.map((group) => {
+  const previous = latestHistory?.coverageGroups?.find?.((item) => item.id === group.id);
+  return {
+    id: group.id,
+    ratio: group.ratio,
+    previousRatio: previous?.ratio,
+    delta: previous ? Number((group.ratio - previous.ratio).toFixed(3)) : undefined,
+  };
+});
+
+summary.coverageTrend = coverageTrend;
+
 if (process.argv.includes('--json')) {
   process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
 } else {
@@ -357,10 +415,15 @@ if (process.argv.includes('--json')) {
   console.log('');
   console.log('Coverage ratios:');
   for (const group of summary.coverageGroups) {
+    const trend = summary.coverageTrend.find((item) => item.id === group.id);
+    const trendText =
+      trend?.delta === undefined
+        ? ''
+        : `, trend ${trend.delta > 0 ? '+' : ''}${Math.round(trend.delta * 100)} pts vs baseline`;
     console.log(
       `- ${group.ok ? '✓' : '✗'} ${group.id}: ${group.covered}/${group.total} (${Math.round(
         group.ratio * 100
-      )}%, min ${Math.round(group.minimumRatio * 100)}%)`
+      )}%, min ${Math.round(group.minimumRatio * 100)}%${trendText})`
     );
     for (const missing of group.missingTargets) {
       console.log(`  missing ${missing.id}: ${missing.remediation}`);
@@ -370,6 +433,17 @@ if (process.argv.includes('--json')) {
   for (const check of summary.checks) {
     console.log(`${check.ok ? '✓' : '✗'} ${check.id}`);
     if (!check.ok) console.log(`  remediation: ${check.remediation}`);
+  }
+}
+
+if (process.argv.includes('--write-history')) {
+  const history = loadHistory();
+  history.push(compactSummary(summary));
+  fs.mkdirSync(path.dirname(historyPath), { recursive: true });
+  fs.writeFileSync(historyPath, `${JSON.stringify(history, null, 2)}\n`);
+  if (!process.argv.includes('--json')) {
+    console.log('');
+    console.log(`✓ graph_coverage_history_written ${path.relative(root, historyPath)}`);
   }
 }
 

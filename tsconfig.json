@@ -5,6 +5,7 @@
     { "path": "./packages/ingest" },
     { "path": "./packages/evidence" },
     { "path": "./packages/evidence-graph" },
+    { "path": "./packages/trust-transaction" },
     { "path": "./packages/frameworks" },
     { "path": "./packages/agent-runtime" },
     { "path": "./packages/a2z-connector" },
