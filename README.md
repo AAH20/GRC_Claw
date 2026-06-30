@@ -1,6 +1,6 @@
-# GRC_Claw v19.0
+# GRC_Claw v20.0
 
-Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide
+Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -96,6 +96,18 @@ Deliverables:
 - Board-ready risk narrative tied to revenue, diligence, and procurement blockers.
 
 This offer can sell as a service first, then convert into recurring A2Z SOC subscriptions and GRC_Claw adoption.
+
+### A2Z SOC revenue surfaces now wired
+
+The open-source engine now points at three concrete hosted offers instead of a generic “book a demo” motion:
+
+| Offer | A2Z SOC route | Commercial shape | Why it matters for GRC_Claw |
+|---|---|---|---|
+| **AI Assurance Passport** | [`/ai-assurance-passport`](https://a2zsoc.com/ai-assurance-passport) | $2,500 setup + $3,500/mo managed evidence desk | Makes GRC_Claw’s agent/evidence receipts legible to AI buyers, auditors, and procurement teams. |
+| **CMMC Procurement Readiness Desk** | [`/cmmc-procurement-readiness`](https://a2zsoc.com/cmmc-procurement-readiness) | $999 triage → $3,500/mo readiness desk | Turns CMMC/NIST 800-171 evidence, SSP/POA&M planning, and defense supplier blockers into a paid recurring workflow. |
+| **Broker Trust Desk** | [`/broker-trust-desk`](https://a2zsoc.com/broker-trust-desk) | $999/mo partner fee + $199–$499/mo client workspaces | Converts brokers, MSPs, and vCISOs into distribution partners that pull multiple clients into A2Z SOC while GRC_Claw remains the inspectable execution layer. |
+
+This is the practical bridge from open-source adoption to survivable revenue: GRC_Claw generates and verifies the trust objects; A2Z SOC sells the hosted rooms, subscriptions, partner desks, and buyer-ready evidence packets.
 
 ---
 
