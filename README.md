@@ -8,6 +8,8 @@ Open-source GRC automation engine — 90 packages, 375+ cross-framework mappings
 [![GitHub](https://img.shields.io/badge/GitHub-AAH20%2FGRC__Claw-181717?logo=github)](https://github.com/AAH20/GRC_Claw)
 [![A2Z SOC](https://img.shields.io/badge/A2Z%20SOC-a2zsoc.com-red)](https://a2zsoc.com)
 
+**اقرأ هذا الملف بالعربية:** [README.ar.md](README.ar.md)
+
 ---
 
 ## Hosted platform, advisory, and international partners
