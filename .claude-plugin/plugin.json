@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "grc-claw",
+  "displayName": "GRC_Claw",
+  "version": "1.0.0",
+  "description": "AI Agent Governance skill: register an autonomous agent's identity, evaluate a runtime policy decision before it acts, and log a hash-chained attestation of what it did, backed by A2Z SOC's live Agent Registry, Policy Firewall, and Attestation Ledger.",
+  "author": {
+    "name": "Ahmed Hassan",
+    "url": "https://github.com/AAH20"
+  },
+  "homepage": "https://a2zsoc.com",
+  "repository": "https://github.com/AAH20/GRC_Claw",
+  "license": "MIT",
+  "keywords": ["compliance", "grc", "ai-governance", "security", "agent-governance", "iso42001"]
+}

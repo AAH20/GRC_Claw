@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "grc-claw",
+  "description": "GRC_Claw: open-source GRC automation engine. Includes an AI Agent Governance skill for Claude Code, backed by A2Z SOC's live Agent Registry, Policy Firewall, and Attestation Ledger.",
+  "owner": {
+    "name": "Ahmed Hassan",
+    "url": "https://github.com/AAH20"
+  },
+  "plugins": [
+    {
+      "name": "ai-agent-governance",
+      "description": "Register an autonomous agent's identity, check a runtime policy decision before it acts, and log a hash-chained attestation of what it did. Backed by A2Z SOC's live Agent Registry, Policy Firewall, and Attestation Ledger.",
+      "author": {
+        "name": "Ahmed Hassan",
+        "url": "https://github.com/AAH20"
+      },
+      "category": "security",
+      "source": "./",
+      "homepage": "https://a2zsoc.com"
+    }
+  ]
+}
