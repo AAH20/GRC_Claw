@@ -4,6 +4,9 @@
   "description": "CMMC/NIST 800-171/ISO 42001 defense procurement cockpit — SSP, POA&M, SPRS, CUI boundary, supplier risk, AI inventory, SBOM/AI-BOM, and packet exports",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "clean": "rm -rf dist"

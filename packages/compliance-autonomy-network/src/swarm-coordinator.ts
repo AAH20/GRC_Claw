@@ -31,6 +31,11 @@ import { AuditPreparer } from "./agents/audit-preparer.js";
 import { RemediationExecutorAgent } from "./agents/remediation-executor.js";
 import { Verifier } from "./agents/verifier.js";
 
+type ExecutableAgent = SwarmAgent & {
+  execute: (task: SwarmTask) => Promise<SwarmResult>;
+  canHandle: (task: SwarmTask) => boolean;
+};
+
 // ============================================================================
 // Default configuration
 // ============================================================================
@@ -51,7 +56,8 @@ const DEFAULT_CONFIG: SwarmCoordinatorConfig = {
 // ============================================================================
 
 export class SwarmCoordinator {
-  private readonly agents: Map<AgentRole, SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }> = new Map();
+  private readonly agents: Map<AgentRole, ExecutableAgent> = new Map();
+  private readonly defaultAgentRoles: Set<AgentRole> = new Set();
   private readonly messages: AgentMessage[] = [];
   private readonly trustChain: TrustChainLink[] = [];
   private readonly taskResults: Map<string, SwarmResult[]> = new Map();
@@ -110,8 +116,9 @@ export class SwarmCoordinator {
   /**
    * Register a custom agent with the coordinator.
    */
-  registerAgent(agent: SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }): void {
+  registerAgent(agent: ExecutableAgent): void {
     this.agents.set(agent.role, agent);
+    this.defaultAgentRoles.delete(agent.role);
   }
 
   /**
@@ -366,12 +373,18 @@ export class SwarmCoordinator {
     return results;
   }
 
-  private async executeWithRetry(task: SwarmTask, agent: SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }): Promise<SwarmResult> {
+  private async executeWithRetry(task: SwarmTask, agent: ExecutableAgent): Promise<SwarmResult> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= this.config.retryAttempts; attempt++) {
       try {
-        return await agent.execute(task);
+        const result = await agent.execute(task);
+        if (result.status !== "failed" || attempt >= this.config.retryAttempts) {
+          return result;
+        }
+
+        lastError = new Error(result.error ?? `Agent ${agent.role} returned failed status`);
+        await this.sleep(this.config.retryDelayMs * (attempt + 1));
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < this.config.retryAttempts) {
@@ -380,20 +393,72 @@ export class SwarmCoordinator {
       }
     }
 
-    throw lastError ?? new Error("Execution failed after retries");
+    return this.createFailedResult(
+      task,
+      agent,
+      lastError ?? new Error("Execution failed after retries"),
+    );
   }
 
-  private selectAgent(task: SwarmTask): (SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }) | null {
+  private selectAgent(task: SwarmTask): ExecutableAgent | null {
     if (task.assignedAgent) {
       const agent = this.agents.get(task.assignedAgent);
-      if (agent && agent.canHandle(task)) return agent;
+      if (agent && agent.canHandle(task)) return this.resolveExecutionAgent(task, agent);
     }
 
     for (const agent of this.agents.values()) {
-      if (agent.canHandle(task)) return agent;
+      if (agent.canHandle(task)) return this.resolveExecutionAgent(task, agent);
     }
 
     return null;
+  }
+
+  private resolveExecutionAgent(task: SwarmTask, agent: ExecutableAgent): ExecutableAgent {
+    if (
+      this.defaultAgentRoles.has(agent.role) &&
+      agent.currentTaskCount > 0 &&
+      agent.currentTaskCount < agent.maxConcurrentTasks
+    ) {
+      const worker = this.createDefaultAgent(agent.role);
+      if (worker.canHandle(task)) return worker;
+    }
+
+    return agent;
+  }
+
+  private createFailedResult(
+    task: SwarmTask,
+    agent: ExecutableAgent,
+    error: Error,
+  ): SwarmResult {
+    const completedAt = new Date().toISOString();
+    const contentHash = createHash("sha256").update(error.message).digest("hex");
+    const previousHash = this.previousLinkHash;
+    const signaturePayload = `${task.id}:${agent.id}:${contentHash}:${completedAt}:${previousHash}`;
+
+    return {
+      taskId: task.id,
+      agentId: agent.id,
+      agentRole: agent.role,
+      status: "failed",
+      output: {
+        summary: `Agent ${agent.role} failed after retries: ${error.message}`,
+        recommendations: ["Review the agent error, fix the input or dependency, then retry the task."],
+      },
+      trustSignature: {
+        agentId: agent.id,
+        agentRole: agent.role,
+        timestamp: completedAt,
+        contentHash,
+        previousHash,
+        nonce: parseInt(randomBytes(4).toString("hex"), 16),
+        signature: createHash("sha256").update(signaturePayload).digest("hex"),
+      },
+      executionTimeMs: 0,
+      startedAt: completedAt,
+      completedAt,
+      error: error.message,
+    };
   }
 
   // ------------------------------------------------------------------
@@ -685,12 +750,34 @@ export class SwarmCoordinator {
   }
 
   private registerDefaultAgents(): void {
-    this.agents.set("evidence-collector", new EvidenceCollector());
-    this.agents.set("control-tester", new ControlTester());
-    this.agents.set("risk-quantifier", new RiskQuantifier());
-    this.agents.set("audit-preparer", new AuditPreparer());
-    this.agents.set("remediation-executor", new RemediationExecutorAgent());
-    this.agents.set("verifier", new Verifier());
+    this.registerDefaultAgent("evidence-collector", new EvidenceCollector());
+    this.registerDefaultAgent("control-tester", new ControlTester());
+    this.registerDefaultAgent("risk-quantifier", new RiskQuantifier());
+    this.registerDefaultAgent("audit-preparer", new AuditPreparer());
+    this.registerDefaultAgent("remediation-executor", new RemediationExecutorAgent());
+    this.registerDefaultAgent("verifier", new Verifier());
+  }
+
+  private registerDefaultAgent(role: AgentRole, agent: ExecutableAgent): void {
+    this.agents.set(role, agent);
+    this.defaultAgentRoles.add(role);
+  }
+
+  private createDefaultAgent(role: AgentRole): ExecutableAgent {
+    switch (role) {
+      case "evidence-collector":
+        return new EvidenceCollector();
+      case "control-tester":
+        return new ControlTester();
+      case "risk-quantifier":
+        return new RiskQuantifier();
+      case "audit-preparer":
+        return new AuditPreparer();
+      case "remediation-executor":
+        return new RemediationExecutorAgent();
+      case "verifier":
+        return new Verifier();
+    }
   }
 
   private sleep(ms: number): Promise<void> {
