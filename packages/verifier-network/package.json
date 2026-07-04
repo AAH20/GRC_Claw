@@ -4,6 +4,9 @@
   "description": "Scoped audit rooms for auditors, customers, primes, MSPs, insurers, PE firms, regulators — longitudinal acceptance memory tied to controls, evidence, and outcomes",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "clean": "rm -rf dist"

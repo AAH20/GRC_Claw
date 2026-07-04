@@ -128,7 +128,7 @@ export class RemediationExecutorAgent extends BaseAgent {
       };
     }
 
-    if (!planInput.autoApprove && action.riskLevel === "high") {
+    if (this.requiresApproval(action, planInput)) {
       return {
         issueId: `issue-${planInput.controlId}`,
         controlId: planInput.controlId,
@@ -165,6 +165,17 @@ export class RemediationExecutorAgent extends BaseAgent {
   private async performAction(action: RemediationActionPlan): Promise<string> {
     // Simulated action execution – in production this would invoke real APIs/commands
     return `Action "${action.type}" executed successfully. Command: ${action.command}. Completed at ${new Date().toISOString()}.`;
+  }
+
+  private requiresApproval(
+    action: RemediationActionPlan,
+    planInput: RemediationPlanInput,
+  ): boolean {
+    if (planInput.autoApprove) return false;
+    if (action.riskLevel === "critical" || action.riskLevel === "high") return true;
+
+    const elevatedSeverity = planInput.severity === "critical" || planInput.severity === "high";
+    return elevatedSeverity && action.riskLevel === "medium";
   }
 
   private generateRemediationRecommendations(

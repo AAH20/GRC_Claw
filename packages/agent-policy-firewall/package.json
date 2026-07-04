@@ -4,6 +4,9 @@
   "description": "Regulated execution boundary for all AI/MCP/browser/cloud/CLI/SOAR actions — sandbox policy, approval thresholds, tenant scope, replay prevention, blast-radius scoring, and signed receipt generation",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "clean": "rm -rf dist"

@@ -48,6 +48,33 @@ export abstract class BaseAgent implements SwarmAgent {
     this.trustScore = options.initialTrustScore ?? 1.0;
     this.status = "idle";
     this.currentTaskCount = 0;
+
+    const executeCore = this.execute.bind(this);
+    let overrideExecute: ((task: SwarmTask) => Promise<SwarmResult>) | null = null;
+    let invokingOverride = false;
+
+    const executeWrapper = async (task: SwarmTask): Promise<SwarmResult> => {
+      if (overrideExecute && !invokingOverride) {
+        invokingOverride = true;
+        try {
+          return await overrideExecute(task);
+        } catch (err) {
+          return this.buildFailedResult(task, err);
+        } finally {
+          invokingOverride = false;
+        }
+      }
+
+      return executeCore(task);
+    };
+
+    Object.defineProperty(this, "execute", {
+      configurable: true,
+      get: () => executeWrapper,
+      set: (nextExecute: (task: SwarmTask) => Promise<SwarmResult>) => {
+        overrideExecute = nextExecute.bind(this);
+      },
+    });
   }
 
   // ------------------------------------------------------------------
@@ -79,26 +106,7 @@ export abstract class BaseAgent implements SwarmAgent {
         completedAt,
       };
     } catch (err) {
-      const completedAt = new Date().toISOString();
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      const errorHash = this.hash(errorMsg);
-      const trustSignature = this.sign(task.id, errorHash);
-
-      this.previousHash = trustSignature.contentHash;
-      this.trustScore = Math.max(0, this.trustScore - 0.1);
-
-      return {
-        taskId: task.id,
-        agentId: this.id,
-        agentRole: this.role,
-        status: "failed",
-        output: { summary: `Agent ${this.role} failed: ${errorMsg}`, recommendations: [] },
-        trustSignature,
-        executionTimeMs: new Date(completedAt).getTime() - new Date(startedAt).getTime(),
-        startedAt,
-        completedAt,
-        error: errorMsg,
-      };
+      return this.buildFailedResult(task, err, startedAt);
     } finally {
       this.currentTaskCount = Math.max(0, this.currentTaskCount - 1);
       this.status = this.currentTaskCount === 0 ? "idle" : "busy";
@@ -128,6 +136,33 @@ export abstract class BaseAgent implements SwarmAgent {
 
   hash(data: string): string {
     return createHash("sha256").update(data).digest("hex");
+  }
+
+  private buildFailedResult(
+    task: SwarmTask,
+    err: unknown,
+    startedAt: string = new Date().toISOString(),
+  ): SwarmResult {
+    const completedAt = new Date().toISOString();
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const errorHash = this.hash(errorMsg);
+    const trustSignature = this.sign(task.id, errorHash);
+
+    this.previousHash = trustSignature.contentHash;
+    this.trustScore = Math.max(0, this.trustScore - 0.1);
+
+    return {
+      taskId: task.id,
+      agentId: this.id,
+      agentRole: this.role,
+      status: "failed",
+      output: { summary: `Agent ${this.role} failed: ${errorMsg}`, recommendations: [] },
+      trustSignature,
+      executionTimeMs: new Date(completedAt).getTime() - new Date(startedAt).getTime(),
+      startedAt,
+      completedAt,
+      error: errorMsg,
+    };
   }
 
   private sign(taskId: string, contentHash: string): TrustSignature {

@@ -4,6 +4,9 @@
   "description": "Opt-in anonymized outcome data — audit cycle time, remediation latency, vendor response, automation success, procurement blockers — proprietary dataset competitors cannot bootstrap",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "clean": "rm -rf dist"
