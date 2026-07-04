@@ -10,6 +10,26 @@ Open-source GRC automation engine — 90 packages, 375+ cross-framework mappings
 
 ---
 
+## Hosted platform, advisory, and international partners
+
+GRC_Claw is the inspectable open-source engine. **A2Z SOC is the hosted trust, evidence, and partner control plane** for teams that need buyer-ready packets, recurring workspaces, white-label delivery, and senior advisory around CMMC, NIST 800-171, ISO 42001, NIST AI RMF, GRC automation, and agentic AI security.
+
+Use the international deal room when you are an MSP, vCISO firm, CMMC RPO/C3PAO, broker, law firm, PE/VC diligence team, or expert-network buyer evaluating implementation support:
+
+- **Partner deal room:** [a2zsoc.com/international-partners](https://a2zsoc.com/international-partners?utm_source=github&utm_medium=oss&utm_campaign=grc-claw-partner-deal-room)
+- **Hosted trust center:** [a2zsoc.com/trust-center](https://a2zsoc.com/trust-center?utm_source=github&utm_medium=oss&utm_campaign=grc-claw-partner-deal-room)
+- **Productized services:** [a2zsoc.com/productized-services](https://a2zsoc.com/productized-services?utm_source=github&utm_medium=oss&utm_campaign=grc-claw-partner-deal-room)
+
+Commercial entry points:
+
+| Buyer | Best first motion | Commercial shape |
+|---|---|---|
+| MSP / vCISO / CMMC RPO | White-label CMMC + AI governance readiness packet | 25–35% partner commission or senior overflow delivery |
+| Cyber broker / law firm | Client evidence desk for underwriting and vendor-risk friction | Partner desk + recurring client workspaces |
+| PE / VC / expert network | Cybersecurity, GRC, AI governance, CNAPP, and agentic AI diligence | Paid diagnostic call → diligence memo / implementation sprint |
+
+---
+
 ## Phase 36 moat roadmap — control-to-revenue assurance exchange
 
 The next leap is to turn A2Z SOC + GRC_Claw from a feature-rich GRC platform into an **assurance exchange**: a network where controls, evidence, agent actions, procurement answers, auditor packets, insurance attestations, and revenue attribution all become signed, reusable trust objects.
