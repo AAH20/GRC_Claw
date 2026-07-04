@@ -177,7 +177,7 @@ export class ControlTester extends BaseAgent {
   }
 
   private getControlTitle(framework: ComplianceFramework, controlId: string): string {
-    const titles: Record<string, string> = {
+    const titles: Record<string, Record<string, string>> = {
       SOC2: {
         "CC6.1": "Logical access security software, infrastructure, and architectures",
         "CC6.6": "Restrictions against transmission, movement, and removal of information",
@@ -212,7 +212,7 @@ export class ControlTester extends BaseAgent {
       },
     };
 
-    const frameworkTitles = titles[framework] as Record<string, string> | undefined;
+    const frameworkTitles = titles[framework];
     return frameworkTitles?.[controlId] ?? `Control ${controlId} under ${framework}`;
   }
 
