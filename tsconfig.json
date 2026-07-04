@@ -89,6 +89,7 @@
     { "path": "./packages/defense-procurement" },
     { "path": "./packages/verifier-network" },
     { "path": "./packages/benchmark-intelligence" },
+    { "path": "./packages/compliance-autonomy-network" },
     { "path": "./packages/gateway" }
   ]
 }
