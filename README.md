@@ -1,6 +1,6 @@
-# GRC_Claw v21.0
+# GRC_Claw v22.0
 
-Open-source GRC automation engine — 89 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
+Open-source GRC automation engine — 90 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, Compliance Autonomy Network (7-agent swarm), OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -154,22 +154,32 @@ The monopoly dynamic is not “closed software.” It is **open primitive + prop
 1. **Ship `grc passport generate`**  
    Generate a signed bundle containing framework coverage, evidence hashes, AI BOM, SBOM pointers, CMMC/NIST 800-171 status, questionnaire answers, and verifier links.
 
-2. **Ship `grc agent firewall install`**  
+2. **Ship `grc trust-swarm generate`**  
+   Generate an Agentic Trust Swarm packet that packages local GRC_Claw assurance envelopes, agent policy decisions, evidence hashes, framework crosswalks, CMMC/NIST 800-171 readiness assumptions, ISO 42001 AI governance evidence, and A2Z SOC buyer routes into one share-safe artifact.
+
+   ```bash
+   grc trust-swarm generate --framework cmmc --output trust-swarm-packet.json
+   ```
+
+   Hosted counterpart: [`https://a2zsoc.com/agentic-trust-swarm`](https://a2zsoc.com/agentic-trust-swarm)  
+   API counterpart: `GET https://a2zsoc.com/api/v1/agentic/trust-swarm`
+
+3. **Ship `grc agent firewall install`**  
    One command to wrap agent tool calls with policy decisions, trust scoring, audit ledger writes, and MCP-compatible attestations.
 
-3. **Unify framework catalogs**  
+4. **Unify framework catalogs**  
    Treat the A2Z SOC Supabase control catalog as the source of truth, with offline snapshots for GRC_Claw. Add snapshot version, source hash, license tier, and mapping provenance.
 
-4. **Make verifier packets first-class**  
+5. **Make verifier packets first-class**  
    Every evidence artifact should be exportable as an auditor-safe proof: hash, timestamp, control IDs, owner, collection method, freshness, and redacted metadata.
 
-5. **Turn compliance data syndication into a paid API**  
+6. **Turn compliance data syndication into a paid API**  
    Package control mappings, regulatory deltas, benchmark percentiles, and procurement questionnaire answers into metered API products for LegalTech, RegTech, MSP, broker, and defense supplier ecosystems.
 
-6. **Create a buyer-specific export matrix**  
+7. **Create a buyer-specific export matrix**  
    Prebuilt exports for: SOC 2 auditor, ISO 27001 auditor, CMMC assessor, cyber insurer, enterprise procurement, AI governance board, MSP/vCISO, and defense prime.
 
-7. **Close the loop from runtime events to audit evidence**  
+8. **Close the loop from runtime events to audit evidence**  
    Normalize security events, agent decisions, CI/CD findings, cloud drift, questionnaire answers, and remediation jobs into the same evidence graph rather than separate dashboards.
 
 ### Acquisition-grade differentiation checklist
@@ -553,6 +563,18 @@ The agent maintains a **trust score** derived from behavioral signals. If the sc
 - `redactAssuranceEnvelopeForSharing(...)` returns a share-safe version for third-party verification.
 
 The gateway records these envelopes around supervised agent actions and exposes the assurance graph through `/api/assurance`.
+
+## Agentic Trust Swarm packets
+
+`@grc-claw/cli` now includes the first local execution surface for A2Z SOC’s Agentic Trust Swarm:
+
+```bash
+grc trust-swarm generate --framework cmmc --buyer dod-prime --output trust-swarm-packet.json
+```
+
+The command creates a signed-readiness packet skeleton for the profitable swarm use case: evidence collectors, control mappers, risk/gap agents, auditor narrators, CMMC/NIST 800-171 readiness, ISO 42001 AI governance, and human approval gates. It is deliberately evidence/readiness oriented: it does not control customer systems, certify compliance, or perform autonomous remediation.
+
+Use the hosted A2Z SOC manifest at [`/agentic-trust-swarm`](https://a2zsoc.com/agentic-trust-swarm) or `GET /api/v1/agentic/trust-swarm` to align local packets with the buyer-facing evidence desk.
 
 ---
 
@@ -1840,6 +1862,88 @@ This release adds a comprehensive security audit report documenting every securi
 | `docs/PERFORMANCE-V17.md` | 1,031 | Performance SLOs |
 | `docs/openapi.yaml` | 2,800+ | OpenAPI 3.1 specification |
 | **Grand total** | **13,900+** | **Complete platform documentation** |
+
+---
+
+## What's New in v22.0 — Compliance Autonomy Network (Swarm Intelligence)
+
+The most profitable Agentic AI integration: a 7-agent swarm that automates the entire compliance lifecycle. Multi-agent collaboration, parallel execution, signed trust chain, and governed by the Agent Policy Firewall.
+
+| Feature | Description |
+|---------|-------------|
+| **Compliance Autonomy Network (CAN)** | 7-agent swarm: Swarm Commander, Evidence Collector, Control Tester, Risk Quantifier, Audit Preparer, Remediation Executor, Verifier. Each agent extends BaseAgent with HMAC-SHA256 trust signing. |
+| **Swarm Commander** | Strategic planner that decomposes compliance goals into tasks, coordinates parallel execution, enforces dependency ordering, and generates signed compliance reports. |
+| **Evidence Collector** | Gathers evidence from 150+ integrations (GitHub, Okta, AWS, Azure, GCP), hashes with SHA-256, stores in vault with full lineage. |
+| **Control Tester** | Runs automated tests against 375+ control mappings, scores compliance posture per framework, generates findings and recommendations. |
+| **Risk Quantifier** | FAIR model risk scoring, Monte Carlo simulation, dollar-denominated risk with confidence intervals. |
+| **Audit Preparer** | Generates SSP, POA&M, audit packets, framework-specific reports. Exportable to OSCAL, PDF, JSON. |
+| **Remediation Executor** | Executes SOAR playbooks, fixes misconfigurations, updates controls, generates trust receipts. |
+| **Verifier** | Validates all agent actions, detects tampering, generates auditor-safe verification receipts. |
+| **Trust Chain** | Every agent action linked via SHA-256 hash chain. Tamper-evident, append-only, auditable. |
+| **Dry-Run Mode** | Test the swarm without making changes. All agents respect `dryRun` flag. |
+
+---
+
+## v22.0 Documentation Suite
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `packages/compliance-autonomy-network/src/` | 1,200+ | 7-agent swarm implementation |
+| `packages/compliance-autonomy-network/src/index.test.ts` | 500+ | 50+ swarm tests across 13 groups |
+| `docs/SECURITY-AUDIT.md` | 400+ | Security audit report |
+| `CHANGELOG.md` | 400+ | Version history |
+| `packages/grc-claw-v16/test/integration-e2e.test.ts` | 450+ | 31 E2E integration tests |
+| `docs/ONBOARDING.md` | 668 | Developer onboarding |
+| `src/pages/DeveloperPortalPage.tsx` | 785 | Developer portal |
+| `docs/CLI-REFERENCE.md` | 1,837 | CLI documentation |
+| `docs/PERFORMANCE-V17.md` | 1,031 | Performance SLOs |
+| `docs/openapi.yaml` | 2,800+ | OpenAPI 3.1 specification |
+| **Grand total** | **15,600+** | **Complete platform documentation** |
+
+---
+
+## The Compliance Autonomy Network (CAN)
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    SWARM COMMANDER                        │
+│         (Strategic Planning & Coordination)              │
+├─────────┬─────────┬─────────┬─────────┬─────────────────┤
+│ Evidence│ Control │ Risk    │ Audit   │ Remediation     │
+│ Agent   │ Agent   │ Agent   │ Agent   │ Agent           │
+│         │         │         │         │                 │
+│ Collect │ Test    │ Quantify│ Prepare │ Execute         │
+│ & Hash  │ & Score │ & Rank  │ & Pack  │ & Verify        │
+├─────────┴─────────┴─────────┴─────────┴─────────────────┤
+│              Agent Policy Firewall                        │
+│         (Governance & Audit Trail)                       │
+├─────────────────────────────────────────────────────────┤
+│              Trust Transaction Network                    │
+│         (Signed Receipts for Every Action)               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### The 7 Swarm Agents
+
+| Agent | Role | Revenue Impact |
+|-------|------|----------------|
+| **Swarm Commander** | Strategic planner | Enables full automation |
+| **Evidence Collector** | Data gatherer | Eliminates 80% manual evidence work |
+| **Control Tester** | Compliance verifier | Continuous monitoring = recurring revenue |
+| **Risk Quantifier** | Risk assessor | CFO-visible risk economics |
+| **Audit Preparer** | Documentation | Audit-ready in days, not months |
+| **Remediation Executor** | Action taker | Closed-loop compliance |
+| **Verifier** | Quality assurance | Trust and auditability |
+
+### Pricing Model
+
+| Tier | Price | What You Get |
+|------|-------|-------------|
+| **CAN Starter** | $499/mo | 3 agents, 50 controls, monthly testing |
+| **CAN Pro** | $1,499/mo | 5 agents, 200 controls, continuous testing |
+| **CAN Enterprise** | $4,999/mo | 7 agents, 375+ controls, autonomous remediation |
 
 ---
 

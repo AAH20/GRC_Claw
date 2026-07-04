@@ -1,0 +1,34 @@
+{
+  "name": "@grc-claw/compliance-autonomy-network",
+  "version": "0.1.0",
+  "description": "Multi-agent swarm orchestrator for autonomous compliance across SOC 2, ISO 27001, NIST CSF, PCI DSS, HIPAA, and GDPR frameworks",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@grc-claw/core": "*",
+    "@grc-claw/evidence": "*",
+    "@grc-claw/frameworks": "*",
+    "@grc-claw/agent-identity": "*",
+    "@grc-claw/trust-transaction": "*",
+    "@grc-claw/agent-policy-firewall": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.14.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
+  }
+}

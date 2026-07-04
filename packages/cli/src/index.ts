@@ -1058,6 +1058,105 @@ function cmdVersion() {
   log(`Platform: ${process.platform} ${process.arch}`);
 }
 
+function buildTrustSwarmPacket(args: string[]) {
+  const framework = args.find((a, i) => args[i - 1] === '--framework') ?? 'cmmc';
+  const buyer = args.find((a, i) => args[i - 1] === '--buyer') ?? 'enterprise-procurement';
+  const mode = args.find((a, i) => args[i - 1] === '--mode') ?? 'trust-packet';
+  const timestamp = new Date().toISOString();
+  const packet = {
+    packet_version: '2026.07.agentic-trust-swarm',
+    generated_at: timestamp,
+    source: 'GRC_Claw local CLI',
+    a2z_soc_route: 'https://a2zsoc.com/agentic-trust-swarm',
+    a2z_soc_api: 'https://a2zsoc.com/api/v1/agentic/trust-swarm',
+    mode,
+    framework,
+    buyer,
+    swarm: {
+      name: 'A2Z Agentic Trust Swarm',
+      objective:
+        'Convert local evidence, agent-runtime receipts, cloud/container posture, and framework mappings into buyer-ready trust packets.',
+      squads: [
+        {
+          id: 'agentic-trust-packet',
+          agents: ['evidence-collector', 'control-mapper', 'risk-gap-agent', 'auditor-narrator', 'human-approval-agent'],
+          output: 'forwardable trust packet with evidence-backed, limited-evidence, and not-observed claims',
+        },
+        {
+          id: 'cmmc-defense-procurement',
+          agents: ['cui-scope-mapper', 'ssp-poam-builder', 'supplier-risk-agent', 'sprs-evidence-planner'],
+          output: 'CMMC/NIST 800-171 readiness packet for defense procurement conversations',
+        },
+        {
+          id: 'iso42001-ai-governance',
+          agents: ['ai-system-inventory', 'aims-control-agent', 'model-tool-policy-agent', 'incident-agent'],
+          output: 'ISO 42001 / NIST AI RMF evidence map with AI governance limitations',
+        },
+      ],
+    },
+    local_collectors: [
+      '@grc-claw/gateway assurance envelopes',
+      '@grc-claw/evidence hashes',
+      '@grc-claw/agent-policy-firewall decisions',
+      '@grc-claw/framework-crosswalk mappings',
+      '@grc-claw/a2z-connector export receipts',
+    ],
+    safety_model: [
+      'Read-only evidence collection by default.',
+      'External sharing requires a named human approver.',
+      'Remediation remains proposal-first; cloud, repo, CI, and runtime mutations are approval-gated.',
+      'This packet is readiness evidence, not certification, legal advice, or a safety guarantee.',
+    ],
+    recommended_next_steps: [
+      'Send packet to A2Z SOC proof ledger or procurement passport flow.',
+      'Attach framework-specific evidence and owner notes.',
+      'Review redaction boundary before sharing with buyers, auditors, brokers, or assessors.',
+    ],
+  };
+  const digest = createHash('sha256').update(JSON.stringify(packet)).digest('hex');
+  return { ...packet, digest };
+}
+
+function cmdTrustSwarm(args: string[]) {
+  const sub = args[0];
+  if (sub !== 'generate') {
+    log(`Usage: grc trust-swarm generate [--framework cmmc|iso42001|soc2] [--buyer <id>] [--mode trust-packet] [--output <file>] [--json]`);
+    return;
+  }
+
+  const scopedArgs = args.slice(1);
+  const packet = buildTrustSwarmPacket(scopedArgs);
+  const outputIndex = scopedArgs.indexOf('--output');
+  const outputPath = outputIndex >= 0 ? scopedArgs[outputIndex + 1] : undefined;
+  const json = JSON.stringify(packet, null, 2);
+
+  if (outputPath) {
+    writeFileSync(outputPath, json);
+    success(`Agentic Trust Swarm packet written to ${outputPath}`);
+    log(`${dim('Digest:')} ${packet.digest}`);
+    return;
+  }
+
+  if (scopedArgs.includes('--json')) {
+    log(json);
+    return;
+  }
+
+  log(`\n${bold('A2Z Agentic Trust Swarm')} ${dim(packet.packet_version)}`);
+  log(`${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+  log(`${dim('Framework:')} ${packet.framework}`);
+  log(`${dim('Buyer:')}     ${packet.buyer}`);
+  log(`${dim('A2Z route:')} ${packet.a2z_soc_route}`);
+  log(`${dim('Digest:')}    ${packet.digest}`);
+  log(`\n${bold('Squads')}`);
+  for (const squad of packet.swarm.squads) {
+    log(`  ${c.cyan}${squad.id}${c.reset} — ${squad.output}`);
+  }
+  log(`\n${bold('Safety model')}`);
+  for (const item of packet.safety_model) log(`  - ${item}`);
+  log(`\n${dim('Use --json or --output trust-swarm-packet.json for automation.')}\n`);
+}
+
 function cmdHelp() {
   log(`
 ${bold('grc')} — GRC_Claw CLI ${dim(`v${VERSION}`)}
@@ -1112,6 +1211,12 @@ ${bold('COMMANDS')}
     --file <path>             AI-BOM JSON file to publish (default: ai-bom.json)
     --model-id <id>           Override model identifier
 
+  ${c.cyan}trust-swarm generate${c.reset}           Generate Agentic Trust Swarm packet
+    --framework <id>          cmmc, iso42001, soc2, or buyer-specific framework
+    --buyer <id>              Buyer context (default: enterprise-procurement)
+    --output <file>           Write packet to file
+    --json                    Output JSON
+
   ${c.cyan}iac-scan${c.reset} [path]               Scan Terraform/CloudFormation/Kubernetes for compliance
     --framework <id>          Filter by framework (iso27001, soc2, nist-csf)
     --output <file>           Write report to file
@@ -1160,6 +1265,9 @@ ${bold('EXAMPLES')}
 
   ${dim('# Generate AI Bill of Materials')}
   grc ai-bom generate --scan-deps --output ai-bom.json
+
+  ${dim('# Generate an Agentic Trust Swarm packet')}
+  grc trust-swarm generate --framework cmmc --output trust-swarm-packet.json
 
   ${dim('# Generate ISO 27001 evidence report')}
   grc report --framework iso27001 > evidence-$(date +%F).json
@@ -1869,6 +1977,7 @@ switch (cmd) {
     if (rest[0] === 'publish') { await cmdAiBomPublish(rest.slice(1)); }
     else { await cmdAiBom(rest); }
     break;
+  case 'trust-swarm': cmdTrustSwarm(rest); break;
   case 'iac-scan':   await cmdIaCScan(rest); break;
   case 'pqc-scan':   await cmdPqcScan(rest); break;
   case 'frameworks': cmdFrameworks(rest); break;
