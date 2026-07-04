@@ -87,7 +87,7 @@ export class Verifier extends BaseAgent {
           true,
           "N/A",
           "N/A",
-          task.agentId,
+          task.assignedAgent ?? "unknown",
         ),
       );
     }
@@ -113,7 +113,7 @@ export class Verifier extends BaseAgent {
         complianceCheck.passed,
         complianceCheck.expected,
         complianceCheck.actual,
-        task.agentId,
+        task.assignedAgent ?? "unknown",
       ),
     );
 
@@ -128,7 +128,7 @@ export class Verifier extends BaseAgent {
         evidenceCheck.passed,
         evidenceCheck.expected,
         evidenceCheck.actual,
-        task.agentId,
+        task.assignedAgent ?? "unknown",
       ),
     );
 
@@ -143,7 +143,7 @@ export class Verifier extends BaseAgent {
           integrityCheck.passed,
           integrityCheck.expected,
           integrityCheck.actual,
-          task.agentId,
+          task.assignedAgent ?? "unknown",
         ),
       );
     }
@@ -158,7 +158,7 @@ export class Verifier extends BaseAgent {
         effectivenessCheck.passed,
         effectivenessCheck.expected,
         effectivenessCheck.actual,
-        task.agentId,
+        task.assignedAgent ?? "unknown",
       ),
     );
 

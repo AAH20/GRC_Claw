@@ -51,7 +51,7 @@ const DEFAULT_CONFIG: SwarmCoordinatorConfig = {
 // ============================================================================
 
 export class SwarmCoordinator {
-  private readonly agents: Map<AgentRole, SwarmAgent> = new Map();
+  private readonly agents: Map<AgentRole, SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }> = new Map();
   private readonly messages: AgentMessage[] = [];
   private readonly trustChain: TrustChainLink[] = [];
   private readonly taskResults: Map<string, SwarmResult[]> = new Map();
@@ -85,7 +85,7 @@ export class SwarmCoordinator {
     const report = await this.assembleReport(goal, decomposition, allResults);
 
     if (this.config.enableTrustChain) {
-      this.appendTrustLink("coordinator", "goal-completed", goal.id, report.integrityHash);
+      this.appendTrustLink("evidence-collector" as AgentRole, "goal-completed", goal.id, report.integrityHash);
     }
 
     return report;
@@ -110,7 +110,7 @@ export class SwarmCoordinator {
   /**
    * Register a custom agent with the coordinator.
    */
-  registerAgent(agent: SwarmAgent): void {
+  registerAgent(agent: SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }): void {
     this.agents.set(agent.role, agent);
   }
 
@@ -366,7 +366,7 @@ export class SwarmCoordinator {
     return results;
   }
 
-  private async executeWithRetry(task: SwarmTask, agent: SwarmAgent): Promise<SwarmResult> {
+  private async executeWithRetry(task: SwarmTask, agent: SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }): Promise<SwarmResult> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= this.config.retryAttempts; attempt++) {
@@ -383,7 +383,7 @@ export class SwarmCoordinator {
     throw lastError ?? new Error("Execution failed after retries");
   }
 
-  private selectAgent(task: SwarmTask): SwarmAgent | null {
+  private selectAgent(task: SwarmTask): (SwarmAgent & { execute: (task: SwarmTask) => Promise<SwarmResult>; canHandle: (task: SwarmTask) => boolean }) | null {
     if (task.assignedAgent) {
       const agent = this.agents.get(task.assignedAgent);
       if (agent && agent.canHandle(task)) return agent;
@@ -510,7 +510,7 @@ export class SwarmCoordinator {
 
     if (frameworks.length < 2) return mappings;
 
-    const mappingRules: Record<string, { target: ComplianceFramework; targetId: string; score: number }>[] = [
+    const mappingRules: Array<Array<{ target: ComplianceFramework; targetId: string; score: number }>> = [
       [{ target: "ISO27001", targetId: "A8.1", score: 0.95 }, { target: "NIST_CSF", targetId: "PR.AC-1", score: 0.88 }],
       [{ target: "SOC2", targetId: "CC6.1", score: 0.92 }, { target: "ISO27001", targetId: "A9.4", score: 0.90 }],
       [{ target: "SOC2", targetId: "CC7.1", score: 0.85 }, { target: "NIST_CSF", targetId: "DE.CM-1", score: 0.82 }],
