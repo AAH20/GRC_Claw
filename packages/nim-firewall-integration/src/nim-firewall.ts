@@ -265,7 +265,7 @@ export class NimFirewall {
     request: NimRequest,
     condition: { field: string; operator: string; value: unknown }
   ): boolean {
-    const fieldValue = (request as Record<string, unknown>)[condition.field];
+    const fieldValue = (request as unknown as Record<string, unknown>)[condition.field];
 
     switch (condition.operator) {
       case 'equals':

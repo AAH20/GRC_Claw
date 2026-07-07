@@ -3,7 +3,6 @@ import {
   NetworkComponent,
   ComplianceFramework,
   ControlMapping,
-  ControlStatus,
   RiskLevel,
   NetworkInterface
 } from './types';
@@ -218,7 +217,7 @@ export class ORANCompliance {
 
   private validateInterface(
     iface: NetworkInterface,
-    component: NetworkComponent
+    _component: NetworkComponent
   ): InterfaceValidation {
     const issues: string[] = [];
 
@@ -243,7 +242,7 @@ export class ORANCompliance {
     };
   }
 
-  private getTestSuites(component: NetworkComponent): TestSuite[] {
+  private getTestSuites(_component: NetworkComponent): TestSuite[] {
     return [
       {
         name: 'Interface Security Tests',
@@ -291,7 +290,7 @@ export class ORANCompliance {
     let message = 'Test passed';
 
     if (testCase.id === 'SEC-001') {
-      const hasStrongTLS = component.interfaces.some(i =>
+      const hasStrongTLS = component.interfaces.some((i: NetworkInterface) =>
         i.encrypted && i.protocol.includes('TLS')
       );
       status = hasStrongTLS ? 'passed' : 'failed';
@@ -299,7 +298,7 @@ export class ORANCompliance {
     }
 
     if (testCase.id === 'SEC-002') {
-      const hasStrongCiphers = component.interfaces.some(i =>
+      const hasStrongCiphers = component.interfaces.some((i: NetworkInterface) =>
         i.encrypted
       );
       status = hasStrongCiphers ? 'passed' : 'failed';
@@ -335,7 +334,7 @@ export class ORANCompliance {
   }
 
   private checkInterfaceRequirement(
-    component: NetworkComponent,
+    _component: NetworkComponent,
     iface: NetworkInterface,
     req: ORANRequirement
   ): boolean {

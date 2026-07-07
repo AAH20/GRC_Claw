@@ -3,7 +3,6 @@ import {
   NetworkComponent,
   ComplianceFramework,
   ControlMapping,
-  ControlStatus,
   RiskLevel,
   Evidence
 } from './types';
@@ -280,7 +279,7 @@ export class NetworkSecurityAssessment {
     ];
   }
 
-  private getApplicableChecks(component: NetworkComponent): SecurityCheck[] {
+  private getApplicableChecks(_component: NetworkComponent): SecurityCheck[] {
     return this.securityChecks;
   }
 
