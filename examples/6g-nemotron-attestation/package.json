@@ -1,0 +1,16 @@
+{
+  "name": "6g-nemotron-attestation-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reference example: a NIM-hosted Nemotron network-operations agent, governed by GRC_Claw's Agent Registry and Policy Firewall, with every decision signed post-quantum (ML-DSA-65 / FIPS 204). Complementary to NVIDIA NemoClaw/OpenShell's guardrail runtime, adds a quantum-safe attestation record.",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@noble/post-quantum": "^0.6.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
