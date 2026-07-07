@@ -91,6 +91,10 @@
     { "path": "./packages/verifier-network" },
     { "path": "./packages/benchmark-intelligence" },
     { "path": "./packages/compliance-autonomy-network" },
+    { "path": "./packages/nvidia-compliance-wrapper" },
+    { "path": "./packages/nim-firewall-integration" },
+    { "path": "./packages/6g-compliance" },
+    { "path": "./packages/ai-ran-assurance" },
     { "path": "./packages/gateway" }
   ]
 }
