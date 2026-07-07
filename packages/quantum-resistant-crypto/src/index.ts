@@ -1,48 +1,55 @@
-import { createHash, createHmac, randomBytes, scryptSync } from 'node:crypto';
+import { createHash, createHmac, randomBytes, scryptSync, generateKeyPairSync, sign as nodeSign, verify as nodeVerify, KeyObject } from 'node:crypto';
+import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js';
+import { ml_dsa44, ml_dsa65, ml_dsa87 } from '@noble/post-quantum/ml-dsa.js';
+import { ml_kem768_x25519 } from '@noble/post-quantum/hybrid.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-/** Kyber key encapsulation mechanism key pair */
+/** ML-KEM (CRYSTALS-Kyber) key encapsulation mechanism key pair, FIPS 203 */
 export interface KyberKeyPair {
   publicKey: Uint8Array;
   privateKey: Uint8Array;
   securityLevel: KyberSecurityLevel;
 }
 
-/** Result of Kyber key encapsulation */
+/** Result of ML-KEM key encapsulation */
 export interface KyberEncapsulation {
   ciphertext: Uint8Array;
   sharedSecret: Uint8Array;
 }
 
-/** Dilithium digital signature key pair */
+/** ML-DSA (CRYSTALS-Dilithium) digital signature key pair, FIPS 204 */
 export interface DilithiumKeyPair {
   publicKey: Uint8Array;
   privateKey: Uint8Array;
   securityLevel: DilithiumSecurityLevel;
 }
 
-/** Dilithium signature output */
+/** ML-DSA signature output */
 export interface DilithiumSignatureData {
   signature: Uint8Array;
   algorithm: string;
   securityLevel: DilithiumSecurityLevel;
 }
 
-/** Combined hybrid encapsulation (classical + post-quantum) */
+/** Combined hybrid encapsulation (X25519 classical + ML-KEM-768 post-quantum, CG/XWing framework) */
 export interface HybridEncapsulation {
-  classicalCiphertext: Uint8Array;
-  postQuantumCiphertext: Uint8Array;
+  ciphertext: Uint8Array;
   sharedSecret: Uint8Array;
-  kdfInfo: Uint8Array;
 }
 
-/** Combined hybrid signature (classical + post-quantum) */
+/** Combined hybrid signature (Ed25519 classical + ML-DSA post-quantum). Valid only if BOTH verify. */
 export interface HybridSignature {
-  classicalSignature: DilithiumSignatureData;
+  classicalSignature: Uint8Array;
   postQuantumSignature: DilithiumSignatureData;
   messageHash: Uint8Array;
   timestamp: number;
+}
+
+/** Hybrid key material: one Ed25519 pair (classical) + one ML-KEM-768/X25519 pair (post-quantum) */
+export interface HybridKeyMaterial {
+  classical: { publicKey: KeyObject; privateKey: KeyObject };
+  postQuantum: KyberKeyPair;
 }
 
 /** Quantum-resistant hash function result */
@@ -62,9 +69,9 @@ export interface EncryptionResult {
 
 /** Configuration for quantum-resistant crypto operations */
 export interface CryptoConfig {
-  /** Kyber security level: 1 (NIST Level 1), 3 (Level 3), 5 (Level 5) */
+  /** ML-KEM security level: 1 (ML-KEM-512), 3 (ML-KEM-768), 5 (ML-KEM-1024) */
   kyberSecurityLevel: KyberSecurityLevel;
-  /** Dilithium security level: 2 (NIST Level 2), 3 (Level 3), 5 (Level 5) */
+  /** ML-DSA security level: 2 (ML-DSA-44), 3 (ML-DSA-65), 5 (ML-DSA-87) */
   dilithiumSecurityLevel: DilithiumSecurityLevel;
   /** Enable hybrid classical + post-quantum mode */
   hybridMode: boolean;
@@ -119,18 +126,24 @@ export class DecapsulationError extends QuantumCryptoError {
   }
 }
 
-// ─── Kyber KEM ────────────────────────────────────────────────────────────────
+// ─── ML-KEM (Kyber) ────────────────────────────────────────────────────────────
+
+/** Real FIPS 203 ML-KEM byte sizes, per NIST specification (not derived, these are the standard's fixed sizes). */
+const KYBER_SIZES: Record<KyberSecurityLevel, { publicKey: number; privateKey: number; ciphertext: number; sharedSecret: number }> = {
+  1: { publicKey: 800, privateKey: 1632, ciphertext: 768, sharedSecret: 32 },
+  3: { publicKey: 1184, privateKey: 2400, ciphertext: 1088, sharedSecret: 32 },
+  5: { publicKey: 1568, privateKey: 3168, ciphertext: 1568, sharedSecret: 32 },
+};
+
+function kyberAlgo(level: KyberSecurityLevel) {
+  if (level === 1) return ml_kem512;
+  if (level === 5) return ml_kem1024;
+  return ml_kem768;
+}
 
 /**
- * CRYSTALS-Kyber Key Encapsulation Mechanism (KEM).
- *
- * Implements NIST-approved post-quantum key encapsulation for
- * generating shared secrets resistant to quantum computer attacks.
- *
- * Security levels correspond to NIST post-quantum standards:
- * - Level 1: ~128-bit classical security
- * - Level 3: ~192-bit classical security
- * - Level 5: ~256-bit classical security
+ * ML-KEM (CRYSTALS-Kyber), FIPS 203, real NIST-standardized key encapsulation,
+ * via the audited `@noble/post-quantum` implementation (not a custom scheme).
  *
  * @example
  * ```typescript
@@ -142,10 +155,12 @@ export class DecapsulationError extends QuantumCryptoError {
  */
 export class KyberKEM {
   private readonly securityLevel: KyberSecurityLevel;
+  private readonly algo: typeof ml_kem768;
 
   constructor(securityLevel: KyberSecurityLevel = 3) {
     this.validateSecurityLevel(securityLevel);
     this.securityLevel = securityLevel;
+    this.algo = kyberAlgo(securityLevel);
   }
 
   private validateSecurityLevel(level: number): asserts level is KyberSecurityLevel {
@@ -158,122 +173,70 @@ export class KyberKEM {
     }
   }
 
-  /**
-   * Returns byte sizes for the configured security level.
-   */
+  /** Returns real FIPS 203 byte sizes for the configured security level. */
   sizes(): { publicKey: number; privateKey: number; ciphertext: number; sharedSecret: number } {
-    switch (this.securityLevel) {
-      case 1:
-        return { publicKey: 800, privateKey: 1632, ciphertext: 768, sharedSecret: 32 };
-      case 5:
-        return { publicKey: 1568, privateKey: 3168, ciphertext: 1568, sharedSecret: 32 };
-      case 3:
-      default:
-        return { publicKey: 1184, privateKey: 2400, ciphertext: 1088, sharedSecret: 32 };
-    }
+    return KYBER_SIZES[this.securityLevel];
   }
 
-  /**
-   * Generate a new Kyber key pair.
-   *
-   * @returns Key pair with public key, private key, and security level metadata.
-   */
+  /** Generate a new ML-KEM key pair. */
   async generateKeyPair(): Promise<KyberKeyPair> {
-    const sizes = this.sizes();
-    const publicKey = randomBytes(sizes.publicKey);
-    const privateKey = randomBytes(sizes.privateKey);
-    return { publicKey, privateKey, securityLevel: this.securityLevel };
+    const keys = this.algo.keygen();
+    return { publicKey: keys.publicKey, privateKey: keys.secretKey, securityLevel: this.securityLevel };
   }
 
   /**
    * Encapsulate a shared secret using the recipient's public key.
-   *
-   * @param publicKey - Recipient's Kyber public key.
-   * @returns Ciphertext to send to recipient and the shared secret.
    * @throws {InvalidKeyError} If public key size is incorrect.
    */
   async encapsulate(publicKey: Uint8Array): Promise<KyberEncapsulation> {
-    const sizes = this.sizes();
-    this.validateKey(publicKey, sizes.publicKey, 'public', 'encapsulate');
-
-    // Derive ciphertext and shared secret from public key material
-    const seed = randomBytes(32);
-    const ciphertext = this.deriveCiphertext(publicKey, seed, sizes.ciphertext);
-    const sharedSecret = this.deriveSharedSecret(publicKey, ciphertext);
-
-    return { ciphertext, sharedSecret };
+    this.validateKey(publicKey, this.sizes().publicKey, 'public', 'encapsulate');
+    const { cipherText, sharedSecret } = this.algo.encapsulate(publicKey);
+    return { ciphertext: cipherText, sharedSecret };
   }
 
   /**
    * Decapsulate to recover the shared secret from ciphertext.
-   *
-   * @param ciphertext - Ciphertext from encapsulation.
-   * @param privateKey - Recipient's Kyber private key.
-   * @returns Recovered shared secret.
    * @throws {InvalidKeyError} If key or ciphertext sizes are incorrect.
    * @throws {DecapsulationError} If decapsulation fails.
    */
   async decapsulate(ciphertext: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
-    const sizes = this.sizes();
-    this.validateKey(privateKey, sizes.privateKey, 'private', 'decapsulate');
-    this.validateKey(ciphertext, sizes.ciphertext, 'ciphertext', 'decapsulate');
-
-    const sharedSecret = this.deriveSharedSecretFromPrivate(ciphertext, privateKey);
-    return sharedSecret;
+    this.validateKey(privateKey, this.sizes().privateKey, 'private', 'decapsulate');
+    this.validateKey(ciphertext, this.sizes().ciphertext, 'ciphertext', 'decapsulate');
+    try {
+      return this.algo.decapsulate(ciphertext, privateKey);
+    } catch (e: any) {
+      throw new DecapsulationError('decapsulate', e?.message ?? 'unknown error');
+    }
   }
 
-  /**
-   * Encrypt data using Kyber-derived key material with AES-256-GCM.
-   *
-   * @param plaintext - Data to encrypt.
-   * @param recipientPublicKey - Recipient's Kyber public key.
-   * @returns Encapsulation and encrypted ciphertext.
-   */
+  /** Encrypt data using an ML-KEM-derived shared secret with AES-256-GCM. */
   async encrypt(
     plaintext: Uint8Array,
     recipientPublicKey: Uint8Array,
   ): Promise<{ encapsulation: KyberEncapsulation; encrypted: EncryptionResult }> {
     const encapsulation = await this.encapsulate(recipientPublicKey);
     const nonce = randomBytes(12);
-    const key = encapsulation.sharedSecret;
-
-    // Use Node.js built-in AES-256-GCM
     const { createCipheriv } = await import('node:crypto');
-    const cipher = createCipheriv('aes-256-gcm', key, nonce);
+    const cipher = createCipheriv('aes-256-gcm', encapsulation.sharedSecret, nonce);
     const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
     const tag = cipher.getAuthTag();
-
     return {
       encapsulation,
-      encrypted: {
-        ciphertext: new Uint8Array(encrypted),
-        nonce,
-        tag: new Uint8Array(tag),
-        algorithm: 'aes-256-gcm',
-      },
+      encrypted: { ciphertext: new Uint8Array(encrypted), nonce, tag: new Uint8Array(tag), algorithm: 'aes-256-gcm' },
     };
   }
 
-  /**
-   * Decrypt data using a Kyber private key.
-   *
-   * @param encapsulation - Encapsulation from encrypt.
-   * @param encrypted - Encryption result from encrypt.
-   * @param privateKey - Recipient's Kyber private key.
-   * @returns Decrypted plaintext.
-   */
+  /** Decrypt data using an ML-KEM private key. */
   async decrypt(
     encapsulation: KyberEncapsulation,
     encrypted: EncryptionResult,
     privateKey: Uint8Array,
   ): Promise<Uint8Array> {
     const sharedSecret = await this.decapsulate(encapsulation.ciphertext, privateKey);
-
     const { createDecipheriv } = await import('node:crypto');
     const decipher = createDecipheriv('aes-256-gcm', sharedSecret, encrypted.nonce);
     decipher.setAuthTag(Buffer.from(encrypted.tag));
     const decrypted = Buffer.concat([decipher.update(Buffer.from(encrypted.ciphertext)), decipher.final()]);
-
     return new Uint8Array(decrypted);
   }
 
@@ -282,53 +245,35 @@ export class KyberKEM {
       throw new InvalidKeyError(operation, `${keyType} must be a Uint8Array`);
     }
     if (key.length !== expectedSize) {
-      throw new InvalidKeyError(
-        operation,
-        `${keyType} must be ${expectedSize} bytes, got ${key.length}`,
-      );
+      throw new InvalidKeyError(operation, `${keyType} must be ${expectedSize} bytes, got ${key.length}`);
     }
-  }
-
-  private deriveCiphertext(publicKey: Uint8Array, seed: Uint8Array, size: number): Uint8Array {
-    const hash = createHash('sha3-256');
-    hash.update(publicKey);
-    hash.update(seed);
-    const digest = hash.digest();
-    const result = new Uint8Array(size);
-    for (let i = 0; i < size; i++) {
-      result[i] = digest[i % digest.length] ^ seed[i % seed.length];
-    }
-    return result;
-  }
-
-  private deriveSharedSecret(publicKey: Uint8Array, ciphertext: Uint8Array): Uint8Array {
-    const hash = createHash('sha3-256');
-    hash.update(publicKey);
-    hash.update(ciphertext);
-    hash.update(randomBytes(16));
-    return new Uint8Array(hash.digest());
-  }
-
-  private deriveSharedSecretFromPrivate(ciphertext: Uint8Array, privateKey: Uint8Array): Uint8Array {
-    const hash = createHash('sha3-256');
-    hash.update(privateKey);
-    hash.update(ciphertext);
-    return new Uint8Array(hash.digest());
   }
 }
 
-// ─── Dilithium Signature ──────────────────────────────────────────────────────
+// ─── ML-DSA (Dilithium) Signature ──────────────────────────────────────────────
+
+/** Real FIPS 204 ML-DSA byte sizes, per NIST specification. */
+const DILITHIUM_SIZES: Record<DilithiumSecurityLevel, { publicKey: number; privateKey: number; signature: number }> = {
+  2: { publicKey: 1312, privateKey: 2560, signature: 2420 },
+  3: { publicKey: 1952, privateKey: 4032, signature: 3309 },
+  5: { publicKey: 2592, privateKey: 4896, signature: 4627 },
+};
+
+function dilithiumAlgo(level: DilithiumSecurityLevel) {
+  if (level === 2) return ml_dsa44;
+  if (level === 5) return ml_dsa87;
+  return ml_dsa65;
+}
+
+function dilithiumAlgoName(level: DilithiumSecurityLevel): string {
+  if (level === 2) return 'ml-dsa-44';
+  if (level === 5) return 'ml-dsa-87';
+  return 'ml-dsa-65';
+}
 
 /**
- * CRYSTALS-Dilithium Digital Signature Algorithm.
- *
- * Implements NIST-approved post-quantum digital signatures for
- * authentication and integrity of compliance data.
- *
- * Security levels:
- * - Level 2: ~128-bit classical security
- * - Level 3: ~192-bit classical security
- * - Level 5: ~256-bit classical security
+ * ML-DSA (CRYSTALS-Dilithium), FIPS 204, real NIST-standardized digital signatures,
+ * via the audited `@noble/post-quantum` implementation (not a custom scheme).
  *
  * @example
  * ```typescript
@@ -340,10 +285,12 @@ export class KyberKEM {
  */
 export class DilithiumSignature {
   private readonly securityLevel: DilithiumSecurityLevel;
+  private readonly algo: typeof ml_dsa65;
 
   constructor(securityLevel: DilithiumSecurityLevel = 3) {
     this.validateSecurityLevel(securityLevel);
     this.securityLevel = securityLevel;
+    this.algo = dilithiumAlgo(securityLevel);
   }
 
   private validateSecurityLevel(level: number): asserts level is DilithiumSecurityLevel {
@@ -356,82 +303,38 @@ export class DilithiumSignature {
     }
   }
 
-  /**
-   * Returns byte sizes for the configured security level.
-   */
+  /** Returns real FIPS 204 byte sizes for the configured security level. */
   sizes(): { publicKey: number; privateKey: number; signature: number } {
-    switch (this.securityLevel) {
-      case 2:
-        return { publicKey: 1312, privateKey: 2528, signature: 2420 };
-      case 5:
-        return { publicKey: 2592, privateKey: 4864, signature: 4595 };
-      case 3:
-      default:
-        return { publicKey: 1952, privateKey: 4000, signature: 3293 };
-    }
+    return DILITHIUM_SIZES[this.securityLevel];
   }
 
-  /**
-   * Generate a new Dilithium key pair.
-   *
-   * @returns Key pair with public key, private key, and security level metadata.
-   */
+  /** Generate a new ML-DSA key pair. */
   async generateKeyPair(): Promise<DilithiumKeyPair> {
-    const sizes = this.sizes();
-    const publicKey = randomBytes(sizes.publicKey);
-    const privateKey = randomBytes(sizes.privateKey);
-    return { publicKey, privateKey, securityLevel: this.securityLevel };
+    const keys = this.algo.keygen();
+    return { publicKey: keys.publicKey, privateKey: keys.secretKey, securityLevel: this.securityLevel };
   }
 
   /**
-   * Sign a message using the Dilithium private key.
-   *
-   * @param message - Message bytes to sign.
-   * @param privateKey - Signer's Dilithium private key.
-   * @returns Signature data with algorithm metadata.
+   * Sign a message using the ML-DSA private key.
    * @throws {InvalidKeyError} If private key size is incorrect.
    */
   async sign(message: Uint8Array, privateKey: Uint8Array): Promise<DilithiumSignatureData> {
-    const sizes = this.sizes();
-    this.validateKey(privateKey, sizes.privateKey, 'private', 'sign');
-
-    const messageHash = createHash('sha3-256').update(message).digest();
-    const signature = this.deriveSignature(messageHash, privateKey, sizes.signature);
-
-    return {
-      signature,
-      algorithm: `dilithium3`,
-      securityLevel: this.securityLevel,
-    };
+    this.validateKey(privateKey, this.sizes().privateKey, 'private', 'sign');
+    const signature = this.algo.sign(message, privateKey);
+    return { signature, algorithm: dilithiumAlgoName(this.securityLevel), securityLevel: this.securityLevel };
   }
 
   /**
-   * Verify a Dilithium signature.
-   *
-   * @param signatureData - Signature data from sign().
-   * @param message - Original message that was signed.
-   * @param publicKey - Signer's Dilithium public key.
-   * @returns True if signature is valid.
+   * Verify an ML-DSA signature.
    * @throws {VerificationError} If signature is invalid.
    * @throws {InvalidKeyError} If public key size is incorrect.
    */
-  async verify(
-    signatureData: DilithiumSignatureData,
-    message: Uint8Array,
-    publicKey: Uint8Array,
-  ): Promise<boolean> {
-    const sizes = this.sizes();
-    this.validateKey(publicKey, sizes.publicKey, 'public', 'verify');
-
-    const messageHash = createHash('sha3-256').update(message).digest();
-    const expectedSignature = this.deriveSignature(messageHash, publicKey, sizes.signature);
-
-    const isValid = this.constantTimeCompare(signatureData.signature, expectedSignature);
-
+  async verify(signatureData: DilithiumSignatureData, message: Uint8Array, publicKey: Uint8Array): Promise<boolean> {
+    this.validateKey(publicKey, this.sizes().publicKey, 'public', 'verify');
+    const isValid = this.algo.verify(signatureData.signature, message, publicKey);
     if (!isValid) {
       throw new VerificationError('verify', 'Signature does not match');
     }
-
     return true;
   }
 
@@ -440,32 +343,8 @@ export class DilithiumSignature {
       throw new InvalidKeyError(operation, `${keyType} must be a Uint8Array`);
     }
     if (key.length !== expectedSize) {
-      throw new InvalidKeyError(
-        operation,
-        `${keyType} must be ${expectedSize} bytes, got ${key.length}`,
-      );
+      throw new InvalidKeyError(operation, `${keyType} must be ${expectedSize} bytes, got ${key.length}`);
     }
-  }
-
-  private deriveSignature(messageHash: Uint8Array, keyMaterial: Uint8Array, size: number): Uint8Array {
-    const hash = createHash('sha3-512');
-    hash.update(messageHash);
-    hash.update(keyMaterial);
-    const digest = hash.digest();
-    const signature = new Uint8Array(size);
-    for (let i = 0; i < size; i++) {
-      signature[i] = digest[i % digest.length] ^ keyMaterial[i % keyMaterial.length];
-    }
-    return signature;
-  }
-
-  private constantTimeCompare(a: Uint8Array, b: Uint8Array): boolean {
-    if (a.length !== b.length) return false;
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a[i] ^ b[i];
-    }
-    return result === 0;
   }
 }
 
@@ -474,203 +353,127 @@ export class DilithiumSignature {
 /**
  * Hybrid classical + post-quantum cryptographic mode.
  *
- * Combines classical algorithms with post-quantum algorithms to provide
- * security against both classical and quantum adversaries. If either
- * algorithm remains secure, the hybrid construction is secure.
+ * KEM: X25519 (classical) + ML-KEM-768 (post-quantum) via the CG/XWing framework
+ * (`@noble/post-quantum/hybrid.js`), a real standards-track hybrid construction,
+ * secure as long as either component remains unbroken.
+ *
+ * Signatures: composite Ed25519 (classical, via Node's native crypto) + ML-DSA
+ * (post-quantum). A hybrid signature is valid only if BOTH components verify,
+ * so an attacker must break both algorithms, not just one.
  *
  * @example
  * ```typescript
  * const hybrid = new HybridMode({ hybridMode: true });
  * const keys = await hybrid.generateKeyPair();
  * const encapsulation = await hybrid.encapsulate(keys.postQuantum.publicKey);
- * const signature = await hybrid.sign(data, keys.classical.privateKey);
+ * const signature = await hybrid.sign(data, keys);
  * ```
  */
 export class HybridMode {
-  private readonly kyber: KyberKEM;
   private readonly dilithium: DilithiumSignature;
   private readonly config: CryptoConfig;
 
   constructor(config: Partial<CryptoConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    this.kyber = new KyberKEM(this.config.kyberSecurityLevel);
     this.dilithium = new DilithiumSignature(this.config.dilithiumSecurityLevel);
   }
 
-  /**
-   * Generate both classical and post-quantum key pairs.
-   *
-   * @returns Combined key pair for hybrid operations.
-   */
-  async generateKeyPair(): Promise<{ classical: DilithiumKeyPair; postQuantum: KyberKeyPair }> {
-    const [classical, postQuantum] = await Promise.all([
-      this.dilithium.generateKeyPair(),
-      this.kyber.generateKeyPair(),
-    ]);
-    return { classical, postQuantum };
+  /** Generate an Ed25519 classical pair and an ML-DSA post-quantum pair for hybrid signing. */
+  async generateKeyPair(): Promise<{ classical: { publicKey: KeyObject; privateKey: KeyObject }; postQuantum: DilithiumKeyPair }> {
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const postQuantum = await this.dilithium.generateKeyPair();
+    return { classical: { publicKey, privateKey }, postQuantum };
   }
 
-  /**
-   * Hybrid key encapsulation combining classical and post-quantum.
-   *
-   * @param publicKey - Post-quantum public key for encapsulation.
-   * @returns Combined encapsulation with both classical and PQ ciphertexts.
-   */
+  /** Hybrid key encapsulation: X25519 + ML-KEM-768 (CG/XWing framework, real construction). */
   async encapsulate(publicKey: Uint8Array): Promise<HybridEncapsulation> {
-    const postQuantum = await this.kyber.encapsulate(publicKey);
-    const classicalCiphertext = randomBytes(3293);
+    const { cipherText, sharedSecret } = ml_kem768_x25519.encapsulate(publicKey);
+    return { ciphertext: cipherText, sharedSecret };
+  }
 
-    // Derive combined shared secret from both classical and PQ
-    const kdfInfo = createHash('sha3-256')
-      .update(publicKey)
-      .update(postQuantum.ciphertext)
-      .update(classicalCiphertext)
-      .digest();
+  /** Hybrid decapsulation: X25519 + ML-KEM-768. */
+  async decapsulate(ciphertext: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
+    return ml_kem768_x25519.decapsulate(ciphertext, privateKey);
+  }
 
-    const sharedSecret = createHash('sha3-256')
-      .update(postQuantum.sharedSecret)
-      .update(kdfInfo)
-      .digest();
-
-    return {
-      classicalCiphertext,
-      postQuantumCiphertext: postQuantum.ciphertext,
-      sharedSecret: new Uint8Array(sharedSecret),
-      kdfInfo: new Uint8Array(kdfInfo),
-    };
+  /** Generate an X25519 + ML-KEM-768 hybrid KEM key pair. */
+  generateHybridKemKeyPair(): { publicKey: Uint8Array; privateKey: Uint8Array } {
+    const keys = ml_kem768_x25519.keygen();
+    return { publicKey: keys.publicKey, privateKey: keys.secretKey };
   }
 
   /**
-   * Hybrid digital signature combining classical and post-quantum.
-   *
-   * @param message - Message to sign.
-   * @param classicalPrivateKey - Classical (Dilithium) private key.
-   * @returns Combined signature with both classical and PQ components.
-   * @throws {InvalidKeyError} If private key is invalid.
+   * Hybrid digital signature: sign with Ed25519 (classical) AND ML-DSA (post-quantum).
+   * Verification requires both to pass.
    */
-  async sign(message: Uint8Array, classicalPrivateKey: Uint8Array): Promise<HybridSignature> {
-    const classicalSignature = await this.dilithium.sign(message, classicalPrivateKey);
+  async sign(
+    message: Uint8Array,
+    keys: { classical: { privateKey: KeyObject }; postQuantum: DilithiumKeyPair },
+  ): Promise<HybridSignature> {
     const messageHash = new Uint8Array(createHash('sha3-256').update(message).digest());
-
-    // Derive PQ signature from message hash and classical key
-    const postQuantumSignature = this.derivePQSignature(messageHash, classicalPrivateKey);
-
-    return {
-      classicalSignature,
-      postQuantumSignature,
-      messageHash,
-      timestamp: Date.now(),
-    };
+    const classicalSignature = new Uint8Array(nodeSign(null, Buffer.from(messageHash), keys.classical.privateKey));
+    const postQuantumSignature = await this.dilithium.sign(messageHash, keys.postQuantum.privateKey);
+    return { classicalSignature, postQuantumSignature, messageHash, timestamp: Date.now() };
   }
 
   /**
-   * Verify a hybrid digital signature.
-   *
-   * @param signature - Hybrid signature to verify.
-   * @param classicalPublicKey - Classical (Dilithium) public key.
-   * @returns True if both classical and PQ signatures are valid.
-   * @throws {VerificationError} If either signature is invalid.
+   * Verify a hybrid digital signature. Valid only if BOTH the classical and
+   * post-quantum components verify against the message hash.
+   * @throws {VerificationError} If either component fails.
    */
-  async verify(signature: HybridSignature, classicalPublicKey: Uint8Array): Promise<boolean> {
-    // Verify classical component
-    const classicalValid = await this.dilithium.verify(
-      signature.classicalSignature,
-      signature.messageHash,
-      classicalPublicKey,
+  async verify(
+    signature: HybridSignature,
+    keys: { classical: { publicKey: KeyObject }; postQuantum: { publicKey: Uint8Array } },
+  ): Promise<boolean> {
+    const classicalValid = nodeVerify(
+      null,
+      Buffer.from(signature.messageHash),
+      keys.classical.publicKey,
+      Buffer.from(signature.classicalSignature),
     );
 
-    // Verify PQ component
-    const expectedPQ = this.derivePQSignature(signature.messageHash, classicalPublicKey);
-    const pqValid = this.constantTimeCompare(signature.postQuantumSignature.signature, expectedPQ.signature);
+    let pqValid = false;
+    try {
+      pqValid = await this.dilithium.verify(signature.postQuantumSignature, signature.messageHash, keys.postQuantum.publicKey);
+    } catch {
+      pqValid = false;
+    }
 
     if (!classicalValid || !pqValid) {
       throw new VerificationError('HybridMode.verify', 'One or more signature components are invalid');
     }
-
     return true;
   }
 
-  /**
-   * Encrypt data using hybrid encryption.
-   *
-   * @param plaintext - Data to encrypt.
-   * @param classicalPublicKey - Classical public key for additional layer.
-   * @param pqPublicKey - Post-quantum public key for key encapsulation.
-   * @returns Hybrid encapsulation and encrypted data.
-   */
+  /** Encrypt data using the hybrid X25519 + ML-KEM-768 shared secret with AES-256-GCM. */
   async encrypt(
     plaintext: Uint8Array,
-    _classicalPublicKey: Uint8Array,
-    pqPublicKey: Uint8Array,
+    hybridPublicKey: Uint8Array,
   ): Promise<{ encapsulation: HybridEncapsulation; encrypted: EncryptionResult }> {
-    const encapsulation = await this.encapsulate(pqPublicKey);
+    const encapsulation = await this.encapsulate(hybridPublicKey);
     const nonce = randomBytes(12);
-
     const { createCipheriv } = await import('node:crypto');
     const cipher = createCipheriv('aes-256-gcm', encapsulation.sharedSecret, nonce);
     const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
     const tag = cipher.getAuthTag();
-
     return {
       encapsulation,
-      encrypted: {
-        ciphertext: new Uint8Array(encrypted),
-        nonce,
-        tag: new Uint8Array(tag),
-        algorithm: 'aes-256-gcm',
-      },
+      encrypted: { ciphertext: new Uint8Array(encrypted), nonce, tag: new Uint8Array(tag), algorithm: 'aes-256-gcm' },
     };
   }
 
-  /**
-   * Decrypt hybrid-encrypted data.
-   *
-   * @param encapsulation - Hybrid encapsulation from encrypt.
-   * @param encrypted - Encrypted data from encrypt.
-   * @param classicalPrivateKey - Classical private key.
-   * @param pqPrivateKey - Post-quantum private key.
-   * @returns Decrypted plaintext.
-   */
+  /** Decrypt hybrid-encrypted data. */
   async decrypt(
     encapsulation: HybridEncapsulation,
     encrypted: EncryptionResult,
-    _classicalPrivateKey: Uint8Array,
-    pqPrivateKey: Uint8Array,
+    hybridPrivateKey: Uint8Array,
   ): Promise<Uint8Array> {
-    const sharedSecret = await this.kyber.decapsulate(encapsulation.postQuantumCiphertext, pqPrivateKey);
-
+    const sharedSecret = await this.decapsulate(encapsulation.ciphertext, hybridPrivateKey);
     const { createDecipheriv } = await import('node:crypto');
     const decipher = createDecipheriv('aes-256-gcm', sharedSecret, encrypted.nonce);
     decipher.setAuthTag(Buffer.from(encrypted.tag));
     const decrypted = Buffer.concat([decipher.update(Buffer.from(encrypted.ciphertext)), decipher.final()]);
-
     return new Uint8Array(decrypted);
-  }
-
-  private derivePQSignature(messageHash: Uint8Array, keyMaterial: Uint8Array): DilithiumSignatureData {
-    const sizes = this.dilithium.sizes();
-    const hash = createHash('sha3-512');
-    hash.update(messageHash);
-    hash.update(keyMaterial);
-    const digest = hash.digest();
-    const signature = new Uint8Array(sizes.signature);
-    for (let i = 0; i < sizes.signature; i++) {
-      signature[i] = digest[i % digest.length] ^ keyMaterial[i % keyMaterial.length];
-    }
-    return {
-      signature,
-      algorithm: `dilithium${this.config.dilithiumSecurityLevel}`,
-      securityLevel: this.config.dilithiumSecurityLevel,
-    };
-  }
-
-  private constantTimeCompare(a: Uint8Array, b: Uint8Array): boolean {
-    if (a.length !== b.length) return false;
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a[i] ^ b[i];
-    }
-    return result === 0;
   }
 }
 
@@ -679,16 +482,10 @@ export class HybridMode {
 /**
  * Quantum-resistant hash functions.
  *
- * Provides SHA-3 and SHAKE-based hashing that remains secure
- * against quantum attacks (Grover's algorithm provides only
- * quadratic speedup for hash preimage attacks).
- *
- * @example
- * ```typescript
- * const qHash = new QuantumHash({ hashAlgorithm: 'sha3-512' });
- * const result = await qHash.digest(data);
- * const mac = await qHash.hmac(key, data);
- * ```
+ * Provides SHA-3 and SHAKE-based hashing that remains secure against quantum
+ * attacks (Grover's algorithm gives only a quadratic speedup on hash preimage
+ * search, so doubling output length restores the original security margin).
+ * This part of the original implementation was already sound; unchanged here.
  */
 export class QuantumHash {
   private readonly config: CryptoConfig;
@@ -697,131 +494,56 @@ export class QuantumHash {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
-  /**
-   * Compute quantum-resistant hash digest.
-   *
-   * @param data - Data to hash.
-   * @returns Hash result with algorithm metadata.
-   */
   async digest(data: Uint8Array): Promise<QuantumHashResult> {
     if (!(data instanceof Uint8Array)) {
       throw new QuantumCryptoError('Data must be a Uint8Array', 'INVALID_INPUT', 'QuantumHash.digest');
     }
-
     const hash = createHash(this.config.hashAlgorithm);
     hash.update(data);
     const digest = hash.digest();
-
-    return {
-      digest: new Uint8Array(digest),
-      algorithm: this.config.hashAlgorithm,
-      length: digest.length,
-    };
+    return { digest: new Uint8Array(digest), algorithm: this.config.hashAlgorithm, length: digest.length };
   }
 
-  /**
-   * Compute quantum-resistant HMAC.
-   *
-   * @param key - HMAC key.
-   * @param data - Data to authenticate.
-   * @returns HMAC result with algorithm metadata.
-   */
   async hmac(key: Uint8Array, data: Uint8Array): Promise<QuantumHashResult> {
     if (!(key instanceof Uint8Array) || !(data instanceof Uint8Array)) {
       throw new QuantumCryptoError('Key and data must be Uint8Arrays', 'INVALID_INPUT', 'QuantumHash.hmac');
     }
-
     const algorithm = this.config.hashAlgorithm === 'shake256' ? 'sha3-256' : this.config.hashAlgorithm;
     const hmacResult = createHmac(algorithm, key);
     hmacResult.update(data);
     const digest = hmacResult.digest();
-
-    return {
-      digest: new Uint8Array(digest),
-      algorithm: `hmac-${algorithm}`,
-      length: digest.length,
-    };
+    return { digest: new Uint8Array(digest), algorithm: `hmac-${algorithm}`, length: digest.length };
   }
 
-  /**
-   * Derive a key using scrypt (quantum-resistant KDF).
-   *
-   * @param password - Password bytes.
-   * @param salt - Salt bytes.
-   * @param keyLength - Desired key length in bytes.
-   * @returns Derived key.
-   */
   async deriveKey(password: Uint8Array, salt: Uint8Array, keyLength: number = 32): Promise<Uint8Array> {
     if (!(password instanceof Uint8Array) || !(salt instanceof Uint8Array)) {
       throw new QuantumCryptoError('Password and salt must be Uint8Arrays', 'INVALID_INPUT', 'QuantumHash.deriveKey');
     }
-
     const derived = scryptSync(Buffer.from(password), Buffer.from(salt), keyLength, {
-      N: this.config.kdfIterations,
-      r: 8,
-      p: 1,
-      maxmem: 256 * 1024 * 1024,
+      N: this.config.kdfIterations, r: 8, p: 1, maxmem: 256 * 1024 * 1024,
     });
-
     return new Uint8Array(derived);
   }
 
-  /**
-   * Compute hash of a hash (hash chain).
-   *
-   * @param data - Data to hash.
-   * @param rounds - Number of hash iterations.
-   * @returns Chained hash result.
-   */
   async chain(data: Uint8Array, rounds: number = 1000): Promise<QuantumHashResult> {
     if (rounds < 1) {
       throw new QuantumCryptoError('Rounds must be >= 1', 'INVALID_INPUT', 'QuantumHash.chain');
     }
-
     let current = Buffer.from(data);
     for (let i = 0; i < rounds; i++) {
       const hash = createHash(this.config.hashAlgorithm);
       hash.update(current);
       current = hash.digest();
     }
-
-    return {
-      digest: new Uint8Array(current),
-      algorithm: `${this.config.hashAlgorithm}:${rounds}`,
-      length: current.length,
-    };
+    return { digest: new Uint8Array(current), algorithm: `${this.config.hashAlgorithm}:${rounds}`, length: current.length };
   }
 }
 
 // ─── Main Facade ──────────────────────────────────────────────────────────────
 
 /**
- * Unified quantum-resistant cryptography facade.
- *
- * Provides a single entry point for all post-quantum cryptographic operations
- * including key encapsulation, digital signatures, hybrid encryption, and
- * quantum-resistant hashing.
- *
- * @example
- * ```typescript
- * const crypto = new QuantumResistantCrypto({ hybridMode: true });
- *
- * // Generate full key material
- * const keys = await crypto.generateFullKeyMaterial();
- *
- * // Encrypt data
- * const encrypted = await crypto.hybridEncrypt(
- *   plaintext,
- *   keys.hybridKeyPair.classical.publicKey,
- *   keys.hybridKeyPair.postQuantum.publicKey,
- * );
- *
- * // Sign data
- * const signature = await crypto.sign(data, keys.dilithiumKeyPair.privateKey);
- *
- * // Hash data
- * const hash = await crypto.digest(data);
- * ```
+ * Unified quantum-resistant cryptography facade over real, NIST-standardized
+ * ML-KEM (FIPS 203) and ML-DSA (FIPS 204) implementations.
  */
 export class QuantumResistantCrypto {
   readonly kyber: KyberKEM;
@@ -838,13 +560,8 @@ export class QuantumResistantCrypto {
     this.hash = new QuantumHash(this.config);
   }
 
-  /**
-   * Generate complete cryptographic key material for all algorithms.
-   *
-   * @returns Combined key pairs for hybrid, KEM, and signature operations.
-   */
   async generateFullKeyMaterial(): Promise<{
-    hybridKeyPair: { classical: DilithiumKeyPair; postQuantum: KyberKeyPair };
+    hybridKeyPair: { classical: { publicKey: KeyObject; privateKey: KeyObject }; postQuantum: DilithiumKeyPair };
     kyberKeyPair: KyberKeyPair;
     dilithiumKeyPair: DilithiumKeyPair;
   }> {
@@ -856,103 +573,26 @@ export class QuantumResistantCrypto {
     return { hybridKeyPair, kyberKeyPair, dilithiumKeyPair };
   }
 
-  /**
-   * Hybrid encrypt using both classical and post-quantum key encapsulation.
-   *
-   * @param plaintext - Data to encrypt.
-   * @param recipientClassicalPublicKey - Recipient's Dilithium public key.
-   * @param recipientKyberPublicKey - Recipient's Kyber public key.
-   * @returns Encapsulation and encrypted ciphertext.
-   */
-  async hybridEncrypt(
-    plaintext: Uint8Array,
-    recipientClassicalPublicKey: Uint8Array,
-    recipientKyberPublicKey: Uint8Array,
-  ): Promise<{ encapsulation: HybridEncapsulation; encrypted: EncryptionResult }> {
-    return this.hybrid.encrypt(plaintext, recipientClassicalPublicKey, recipientKyberPublicKey);
+  async sign(data: Uint8Array, privateKey: Uint8Array): Promise<DilithiumSignatureData> {
+    return this.dilithium.sign(data, privateKey);
   }
 
-  /**
-   * Hybrid decrypt using both classical and post-quantum private keys.
-   *
-   * @param encapsulation - Hybrid encapsulation from hybridEncrypt.
-   * @param encrypted - Encrypted data from hybridEncrypt.
-   * @param classicalPrivateKey - Recipient's Dilithium private key.
-   * @param pqPrivateKey - Recipient's Kyber private key.
-   * @returns Decrypted plaintext.
-   */
-  async hybridDecrypt(
-    encapsulation: HybridEncapsulation,
-    encrypted: EncryptionResult,
-    classicalPrivateKey: Uint8Array,
-    pqPrivateKey: Uint8Array,
-  ): Promise<Uint8Array> {
-    return this.hybrid.decrypt(encapsulation, encrypted, classicalPrivateKey, pqPrivateKey);
+  async verify(signature: DilithiumSignatureData, data: Uint8Array, publicKey: Uint8Array): Promise<boolean> {
+    return this.dilithium.verify(signature, data, publicKey);
   }
 
-  /**
-   * Sign data using hybrid digital signatures.
-   *
-   * @param data - Data to sign.
-   * @param privateKey - Dilithium private key for signing.
-   * @returns Hybrid signature with classical and PQ components.
-   */
-  async sign(data: Uint8Array, privateKey: Uint8Array): Promise<HybridSignature> {
-    return this.hybrid.sign(data, privateKey);
-  }
-
-  /**
-   * Verify a hybrid digital signature.
-   *
-   * @param signature - Hybrid signature to verify.
-   * @param publicKey - Dilithium public key for verification.
-   * @returns True if signature is valid.
-   * @throws {VerificationError} If signature is invalid.
-   */
-  async verify(signature: HybridSignature, publicKey: Uint8Array): Promise<boolean> {
-    return this.hybrid.verify(signature, publicKey);
-  }
-
-  /**
-   * Compute quantum-resistant hash digest.
-   *
-   * @param data - Data to hash.
-   * @returns Hash result with algorithm metadata.
-   */
   async digest(data: Uint8Array): Promise<QuantumHashResult> {
     return this.hash.digest(data);
   }
 
-  /**
-   * Compute quantum-resistant HMAC.
-   *
-   * @param key - HMAC key.
-   * @param data - Data to authenticate.
-   * @returns HMAC result.
-   */
   async hmac(key: Uint8Array, data: Uint8Array): Promise<QuantumHashResult> {
     return this.hash.hmac(key, data);
   }
 
-  /**
-   * Derive a key using quantum-resistant KDF.
-   *
-   * @param password - Password bytes.
-   * @param salt - Salt bytes.
-   * @param keyLength - Desired key length in bytes.
-   * @returns Derived key.
-   */
   async deriveKey(password: Uint8Array, salt: Uint8Array, keyLength?: number): Promise<Uint8Array> {
     return this.hash.deriveKey(password, salt, keyLength);
   }
 
-  /**
-   * Encrypt data using Kyber KEM.
-   *
-   * @param plaintext - Data to encrypt.
-   * @param recipientPublicKey - Recipient's Kyber public key.
-   * @returns Encapsulation and encrypted data.
-   */
   async kyberEncrypt(
     plaintext: Uint8Array,
     recipientPublicKey: Uint8Array,
@@ -960,14 +600,6 @@ export class QuantumResistantCrypto {
     return this.kyber.encrypt(plaintext, recipientPublicKey);
   }
 
-  /**
-   * Decrypt data using Kyber KEM.
-   *
-   * @param encapsulation - Kyber encapsulation.
-   * @param encrypted - Encrypted data.
-   * @param privateKey - Recipient's Kyber private key.
-   * @returns Decrypted plaintext.
-   */
   async kyberDecrypt(
     encapsulation: KyberEncapsulation,
     encrypted: EncryptionResult,
@@ -979,25 +611,10 @@ export class QuantumResistantCrypto {
 
 // ─── Utility Functions ────────────────────────────────────────────────────────
 
-/**
- * Convert Uint8Array to hexadecimal string.
- *
- * @param bytes - Byte array to convert.
- * @returns Hex string representation.
- */
 export function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Convert hexadecimal string to Uint8Array.
- *
- * @param hex - Hex string to convert.
- * @returns Byte array representation.
- * @throws {QuantumCryptoError} If hex string is invalid.
- */
 export function hexToBytes(hex: string): Uint8Array {
   if (hex.length % 2 !== 0) {
     throw new QuantumCryptoError('Hex string must have even length', 'INVALID_HEX', 'hexToBytes');
@@ -1012,13 +629,6 @@ export function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
-/**
- * Securely compare two Uint8Arrays in constant time.
- *
- * @param a - First byte array.
- * @param b - Second byte array.
- * @returns True if arrays are equal.
- */
 export function secureCompare(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let result = 0;
@@ -1028,13 +638,6 @@ export function secureCompare(a: Uint8Array, b: Uint8Array): boolean {
   return result === 0;
 }
 
-/**
- * Get human-readable algorithm information for a security level.
- *
- * @param kyberLevel - Kyber security level.
- * @param dilithiumLevel - Dilithium security level.
- * @returns Algorithm description.
- */
 export function getAlgorithmInfo(
   kyberLevel: KyberSecurityLevel,
   dilithiumLevel: DilithiumSecurityLevel,
@@ -1043,19 +646,14 @@ export function getAlgorithmInfo(
   dilithium: { name: string; nistLevel: number; classicalSecurityBits: number };
 } {
   const kyberInfo: Record<KyberSecurityLevel, { name: string; nistLevel: number; classicalSecurityBits: number }> = {
-    1: { name: 'Kyber512', nistLevel: 1, classicalSecurityBits: 128 },
-    3: { name: 'Kyber768', nistLevel: 3, classicalSecurityBits: 192 },
-    5: { name: 'Kyber1024', nistLevel: 5, classicalSecurityBits: 256 },
+    1: { name: 'ML-KEM-512', nistLevel: 1, classicalSecurityBits: 128 },
+    3: { name: 'ML-KEM-768', nistLevel: 3, classicalSecurityBits: 192 },
+    5: { name: 'ML-KEM-1024', nistLevel: 5, classicalSecurityBits: 256 },
   };
-
   const dilithiumInfo: Record<DilithiumSecurityLevel, { name: string; nistLevel: number; classicalSecurityBits: number }> = {
-    2: { name: 'Dilithium2', nistLevel: 2, classicalSecurityBits: 128 },
-    3: { name: 'Dilithium3', nistLevel: 3, classicalSecurityBits: 192 },
-    5: { name: 'Dilithium5', nistLevel: 5, classicalSecurityBits: 256 },
+    2: { name: 'ML-DSA-44', nistLevel: 2, classicalSecurityBits: 128 },
+    3: { name: 'ML-DSA-65', nistLevel: 3, classicalSecurityBits: 192 },
+    5: { name: 'ML-DSA-87', nistLevel: 5, classicalSecurityBits: 256 },
   };
-
-  return {
-    kyber: kyberInfo[kyberLevel],
-    dilithium: dilithiumInfo[dilithiumLevel],
-  };
+  return { kyber: kyberInfo[kyberLevel], dilithium: dilithiumInfo[dilithiumLevel] };
 }
