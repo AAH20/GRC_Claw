@@ -108,7 +108,7 @@ export class ThreeGPPControls {
   }
 
   private determineRisk(
-    component: NetworkComponent,
+    _component: NetworkComponent,
     control: ThreeGPPControl
   ): RiskLevel {
     if (control.id.includes('auth') || control.id.includes('integrity')) {
