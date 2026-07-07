@@ -8,6 +8,7 @@
     { "path": "./packages/trust-transaction" },
     { "path": "./packages/frameworks" },
     { "path": "./packages/agent-runtime" },
+    { "path": "./packages/ai-ran-assurance" },
     { "path": "./packages/a2z-connector" },
     { "path": "./packages/aims" },
     { "path": "./packages/connectors" },

@@ -22,6 +22,7 @@
     "test:action-ledger": "npm run build && node scripts/test-action-ledger.mjs",
     "test:assurance": "npm run build && node scripts/test-assurance.mjs",
     "test:assurance-envelope": "npm run build && node scripts/test-assurance-envelope.mjs",
+    "test:ai-ran-assurance": "npm run build -w @grc-claw/ai-ran-assurance && node scripts/test-ai-ran-assurance.mjs",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
     "test:skills": "npm run test -w @grc-claw/skill-executor",
     "test:orchestrator": "npm run test -w @grc-claw/compliance-orchestrator",

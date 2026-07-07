@@ -1,0 +1,29 @@
+{
+  "name": "@grc-claw/nvidia-compliance-wrapper",
+  "version": "1.0.0",
+  "description": "NVIDIA Nemotron model compliance wrapper for EU AI Act, NIST AI RMF, and ISO 42001",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/index.test.js",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "nvidia",
+    "nemotron",
+    "compliance",
+    "eu-ai-act",
+    "nist-ai-rmf",
+    "iso-42001",
+    "ai-bom",
+    "grc"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

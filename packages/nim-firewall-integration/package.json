@@ -1,0 +1,36 @@
+{
+  "name": "@grc-claw/nim-firewall-integration",
+  "version": "1.0.0",
+  "description": "NIM Agent Policy Firewall integration for GRC_Claw - enforces AI governance policies on NVIDIA NIM inference requests",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "nim",
+    "firewall",
+    "ai-governance",
+    "grc",
+    "policy",
+    "prompt-injection",
+    "data-boundary",
+    "audit"
+  ],
+  "author": "A2Z SOC",
+  "license": "MIT",
+  "dependencies": {
+    "@grc-claw/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

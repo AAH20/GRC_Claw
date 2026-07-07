@@ -62,6 +62,8 @@ export const BUILTIN_AGENT_TOOLS: ToolDefinition[] = [
   { name: 'servicenow.create_incident', tier: 'write' },
   { name: 'sap.query_access_logs', tier: 'read' },
   { name: 'nemotron.evaluate_compliance', tier: 'read' },
+  { name: 'ai_ran.assess_experiment', tier: 'read' },
+  { name: 'ai_ran.generate_assurance_envelope', tier: 'read' },
   // Canary/Honeypot Decoy Tools for Anti-Swarm Testing
   { name: 'connector.canary_override', tier: 'destructive' },
   { name: 'connector.admin_db_override', tier: 'destructive' },
@@ -1223,5 +1225,4 @@ export class SkillsRegistry {
 
 export * from './hermes-provider.js';
 export * from './orchestrator.js';
-
 

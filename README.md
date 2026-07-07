@@ -32,6 +32,45 @@ Commercial entry points:
 
 ---
 
+## NVIDIA AI-RAN / 6G assurance contribution pack
+
+GRC_Claw now includes an **AI-RAN Assurance** package for the NVIDIA 6G Developer Program direction: Sionna, AI Aerial, Aerial digital twins, CUDA-accelerated RAN, NIM, and Nemotron-powered agentic workflows. The package is intentionally an assurance and evidence layer—not a radio-control, spectrum-interference, exploit, or live-network automation system.
+
+- **Package:** `@grc-claw/ai-ran-assurance`
+- **Hosted A2Z SOC route:** [a2zsoc.com/ai-ran-6g-assurance](https://a2zsoc.com/ai-ran-6g-assurance?utm_source=github&utm_medium=oss&utm_campaign=nvidia-6g)
+- **Test:** `npm run test:ai-ran-assurance`
+- **Agent tool registry:** `ai_ran.assess_experiment`, `ai_ran.generate_assurance_envelope`
+
+The core output is a signed-style assurance envelope for AI-native 5G/6G work:
+
+```ts
+import { assessAiRanExperiment } from '@grc-claw/ai-ran-assurance';
+
+const envelope = assessAiRanExperiment({
+  experimentId: 'sionna-nim-review-001',
+  title: 'Sionna to NIM AI-RAN assurance review',
+  source: 'nvidia_sionna',
+  scope: 'Pre-production AI-RAN research manifest',
+  model: {
+    provider: 'nvidia_nim',
+    modelFamily: 'nemotron',
+    modelId: 'nemotron-governance-agent',
+    endpointMode: 'managed_api',
+    toolAllowlist: ['ai_ran.assess_experiment', 'evidence.export'],
+  },
+  runtime: {
+    gpuProfile: 'NVIDIA accelerated research or edge GPU',
+    tenantBoundary: 'single tenant evidence scope',
+  },
+  evidenceHashes: ['sha256:simulation-manifest', 'sha256:model-card'],
+  humanApproval: { required: true, approverRole: 'AI-RAN assurance owner' },
+});
+```
+
+The strategic wedge is simple: NVIDIA and telco ecosystems are racing toward AI-native RAN, but critical infrastructure buyers still need governance, model-risk evidence, runtime boundaries, auditor-readable records, and procurement packets before real deployments. GRC_Claw supplies the local verifier; A2Z SOC supplies the hosted evidence vault, share room, and trust desk.
+
+---
+
 ## Phase 36 moat roadmap — control-to-revenue assurance exchange
 
 The next leap is to turn A2Z SOC + GRC_Claw from a feature-rich GRC platform into an **assurance exchange**: a network where controls, evidence, agent actions, procurement answers, auditor packets, insurance attestations, and revenue attribution all become signed, reusable trust objects.
@@ -1966,6 +2005,34 @@ The most profitable Agentic AI integration: a 7-agent swarm that automates the e
 | **CAN Starter** | $499/mo | 3 agents, 50 controls, monthly testing |
 | **CAN Pro** | $1,499/mo | 5 agents, 200 controls, continuous testing |
 | **CAN Enterprise** | $4,999/mo | 7 agents, 375+ controls, autonomous remediation |
+
+---
+
+## What's New in v23.0 — NVIDIA 6G + AI Governance Integration
+
+The most strategic integration: NVIDIA Nemotron compliance, NIM agent firewall, and 6G network compliance automation. This makes GRC_Claw the compliance engine for NVIDIA's AI and 6G ecosystem.
+
+| Feature | Description |
+|---------|-------------|
+| **NVIDIA Nemotron Compliance Wrapper** | Assess Nemotron models against EU AI Act, NIST AI RMF, ISO 42001. Generate AI BOM. Map to framework controls. Risk tier classification. |
+| **NIM Agent Policy Firewall** | Every NIM request passes through governance. Prompt injection detection (20+ patterns). Data boundary enforcement (CUI/PHI/PCI). Signed trust receipts. |
+| **6G Compliance Automation** | Assess 6G network components against 3GPP, O-RAN, NIST, ISO 27001. Continuous monitoring. Automated evidence collection. |
+| **EU AI Act Compliance** | Risk tier classification (minimal/limited/high/unacceptable). Article 6–55 mapping. Conformity assessment. Transparency requirements. |
+| **NIST AI RMF Integration** | GOVERN, MAP, MEASURE, MANAGE functions. 23 controls. Risk assessment. Accountability requirements. |
+| **ISO 42001 Compliance** | 15 Annex A controls. AI management system. Conformity evidence. Certification readiness. |
+| **AI Bill of Materials** | SHA-256 hashed BOM for Nemotron models. Training data provenance. License compliance. Vulnerability tracking. |
+
+---
+
+## v23.0 Documentation Suite
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `docs/NVIDIA-INTEGRATION.md` | 1,257 | Complete NVIDIA integration guide |
+| `packages/nvidia-compliance-wrapper/src/` | 800+ | Nemotron compliance engine |
+| `packages/nim-firewall-integration/src/` | 600+ | NIM firewall integration |
+| `packages/6g-compliance/src/` | 500+ | 6G compliance automation |
+| **Grand total** | **18,000+** | **Complete platform documentation** |
 
 ---
 
