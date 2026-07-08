@@ -1,6 +1,6 @@
-# GRC_Claw v22.0
+# GRC_Claw v24.0
 
-Open-source GRC automation engine — 90 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, Compliance Autonomy Network (7-agent swarm), OpenAPI spec, 142 test cases, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
+Open-source GRC automation engine — 96 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, Compliance Autonomy Network, NVIDIA GR00T Compliance, CJADC2 Operations Framework, Military Robot Policy Firewall, NVIDIA Nemotron Compliance, NIM Firewall, 6G Compliance, OpenAPI spec, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
@@ -68,6 +68,52 @@ const envelope = assessAiRanExperiment({
 ```
 
 The strategic wedge is simple: NVIDIA and telco ecosystems are racing toward AI-native RAN, but critical infrastructure buyers still need governance, model-risk evidence, runtime boundaries, auditor-readable records, and procurement packets before real deployments. GRC_Claw supplies the local verifier; A2Z SOC supplies the hosted evidence vault, share room, and trust desk.
+
+---
+
+## Physical AI / humanoid VLA assurance contribution pack
+
+GRC_Claw now includes a **Physical AI Assurance** package for NVIDIA Isaac-GR00T-style humanoid Vision-Language-Action workflows, Isaac Sim / Isaac Lab evidence, embodiment manifests, runtime safety posture, and cyber-physical procurement review. The package is intentionally an assurance and evidence layer—not a robot-control, tactical-command, targeting, live-actuator, or weapon-automation system.
+
+- **Package:** `@grc-claw/physical-ai-assurance`
+- **Hosted A2Z SOC route:** [a2zsoc.com/physical-ai-humanoid-assurance](https://a2zsoc.com/physical-ai-humanoid-assurance?utm_source=github&utm_medium=oss&utm_campaign=physical-ai)
+- **Test:** `npm run test:physical-ai-assurance`
+- **Agent tool registry:** `physical_ai.assess_system`, `physical_ai.generate_assurance_envelope`
+
+The core output is a signed-style assurance envelope for humanoid VLA and physical AI work:
+
+```ts
+import { assessPhysicalAiSystem } from '@grc-claw/physical-ai-assurance';
+
+const envelope = assessPhysicalAiSystem({
+  systemId: 'groot-lab-review-001',
+  title: 'Isaac-GR00T-style humanoid VLA assurance review',
+  source: 'nvidia_isaac_groot',
+  scope: 'Pre-production humanoid VLA safety and governance manifest',
+  model: {
+    provider: 'nvidia',
+    modelFamily: 'isaac_gr00t',
+    modelId: 'isaac-gr00t-n1-or-compatible-vla',
+    endpointMode: 'local',
+    toolAllowlist: ['physical_ai.assess_system', 'evidence.export'],
+  },
+  embodiment: {
+    robotClass: 'humanoid',
+    autonomyMode: 'supervised_autonomy',
+    operatingDomain: 'defense_supplier_lab',
+    prohibitedActionClasses: ['weapon_control', 'target_selection', 'payload_guidance', 'live_tactical_command'],
+  },
+  runtime: {
+    gpuProfile: 'NVIDIA accelerated robotics workstation or edge GPU',
+    networkBoundary: 'segmented robotics safety network',
+    emergencyStop: { present: true, mechanism: 'hardware and software hold-to-run / e-stop gate' },
+  },
+  evidenceHashes: ['sha256:model-card', 'sha256:simulation-run', 'sha256:safety-case'],
+  humanApproval: { required: true, approverRole: 'Physical AI safety owner' },
+});
+```
+
+The strategic wedge is the gap between frontier physical AI demos and procurement-grade mission assurance. Robotics labs, critical infrastructure operators, defense suppliers, insurers, and auditors all need the same durable facts: model boundaries, embodiment boundaries, cyber-physical runtime controls, operator authority, emergency-stop evidence, simulation lineage, and incident response. GRC_Claw supplies the local verifier; A2Z SOC supplies the hosted evidence vault, share room, and recurring physical AI assurance desk.
 
 ---
 
@@ -2033,6 +2079,35 @@ The most strategic integration: NVIDIA Nemotron compliance, NIM agent firewall, 
 | `packages/nim-firewall-integration/src/` | 600+ | NIM firewall integration |
 | `packages/6g-compliance/src/` | 500+ | 6G compliance automation |
 | **Grand total** | **18,000+** | **Complete platform documentation** |
+
+---
+
+## What's New in v24.0 — NVIDIA GR00T + CJADC2 Military Integration
+
+The most strategic integration: NVIDIA Isaac GR00T compliance, CJADC2 operations framework, and military robot policy firewall. This makes GRC_Claw the compliance engine for military humanoid robots in Combined Joint All-Domain Command and Control.
+
+| Feature | Description |
+|---------|-------------|
+| **GR00T Compliance Wrapper** | Assess NVIDIA Isaac GR00T models against ITAR, EAR, DoD 5200.21, NIST 800-171. Map to military frameworks. Risk assessment. Export control compliance. |
+| **CJADC2 Operations Framework** | Assess Sense/Decide/Act/Communicate domains. Interoperability checking. Security assessment. STANAG protocol mapping. |
+| **Military Robot Policy Firewall** | Every robot action passes through military policy. Engagement authority enforcement. Human-in-the-loop requirements. Classification boundary enforcement. |
+| **ITAR Compliance** | Export control classification. Deployment restrictions. End-user restrictions. Export license requirements. |
+| **DoD Compliance** | DoD 5200.21, NIST 800-171 (16 controls), CMMC Levels 1-3. GR00T-to-DoD control mapping. |
+| **Autonomous Weapons Policy** | 5 autonomy levels. Human-in-the-loop requirements. Lethal autonomy restrictions. Engagement authority. |
+| **STANAG Protocol Mapping** | NATO interoperability standards. Protocol compliance. Data sharing requirements. |
+
+---
+
+## v24.0 Documentation Suite
+
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `docs/GR00T-CJADC2-INTEGRATION.md` | 1,430 | Complete GR00T + CJADC2 integration guide |
+| `packages/gr00t-compliance/src/` | 800+ | GR00T compliance engine |
+| `packages/cjadc2-operations/src/` | 600+ | CJADC2 operations framework |
+| `packages/military-robot-firewall/src/` | 500+ | Military robot policy firewall |
+| `docs/NVIDIA-INTEGRATION.md` | 1,257 | NVIDIA integration guide |
+| **Grand total** | **22,000+** | **Complete platform documentation** |
 
 ---
 

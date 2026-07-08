@@ -1,0 +1,44 @@
+{
+  "name": "@grc-claw/military-robot-firewall",
+  "version": "1.0.0",
+  "description": "Military robot policy firewall enforcing engagement authority, human-in-the-loop, classification boundaries, and LOAC compliance for autonomous and semi-autonomous weapon systems",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "military",
+    "robot",
+    "firewall",
+    "engagement-authority",
+    "human-in-the-loop",
+    "classification",
+    "loac",
+    "weapon-system",
+    "autonomous",
+    "defense",
+    "grc",
+    "compliance"
+  ],
+  "author": "A2Z SOC Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0",
+    "eslint": "^8.56.0",
+    "@types/node": "^20.11.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a2z-soc/a2z-soc"
+  }
+}
