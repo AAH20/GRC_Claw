@@ -1,39 +1,16 @@
 import {
   Cjadc2Domain,
   Cjadc2Component,
-  ComponentType,
-  ComponentStatus,
   DomainAssessment,
   AssessmentIssue
 } from './types';
 
 export class ActDomain {
-  private readonly ENGAGEMENT_AUTHORITY_REQUIREMENTS = {
-    authorizationRequired: true,
-    positiveIdentification: true,
-    proportionality: true,
-    discrimination: true
-  };
-
-  private readonly AUTONOMOUS_ACTION_REQUIREMENTS = {
-    maxAutonomyLevel: 'supervised',
-    humanApprovalRequired: true,
-    abortCapability: true,
-    restrictions: ['lethal', 'strategic']
-  };
-
   private readonly LETHAL_AUTONOMY_POLICY = {
     allowed: false,
     requiresHumanControl: true,
     exceptionProcess: true,
     reviewBoard: true
-  };
-
-  private readonly RESPONSE_TIME_REQUIREMENTS = {
-    maxResponseTimeMs: 5000,
-    maxEngagementTimeMs: 10000,
-    maxAbortTimeMs: 1000,
-    realTimeRequired: true
   };
 
   assess(components: Cjadc2Component[]): DomainAssessment {
@@ -129,9 +106,6 @@ export class ActDomain {
 
   private checkAutonomousAction(components: Cjadc2Component[], issues: AssessmentIssue[]): number {
     let score = 0;
-
-    const weaponComponents = components.filter(c => c.type === ComponentType.WEAPON);
-    const aiComponents = components.filter(c => c.type === ComponentType.AI_SYSTEM);
 
     const hasSupervision = components.some(c =>
       c.capabilities.includes('supervised_autonomy') || c.capabilities.includes('human_supervision')

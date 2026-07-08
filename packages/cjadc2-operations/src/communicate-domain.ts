@@ -2,28 +2,12 @@ import {
   Cjadc2Domain,
   Cjadc2Component,
   ComponentType,
-  ComponentStatus,
   DomainAssessment,
   AssessmentIssue,
   InteroperabilityStandard
 } from './types';
 
 export class CommunicateDomain {
-  private readonly NETWORK_SECURITY_REQUIREMENTS = {
-    encryptionRequired: true,
-    authenticationRequired: true,
-    accessControl: true,
-    intrusionDetection: true,
-    networkSegmentation: true
-  };
-
-  private readonly DATA_SHARING_REQUIREMENTS = {
-    crossDomain: true,
-    semanticInterop: true,
-    dataFormat: 'NATO_STANAG',
-    disseminationControl: true
-  };
-
   private readonly INTEROPERABILITY_STANDARDS = [
     InteroperabilityStandard.LINK_16,
     InteroperabilityStandard.LINK_22,
@@ -31,13 +15,6 @@ export class CommunicateDomain {
     InteroperabilityStandard.STANAG_5500,
     InteroperabilityStandard.VMF
   ];
-
-  private readonly ENCRYPTION_REQUIREMENTS = {
-    minAlgorithm: 'AES-256',
-    keyManagement: true,
-    forwardSecrecy: true,
-    quantumResistant: false
-  };
 
   assess(components: Cjadc2Component[]): DomainAssessment {
     const issues: AssessmentIssue[] = [];
