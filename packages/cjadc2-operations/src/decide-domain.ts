@@ -15,27 +15,6 @@ export class DecideDomain {
     authorityLevels: ['strategic', 'operational', 'tactical']
   };
 
-  private readonly DECISION_SUPPORT_REQUIREMENTS = {
-    aiAssistance: true,
-    humanInTheLoop: true,
-    decisionTimeMs: 30000,
-    confidenceThreshold: 0.8
-  };
-
-  private readonly AI_DECISION_REQUIREMENTS = {
-    explainabilityRequired: true,
-    biasMonitoring: true,
-    overrideCapability: true,
-    auditLogging: true
-  };
-
-  private readonly HITL_REQUIREMENTS = {
-    humanApprovalRequired: true,
-    abortCapability: true,
-    overrideAuthority: true,
-    notificationSystem: true
-  };
-
   assess(components: Cjadc2Component[]): DomainAssessment {
     const issues: AssessmentIssue[] = [];
     let score = 0;
@@ -121,7 +100,7 @@ export class DecideDomain {
     return score;
   }
 
-  private checkDecisionSupport(components: Cjadc2Component[]): number {
+  private checkDecisionSupport(components: Cjadc2Component[], _issues: AssessmentIssue[]): number {
     let score = 0;
 
     const hasDecisionAids = components.some(c =>

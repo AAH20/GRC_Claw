@@ -4,8 +4,7 @@ import {
   ComponentType,
   ComponentStatus,
   DomainAssessment,
-  AssessmentIssue,
-  InteroperabilityStandard
+  AssessmentIssue
 } from './types';
 
 export class SenseDomain {
@@ -21,20 +20,6 @@ export class SenseDomain {
     correlationAccuracy: 0.85,
     trackManagement: true,
     multiDomain: true
-  };
-
-  private readonly DATA_PROCESSING_REQUIREMENTS = {
-    maxLatencyMs: 1000,
-    minThroughputMbps: 100,
-    dataRetention: '24h',
-    compressionRequired: true
-  };
-
-  private readonly REAL_TIME_ANALYSIS_REQUIREMENTS = {
-    maxAnalysisTimeMs: 500,
-    minConfidenceLevel: 0.75,
-    automatedClassification: true,
-    threatAssessment: true
   };
 
   assess(components: Cjadc2Component[]): DomainAssessment {
@@ -97,7 +82,6 @@ export class SenseDomain {
 
   private checkSensorFusion(components: Cjadc2Component[], issues: AssessmentIssue[]): number {
     const sensors = components.filter(c => c.type === ComponentType.SENSOR);
-    const dataLinks = components.filter(c => c.type === ComponentType.DATA_LINK);
 
     let score = 0;
 

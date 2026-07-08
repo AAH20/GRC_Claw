@@ -93,7 +93,7 @@ export class Cjadc2Engine {
       });
     });
 
-    protocolMap.forEach((value, key) => {
+    protocolMap.forEach((value, _key) => {
       compliance.push({
         standard: value.standard as any,
         compliant: value.components.length > 1,
