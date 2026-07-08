@@ -1,0 +1,35 @@
+{
+  "name": "@grc-claw/gr00t-compliance",
+  "version": "1.0.0",
+  "description": "NVIDIA Isaac GR00T Compliance Wrapper for military and defense robotics compliance",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "gr00t",
+    "compliance",
+    "itar",
+    "dod",
+    "cjadc2",
+    "autonomous-weapons",
+    "robotics",
+    "military"
+  ],
+  "author": "A2Z SOC",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.11.0"
+  }
+}

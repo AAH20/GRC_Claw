@@ -9,6 +9,7 @@
     { "path": "./packages/frameworks" },
     { "path": "./packages/agent-runtime" },
     { "path": "./packages/ai-ran-assurance" },
+    { "path": "./packages/physical-ai-assurance" },
     { "path": "./packages/a2z-connector" },
     { "path": "./packages/aims" },
     { "path": "./packages/connectors" },
@@ -95,6 +96,10 @@
     { "path": "./packages/nim-firewall-integration" },
     { "path": "./packages/6g-compliance" },
     { "path": "./packages/ai-ran-assurance" },
+    { "path": "./packages/physical-ai-assurance" },
+    { "path": "./packages/gr00t-compliance" },
+    { "path": "./packages/cjadc2-operations" },
+    { "path": "./packages/military-robot-firewall" },
     { "path": "./packages/gateway" }
   ]
 }

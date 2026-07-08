@@ -1,0 +1,40 @@
+{
+  "name": "@grc-claw/cjadc2-operations",
+  "version": "1.0.0",
+  "description": "CJADC2 Operations Framework for Combined Joint All-Domain Command and Control compliance and assessment",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "cjadc2",
+    "command-control",
+    "military",
+    "defense",
+    "interoperability",
+    "grc",
+    "compliance",
+    "security"
+  ],
+  "author": "A2Z SOC Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0",
+    "eslint": "^8.56.0",
+    "@types/node": "^20.11.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a2z-soc/a2z-soc"
+  }
+}

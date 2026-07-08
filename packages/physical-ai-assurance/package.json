@@ -1,0 +1,28 @@
+{
+  "name": "@grc-claw/physical-ai-assurance",
+  "version": "0.1.0",
+  "description": "Safe physical AI and humanoid VLA assurance envelopes for NVIDIA Isaac-GR00T-style robotics workflows.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
+  }
+}
