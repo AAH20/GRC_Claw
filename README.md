@@ -16,6 +16,33 @@ Open-source GRC automation engine — 96 packages, 375+ cross-framework mappings
 
 GRC_Claw is the inspectable open-source engine. **A2Z SOC is the hosted trust, evidence, and partner control plane** for teams that need buyer-ready packets, recurring workspaces, white-label delivery, and senior advisory around CMMC, NIST 800-171, ISO 42001, NIST AI RMF, GRC automation, and agentic AI security.
 
+## Agentic TrustOps / Agent Trust Passport v1
+
+GRC_Claw now includes the first **Agent Trust Passport v1** contract inside `@grc-claw/evidence`. The goal is to govern every execution agent—Stakpak-style DevOps agents, Cursor/Codex sessions, Claude Code, GitHub Actions bots, Terraform/OpenTofu agents, Kubernetes copilots, internal MCP tools—without trying to become another command-running bot.
+
+The trust primitive is:
+
+```ts
+import { ActionLedger, createAssuranceEnvelope, createAgentTrustPassport } from '@grc-claw/evidence';
+```
+
+The passport aggregates hash-only action receipts into a buyer-ready packet:
+
+- agent identity, provider, adapter, allowlist, and approval mode;
+- allowed, denied, and approval-required actions;
+- evidence IDs and envelope hashes without raw prompts, secrets, or command payloads;
+- control mappings across ISO 42001, NIST AI RMF, SOC 2, ISO 27001, NIST 800-171, CMMC, CIS Kubernetes, and custom frameworks;
+- evidenced / limited-evidence / not-observed claim status;
+- risks, limitations, and procurement-ready buyer questions.
+
+Hosted A2Z SOC surfaces:
+
+- **Agentic TrustOps category page:** [a2zsoc.com/agentic-trustops](https://a2zsoc.com/agentic-trustops?utm_source=github&utm_medium=oss&utm_campaign=agentic-trustops)
+- **AI Assurance Passport offer:** [a2zsoc.com/ai-assurance-passport](https://a2zsoc.com/ai-assurance-passport?utm_source=github&utm_medium=oss&utm_campaign=agentic-trustops)
+- **Trust Passport API manifest:** [a2zsoc.com/api/v1/agentic/trust-passport](https://a2zsoc.com/api/v1/agentic/trust-passport)
+
+This is the strategic layer above autonomous DevOps tools: execution agents do the work; GRC_Claw and A2Z SOC make the work acceptable to CISOs, auditors, procurement teams, insurers, and regulated buyers.
+
 Use the international deal room when you are an MSP, vCISO firm, CMMC RPO/C3PAO, broker, law firm, PE/VC diligence team, or expert-network buyer evaluating implementation support:
 
 - **Partner deal room:** [a2zsoc.com/international-partners](https://a2zsoc.com/international-partners?utm_source=github&utm_medium=oss&utm_campaign=grc-claw-partner-deal-room)
@@ -436,7 +463,7 @@ grc sovereign init
 
 ---
 
-## Packages (40 listed · 44 private — 84 total)
+## Packages (41 listed · 44 private — 85 total)
 
 | Package | Description | Version |
 |---------|-------------|---------|
@@ -483,6 +510,7 @@ grc sovereign init
 | `@grc-claw/natural-language-compliance` | Ask compliance questions in plain English — 7 intents, 8 frameworks, 8 languages | v1.0.0 |
 | `@grc-claw/compliance-automation-marketplace` | Share, discover, and monetize compliance automations — ratings, reviews, versioning | v1.0.0 |
 | `@grc-claw/real-time-compliance-monitor` | Live compliance dashboards, alerts, SLA monitoring, trend analysis | v1.0.0 |
+| `@grc-claw/infra-agent-assurance` | Compliance and attestation assurance envelopes for autonomous DevOps/IaC agents (SOC 2, ISO 42001, ISO 27001, DORA, NIST CSF, NIST 800-53) | v0.1.0 |
 
 The remaining 44 packages are private or pre-release. See the monorepo root `package.json` for the full workspace list.
 

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 
 export * from './action-ledger.js';
 export * from './assurance-envelope.js';
+export * from './agent-trust-passport.js';
 
 export interface EvidenceRecord {
   id: string;
