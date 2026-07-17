@@ -22,6 +22,7 @@
     "test:action-ledger": "npm run build && node scripts/test-action-ledger.mjs",
     "test:assurance": "npm run build && node scripts/test-assurance.mjs",
     "test:assurance-envelope": "npm run build && node scripts/test-assurance-envelope.mjs",
+    "test:agent-trust-passport": "npm run build -w @grc-claw/evidence && node scripts/test-agent-trust-passport.mjs",
     "test:ai-ran-assurance": "npm run build -w @grc-claw/ai-ran-assurance && node scripts/test-ai-ran-assurance.mjs",
     "test:physical-ai-assurance": "npm run build -w @grc-claw/physical-ai-assurance && node scripts/test-physical-ai-assurance.mjs",
     "test:comprehensive": "bash scripts/test-comprehensive.sh",
