@@ -10,6 +10,7 @@ import {
 } from '@grc-claw/connectors';
 import { dispatchClawTool, isClawTool, type ClawDispatchContext } from '@grc-claw/skill-executor';
 import { VectorGraphMemory, SkillsRegistry, AgentSession, ExecPolicy, PersistentMemoryStore } from '@grc-claw/agent-runtime';
+import { createA2ZTrustRecorder } from './trust-recorder.js';
 import { normalizeBySource, CLOUD_INGEST_SOURCES } from '@grc-claw/ingest';
 import type { IngestSource } from '@grc-claw/ingest';
 import { createAssuranceEnvelope, ActionLedger } from '@grc-claw/evidence';
@@ -151,6 +152,8 @@ const auditManager = new AuditManager();
 const cloudRegistry = new CloudConnectorRegistry();
 const actionLedger = new ActionLedger();
 const memoryStore = new PersistentMemoryStore();
+
+const trustRecorder = createA2ZTrustRecorder();
 const agentSessions = new Map<string, AgentSession>();
 const riskRegister = new RiskRegister();
 const entityManager = new EntityManager();
@@ -1476,7 +1479,7 @@ export async function dispatchBuiltinGrcTool(
         let session = agentSessions.get(sessionId);
         if (!session) {
           const policy = new ExecPolicy();
-          session = new AgentSession(sessionId, policy, memoryStore);
+          session = new AgentSession(sessionId, policy, memoryStore, trustRecorder);
           agentSessions.set(sessionId, session);
         }
 
@@ -1517,7 +1520,7 @@ export async function dispatchBuiltinGrcTool(
         let session = agentSessions.get(sessionId);
         if (!session) {
           const policy = new ExecPolicy();
-          session = new AgentSession(sessionId, policy, memoryStore);
+          session = new AgentSession(sessionId, policy, memoryStore, trustRecorder);
           agentSessions.set(sessionId, session);
         }
 

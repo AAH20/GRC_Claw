@@ -72,6 +72,15 @@ try {
   });
 }
 
+checks.push({
+  name: 'Agent Trust Passport sync (optional)',
+  ok: true,
+  hint:
+    process.env.A2Z_SOC_MODE === 'private' && process.env.A2Z_SOC_API_KEY && process.env.A2Z_SOC_API_KEY !== 'demo-key'
+      ? 'ExecPolicy decisions will POST to /api/platform/agent-trust/record'
+      : 'Set A2Z_SOC_MODE=private + A2Z_SOC_API_KEY to sync living passport events',
+});
+
 console.log('GRC_Claw doctor — Agentic AI Security + A2Z SOC bridge + BYOC\n');
 for (const c of checks) {
   console.log(`${c.ok ? '✓' : '✗'} ${c.name}${c.hint ? ` (${c.hint})` : ''}`);

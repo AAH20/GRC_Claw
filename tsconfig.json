@@ -10,6 +10,7 @@
     { "path": "./packages/agent-runtime" },
     { "path": "./packages/ai-ran-assurance" },
     { "path": "./packages/physical-ai-assurance" },
+    { "path": "./packages/infra-agent-assurance" },
     { "path": "./packages/a2z-connector" },
     { "path": "./packages/aims" },
     { "path": "./packages/connectors" },
