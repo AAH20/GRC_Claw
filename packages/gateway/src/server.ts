@@ -27,6 +27,7 @@ import { discoverCursorSkills } from './cursor-skills.js';
 import { dispatchAgentTool, executionStateFromOutput, setSecurityGraph, identityManager, agentAuditTrail } from './agent-dispatch.js';
 import { createClawDispatchContext } from './skill-runtime.js';
 import { GatewayAssuranceGraph } from './assurance.js';
+import { createA2ZTrustRecorder } from './trust-recorder.js';
 import { initSecurityGraph } from './graph-init.js';
 import { getSkillById, listSkills } from '@grc-claw/skill-executor';
 import { createRateLimiter } from './rate-limiter.js';
@@ -573,6 +574,8 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
 
   void refreshExecPolicy();
 
+  const trustRecorder = createA2ZTrustRecorder();
+
   function makeClawContext(policy: ExecPolicy) {
     const llmProviders = connectors.listLlm();
     return createClawDispatchContext({
@@ -582,7 +585,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       a2z,
       defaultLlmProviderId: llmProviders[0]?.id ?? 'gemini',
       getPolicy: () => policy,
-      makeSession: (sessionId, pol) => new AgentSession(sessionId, pol, store),
+      makeSession: (sessionId, pol) => new AgentSession(sessionId, pol, store, trustRecorder),
     });
   }
 
@@ -879,7 +882,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
       const skillId = String(body.skillId ?? '');
       const task = String(body.task ?? '');
       const policy = execPolicy ?? (await refreshExecPolicy());
-      const session = new AgentSession(String(body.sessionId ?? 'skill-run'), policy, store);
+      const session = new AgentSession(String(body.sessionId ?? 'skill-run'), policy, store, trustRecorder);
       const idem = String(body.idempotencyKey ?? `skill-run-${skillId}-${Date.now()}`);
       const decision = await session.invoke({
         tool: 'claw.run_skill',
@@ -1046,7 +1049,7 @@ export function createGateway(config: GatewayConfig, persistence?: PersistenceLa
         return;
       }
       const policy = execPolicy ?? (await refreshExecPolicy());
-      const session = new AgentSession(String(body.sessionId ?? 'default'), policy, store);
+      const session = new AgentSession(String(body.sessionId ?? 'default'), policy, store, trustRecorder);
       const sessionId = session.sessionId;
       const tool = String(body.tool ?? '');
       const args = (body.args as Record<string, unknown>) ?? {};

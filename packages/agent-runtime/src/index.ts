@@ -459,6 +459,24 @@ export interface AgentAuditEntry {
   argsRedacted: Record<string, unknown>;
 }
 
+/** Optional bridge to a2zsoc.com Agent Trust Passport (no hard dependency). */
+export type TrustDecisionKind = 'allowed' | 'denied' | 'sandboxed' | 'approval_required';
+
+export type TrustDecisionRecorder = (payload: {
+  agentId: string;
+  decision: TrustDecisionKind;
+  tool: string;
+  tier?: ToolTier;
+  reason?: string;
+}) => void | Promise<void>;
+
+export function mapExecDecisionToTrustKind(decision: ExecDecision): TrustDecisionKind {
+  if (decision.requiresApproval && !decision.allowed) return 'approval_required';
+  if (!decision.allowed) return 'denied';
+  if (decision.sandbox === 'docker') return 'sandboxed';
+  return 'allowed';
+}
+
 export function calculateStringSimilarity(s1: string, s2: string): number {
   const words1 = new Set(s1.toLowerCase().split(/\s+/).filter(w => w.length > 2));
   const words2 = new Set(s2.toLowerCase().split(/\s+/).filter(w => w.length > 2));
@@ -491,10 +509,30 @@ export class AgentSession {
   constructor(
     public readonly sessionId: string,
     private readonly policy: ExecPolicy,
-    private readonly store?: PersistentMemoryStore
+    private readonly store?: PersistentMemoryStore,
+    private readonly trustRecorder?: TrustDecisionRecorder
   ) {
     if (this.store) {
       this.store.loadSession(this.sessionId, this);
+    }
+  }
+
+  private emitTrust(tool: string, decision: ExecDecision, toolTier?: ToolTier): void {
+    if (!this.trustRecorder) return;
+    const payload = {
+      agentId: this.sessionId,
+      decision: mapExecDecisionToTrustKind(decision),
+      tool,
+      tier: toolTier,
+      reason: decision.reason,
+    };
+    try {
+      const maybe = this.trustRecorder(payload);
+      if (maybe && typeof (maybe as Promise<void>).then === 'function') {
+        (maybe as Promise<void>).catch(() => undefined);
+      }
+    } catch {
+      /* non-fatal */
     }
   }
 
@@ -537,6 +575,8 @@ export class AgentSession {
         argsRedacted: { keys: Object.keys(inv.args) },
       });
       
+      this.emitTrust(inv.tool, decision);
+
       if (this.store) {
         try {
           this.store.saveSession(this);
@@ -669,6 +709,8 @@ export class AgentSession {
       decision,
       argsRedacted: { keys: Object.keys(inv.args) },
     });
+
+    this.emitTrust(inv.tool, decision);
 
     if (this.store) {
       try {
@@ -1227,3 +1269,4 @@ export class SkillsRegistry {
 
 export * from './hermes-provider.js';
 export * from './orchestrator.js';
+export * from './assurance-controls.js';

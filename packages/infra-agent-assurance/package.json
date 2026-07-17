@@ -1,0 +1,32 @@
+{
+  "name": "@grc-claw/infra-agent-assurance",
+  "version": "0.1.0",
+  "description": "Compliance and attestation assurance envelopes for autonomous DevOps and infrastructure agents (IaC generation, Kubernetes, CI/CD automation).",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "vitest": "^1.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AAH20/GRC_Claw"
+  }
+}

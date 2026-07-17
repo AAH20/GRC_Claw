@@ -150,6 +150,32 @@ export class A2ZSocConnector implements GRCEngineFacade {
     return res.json() as Promise<{ envelopeId?: string; actionId: string; executionState: 'recorded' }>;
   }
 
+  /** Record an ExecPolicy decision into a2zsoc Agent Trust Passport. */
+  async recordAgentTrustDecision(payload: {
+    agentId: string;
+    decision: 'allowed' | 'denied' | 'sandboxed' | 'approval_required';
+    tool?: string;
+    tier?: string;
+    reason?: string;
+  }): Promise<{ recorded: boolean }> {
+    if (this.cfg.mode === 'demo') {
+      return { recorded: false };
+    }
+    const res = await fetch(this.url('/api/platform/agent-trust/record'), {
+      method: 'POST',
+      headers: this.headers(`trust-${payload.agentId}-${Date.now()}`),
+      body: JSON.stringify({
+        agent_id: payload.agentId,
+        decision: payload.decision,
+        tool: payload.tool ?? null,
+        tier: payload.tier ?? null,
+        reason: payload.reason ?? null,
+      }),
+    });
+    if (!res.ok) throw new Error(`A2Z SOC agent-trust record: ${res.status}`);
+    return { recorded: true };
+  }
+
   async mapSecurityEventToControls(event: SecurityEventCanonical): Promise<ComplianceImpact> {
     if (event.complianceImpact) return event.complianceImpact;
     const mapping: Record<string, string[]> = {
