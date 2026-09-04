@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://grc-claw.dev/schemas/revenue-blocker-v1.schema.json",
+  "title": "Revenue Blocker v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deal_id", "classification", "grc_blocker", "evidence_ids"],
+  "properties": {
+    "deal_id": { "type": "string", "minLength": 1 },
+    "deal_value_usd": { "type": "number", "minimum": 0 },
+    "weighted_pipeline_usd": { "type": "number", "minimum": 0 },
+    "recognized_revenue_enabled_usd": { "type": "number", "minimum": 0 },
+    "grc_blocker": { "type": "string", "minLength": 1 },
+    "blocked_at": { "type": "string", "format": "date-time" },
+    "cleared_at": { "type": "string", "format": "date-time" },
+    "stage_before": { "type": "string" },
+    "stage_after": { "type": "string" },
+    "attribution_factor": { "type": "number", "minimum": 0, "maximum": 1 },
+    "classification": {
+      "enum": ["observed", "correlated", "estimated", "synthetic", "insufficient_evidence"]
+    },
+    "evidence_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "missing_inputs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "assumptions": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://grc-claw.dev/schemas/agent-assurance-result-v1.schema.json",
+  "title": "Agent Assurance Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "classification", "scenarios", "metrics"],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "classification": { "enum": ["observed", "synthetic"] },
+    "agent_id": { "type": "string" },
+    "policy_version": { "type": "string" },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "expected", "actual", "passed"],
+        "properties": {
+          "id": { "type": "string" },
+          "category": {
+            "enum": ["prompt_injection", "tool_authorization", "tenant_isolation", "data_exfiltration", "approval_bypass", "identity_revocation"]
+          },
+          "expected": { "type": "string" },
+          "actual": { "type": "string" },
+          "passed": { "type": "boolean" },
+          "evidence_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "unauthorized_action_prevention_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "prompt_injection_attack_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "approval_bypass_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cross_tenant_leakage_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence_receipt_completeness": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
