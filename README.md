@@ -1,5 +1,16 @@
 # GRC_Claw v24.0
 
+**Enterprise AI-agent policy and evidence control plane.** GRC_Claw records
+agent identity, delegated tool authority, policy decisions, approvals, action
+receipts, control mappings, and evidence provenance—then exports inspectable
+assurance artifacts for security, GRC, audit, and procurement teams.
+
+Start with the [executive overview](docs/EXECUTIVE_OVERVIEW.md) and the public
+[claims and limitations boundary](docs/CLAIMS_AND_LIMITATIONS.md). Capabilities
+in this repository span implemented libraries, reference integrations,
+demonstrations, and research modules; passing tests is not a claim of production
+operating effectiveness.
+
 Open-source GRC automation engine — 96 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, Compliance Autonomy Network, NVIDIA GR00T Compliance, CJADC2 Operations Framework, Military Robot Policy Firewall, NVIDIA Nemotron Compliance, NIM Firewall, 6G Compliance, OpenAPI spec, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
