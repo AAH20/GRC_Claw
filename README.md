@@ -11,7 +11,19 @@ in this repository span implemented libraries, reference integrations,
 demonstrations, and research modules; passing tests is not a claim of production
 operating effectiveness.
 
-Open-source GRC automation engine — 96 packages, 375+ cross-framework mappings, autonomous agent, Terraform provider, VS Code extension, Trust Transaction Network, Agent Policy Firewall, Verifier Network, Benchmark Intelligence, Compliance Autonomy Network, NVIDIA GR00T Compliance, CJADC2 Operations Framework, Military Robot Policy Firewall, NVIDIA Nemotron Compliance, NIM Firewall, 6G Compliance, OpenAPI spec, real-time data providers, Developer Portal, CLI Reference, Performance SLOs, full navigation wiring, integration tests, onboarding guide, mock elimination, changelog, security audit
+## Try one governed agent action in under five minutes
+
+The [offline agent policy denial example](examples/agent-policy-denial/README.md) evaluates two fictional tool calls: an inventory read that policy permits and a customer export that policy denies. It writes a hash-chained action ledger and a small report. No tool is invoked, and the verifier rejects a modified ledger.
+
+```bash
+npm install
+npm run demo:agent-policy-denial
+npm run verify:agent-policy-denial
+```
+
+Expected report: `fixtureCases: 2`, `expectedAllowed: 1`, `expectedDenied: 1`, `ledgerIntegrity: verified`, and `toolExecution: none; allowed action simulated`. The fixture and verifier are public; this is a synthetic policy-path demonstration, not evidence of prompt-injection detection or production interception.
+
+The monorepo contains policy and evidence libraries, developer tools, reference connectors, demonstrations, and research modules. The [claims and limitations matrix](docs/CLAIMS_AND_LIMITATIONS.md) identifies what is implemented and what still needs production validation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40grc--claw-red?logo=npm)](https://www.npmjs.com/search?q=%40grc-claw)
