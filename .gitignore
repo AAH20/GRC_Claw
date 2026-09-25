@@ -9,3 +9,4 @@ dist-test/
 /var/
 coverage/
 .turbo/
+examples/agent-policy-denial/out/

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "classification": "synthetic-offline",
+  "actor": { "id": "demo-agent", "type": "agent", "tenantId": 7, "role": "reader" },
+  "context": {
+    "tenantScope": ["demo-tenant"],
+    "role": "reader",
+    "allowedTools": ["inventory.read"],
+    "deniedTools": ["customer.export"],
+    "sandboxPolicy": "none",
+    "approvalThreshold": "human",
+    "dataBoundary": "tenant-confidential",
+    "replayWindowSeconds": 300,
+    "maxBlastRadius": 10,
+    "controlImpactIds": ["DEMO-TOOL-AUTHORIZATION"]
+  },
+  "cases": [
+    {
+      "id": "permitted-read",
+      "toolName": "inventory.read",
+      "tier": "read",
+      "args": { "assetId": "fictional-asset-01" },
+      "expectedAllowed": true,
+      "expectedReason": "approved_by_firewall"
+    },
+    {
+      "id": "denied-export",
+      "toolName": "customer.export",
+      "tier": "read",
+      "args": { "dataset": "fictional-customers", "destination": "fixture://outside" },
+      "expectedAllowed": false,
+      "expectedReason": "tool_explicitly_denied"
+    }
+  ]
+}
