@@ -36,5 +36,5 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm install --include=optional --no-audit --no-fund
       - run: npm run test:agent-policy-denial
