@@ -1,0 +1,313 @@
+# GRC_Claw — Tiltfile for Live-Reload Development
+# Provides the fastest inner-loop: edit code → auto-rebuild → auto-deploy.
+#
+# Prerequisites:
+#   - Tilt v0.30+
+#   - kind or minikube cluster running
+#   - kubectl configured to target the cluster
+#
+# Usage:
+#   tilt up              # Start Tilt UI + live-reload
+#   tilt up policy-api   # Only start specific resource
+#   tilt down            # Tear down
+#   tilt ci              # CI mode (no UI, fail on error)
+#
+# Environment:
+#   TILT_HOST=127.0.0.1  # Bind Tilt UI to specific host
+#   TILT_PORT=10350      # Tilt UI port
+
+# ── Settings ─────────────────────────────────────────────────────────────────
+
+settings({
+    'auto_init': True,
+    'k8s_telemetry': False,
+    'trigger_mode': TRIGGER_MODE_AUTO,
+    'enable_telemetry': False,
+})
+
+# ── Namespace ────────────────────────────────────────────────────────────────
+
+allow_k8s_contexts([
+    'kind-grc-claw',
+    'minikube',
+    'docker-desktop',
+])
+
+# ── Docker Compose (Data Layer) ──────────────────────────────────────────────
+
+# Start the data layer via docker-compose for local dev speed
+docker_compose('./docker-compose.yml')
+
+# ── Kubernetes Resources ─────────────────────────────────────────────────────
+
+# Load all K8s manifests
+k8s_yaml([
+    './grc-claw-deployment/kubernetes/namespaces',
+    './grc-claw-deployment/kubernetes/data',
+    './grc-claw-deployment/kubernetes/control-plane',
+    './grc-claw-deployment/kubernetes/analytics',
+    './grc-claw-deployment/kubernetes/evidence',
+    './grc-claw-deployment/kubernetes/observability',
+    './grc-claw-deployment/kubernetes/ingress',
+    './grc-claw-deployment/kubernetes/network-policies',
+    './grc-claw-deployment/kubernetes/resource-quotas.yaml',
+    './grc-claw-deployment/kubernetes/pod-disruption-budgets',
+])
+
+# ── Custom Build ─────────────────────────────────────────────────────────────
+
+# Build images from local Dockerfiles for live-reload
+
+custom_build(
+    'grc-claw/policy-api',
+    './grc-claw-deployment/docker/policy-api',
+    dockerfile='./grc-claw-deployment/docker/policy-api/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/policy-api', '/app'),
+        run('pip install -r /app/requirements.txt', trigger='./grc-claw-deployment/docker/policy-api/requirements.txt'),
+        restart_container(),
+    ],
+    entrypoint='python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload',
+)
+
+custom_build(
+    'grc-claw/pdp-service',
+    './grc-claw-deployment/docker/pdp-service',
+    dockerfile='./grc-claw-deployment/docker/pdp-service/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/pdp-service', '/app'),
+        run('go mod download', trigger='./grc-claw-deployment/docker/pdp-service/go.mod'),
+        run('go build -o /app/server ./cmd/server', trigger='./grc-claw-deployment/docker/pdp-service'),
+        restart_container(),
+    ],
+    entrypoint='/app/server',
+)
+
+custom_build(
+    'grc-claw/pep-gateway',
+    './grc-claw-deployment/docker/pep-gateway',
+    dockerfile='./grc-claw-deployment/docker/pep-gateway/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/pep-gateway', '/app'),
+        run('go mod download', trigger='./grc-claw-deployment/docker/pep-gateway/go.mod'),
+        run('go build -o /app/server ./cmd/server', trigger='./grc-claw-deployment/docker/pep-gateway'),
+        restart_container(),
+    ],
+    entrypoint='/app/server',
+)
+
+custom_build(
+    'grc-claw/agent-identity',
+    './grc-claw-deployment/docker/agent-identity',
+    dockerfile='./grc-claw-deployment/docker/agent-identity/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/agent-identity', '/app'),
+        run('go mod download', trigger='./grc-claw-deployment/docker/agent-identity/go.mod'),
+        run('go build -o /app/server ./cmd/server', trigger='./grc-claw-deployment/docker/agent-identity'),
+        restart_container(),
+    ],
+    entrypoint='/app/server',
+)
+
+custom_build(
+    'grc-claw/analytics-engine',
+    './grc-claw-deployment/docker/analytics-engine',
+    dockerfile='./grc-claw-deployment/docker/analytics-engine/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/analytics-engine', '/app'),
+        run('pip install -r /app/requirements.txt', trigger='./grc-claw-deployment/docker/analytics-engine/requirements.txt'),
+        restart_container(),
+    ],
+    entrypoint='python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload',
+)
+
+custom_build(
+    'grc-claw/reporting-engine',
+    './grc-claw-deployment/docker/reporting-engine',
+    dockerfile='./grc-claw-deployment/docker/reporting-engine/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/reporting-engine', '/app'),
+        run('pip install -r /app/requirements.txt', trigger='./grc-claw-deployment/docker/reporting-engine/requirements.txt'),
+        restart_container(),
+    ],
+    entrypoint='python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload',
+)
+
+custom_build(
+    'grc-claw/evidence-collector',
+    './grc-claw-deployment/docker/evidence-collector',
+    dockerfile='./grc-claw-deployment/docker/evidence-collector/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/evidence-collector', '/app'),
+        run('pip install -r /app/requirements.txt', trigger='./grc-claw-deployment/docker/evidence-collector/requirements.txt'),
+        restart_container(),
+    ],
+    entrypoint='python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload',
+)
+
+custom_build(
+    'grc-claw/evidence-validator',
+    './grc-claw-deployment/docker/evidence-validator',
+    dockerfile='./grc-claw-deployment/docker/evidence-validator/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/evidence-validator', '/app'),
+        run('pip install -r /app/requirements.txt', trigger='./grc-claw-deployment/docker/evidence-validator/requirements.txt'),
+        restart_container(),
+    ],
+    entrypoint='python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload',
+)
+
+custom_build(
+    'grc-claw/compliance-mapping',
+    './grc-claw-deployment/docker/compliance-mapping',
+    dockerfile='./grc-claw-deployment/docker/compliance-mapping/Dockerfile',
+    target='builder',
+    live_update=[
+        sync('./grc-claw-deployment/docker/compliance-mapping', '/app'),
+        run('pip install -r /app/requirements.txt', trigger='./grc-claw-deployment/docker/compliance-mapping/requirements.txt'),
+        restart_container(),
+    ],
+    entrypoint='python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload',
+)
+
+custom_build(
+    'grc-claw/gateway',
+    '.',
+    dockerfile='./deploy/Dockerfile',
+    target='build',
+    live_update=[
+        sync('./packages/gateway', '/app/packages/gateway'),
+        run('npm install', trigger='./package.json'),
+        run('npm run build', trigger='./packages/gateway'),
+        restart_container(),
+    ],
+    entrypoint='node packages/gateway/dist/cli.js',
+)
+
+# ── Port Forwards ────────────────────────────────────────────────────────────
+
+# Gateway
+k8s_resource(
+    'grc-claw-gateway',
+    port_forwards=['18791:18791'],
+    resource_deps=['policy-api', 'pdp-service', 'pep-gateway', 'agent-identity'],
+)
+
+# Grafana
+k8s_resource(
+    'grafana',
+    port_forwards=['3000:3000'],
+    resource_deps=['prometheus'],
+)
+
+# Prometheus
+k8s_resource(
+    'prometheus',
+    port_forwards=['9090:9090'],
+)
+
+# Jaeger
+k8s_resource(
+    'jaeger',
+    port_forwards=['16686:16686'],
+)
+
+# MinIO
+k8s_resource(
+    'minio',
+    port_forwards=['9000:9000', '9001:9001'],
+)
+
+# Vault
+k8s_resource(
+    'vault',
+    port_forwards=['8200:8200'],
+)
+
+# Control plane services
+k8s_resource('policy-api', port_forwards=['8081:8080'])
+k8s_resource('pdp-service', port_forwards=['8082:8080'])
+k8s_resource('pep-gateway', port_forwards=['8083:8080'])
+k8s_resource('agent-identity', port_forwards=['8084:8080'])
+
+# Analytics
+k8s_resource('analytics-engine', port_forwards=['8085:8080'])
+k8s_resource('reporting-engine', port_forwards=['8086:8080'])
+
+# Evidence
+k8s_resource('evidence-collector', port_forwards=['8087:8080'])
+k8s_resource('evidence-validator', port_forwards=['8088:8080'])
+k8s_resource('compliance-mapping', port_forwards=['8089:8080'])
+
+# ── Resource Groups ─────────────────────────────────────────────────────────
+
+# Group resources by tier for the Tilt UI
+
+local_resource(
+    'init-db',
+    cmd='./scripts/init-local-db.sh',
+    deps=['./scripts/init-local-db.sh'],
+    resource_deps=['postgres'],
+)
+
+local_resource(
+    'seed-data',
+    cmd='./scripts/seed-local-data.sh',
+    deps=['./scripts/seed-local-data.sh'],
+    resource_deps=['init-db'],
+)
+
+# ── Health Checks ────────────────────────────────────────────────────────────
+
+# Wait for data layer before deploying services
+k8s_resource(
+    'postgres',
+    readiness_probe={
+        'exec': {
+            'command': ['pg_isready', '-U', 'grc_claw', '-d', 'grc_claw'],
+        },
+        'period_secs': 5,
+        'failure_threshold': 12,
+    },
+)
+
+k8s_resource(
+    'redis',
+    readiness_probe={
+        'exec': {
+            'command': ['redis-cli', 'ping'],
+        },
+        'period_secs': 5,
+        'failure_threshold': 12,
+    },
+)
+
+k8s_resource(
+    'kafka',
+    readiness_probe={
+        'exec': {
+            'command': ['kafka-broker-api-versions', '--bootstrap-server', 'localhost:9092'],
+        },
+        'period_secs': 10,
+        'failure_threshold': 12,
+    },
+)
+
+# ── Environment ─────────────────────────────────────────────────────────────
+
+# Load .env file for local development
+dotenv('./.env.local')
+
+# ── Extensions ───────────────────────────────────────────────────────────────
+
+# Load Tilt extensions if present
+load('ext://helm_resource', 'helm_resource')
+load('ext://portforward', 'portforward')

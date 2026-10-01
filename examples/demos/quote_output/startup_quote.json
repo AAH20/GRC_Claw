@@ -1,0 +1,114 @@
+{
+  "quote_id": "GRC-F06EC5EA",
+  "created_at": "2026-10-01T13:19:44.126947",
+  "valid_until": "2026-10-31T13:19:44.126947",
+  "organization": {
+    "name": "TechFlow Inc.",
+    "industry": "technology",
+    "agents": 5,
+    "models": 2,
+    "policies": 8,
+    "evidence_volume_gb": 50,
+    "frameworks": [
+      "SOC 2",
+      "ISO 27001"
+    ],
+    "deployment_model": "cloud_saas",
+    "support_level": "standard",
+    "pricing_tier": "startup"
+  },
+  "line_items": [
+    {
+      "description": "GRC Agent License (5 agents)",
+      "quantity": 5.0,
+      "unit_price": 12000,
+      "unit": "agent/year",
+      "category": "license",
+      "subtotal": 60000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 60000.0
+    },
+    {
+      "description": "AI Model License (2 models)",
+      "quantity": 2.0,
+      "unit_price": 6000,
+      "unit": "model/year",
+      "category": "license",
+      "subtotal": 12000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 12000.0
+    },
+    {
+      "description": "Policy Management (8 policies)",
+      "quantity": 8.0,
+      "unit_price": 240,
+      "unit": "policy/year",
+      "category": "management",
+      "subtotal": 1920.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 1920.0
+    },
+    {
+      "description": "Evidence Storage (50 GB)",
+      "quantity": 50,
+      "unit_price": 0.5,
+      "unit": "GB/year",
+      "category": "storage",
+      "subtotal": 25.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 25.0
+    },
+    {
+      "description": "Framework Compliance: SOC 2",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 3600.0
+    },
+    {
+      "description": "Framework Compliance: ISO 27001",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 3600.0
+    }
+  ],
+  "summary": {
+    "subtotal": 81145.0,
+    "volume_discount_pct": 0.0,
+    "volume_discount_amount": 0.0,
+    "support_multiplier": 1.0,
+    "deployment_multiplier": 1.0,
+    "total_before_tax": 87636.6,
+    "tax_rate": 0.0,
+    "tax_amount": 0.0,
+    "total": 87636.6,
+    "annual_cost": 87636.6,
+    "monthly_cost": 7303.05
+  },
+  "assumptions": [
+    "Annual billing cycle",
+    "Cloud Saas deployment",
+    "Standard support included",
+    "Up to 50 GB evidence storage",
+    "2 compliance framework(s): SOC 2, ISO 27001",
+    "Startup pricing applied (10% discount)"
+  ],
+  "notes": [
+    "All pricing in USD",
+    "Volume discounts applied automatically",
+    "Custom frameworks available upon request"
+  ]
+}

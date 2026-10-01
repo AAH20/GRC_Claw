@@ -1,0 +1,14 @@
+[
+  {
+    "id": "ev-e74a03b1d1bf3f69",
+    "control_id": "CC6.1",
+    "tenant_id": 1,
+    "sha256": "e74a03b1d1bf3f69f6f97a3b545f559d7cc50ecf361f8a279bfa16d67374a20f",
+    "uri": "./test-evidence.txt",
+    "collected_at": "2026-10-01T13:18:34.015603+00:00",
+    "lineage": {
+      "parent_hash": null,
+      "source": "cli"
+    }
+  }
+]

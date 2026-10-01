@@ -1,0 +1,160 @@
+{
+  "quote_id": "GRC-3754788B",
+  "created_at": "2026-10-01T13:19:44.130484",
+  "valid_until": "2026-10-31T13:19:44.130484",
+  "organization": {
+    "name": "GlobalBank Corp",
+    "industry": "banking",
+    "agents": 200,
+    "models": 15,
+    "policies": 50,
+    "evidence_volume_gb": 2000,
+    "frameworks": [
+      "SOC 2",
+      "ISO 27001",
+      "PCI DSS",
+      "GDPR"
+    ],
+    "deployment_model": "private_cloud",
+    "support_level": "enterprise",
+    "pricing_tier": "enterprise"
+  },
+  "line_items": [
+    {
+      "description": "GRC Agent License (200 agents)",
+      "quantity": 200.0,
+      "unit_price": 12000,
+      "unit": "agent/year",
+      "category": "license",
+      "subtotal": 2400000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 240000.0,
+      "total": 2160000.0
+    },
+    {
+      "description": "AI Model License (15 models)",
+      "quantity": 15.0,
+      "unit_price": 6000,
+      "unit": "model/year",
+      "category": "license",
+      "subtotal": 90000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 9000.0,
+      "total": 81000.0
+    },
+    {
+      "description": "Policy Management (50 policies)",
+      "quantity": 50.0,
+      "unit_price": 240,
+      "unit": "policy/year",
+      "category": "management",
+      "subtotal": 12000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 1200.0,
+      "total": 10800.0
+    },
+    {
+      "description": "Evidence Storage (2000 GB)",
+      "quantity": 2000,
+      "unit_price": 0.5,
+      "unit": "GB/year",
+      "category": "storage",
+      "subtotal": 1000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 100.0,
+      "total": 900.0
+    },
+    {
+      "description": "Framework Compliance: SOC 2",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 360.0,
+      "total": 3240.0
+    },
+    {
+      "description": "Framework Compliance: ISO 27001",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 360.0,
+      "total": 3240.0
+    },
+    {
+      "description": "Framework Compliance: PCI DSS",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 360.0,
+      "total": 3240.0
+    },
+    {
+      "description": "Framework Compliance: GDPR",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 360.0,
+      "total": 3240.0
+    },
+    {
+      "description": "Support: Enterprise",
+      "quantity": 1.0,
+      "unit_price": 1258700.0,
+      "unit": "package",
+      "category": "support",
+      "subtotal": 1258700.0,
+      "discount_pct": 0.0,
+      "discount_amount": 125870.0,
+      "total": 1132830.0
+    },
+    {
+      "description": "Deployment: Private Cloud",
+      "quantity": 1.0,
+      "unit_price": 881090.0,
+      "unit": "infrastructure",
+      "category": "infrastructure",
+      "subtotal": 881090.0,
+      "discount_pct": 0.0,
+      "discount_amount": 88109.0,
+      "total": 792981.0
+    }
+  ],
+  "summary": {
+    "subtotal": 4657190.0,
+    "volume_discount_pct": 10.0,
+    "volume_discount_amount": 251740.0,
+    "support_multiplier": 1.5,
+    "deployment_multiplier": 1.35,
+    "total_before_tax": 6265434.92,
+    "tax_rate": 0.0,
+    "tax_amount": 0.0,
+    "total": 6265434.92,
+    "annual_cost": 6265434.92,
+    "monthly_cost": 522119.58
+  },
+  "assumptions": [
+    "Annual billing cycle",
+    "Private Cloud deployment",
+    "Enterprise support included",
+    "Up to 2000 GB evidence storage",
+    "4 compliance framework(s): SOC 2, ISO 27001, PCI DSS, GDPR",
+    "Enterprise tier pricing applied (15% premium for advanced features)"
+  ],
+  "notes": [
+    "All pricing in USD",
+    "Volume discounts applied automatically",
+    "Custom frameworks available upon request"
+  ]
+}

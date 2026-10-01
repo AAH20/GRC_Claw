@@ -454,6 +454,93 @@ npx changeset publish
 
 ---
 
+## IDE Setup
+
+### VS Code Extensions
+
+Install recommended extensions:
+
+```bash
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+code --install-extension ms-vscode.vscode-typescript-next
+code --install-extension redhat.vscode-yaml
+code --install-extension ms-azuretools.vscode-docker
+code --install-extension github.copilot
+code --install-extension eamodio.gitlens
+```
+
+### VS Code Settings
+
+Settings are pre-configured in `.vscode/settings.json`:
+- TypeScript SDK points to workspace version
+- Format on save enabled
+- ESLint auto-fix on save
+- Prettier as default formatter
+
+### Recommended VS Code Settings
+
+Add to your user settings for better experience:
+
+```json
+{
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "typescript.suggest.autoImports": true,
+  "javascript.suggest.autoImports": true,
+  "editor.suggestSelection": "first",
+  "editor.acceptSuggestionOnEnter": "on"
+}
+```
+
+---
+
+## Architecture Overview
+
+### Core Components
+
+1. **Gateway** (`packages/gateway`): Supervised control-plane gateway daemon
+2. **Core** (`packages/core`): Domain types and GRCEngineFacade
+3. **SDK** (`packages/sdk`): Compliance-as-Code SDK with grcfile.yaml support
+4. **CLI** (`packages/cli`): Command-line interface
+5. **MCP Server** (`packages/mcp-server`): Model Context Protocol server
+
+### Key Packages
+
+- **Evidence**: Evidence collection and management
+- **Agent Identity**: Agent identity and trust management
+- **Compliance Orchestrator**: Orchestration of compliance workflows
+- **Policy Management**: Policy definition and enforcement
+- **Risk Assessment**: Risk quantification and assessment
+- **Audit Management**: Audit trail and reporting
+- **Incident Response**: Incident management workflows
+- **Persistence**: Data persistence layer
+- **Observability**: Monitoring, logging, and tracing
+
+### Communication
+
+- **REST API**: Gateway exposes REST API on port 18791
+- **gRPC**: Inter-service communication on port 50051
+- **MCP**: Model Context Protocol for AI agent integration
+
+### Data Flow
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Console   │────▶│   Gateway   │────▶│   Core      │
+│   (Web UI)  │     │   (REST)    │     │   Engine    │
+└─────────────┘     └─────────────┘     └─────────────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │  Services   │
+                    │  (gRPC)     │
+                    └─────────────┘
+```
+
+---
+
 ## Troubleshooting
 
 See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues and solutions.

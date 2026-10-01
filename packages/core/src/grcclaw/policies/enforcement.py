@@ -1,15 +1,17 @@
 """
-Policy Enforcement
+Policy Enforcement Engine for GRC_Claw.
 
-Evaluates enforcement rules against targets, collects findings,
-tracks remediation, and generates evidence.
+Provides configurable enforcement rules with pluggable evaluators,
+batch enforcement, and finding management.
 """
 
 from __future__ import annotations
 
+import logging
 import uuid
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from typing import Optional
 
 from .models import (
     Policy,
@@ -19,173 +21,189 @@ from .models import (
     EnforcementResult,
     EnforcementMode,
     PolicyPriority,
-    PolicyStatus,
 )
 
-
-class PolicyEnforcementError(Exception):
-    """Raised when enforcement evaluation fails."""
-    pass
+logger = logging.getLogger(__name__)
 
 
-class RuleEvaluator:
-    """Base class for rule evaluators."""
+class RuleEvaluator(ABC):
+    """Abstract base class for rule evaluators."""
 
-    def evaluate(
-        self,
-        rule: EnforcementRule,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
-    ) -> list[EnforcementFinding]:
-        """Evaluate a rule against a target. Override in subclasses."""
-        return []
+    @abstractmethod
+    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
+        """Evaluate a rule against a target."""
+        pass
 
 
 class TagCheckEvaluator(RuleEvaluator):
     """Evaluates tag-based compliance rules."""
 
-    def evaluate(
-        self,
-        rule: EnforcementRule,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
-    ) -> list[EnforcementFinding]:
-        findings: list[EnforcementFinding] = []
+    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
         condition = rule.condition
         required_tags = condition.get("required_tags", [])
         target_tags = target.get("tags", [])
 
-        missing = [t for t in required_tags if t not in target_tags]
-        if missing:
+        missing_tags = [t for t in required_tags if t not in target_tags]
+        findings: list[EnforcementFinding] = []
+
+        if missing_tags:
             findings.append(EnforcementFinding(
                 severity=rule.severity,
-                title=f"Missing required tags: {', '.join(missing)}",
+                title=f"Missing required tags: {', '.join(missing_tags)}",
                 description=f"Target {target.get('id', 'unknown')} is missing required tags",
                 evidence=f"Required: {required_tags}, Found: {target_tags}",
-                remediation=f"Add missing tags: {', '.join(missing)}",
+                remediation=f"Add missing tags: {', '.join(missing_tags)}",
             ))
 
-        return findings
+        result = EnforcementResult.PASS if not findings else EnforcementResult.FAIL
+        return EnforcementEvent(
+            policy_id=rule.policy_id,
+            rule_id=rule.id,
+            target_id=target.get("id", ""),
+            target_type=target.get("type", "unknown"),
+            result=result,
+            findings=findings,
+            remediation="; ".join(f.remediation for f in findings) if findings else "",
+        )
 
 
 class ConfigScanEvaluator(RuleEvaluator):
-    """Evaluates configuration compliance rules."""
+    """Evaluates configuration-based compliance rules."""
 
-    def evaluate(
-        self,
-        rule: EnforcementRule,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
-    ) -> list[EnforcementFinding]:
-        findings: list[EnforcementFinding] = []
+    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
         condition = rule.condition
-        config = target.get("config", {})
-        checks = condition.get("checks", [])
+        config_key = condition.get("config_key", "")
+        expected_value = condition.get("expected_value")
+        operator = condition.get("operator", "equals")
 
-        for check in checks:
-            path = check.get("path", "")
-            expected = check.get("expected")
-            actual = self._get_nested_value(config, path)
+        target_config = target.get("config", {})
+        actual_value = target_config.get(config_key)
 
-            if actual != expected:
-                findings.append(EnforcementFinding(
-                    severity=rule.severity,
-                    title=f"Config mismatch at {path}",
-                    description=f"Expected '{expected}', found '{actual}'",
-                    evidence=f"Config path: {path}, Actual: {actual}",
-                    remediation=check.get("remediation", f"Set {path} to {expected}"),
-                ))
+        findings: list[EnforcementFinding] = []
+        passed = self._compare(actual_value, expected_value, operator)
 
-        return findings
+        if not passed:
+            findings.append(EnforcementFinding(
+                severity=rule.severity,
+                title=f"Configuration mismatch: {config_key}",
+                description=f"Expected {config_key} {operator} {expected_value}, got {actual_value}",
+                evidence=f"Config key: {config_key}, Actual: {actual_value}",
+                remediation=f"Set {config_key} to {expected_value}",
+            ))
 
-    def _get_nested_value(self, data: dict[str, Any], path: str) -> Any:
-        """Get a nested dictionary value by dot-separated path."""
-        keys = path.split(".")
-        current = data
-        for key in keys:
-            if isinstance(current, dict):
-                current = current.get(key)
-            else:
-                return None
-        return current
+        result = EnforcementResult.PASS if not findings else EnforcementResult.FAIL
+        return EnforcementEvent(
+            policy_id=rule.policy_id,
+            rule_id=rule.id,
+            target_id=target.get("id", ""),
+            target_type=target.get("type", "unknown"),
+            result=result,
+            findings=findings,
+            remediation="; ".join(f.remediation for f in findings) if findings else "",
+        )
+
+    def _compare(self, actual, expected, operator: str) -> bool:
+        """Compare values based on operator."""
+        if operator == "equals":
+            return actual == expected
+        elif operator == "not_equals":
+            return actual != expected
+        elif operator == "contains":
+            return expected in actual if actual else False
+        elif operator == "greater_than":
+            return actual > expected if actual is not None else False
+        elif operator == "less_than":
+            return actual < expected if actual is not None else False
+        elif operator == "exists":
+            return actual is not None
+        return False
 
 
 class AccessReviewEvaluator(RuleEvaluator):
-    """Evaluates access control compliance rules."""
+    """Evaluates access review compliance rules."""
 
-    def evaluate(
-        self,
-        rule: EnforcementRule,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
-    ) -> list[EnforcementFinding]:
-        findings: list[EnforcementFinding] = []
+    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
         condition = rule.condition
-        max_permissions = condition.get("max_permissions", 10)
-        required_approvals = condition.get("required_approvals", [])
-        permissions = target.get("permissions", [])
+        max_access_age_days = condition.get("max_access_age_days", 90)
+        required_review = condition.get("required_review", True)
 
-        if len(permissions) > max_permissions:
-            findings.append(EnforcementFinding(
-                severity=rule.severity,
-                title="Excessive permissions",
-                description=f"Target has {len(permissions)} permissions (max: {max_permissions})",
-                evidence=f"Permissions: {permissions}",
-                remediation="Review and reduce permissions to minimum required",
-            ))
+        target_access = target.get("access", {})
+        last_review = target_access.get("last_review_date")
+        has_access = target_access.get("has_access", False)
 
-        for req in required_approvals:
-            if req not in permissions:
+        findings: list[EnforcementFinding] = []
+
+        if has_access and required_review:
+            if not last_review:
                 findings.append(EnforcementFinding(
                     severity=rule.severity,
-                    title=f"Missing required approval: {req}",
-                    description=f"Required approval '{req}' not found",
-                    evidence=f"Required: {required_approvals}, Found: {permissions}",
-                    remediation=f"Add required approval: {req}",
+                    title="Access review missing",
+                    description=f"Target {target.get('id', 'unknown')} has access but no review date",
+                    evidence="No last_review_date found",
+                    remediation="Conduct access review immediately",
                 ))
+            else:
+                try:
+                    review_date = datetime.fromisoformat(last_review)
+                    age_days = (datetime.now(timezone.utc) - review_date).days
+                    if age_days > max_access_age_days:
+                        findings.append(EnforcementFinding(
+                            severity=rule.severity,
+                            title=f"Access review overdue ({age_days} days)",
+                            description=f"Last review was {age_days} days ago (max: {max_access_age_days})",
+                            evidence=f"Last review: {last_review}",
+                            remediation="Schedule access review",
+                        ))
+                except ValueError:
+                    findings.append(EnforcementFinding(
+                        severity=rule.severity,
+                        title="Invalid review date format",
+                        description=f"Cannot parse last_review_date: {last_review}",
+                        evidence=f"Value: {last_review}",
+                        remediation="Fix date format to ISO 8601",
+                    ))
 
-        return findings
+        result = EnforcementResult.PASS if not findings else EnforcementResult.FAIL
+        return EnforcementEvent(
+            policy_id=rule.policy_id,
+            rule_id=rule.id,
+            target_id=target.get("id", ""),
+            target_type=target.get("type", "unknown"),
+            result=result,
+            findings=findings,
+            remediation="; ".join(f.remediation for f in findings) if findings else "",
+        )
 
 
 class PolicyEnforcementEngine:
-    """Engine for evaluating policy enforcement rules."""
+    """Core enforcement engine."""
 
     def __init__(self) -> None:
-        self._evaluators: dict[str, RuleEvaluator] = {
-            "tag_check": TagCheckEvaluator(),
-            "config_scan": ConfigScanEvaluator(),
-            "access_review": AccessReviewEvaluator(),
-        }
-        self._events: dict[str, EnforcementEvent] = {}
-        self._custom_evaluators: dict[str, Callable] = {}
+        self._evaluators: dict[str, RuleEvaluator] = {}
+        self._events: dict[str, list[EnforcementEvent]] = {}
+        self._register_default_evaluators()
 
-    # ── Evaluator Registration ─────────────────────────────────────────────
+    def _register_default_evaluators(self) -> None:
+        """Register built-in evaluators."""
+        self._evaluators["tag_check"] = TagCheckEvaluator()
+        self._evaluators["config_scan"] = ConfigScanEvaluator()
+        self._evaluators["access_review"] = AccessReviewEvaluator()
 
     def register_evaluator(self, rule_type: str, evaluator: RuleEvaluator) -> None:
         """Register a custom rule evaluator."""
         self._evaluators[rule_type] = evaluator
-
-    def register_custom_evaluator(
-        self,
-        rule_type: str,
-        evaluator_fn: Callable[[EnforcementRule, dict[str, Any], Optional[dict[str, Any]]], list[EnforcementFinding]],
-    ) -> None:
-        """Register a custom evaluator function."""
-        self._custom_evaluators[rule_type] = evaluator_fn
-
-    # ── Rule Management ────────────────────────────────────────────────────
 
     def add_rule(
         self,
         policy_id: str,
         name: str,
         rule_type: str,
-        condition: dict[str, Any],
-        action: Optional[dict[str, Any]] = None,
+        condition: dict,
+        action: Optional[dict] = None,
         severity: PolicyPriority = PolicyPriority.MEDIUM,
         target_scope: Optional[list[str]] = None,
     ) -> EnforcementRule:
-        """Add an enforcement rule to a policy."""
+        """Add an enforcement rule."""
         rule = EnforcementRule(
             policy_id=policy_id,
             name=name,
@@ -197,208 +215,91 @@ class PolicyEnforcementEngine:
         )
         return rule
 
-    def remove_rule(self, policy: Policy, rule_id: str) -> bool:
-        """Remove an enforcement rule from a policy."""
-        original_len = len(policy.enforcement_rules)
-        policy.enforcement_rules = [r for r in policy.enforcement_rules if r.id != rule_id]
-        return len(policy.enforcement_rules) < original_len
-
-    def enable_rule(self, rule: EnforcementRule) -> None:
-        """Enable an enforcement rule."""
-        rule.enabled = True
-
-    def disable_rule(self, rule: EnforcementRule) -> None:
-        """Disable an enforcement rule."""
-        rule.enabled = False
-
-    # ── Enforcement Execution ──────────────────────────────────────────────
-
     def evaluate_policy(
         self,
         policy: Policy,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        target: dict,
+        context: Optional[dict] = None,
     ) -> EnforcementEvent:
-        """Evaluate all enabled rules in a policy against a target."""
+        """Evaluate all rules in a policy against a target."""
         if policy.enforcement_mode == EnforcementMode.DISABLED:
             return EnforcementEvent(
                 policy_id=policy.id,
-                target_id=target.get("id", "unknown"),
+                rule_id="",
+                target_id=target.get("id", ""),
                 target_type=target.get("type", "unknown"),
                 result=EnforcementResult.NOT_APPLICABLE,
                 findings=[],
-                enforced_by="system",
+                remediation="",
             )
 
         all_findings: list[EnforcementFinding] = []
+        overall_result = EnforcementResult.PASS
 
         for rule in policy.enforcement_rules:
             if not rule.enabled:
                 continue
-
             if rule.target_scope and target.get("type", "") not in rule.target_scope:
                 continue
 
-            findings = self._evaluate_rule(rule, target, context)
-            all_findings.extend(findings)
+            evaluator = self._evaluators.get(rule.rule_type)
+            if not evaluator:
+                logger.warning(f"No evaluator for rule type '{rule.rule_type}'")
+                continue
 
-        # Determine overall result
-        if not all_findings:
-            result = EnforcementResult.PASS
-        elif any(f.severity == PolicyPriority.CRITICAL for f in all_findings):
-            result = EnforcementResult.FAIL
-        elif any(f.severity == PolicyPriority.HIGH for f in all_findings):
-            result = EnforcementResult.FAIL
-        elif any(f.severity == PolicyPriority.MEDIUM for f in all_findings):
-            result = EnforcementResult.WARNING
-        else:
-            result = EnforcementResult.WARNING
+            event = evaluator.evaluate(rule, target, context)
+            all_findings.extend(event.findings)
 
-        # Advisory mode downgrades FAIL to WARNING
-        if policy.enforcement_mode == EnforcementMode.ADVISORY and result == EnforcementResult.FAIL:
-            result = EnforcementResult.WARNING
+            if event.result == EnforcementResult.FAIL:
+                overall_result = EnforcementResult.FAIL
+            elif event.result == EnforcementResult.WARNING and overall_result == EnforcementResult.PASS:
+                overall_result = EnforcementResult.WARNING
 
+        # Aggregate event
         event = EnforcementEvent(
             policy_id=policy.id,
-            target_id=target.get("id", "unknown"),
+            rule_id="",
+            target_id=target.get("id", ""),
             target_type=target.get("type", "unknown"),
-            result=result,
+            result=overall_result,
             findings=all_findings,
-            enforced_by="system",
+            remediation="; ".join(f.remediation for f in all_findings) if all_findings else "",
         )
 
-        self._events[event.id] = event
-        return event
+        if policy.id not in self._events:
+            self._events[policy.id] = []
+        self._events[policy.id].append(event)
 
-    def evaluate_rule(
-        self,
-        rule: EnforcementRule,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
-    ) -> list[EnforcementFinding]:
-        """Evaluate a single rule against a target."""
-        return self._evaluate_rule(rule, target, context)
+        return event
 
     def batch_evaluate(
         self,
         policy: Policy,
-        targets: list[dict[str, Any]],
-        context: Optional[dict[str, Any]] = None,
+        targets: list[dict],
+        context: Optional[dict] = None,
     ) -> list[EnforcementEvent]:
         """Evaluate a policy against multiple targets."""
         return [self.evaluate_policy(policy, target, context) for target in targets]
 
-    # ── Remediation Tracking ───────────────────────────────────────────────
-
-    def acknowledge_finding(
-        self,
-        event_id: str,
-        finding_id: str,
-        acknowledged_by: str,
-    ) -> bool:
-        """Acknowledge a finding without remediation."""
-        event = self._events.get(event_id)
-        if not event:
-            return False
-
-        for finding in event.findings:
-            if finding.id == finding_id:
-                finding.status = "acknowledged"
-                return True
-        return False
-
-    def mark_remediated(
-        self,
-        event_id: str,
-        finding_id: str,
-        remediated_by: str,
-        evidence: str = "",
-    ) -> bool:
-        """Mark a finding as remediated."""
-        event = self._events.get(event_id)
-        if not event:
-            return False
-
-        for finding in event.findings:
-            if finding.id == finding_id:
-                finding.status = "remediated"
-                if evidence:
-                    finding.evidence = evidence
-                return True
-        return False
-
-    def accept_risk(
-        self,
-        event_id: str,
-        finding_id: str,
-        accepted_by: str,
-        reason: str = "",
-    ) -> bool:
-        """Accept a finding as risk."""
-        event = self._events.get(event_id)
-        if not event:
-            return False
-
-        for finding in event.findings:
-            if finding.id == finding_id:
-                finding.status = "accepted_risk"
-                if reason:
-                    finding.remediation = reason
-                return True
-        return False
-
-    # ── Event Queries ──────────────────────────────────────────────────────
-
-    def get_event(self, event_id: str) -> Optional[EnforcementEvent]:
-        """Retrieve an enforcement event."""
-        return self._events.get(event_id)
-
     def get_events_for_policy(self, policy_id: str) -> list[EnforcementEvent]:
         """Get all enforcement events for a policy."""
-        return [e for e in self._events.values() if e.policy_id == policy_id]
+        return self._events.get(policy_id, [])
 
-    def get_events_for_target(self, target_id: str) -> list[EnforcementEvent]:
-        """Get all enforcement events for a target."""
-        return [e for e in self._events.values() if e.target_id == target_id]
-
-    def get_open_findings(self, policy_id: Optional[str] = None) -> list[dict[str, Any]]:
+    def get_open_findings(self, policy_id: Optional[str] = None) -> list[dict]:
         """Get all open findings, optionally filtered by policy."""
-        findings: list[dict[str, Any]] = []
-        for event in self._events.values():
-            if policy_id and event.policy_id != policy_id:
-                continue
+        findings: list[dict] = []
+        events = self._events.get(policy_id, []) if policy_id else [e for events in self._events.values() for e in events]
+        for event in events:
             for finding in event.findings:
                 if finding.status == "open":
                     findings.append({
-                        "event_id": event.id,
+                        "id": finding.id,
                         "policy_id": event.policy_id,
                         "target_id": event.target_id,
-                        "finding": finding,
+                        "severity": finding.severity.value,
+                        "title": finding.title,
+                        "description": finding.description,
+                        "remediation": finding.remediation,
+                        "status": finding.status,
                     })
         return findings
-
-    # ── Internal Helpers ───────────────────────────────────────────────────
-
-    def _evaluate_rule(
-        self,
-        rule: EnforcementRule,
-        target: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
-    ) -> list[EnforcementFinding]:
-        """Evaluate a single rule using the appropriate evaluator."""
-        # Check custom evaluators first
-        if rule.rule_type in self._custom_evaluators:
-            return self._custom_evaluators[rule.rule_type](rule, target, context)
-
-        # Use registered evaluators
-        evaluator = self._evaluators.get(rule.rule_type)
-        if evaluator:
-            return evaluator.evaluate(rule, target, context)
-
-        # Unknown rule type — return error finding
-        return [EnforcementFinding(
-            severity=PolicyPriority.HIGH,
-            title=f"Unknown rule type: {rule.rule_type}",
-            description=f"No evaluator registered for rule type '{rule.rule_type}'",
-            remediation="Register an evaluator for this rule type",
-        )]

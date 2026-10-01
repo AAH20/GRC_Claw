@@ -1,0 +1,1289 @@
+{
+  "info": {
+    "name": "GRC_Claw API",
+    "description": "Complete GRC_Claw API collection covering all 40+ endpoints for AI governance, risk, and compliance management.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.grc-claw.io"
+    },
+    {
+      "key": "apiKey",
+      "value": "grc_live_abc123..."
+    },
+    {
+      "key": "tenantId",
+      "value": "org-acme"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{apiKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["ready"]
+            }
+          }
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["metrics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Policies",
+      "item": [
+        {
+          "name": "List Policies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "privacy",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policy_key\": \"AI-ETHICS-001\",\n  \"name\": \"Data Access Control Policy\",\n  \"category\": \"privacy\",\n  \"description\": \"Controls access to sensitive data by AI agents\",\n  \"framework_tags\": [\"NIST-800-53\", \"SOC2\"],\n  \"cedar_policy\": \"permit(principal, action, resource) when { principal.role == \\\"analyst\\\" };\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies"]
+            }
+          }
+        },
+        {
+          "name": "Get Policy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001"]
+            }
+          }
+        },
+        {
+          "name": "Update Policy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Data Access Control Policy v2\",\n  \"description\": \"Updated with stricter controls\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001"]
+            }
+          }
+        },
+        {
+          "name": "Delete Policy",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001?force=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001"],
+              "query": [
+                {
+                  "key": "force",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Compile Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001/compile",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001", "compile"]
+            }
+          }
+        },
+        {
+          "name": "Dry Run Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"test_inputs\": [\n    {\"principal\": {\"role\": \"analyst\"}, \"action\": \"read\", \"resource\": {\"classification\": \"public\"}},\n    {\"principal\": {\"role\": \"intern\"}, \"action\": \"read\", \"resource\": {\"classification\": \"confidential\"}}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001/dry-run",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001", "dry-run"]
+            }
+          }
+        },
+        {
+          "name": "Get Policy Versions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001/versions",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001", "versions"]
+            }
+          }
+        },
+        {
+          "name": "Get Policy Dependencies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/policies/pol-001/dependencies",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "policies", "pol-001", "dependencies"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence",
+      "item": [
+        {
+          "name": "Search Evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/evidence?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "evidence"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "policy_id",
+                  "value": "pol-001",
+                  "disabled": true
+                },
+                {
+                  "key": "evidence_type",
+                  "value": "artifact",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": {\"type\": \"automated_scan\", \"system\": \"nessus\", \"collection_method\": \"api\"},\n  \"evidence_type\": \"artifact\",\n  \"content\": {\"format\": \"application/json\", \"data\": \"{\\\"scan_id\\\": \\\"scan-123\\\"}\"},\n  \"policy_id\": \"pol-001\",\n  \"context\": {\"environment\": \"production\", \"region\": \"us-east-1\"},\n  \"control_mapping\": {\"control_id\": \"AC-2\", \"framework\": \"NIST-800-53\"}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/evidence",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "evidence"]
+            }
+          }
+        },
+        {
+          "name": "Get Evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/evidence/evd-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "evidence", "evd-001"]
+            }
+          }
+        },
+        {
+          "name": "Verify Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/evidence/evd-001/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "evidence", "evd-001", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Export Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"framework\": \"NIST-800-53\",\n  \"time_range\": {\"start\": \"2024-01-01T00:00:00Z\", \"end\": \"2024-01-31T23:59:59Z\"},\n  \"format\": \"json\",\n  \"include_chain_of_custody\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/evidence/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "evidence", "export"]
+            }
+          }
+        },
+        {
+          "name": "Get Export Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/evidence/export/pkg-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "evidence", "export", "pkg-001"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enforcement",
+      "item": [
+        {
+          "name": "Single Decision",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"agent-42\",\n  \"action\": \"read\",\n  \"resource\": \"s3://data/public/dataset.csv\",\n  \"context\": {\"environment\": \"production\"},\n  \"policy_ids\": [\"pol-001\"],\n  \"include_evidence\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/enforcement/decide",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "enforcement", "decide"]
+            }
+          }
+        },
+        {
+          "name": "Batch Decision",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decisions\": [\n    {\"agent_id\": \"agent-1\", \"action\": \"read\", \"resource\": \"s3://bucket/file1.csv\"},\n    {\"agent_id\": \"agent-2\", \"action\": \"write\", \"resource\": \"s3://bucket/file2.csv\"}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/enforcement/decide-batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "enforcement", "decide-batch"]
+            }
+          }
+        },
+        {
+          "name": "Get Decision",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/enforcement/decisions/dec-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "enforcement", "decisions", "dec-001"]
+            }
+          }
+        },
+        {
+          "name": "List Decisions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/enforcement/decisions?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "enforcement", "decisions"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "agent_id",
+                  "value": "agent-42",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assessments",
+      "item": [
+        {
+          "name": "List Assessments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/assessments?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "assessments"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessment_key\": \"RISK-2024-Q1\",\n  \"title\": \"Q1 2024 Risk Assessment\",\n  \"assessment_type\": \"risk\",\n  \"target_id\": \"org-acme\",\n  \"target_type\": \"organization\",\n  \"description\": \"Quarterly risk assessment\",\n  \"methodology\": \"NIST RMF\",\n  \"lead_assessor\": \"security-team\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/assessments",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "assessments"]
+            }
+          }
+        },
+        {
+          "name": "Get Assessment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/assessments/asm-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "assessments", "asm-001"]
+            }
+          }
+        },
+        {
+          "name": "Update Assessment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"score\": 85.0,\n  \"risk_level\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/assessments/asm-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "assessments", "asm-001"]
+            }
+          }
+        },
+        {
+          "name": "Add Finding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"finding_key\": \"FIND-001\",\n  \"title\": \"Unrestricted data access\",\n  \"severity\": \"high\",\n  \"category\": \"access_control\",\n  \"description\": \"Agent has access to confidential data\",\n  \"policy_id\": \"pol-001\",\n  \"evidence_ids\": [\"evd-001\"],\n  \"remediation\": \"Implement RBAC\",\n  \"due_date\": \"2024-02-15T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/assessments/asm-001/findings",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "assessments", "asm-001", "findings"]
+            }
+          }
+        },
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"pdf\",\n  \"include_evidence\": true,\n  \"include_remediation\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/assessments/asm-001/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "assessments", "asm-001", "report"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compliance",
+      "item": [
+        {
+          "name": "List Frameworks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/compliance/frameworks",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "compliance", "frameworks"]
+            }
+          }
+        },
+        {
+          "name": "List Controls",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/compliance/frameworks/fw-001/controls",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "compliance", "frameworks", "fw-001", "controls"]
+            }
+          }
+        },
+        {
+          "name": "Get Posture",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/compliance/posture?framework=NIST-800-53&target_id=org-acme&target_type=organization",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "compliance", "posture"],
+              "query": [
+                {
+                  "key": "framework",
+                  "value": "NIST-800-53"
+                },
+                {
+                  "key": "target_id",
+                  "value": "org-acme"
+                },
+                {
+                  "key": "target_type",
+                  "value": "organization"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Mapping",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"control_id\": \"ctrl-001\",\n  \"mapping_type\": \"policy\",\n  \"coverage\": \"full\",\n  \"policy_id\": \"pol-001\",\n  \"notes\": \"Policy fully covers this control\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/compliance/mappings",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "compliance", "mappings"]
+            }
+          }
+        },
+        {
+          "name": "Crosswalk",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/compliance/crosswalk?control_id=ctrl-001&framework=NIST-800-53&target_framework=SOC2",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "compliance", "crosswalk"],
+              "query": [
+                {
+                  "key": "control_id",
+                  "value": "ctrl-001"
+                },
+                {
+                  "key": "framework",
+                  "value": "NIST-800-53"
+                },
+                {
+                  "key": "target_framework",
+                  "value": "SOC2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"framework\": \"NIST-800-53\",\n  \"time_range\": {\"start\": \"2024-01-01T00:00:00Z\", \"end\": \"2024-01-31T23:59:59Z\"},\n  \"format\": \"json\",\n  \"include_evidence\": true,\n  \"include_gaps\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/compliance/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "compliance", "reports"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/agents?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "agents"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Data Analyst Agent\",\n  \"type\": \"agent\",\n  \"framework\": \"langchain\",\n  \"risk_tier\": \"limited\",\n  \"owner\": \"data-team\",\n  \"capabilities\": [\n    {\"name\": \"read_data\", \"permissions\": [\"s3:GetObject\"], \"resource_scope\": \"s3://data/public/*\"}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/agents",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "agents"]
+            }
+          }
+        },
+        {
+          "name": "Get Agent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/agents/agent-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "agents", "agent-1"]
+            }
+          }
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lifecycle_stage\": \"active\",\n  \"risk_tier\": \"minimal\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/agents/agent-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "agents", "agent-1"]
+            }
+          }
+        },
+        {
+          "name": "Update Trust Score",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 85,\n  \"grade\": \"B\",\n  \"reason\": \"Completed security review\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/agents/agent-1/trust-score",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "agents", "agent-1", "trust-score"]
+            }
+          }
+        },
+        {
+          "name": "Bind Policies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policy_ids\": [\"pol-001\", \"pol-002\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/agents/agent-1/policy-bindings",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "agents", "agent-1", "policy-bindings"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Query Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audit?limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "audit"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "event_type",
+                  "value": "policy.created",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Audit Chain",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_event_id\": \"evt-001\",\n  \"to_event_id\": \"evt-100\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audit/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "audit", "verify"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/webhooks/grc-claw\",\n  \"events\": [\"policy.created\", \"policy.updated\", \"enforcement.decision\"],\n  \"secret\": \"whsec_my_webhook_secret\",\n  \"description\": \"Production webhook\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Get Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions/sub-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "sub-001"]
+            }
+          }
+        },
+        {
+          "name": "Update Subscription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\"policy.created\", \"policy.updated\", \"enforcement.decision\", \"evidence.verified\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions/sub-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "sub-001"]
+            }
+          }
+        },
+        {
+          "name": "Delete Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions/sub-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "sub-001"]
+            }
+          }
+        },
+        {
+          "name": "Test Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions/sub-001/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "sub-001", "test"]
+            }
+          }
+        },
+        {
+          "name": "Get Delivery History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/webhooks/subscriptions/sub-001/deliveries",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "sub-001", "deliveries"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Composed",
+      "item": [
+        {
+          "name": "Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/composed/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "composed", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Agent 360",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/composed/agents/agent-1/360",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "composed", "agents", "agent-1", "360"]
+            }
+          }
+        },
+        {
+          "name": "Compliance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/composed/compliance-report",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "composed", "compliance-report"]
+            }
+          }
+        },
+        {
+          "name": "Executive Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/composed/executive-summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "composed", "executive-summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL",
+      "item": [
+        {
+          "name": "GraphQL Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetPolicies($limit: Int!) { policies(limit: $limit) { id name status version category } }\",\n  \"variables\": {\"limit\": 10}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "graphql"]
+            }
+          }
+        },
+        {
+          "name": "GraphQL Mutation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenantId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreatePolicy($input: PolicyInput!) { createPolicy(input: $input) { id name status } }\",\n  \"variables\": {\"input\": {\"name\": \"New Policy\", \"category\": \"privacy\"}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1.0", "graphql"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

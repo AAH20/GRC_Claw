@@ -153,28 +153,37 @@ class GapDetector:
         existing_names = {g.name.lower() for g in self.gaps}
         existing_ids = {g.id for g in self.gaps}
 
-        gap_pattern = re.compile(
-            r"(?:gap|missing|lack|no|without|absence of)\s+"
-            r"(?:unified|standard|automated|real-time|universal|automated|cross-border|"
-            r"multi-agent|governance|policy|compliance|audit|risk|bias|fairness|"
-            r"incident|model|vendor|asset|edge|iot|regulatory|certification|"
-            r"metrics|monitoring|enforcement|inventory|playbook|versioning|"
-            r"mapping|sbom|dashboard|framework|protocol|language|engine)"
-            r"[\w\s\-]{5,80}",
+        # Only match explicit gap declarations — lines starting with ### Gap or ## Gap
+        # or containing "GRC_Claw Should Build" (the blueprint pattern)
+        gap_header_pattern = re.compile(
+            r"^#{2,4}\s+Gap\s+\d+:\s+(.+)$",
+            re.MULTILINE | re.IGNORECASE
+        )
+        should_build_pattern = re.compile(
+            r"GRC_Claw Should Build[:\s]+(.+?)(?:\n|$)",
             re.IGNORECASE
         )
 
         for spec_file in SPECS_DIR.glob("*.md"):
             content = spec_file.read_text(errors="ignore")
-            matches = gap_pattern.findall(content)
-            for match in matches:
-                match_clean = match.strip().lower()
-                # Check if this is already tracked
+            found_names: set[str] = set()
+
+            for m in gap_header_pattern.finditer(content):
+                name = m.group(1).strip()
+                if name:
+                    found_names.add(name.lower())
+
+            for m in should_build_pattern.finditer(content):
+                name = m.group(1).strip()
+                if name:
+                    found_names.add(name.lower())
+
+            for match_clean in found_names:
                 is_tracked = any(
                     match_clean in name or name in match_clean
                     for name in existing_names
                 )
-                if not is_tracked and len(match_clean) > 10:
+                if not is_tracked and len(match_clean) > 5:
                     new_id = f"GAP-{len(self.gaps) + len(self.new_gaps) + 1:03d}"
                     if new_id not in existing_ids:
                         self.new_gaps.append(Gap(

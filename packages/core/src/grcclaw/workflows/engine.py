@@ -8,6 +8,7 @@ dependency resolution, parallel execution, and state transitions.
 from __future__ import annotations
 
 import asyncio
+import copy
 import logging
 import time
 from collections import defaultdict
@@ -27,6 +28,26 @@ from .schema import (
 logger = logging.getLogger(__name__)
 
 
+class WorkflowEngineError(Exception):
+    """Base exception for workflow engine errors."""
+    pass
+
+
+class WorkflowNotFoundError(WorkflowEngineError):
+    """Raised when a workflow definition is not found."""
+    pass
+
+
+class WorkflowValidationError(WorkflowEngineError):
+    """Raised when a workflow definition fails validation."""
+    pass
+
+
+class WorkflowVersionError(WorkflowEngineError):
+    """Raised when a workflow version conflict occurs."""
+    pass
+
+
 class WorkflowEngine:
     """Core workflow orchestration engine."""
 
@@ -36,17 +57,36 @@ class WorkflowEngine:
         self._handlers: dict[str, Callable] = {}
         self._running: set[str] = set()
         self._lock = asyncio.Lock()
+        self._versions: dict[str, list[WorkflowDefinition]] = {}
+        self._hooks: dict[str, list[Callable]] = {
+            "on_register": [],
+            "on_update": [],
+            "on_delete": [],
+            "on_activate": [],
+            "on_pause": [],
+            "on_deprecate": [],
+        }
+        self._run_history: dict[str, list[WorkflowRun]] = {}
+
+    # ------------------------------------------------------------------
+    # Definition CRUD
+    # ------------------------------------------------------------------
 
     def register_workflow(self, definition: WorkflowDefinition) -> None:
         errors = definition.validate()
         if errors:
-            raise ValueError(f"invalid workflow definition: {'; '.join(errors)}")
+            raise WorkflowValidationError(
+                f"invalid workflow definition: {'; '.join(errors)}"
+            )
         self._workflows[definition.id] = definition
+        self._emit("on_register", definition)
         logger.info("registered workflow %s (%s)", definition.name, definition.id)
 
     def unregister_workflow(self, workflow_id: str) -> bool:
         if workflow_id in self._workflows:
-            del self._workflows[workflow_id]
+            wf = self._workflows.pop(workflow_id)
+            self._versions.pop(workflow_id, None)
+            self._emit("on_delete", wf)
             return True
         return False
 
@@ -69,6 +109,74 @@ class WorkflowEngine:
         self._handlers[step_type] = handler
         logger.info("registered handler for step type %s", step_type)
 
+    # ------------------------------------------------------------------
+    # Lifecycle management
+    # ------------------------------------------------------------------
+
+    def activate(self, workflow_id: str) -> WorkflowDefinition:
+        """Activate a workflow so it can be executed."""
+        wf = self._workflows.get(workflow_id)
+        if wf is None:
+            raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
+        wf.status = WorkflowStatus.ACTIVE
+        wf.updated_at = datetime.now(timezone.utc).isoformat()
+        self._emit("on_activate", wf)
+        logger.info("activated workflow %s", workflow_id)
+        return wf
+
+    def pause(self, workflow_id: str) -> WorkflowDefinition:
+        """Pause a workflow to prevent new runs."""
+        wf = self._workflows.get(workflow_id)
+        if wf is None:
+            raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
+        wf.status = WorkflowStatus.PAUSED
+        wf.updated_at = datetime.now(timezone.utc).isoformat()
+        self._emit("on_pause", wf)
+        logger.info("paused workflow %s", workflow_id)
+        return wf
+
+    def deprecate(self, workflow_id: str) -> WorkflowDefinition:
+        """Deprecate a workflow."""
+        wf = self._workflows.get(workflow_id)
+        if wf is None:
+            raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
+        wf.status = WorkflowStatus.DEPRECATED
+        wf.updated_at = datetime.now(timezone.utc).isoformat()
+        self._emit("on_deprecate", wf)
+        logger.info("deprecated workflow %s", workflow_id)
+        return wf
+
+    # ------------------------------------------------------------------
+    # Versioning
+    # ------------------------------------------------------------------
+
+    def list_versions(self, workflow_id: str) -> list[WorkflowDefinition]:
+        """List all historical versions of a workflow."""
+        return list(self._versions.get(workflow_id, []))
+
+    def rollback(self, workflow_id: str, version: str) -> WorkflowDefinition:
+        """Roll back to a previous version."""
+        versions = self._versions.get(workflow_id, [])
+        target = None
+        for v in versions:
+            if v.version == version:
+                target = v
+                break
+        if target is None:
+            raise WorkflowNotFoundError(
+                f"version '{version}' not found for workflow '{workflow_id}'"
+            )
+        restored = copy.deepcopy(target)
+        restored.status = WorkflowStatus.DRAFT
+        restored.updated_at = datetime.now(timezone.utc).isoformat()
+        self._workflows[workflow_id] = restored
+        logger.info("rolled back workflow %s to version %s", workflow_id, version)
+        return restored
+
+    # ------------------------------------------------------------------
+    # Run management
+    # ------------------------------------------------------------------
+
     async def start_run(
         self,
         workflow_id: str,
@@ -78,9 +186,9 @@ class WorkflowEngine:
     ) -> WorkflowRun:
         definition = self._workflows.get(workflow_id)
         if definition is None:
-            raise KeyError(f"workflow '{workflow_id}' not found")
+            raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
         if definition.status != WorkflowStatus.ACTIVE:
-            raise RuntimeError(
+            raise WorkflowEngineError(
                 f"workflow '{workflow_id}' is not active (status={definition.status})"
             )
 
@@ -134,6 +242,23 @@ class WorkflowEngine:
             results = [r for r in results if r.status == status]
         return results
 
+    def record_run(self, run: WorkflowRun) -> None:
+        """Record a completed run in history."""
+        self._run_history.setdefault(run.workflow_id, []).append(run)
+
+    def get_run_history(
+        self,
+        workflow_id: str,
+        limit: int = 100,
+    ) -> list[WorkflowRun]:
+        """Get recent run history for a workflow."""
+        runs = self._run_history.get(workflow_id, [])
+        return runs[-limit:]
+
+    # ------------------------------------------------------------------
+    # Execution
+    # ------------------------------------------------------------------
+
     async def _execute_run(self, run_id: str) -> None:
         run = self._runs.get(run_id)
         if run is None:
@@ -156,6 +281,7 @@ class WorkflowEngine:
                 run.duration_seconds = (end - start).total_seconds()
             async with self._lock:
                 self._running.discard(run_id)
+            self.record_run(run)
 
     async def _run_steps(self, run: WorkflowRun, definition: WorkflowDefinition) -> None:
         completed: set[str] = set()
@@ -337,3 +463,77 @@ class WorkflowEngine:
             start = datetime.fromisoformat(result.started_at)
             end = datetime.fromisoformat(result.finished_at)
             result.duration_seconds = (end - start).total_seconds()
+
+    # ------------------------------------------------------------------
+    # Event hooks
+    # ------------------------------------------------------------------
+
+    def add_hook(self, event: str, callback: Callable) -> None:
+        """Register a lifecycle event hook."""
+        if event not in self._hooks:
+            raise ValueError(f"unknown hook event '{event}'")
+        self._hooks[event].append(callback)
+
+    def remove_hook(self, event: str, callback: Callable) -> bool:
+        """Remove a previously registered hook."""
+        if event in self._hooks and callback in self._hooks[event]:
+            self._hooks[event].remove(callback)
+            return True
+        return False
+
+    def _emit(self, event: str, *args: Any) -> None:
+        """Fire all callbacks for an event."""
+        for callback in self._hooks.get(event, []):
+            try:
+                callback(*args)
+            except Exception:
+                logger.exception("hook error for event '%s'", event)
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
+
+    def check_readiness(self, workflow_id: str) -> tuple[bool, list[str]]:
+        """Check if a workflow is ready for execution."""
+        issues: list[str] = []
+        try:
+            wf = self._workflows.get(workflow_id)
+        except Exception as exc:
+            return False, [str(exc)]
+        if wf is None:
+            return False, [f"workflow '{workflow_id}' not found"]
+        if wf.status != WorkflowStatus.ACTIVE:
+            issues.append(f"workflow status is '{wf.status.value}', not 'active'")
+        if not wf.steps:
+            issues.append("workflow has no steps")
+        step_ids = {s.id for s in wf.steps}
+        for step in wf.steps:
+            for nxt in step.next_steps:
+                if nxt not in step_ids:
+                    issues.append(f"step '{step.id}' has unknown next_step '{nxt}'")
+        entry_points = [s for s in wf.steps if not s.depends_on]
+        if wf.steps and not entry_points:
+            issues.append("workflow has no entry-point steps")
+        return len(issues) == 0, issues
+
+    # ------------------------------------------------------------------
+    # Statistics
+    # ------------------------------------------------------------------
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get engine statistics."""
+        total = len(self._workflows)
+        by_status: dict[str, int] = {}
+        for wf in self._workflows.values():
+            key = wf.status.value
+            by_status[key] = by_status.get(key, 0) + 1
+        total_runs = sum(len(runs) for runs in self._run_history.values())
+        return {
+            "total_definitions": total,
+            "by_status": by_status,
+            "total_versions_archived": sum(len(v) for v in self._versions.values()),
+            "total_runs_recorded": total_runs,
+            "active_runs": len(self._running),
+            "registered_handlers": list(self._handlers.keys()),
+            "registered_hooks": {e: len(c) for e, c in self._hooks.items()},
+        }

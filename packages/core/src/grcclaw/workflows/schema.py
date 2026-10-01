@@ -7,7 +7,8 @@ retry policies, run tracking, and template metadata.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
@@ -47,6 +48,13 @@ class TriggerType(str, Enum):
     SCHEDULED = "scheduled"
     EVENT = "event"
     WEBHOOK = "webhook"
+
+
+class WorkflowPriority(str, Enum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 
 @dataclass
@@ -111,6 +119,7 @@ class WorkflowDefinition:
     max_concurrent_runs: int = 1
     timeout_seconds: float = 3600.0
     metadata: dict[str, Any] = field(default_factory=dict)
+    priority: WorkflowPriority = WorkflowPriority.NORMAL
 
     def __post_init__(self):
         if not self.name:
@@ -137,7 +146,7 @@ class WorkflowDefinition:
         """Validate the workflow definition and return a list of error messages."""
         errors: list[str] = []
         if not self.steps:
-            errors.append("workflow must have at least step")
+            errors.append("workflow must have at least one step")
         step_ids = {s.id for s in self.steps}
         for step in self.steps:
             for dep in step.depends_on:
@@ -170,6 +179,99 @@ class WorkflowDefinition:
         for step in self.steps:
             dfs(step.id)
         return errors
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dictionary."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "version": self.version,
+            "status": self.status.value,
+            "trigger": self.trigger.value,
+            "cron_expression": self.cron_expression,
+            "webhook_path": self.webhook_path,
+            "steps": [
+                {
+                    "id": s.id,
+                    "name": s.name,
+                    "type": s.type.value,
+                    "description": s.description,
+                    "agent": s.agent,
+                    "tool": s.tool,
+                    "parameters": s.parameters,
+                    "depends_on": s.depends_on,
+                    "condition": asdict(s.condition) if s.condition else None,
+                    "retry_policy": asdict(s.retry_policy),
+                    "timeout_seconds": s.timeout_seconds,
+                    "metadata": s.metadata,
+                    "next_steps": s.next_steps,
+                }
+                for s in self.steps
+            ],
+            "variables": self.variables,
+            "tags": self.tags,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "owner": self.owner,
+            "max_concurrent_runs": self.max_concurrent_runs,
+            "timeout_seconds": self.timeout_seconds,
+            "metadata": self.metadata,
+            "priority": self.priority.value,
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        """Serialize to JSON string."""
+        return json.dumps(self.to_dict(), indent=indent, default=str)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> WorkflowDefinition:
+        """Deserialize from dictionary."""
+        steps = []
+        for s_data in data.get("steps", []):
+            cond_data = s_data.get("condition")
+            condition = StepCondition(**cond_data) if cond_data else None
+            retry_policy = RetryPolicy(**s_data.get("retry_policy", {}))
+            steps.append(WorkflowStep(
+                id=s_data["id"],
+                name=s_data["name"],
+                type=StepType(s_data.get("type", "action")),
+                description=s_data.get("description", ""),
+                agent=s_data.get("agent", ""),
+                tool=s_data.get("tool", ""),
+                parameters=s_data.get("parameters", {}),
+                depends_on=s_data.get("depends_on", []),
+                condition=condition,
+                retry_policy=retry_policy,
+                timeout_seconds=s_data.get("timeout_seconds", 300.0),
+                metadata=s_data.get("metadata", {}),
+                next_steps=s_data.get("next_steps", []),
+            ))
+        return cls(
+            id=data.get("id", str(uuid.uuid4())),
+            name=data["name"],
+            description=data.get("description", ""),
+            version=data.get("version", "1.0.0"),
+            status=WorkflowStatus(data.get("status", "draft")),
+            trigger=TriggerType(data.get("trigger", "manual")),
+            cron_expression=data.get("cron_expression", ""),
+            webhook_path=data.get("webhook_path", ""),
+            steps=steps,
+            variables=data.get("variables", {}),
+            tags=data.get("tags", []),
+            created_at=data.get("created_at", datetime.now(timezone.utc).isoformat()),
+            updated_at=data.get("updated_at", datetime.now(timezone.utc).isoformat()),
+            owner=data.get("owner", ""),
+            max_concurrent_runs=data.get("max_concurrent_runs", 1),
+            timeout_seconds=data.get("timeout_seconds", 3600.0),
+            metadata=data.get("metadata", {}),
+            priority=WorkflowPriority(data.get("priority", "normal")),
+        )
+
+    @classmethod
+    def from_json(cls, json_str: str) -> WorkflowDefinition:
+        """Deserialize from JSON string."""
+        return cls.from_dict(json.loads(json_str))
 
 
 @dataclass
@@ -231,6 +333,39 @@ class WorkflowRun:
         total = len(self.step_results)
         done = sum(1 for r in self.step_results.values() if r.is_terminal)
         return round((done / total) * 100, 1) if total else 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "run_id": self.run_id,
+            "workflow_id": self.workflow_id,
+            "workflow_name": self.workflow_name,
+            "workflow_version": self.workflow_version,
+            "status": self.status.value,
+            "trigger": self.trigger.value,
+            "parameters": self.parameters,
+            "context": self.context,
+            "step_results": {
+                k: {
+                    "step_id": v.step_id,
+                    "status": v.status.value,
+                    "started_at": v.started_at,
+                    "finished_at": v.finished_at,
+                    "duration_seconds": v.duration_seconds,
+                    "output": v.output,
+                    "error": v.error,
+                    "attempt": v.attempt,
+                    "logs": v.logs,
+                }
+                for k, v in self.step_results.items()
+            },
+            "started_at": self.started_at,
+            "finished_at": self.finished_at,
+            "duration_seconds": self.duration_seconds,
+            "error": self.error,
+            "triggered_by": self.triggered_by,
+            "parent_run_id": self.parent_run_id,
+            "metadata": self.metadata,
+        }
 
 
 @dataclass

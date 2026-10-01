@@ -69,6 +69,8 @@ class PolicyManager:
         self._approval = PolicyApprovalWorkflow()
         self._enforcement = PolicyEnforcementEngine()
         self._analytics = PolicyAnalyticsEngine()
+        # Wire the approval workflow to find policies via the definition engine
+        self._approval.set_policy_finder(self._engine.get_policy)
 
     # ── Definition ─────────────────────────────────────────────────────────
 
@@ -80,8 +82,10 @@ class PolicyManager:
         overrides: Optional[dict] = None,
     ) -> Policy:
         """Create a policy from a registered template."""
+        from .approval import register_policy
         policy = self._engine.create_from_template(template_id, owner, approver, overrides)
         self._analytics.register_policy(policy)
+        register_policy(policy)
         return policy
 
     def create_policy(
@@ -91,8 +95,10 @@ class PolicyManager:
         created_by: str = "",
     ) -> Policy:
         """Create a policy from scratch."""
+        from .approval import register_policy
         policy = self._engine.create_policy(metadata, sections, created_by)
         self._analytics.register_policy(policy)
+        register_policy(policy)
         return policy
 
     def get_policy(self, policy_id: str) -> Optional[Policy]:

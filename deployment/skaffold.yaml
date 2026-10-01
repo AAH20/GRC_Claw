@@ -1,0 +1,409 @@
+# GRC_Claw — Skaffold Configuration for Kubernetes Development
+# Provides iterative development against a local K8s cluster (kind/minikube).
+#
+# Prerequisites:
+#   - skaffold v2+
+#   - kind or minikube cluster running
+#   - kubectl configured to target the cluster
+#
+# Usage:
+#   skaffold dev          # Live-reload dev loop (port-forward + sync)
+#   skaffold run          # One-shot deploy
+#   skaffold debug        # Debug mode with delve
+#   skaffold delete       # Clean up
+
+apiVersion: skaffold/v4beta7
+kind: Config
+
+metadata:
+  name: grc-claw
+
+# ── Build ──────────────────────────────────────────────────────────────────
+
+build:
+  # Local build — no registry required for dev
+  local:
+    push: false
+    useDockerCLI: true
+    useBuildkit: true
+
+  artifacts:
+    # ── Data Layer ──────────────────────────────────────────────────────
+
+    - image: grc-claw/postgresql
+      context: ./grc-claw-deployment/kubernetes/data/postgresql
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.sql"
+            dest: /docker-entrypoint-initdb.d
+            strip: ""
+
+    - image: grc-claw/redis
+      context: ./grc-claw-deployment/kubernetes/data/redis
+      docker:
+        dockerfile: Dockerfile
+
+    - image: grc-claw/kafka
+      context: ./grc-claw-deployment/kubernetes/data/kafka
+      docker:
+        dockerfile: Dockerfile
+
+    - image: grc-claw/minio
+      context: ./grc-claw-deployment/kubernetes/data/minio
+      docker:
+        dockerfile: Dockerfile
+
+    - image: grc-claw/vault
+      context: ./grc-claw-deployment/kubernetes/data/vault
+      docker:
+        dockerfile: Dockerfile
+
+    # ── Control Plane ───────────────────────────────────────────────────
+
+    - image: grc-claw/policy-api
+      context: ./grc-claw-deployment/docker/policy-api
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.py"
+            dest: /app
+            strip: ""
+
+    - image: grc-claw/pdp-service
+      context: ./grc-claw-deployment/docker/pdp-service
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.go"
+            dest: /app
+            strip: ""
+
+    - image: grc-claw/pep-gateway
+      context: ./grc-claw-deployment/docker/pep-gateway
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.go"
+            dest: /app
+            strip: ""
+
+    - image: grc-claw/agent-identity
+      context: ./grc-claw-deployment/docker/agent-identity
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.go"
+            dest: /app
+            strip: ""
+
+    # ── Analytics ───────────────────────────────────────────────────────
+
+    - image: grc-claw/analytics-engine
+      context: ./grc-claw-deployment/docker/analytics-engine
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.py"
+            dest: /app
+            strip: ""
+
+    - image: grc-claw/reporting-engine
+      context: ./grc-claw-deployment/docker/reporting-engine
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.py"
+            dest: /app
+            strip: ""
+
+    # ── Evidence ────────────────────────────────────────────────────────
+
+    - image: grc-claw/evidence-collector
+      context: ./grc-claw-deployment/docker/evidence-collector
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.py"
+            dest: /app
+            strip: ""
+
+    - image: grc-claw/evidence-validator
+      context: ./grc-claw-deployment/docker/evidence-validator
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.py"
+            dest: /app
+            strip: ""
+
+    - image: grc-claw/compliance-mapping
+      context: ./grc-claw-deployment/docker/compliance-mapping
+      docker:
+        dockerfile: Dockerfile
+        target: builder
+      sync:
+        manual:
+          - src: "**/*.py"
+            dest: /app
+            strip: ""
+
+    # ── Gateway ─────────────────────────────────────────────────────────
+
+    - image: grc-claw/gateway
+      context: ..
+      docker:
+        dockerfile: deploy/Dockerfile
+        target: build
+      sync:
+        manual:
+          - src: "packages/gateway/**/*.ts"
+            dest: /app/packages/gateway
+            strip: "packages/gateway/"
+
+  tagPolicy:
+    sha256: {}
+
+# ── Deploy ──────────────────────────────────────────────────────────────────
+
+deploy:
+  kubectl:
+    manifests:
+      # Namespaces first
+      - ./grc-claw-deployment/kubernetes/namespaces/*.yaml
+
+      # Data layer
+      - ./grc-claw-deployment/kubernetes/data/postgresql/*.yaml
+      - ./grc-claw-deployment/kubernetes/data/redis/*.yaml
+      - ./grc-claw-deployment/kubernetes/data/kafka/*.yaml
+      - ./grc-claw-deployment/kubernetes/data/minio/*.yaml
+      - ./grc-claw-deployment/kubernetes/data/vault/*.yaml
+
+      # Control plane
+      - ./grc-claw-deployment/kubernetes/control-plane/policy-api/*.yaml
+      - ./grc-claw-deployment/kubernetes/control-plane/pdp-service/*.yaml
+      - ./grc-claw-deployment/kubernetes/control-plane/pep-gateway/*.yaml
+      - ./grc-claw-deployment/kubernetes/control-plane/agent-identity/*.yaml
+
+      # Analytics
+      - ./grc-claw-deployment/kubernetes/analytics/engine/*.yaml
+      - ./grc-claw-deployment/kubernetes/analytics/reporting/*.yaml
+
+      # Evidence
+      - ./grc-claw-deployment/kubernetes/evidence/collector/*.yaml
+      - ./grc-claw-deployment/kubernetes/evidence/validator/*.yaml
+      - ./grc-claw-deployment/kubernetes/evidence/normalizer/*.yaml
+
+      # Observability
+      - ./grc-claw-deployment/kubernetes/observability/prometheus/*.yaml
+      - ./grc-claw-deployment/kubernetes/observability/grafana/*.yaml
+      - ./grc-claw-deployment/kubernetes/observability/loki/*.yaml
+      - ./grc-claw-deployment/kubernetes/observability/tempo/*.yaml
+      - ./grc-claw-deployment/kubernetes/observability/otel-collector/*.yaml
+
+      # Ingress
+      - ./grc-claw-deployment/kubernetes/ingress/*.yaml
+
+      # Network policies
+      - ./grc-claw-deployment/kubernetes/network-policies/*.yaml
+
+      # Resource quotas
+      - ./grc-claw-deployment/kubernetes/resource-quotas.yaml
+
+      # PDBs
+      - ./grc-claw-deployment/kubernetes/pod-disruption-budgets/*.yaml
+
+    # Apply secrets from env substitution
+    defaultNamespace: grc-claw-control-plane
+
+# ── Port Forward ────────────────────────────────────────────────────────────
+
+portForward:
+  - resourceType: service
+    resourceName: grc-claw-gateway
+    namespace: grc-claw-control-plane
+    port: 18791
+    localPort: 18791
+
+  - resourceType: service
+    resourceName: grafana
+    namespace: grc-claw-observability
+    port: 3000
+    localPort: 3000
+
+  - resourceType: service
+    resourceName: prometheus
+    namespace: grc-claw-observability
+    port: 9090
+    localPort: 9090
+
+  - resourceType: service
+    resourceName: jaeger
+    namespace: grc-claw-observability
+    port: 16686
+    localPort: 16686
+
+  - resourceType: service
+    resourceName: minio
+    namespace: grc-claw-data
+    port: 9000
+    localPort: 9000
+
+  - resourceType: service
+    resourceName: vault
+    namespace: grc-claw-data
+    port: 8200
+    localPort: 8200
+
+  - resourceType: service
+    resourceName: policy-api
+    namespace: grc-claw-control-plane
+    port: 8080
+    localPort: 8081
+
+  - resourceType: service
+    resourceName: pdp-service
+    namespace: grc-claw-control-plane
+    port: 8080
+    localPort: 8082
+
+  - resourceType: service
+    resourceName: pep-gateway
+    namespace: grc-claw-control-plane
+    port: 8080
+    localPort: 8083
+
+  - resourceType: service
+    resourceName: agent-identity
+    namespace: grc-claw-control-plane
+    port: 8080
+    localPort: 8084
+
+  - resourceType: service
+    resourceName: analytics-engine
+    namespace: grc-claw-analytics
+    port: 8080
+    localPort: 8085
+
+  - resourceType: service
+    resourceName: reporting-engine
+    namespace: grc-claw-analytics
+    port: 8080
+    localPort: 8086
+
+  - resourceType: service
+    resourceName: evidence-collector
+    namespace: grc-claw-evidence
+    port: 8080
+    localPort: 8087
+
+  - resourceType: service
+    resourceName: evidence-validator
+    namespace: grc-claw-evidence
+    port: 8080
+    localPort: 8088
+
+  - resourceType: service
+    resourceName: compliance-mapping
+    namespace: grc-claw-evidence
+    port: 8080
+    localPort: 8089
+
+# ── Profiles ────────────────────────────────────────────────────────────────
+
+profiles:
+  # Minimal — only data layer + gateway
+  - name: minimal
+    build:
+      artifacts:
+        - image: grc-claw/postgresql
+          context: ./grc-claw-deployment/kubernetes/data/postgresql
+        - image: grc-claw/redis
+          context: ./grc-claw-deployment/kubernetes/data/redis
+        - image: grc-claw/gateway
+          context: ..
+          docker:
+            dockerfile: deploy/Dockerfile
+    deploy:
+      kubectl:
+        manifests:
+          - ./grc-claw-deployment/kubernetes/namespaces/*.yaml
+          - ./grc-claw-deployment/kubernetes/data/postgresql/*.yaml
+          - ./grc-claw-deployment/kubernetes/data/redis/*.yaml
+
+  # Control plane only
+  - name: control-plane
+    build:
+      artifacts:
+        - image: grc-claw/policy-api
+          context: ./grc-claw-deployment/docker/policy-api
+        - image: grc-claw/pdp-service
+          context: ./grc-claw-deployment/docker/pdp-service
+        - image: grc-claw/pep-gateway
+          context: ./grc-claw-deployment/docker/pep-gateway
+        - image: grc-claw/agent-identity
+          context: ./grc-claw-deployment/docker/agent-identity
+    deploy:
+      kubectl:
+        manifests:
+          - ./grc-claw-deployment/kubernetes/namespaces/*.yaml
+          - ./grc-claw-deployment/kubernetes/control-plane/**/*.yaml
+
+  # Debug mode — with delve for Go services
+  - name: debug
+    build:
+      artifacts:
+        - image: grc-claw/pdp-service
+          context: ./grc-claw-deployment/docker/pdp-service
+          docker:
+            dockerfile: Dockerfile
+            target: debug
+        - image: grc-claw/pep-gateway
+          context: ./grc-claw-deployment/docker/pep-gateway
+          docker:
+            dockerfile: Dockerfile
+            target: debug
+        - image: grc-claw/agent-identity
+          context: ./grc-claw-deployment/docker/agent-identity
+          docker:
+            dockerfile: Dockerfile
+            target: debug
+    deploy:
+      kubectl:
+        manifests:
+          - ./grc-claw-deployment/kubernetes/namespaces/*.yaml
+          - ./grc-claw-deployment/kubernetes/control-plane/**/*.yaml
+
+# ── Verify ──────────────────────────────────────────────────────────────────
+
+verify:
+  - name: smoke-test
+    container:
+      name: curl
+      image: curlimages/curl:latest
+      command: ["sh", "-c"]
+      args:
+        - |
+          echo "Waiting for gateway..."
+          until curl -sf http://localhost:18791/healthz; do
+            sleep 2
+          done
+          echo "Gateway is healthy!"
+          curl -sf http://localhost:18791/healthz

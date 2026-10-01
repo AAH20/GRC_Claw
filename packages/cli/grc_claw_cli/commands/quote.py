@@ -166,7 +166,7 @@ def register(subparsers):
     gen_p.add_argument("--frameworks", nargs="*", default=[], help="Framework packs")
     gen_p.add_argument("--deployment", default="cloud_saas", choices=DEPLOYMENT_MODELS, help="Deployment model")
     gen_p.add_argument("--support", default="standard", choices=SUPPORT_LEVELS, help="Support level")
-    gen_p.add_argument("--tier", default="growth", choices=PRICING_TIER, help="Pricing tier")
+    gen_p.add_argument("--tier", default="growth", choices=PRICING_TIERS, help="Pricing tier")
     gen_p.add_argument("--risk-exposure", type=float, default=5, help="Risk exposure 1-10")
     gen_p.add_argument("--compliance-maturity", type=float, default=5, help="Compliance maturity 1-10")
     gen_p.add_argument("--output", help="Output file path")

@@ -11,6 +11,7 @@ import os
 import shutil
 import sqlite3
 import threading
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, BinaryIO, Optional, Union
@@ -284,7 +285,7 @@ class EvidenceManager:
                 ext = ""
                 if mime_type:
                     ext = self._mime_to_ext(mime_type)
-                filename = f"{ev_id_prefix()}{ext}" if False else f"{file_hash[:16]}{ext}"
+                filename = f"{file_hash[:16]}{ext}"
                 file_path = date_dir / filename
                 file_path.write_bytes(file_bytes)
                 storage_location = str(file_path)
@@ -688,7 +689,4 @@ class EvidenceManager:
         self.close()
 
 
-def ev_id_prefix() -> str:
-    """Generate a short prefix for evidence file names."""
-    import uuid
-    return str(uuid.uuid4())[:8]
+

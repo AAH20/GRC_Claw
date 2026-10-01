@@ -535,6 +535,122 @@ cat .gitignore
 
 ---
 
+## Dev Container Issues
+
+### Container fails to start
+
+**Symptom:**
+Dev container build fails or hangs.
+
+**Solution:**
+1. Check Docker is running: `docker ps`
+2. Pull latest base image: `docker pull mcr.microsoft.com/devcontainers/typescript-node:20`
+3. Rebuild container: `Dev Containers: Rebuild Container`
+4. Check Docker logs: `docker logs <container-id>`
+5. Increase Docker memory limit (recommended: 4GB+)
+
+### Extensions not installing
+
+**Symptom:**
+VS Code extensions fail to install in container.
+
+**Solution:**
+1. Check internet connection in container
+2. Try installing manually: `code --install-extension <extension-id>`
+3. Check VS Code version compatibility
+4. Clear extension cache: delete `~/.vscode/extensions`
+
+### Port forwarding not working
+
+**Symptom:**
+Cannot access forwarded ports (18791, 8080, etc.).
+
+**Solution:**
+1. Check if service is running: `lsof -i :18791`
+2. Verify port is exposed in `devcontainer.json`
+3. Check firewall settings
+4. Try accessing via `localhost` instead of `127.0.0.1`
+5. Restart port forwarding: `Dev Containers: Forward Port`
+
+### File permissions issues
+
+**Symptom:**
+```
+EACCES: permission denied, open '/workspaces/GRC_Claw/...'
+```
+
+**Solution:**
+```bash
+# Fix ownership in container
+sudo chown -R node:node /workspaces/GRC_Claw
+
+# Or restart container with correct user
+# In devcontainer.json, ensure "remoteUser": "node"
+```
+
+---
+
+## Git Hook Issues
+
+### Pre-commit hook fails
+
+**Symptom:**
+```
+husky - pre-commit hook exited with code 1
+```
+
+**Solution:**
+```bash
+# Skip hooks (not recommended)
+git commit --no-verify -m "message"
+
+# Run hooks manually to see full output
+pre-commit run --all-files
+
+# Fix auto-fixable issues
+pre-commit run --all-files --hook-stage manual
+
+# Update hooks
+pre-commit autoupdate
+pre-commit install --install-hooks
+```
+
+### Commit message rejected
+
+**Symptom:**
+```
+commit-msg: failed - conventional-pre-commit
+```
+
+**Solution:**
+Use correct format:
+```bash
+# Correct
+git commit -m "feat(gateway): add new feature"
+
+# Incorrect
+git commit -m "added new feature"
+```
+
+### Hooks not running
+
+**Symptom:**
+Commits succeed without running hooks.
+
+**Solution:**
+```bash
+# Reinstall hooks
+pre-commit install --install-hooks
+
+# Check if hooks are installed
+ls -la .git/hooks/pre-commit
+
+# Verify pre-commit config exists
+cat .pre-commit-config.yaml
+```
+
+---
+
 ## Getting Help
 
 If you're still experiencing issues:

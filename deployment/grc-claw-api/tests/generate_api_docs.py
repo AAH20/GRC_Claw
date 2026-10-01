@@ -393,6 +393,8 @@ def main():
 
     args = parser.parse_args()
 
+    markdown = ""
+
     if args.openapi:
         if not os.path.exists(args.openapi):
             print(f"Error: OpenAPI spec not found at {args.openapi}", file=sys.stderr)

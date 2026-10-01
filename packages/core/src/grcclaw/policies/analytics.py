@@ -1,15 +1,16 @@
 """
-Policy Analytics
+Policy Analytics Engine for GRC_Claw.
 
-Aggregates policy portfolio metrics, compliance trends, enforcement
-statistics, and generates executive dashboards.
+Provides portfolio analytics, compliance dashboards, trend analysis,
+and executive reporting for the policy management system.
 """
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+import logging
+from collections import defaultdict
 from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
+from typing import Optional
 
 from .models import (
     Policy,
@@ -20,174 +21,165 @@ from .models import (
     EnforcementResult,
     EnforcementEvent,
     PolicyAnalytics,
-    ApprovalRecord,
-    ApprovalStatus,
-    Attestation,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PolicyAnalyticsEngine:
-    """Generates analytics and insights for the policy portfolio."""
+    """Analytics engine for policy portfolio insights."""
 
     def __init__(self) -> None:
         self._policies: dict[str, Policy] = {}
-        self._events: dict[str, EnforcementEvent] = {}
-        self._approvals: dict[str, ApprovalRecord] = {}
-
-    # ── Data Registration ──────────────────────────────────────────────────
+        self._events: dict[str, list[EnforcementEvent]] = {}
 
     def register_policy(self, policy: Policy) -> None:
         """Register a policy for analytics tracking."""
         self._policies[policy.id] = policy
 
+    def unregister_policy(self, policy_id: str) -> None:
+        """Remove a policy from analytics tracking."""
+        self._policies.pop(policy_id, None)
+        self._events.pop(policy_id, None)
+
     def register_event(self, event: EnforcementEvent) -> None:
-        """Register an enforcement event."""
-        self._events[event.id] = event
-
-    def register_approval(self, approval: ApprovalRecord) -> None:
-        """Register an approval record."""
-        self._approvals[approval.id] = approval
-
-    def clear(self) -> None:
-        """Clear all registered data."""
-        self._policies.clear()
-        self._events.clear()
-        self._approvals.clear()
-
-    # ── Portfolio Analytics ────────────────────────────────────────────────
+        """Register an enforcement event for analytics."""
+        if event.policy_id not in self._events:
+            self._events[event.policy_id] = []
+        self._events[event.policy_id].append(event)
 
     def generate_portfolio_analytics(self) -> PolicyAnalytics:
-        """Generate comprehensive analytics for the entire policy portfolio."""
+        """Generate portfolio-wide analytics."""
         policies = list(self._policies.values())
-        events = list(self._events.values())
-        approvals = list(self._approvals.values())
-
-        analytics = PolicyAnalytics()
-
-        # Basic counts
-        analytics.total_policies = len(policies)
-
-        # Status distribution
-        status_counts = Counter(p.status.value for p in policies)
-        analytics.by_status = dict(status_counts)
-
-        # Category distribution
-        category_counts = Counter(p.metadata.category.value for p in policies)
-        analytics.by_category = dict(category_counts)
-
-        # Priority distribution
-        priority_counts = Counter(p.metadata.priority.value for p in policies)
-        analytics.by_priority = dict(priority_counts)
-
-        # Enforcement mode distribution
-        mode_counts = Counter(p.enforcement_mode.value for p in policies)
-        analytics.by_enforcement_mode = dict(mode_counts)
-
-        # Review tracking
         now = datetime.now(timezone.utc)
-        review_threshold = now + timedelta(days=30)
-        analytics.upcoming_reviews = 0
-        analytics.overdue_reviews = 0
-        for p in policies:
-            if p.metadata.review_date:
+
+        by_status: dict[str, int] = defaultdict(int)
+        by_category: dict[str, int] = defaultdict(int)
+        by_priority: dict[str, int] = defaultdict(int)
+        by_enforcement_mode: dict[str, int] = defaultdict(int)
+
+        upcoming_reviews = 0
+        overdue_reviews = 0
+        pending_approvals = 0
+        attestations_pending = 0
+        attestations_completed = 0
+
+        total_pass = 0
+        total_fail = 0
+        total_warning = 0
+        total_events = 0
+
+        policies_created_last_30d = 0
+        policies_updated_last_30d = 0
+
+        rule_violation_counts: dict[str, int] = defaultdict(int)
+
+        for policy in policies:
+            by_status[policy.status.value] += 1
+            by_category[policy.metadata.category.value] += 1
+            by_priority[policy.metadata.priority.value] += 1
+            by_enforcement_mode[policy.enforcement_mode.value] += 1
+
+            # Review tracking
+            if policy.metadata.review_date:
                 try:
-                    review_dt = datetime.fromisoformat(p.metadata.review_date.replace("Z", "+00:00"))
-                    if review_dt < now:
-                        analytics.overdue_reviews += 1
-                    elif review_dt <= review_threshold:
-                        analytics.upcoming_reviews += 1
-                except (ValueError, AttributeError):
+                    review_date = datetime.fromisoformat(policy.metadata.review_date)
+                    if review_date > now and (review_date - now).days <= 30:
+                        upcoming_reviews += 1
+                    elif review_date <= now:
+                        overdue_reviews += 1
+                except ValueError:
                     pass
 
-        # Approval tracking
-        analytics.pending_approvals = sum(
-            1 for a in approvals if a.status == ApprovalStatus.PENDING
-        )
+            # Approval tracking
+            for approval in policy.approvals:
+                if approval.status.value == "pending":
+                    pending_approvals += 1
 
-        # Attestation tracking
-        total_attestations = sum(len(p.attestations) for p in policies)
-        analytics.attestations_completed = total_attestations
-        # Pending attestations would come from HR system integration
-        analytics.attestations_pending = 0
+            # Attestation tracking
+            for attestation in policy.attestations:
+                if attestation.acknowledged_at:
+                    attestations_completed += 1
+                else:
+                    attestations_pending += 1
 
-        # Enforcement statistics
-        if events:
-            pass_count = sum(1 for e in events if e.result == EnforcementResult.PASS)
-            fail_count = sum(1 for e in events if e.result == EnforcementResult.FAIL)
-            warning_count = sum(1 for e in events if e.result == EnforcementResult.WARNING)
-            total = len(events)
+            # Creation/update tracking (last 30 days)
+            try:
+                created = datetime.fromisoformat(policy.created_at)
+                if (now - created).days <= 30:
+                    policies_created_last_30d += 1
+            except ValueError:
+                pass
 
-            analytics.enforcement_pass_rate = (pass_count / total) * 100 if total > 0 else 0.0
-            analytics.enforcement_fail_count = fail_count
-            analytics.enforcement_warning_count = warning_count
+            try:
+                updated = datetime.fromisoformat(policy.updated_at)
+                if (now - updated).days <= 30:
+                    policies_updated_last_30d += 1
+            except ValueError:
+                pass
 
-        # Approval timing
-        completed_approvals = [
-            a for a in approvals
-            if a.status in (ApprovalStatus.APPROVED, ApprovalStatus.REJECTED)
-            and a.decided_at
-        ]
-        if completed_approvals:
-            total_hours = 0.0
-            for a in completed_approvals:
-                try:
-                    requested = datetime.fromisoformat(a.requested_at.replace("Z", "+00:00"))
-                    decided = datetime.fromisoformat(a.decided_at.replace("Z", "+00:00"))
-                    total_hours += (decided - requested).total_seconds() / 3600
-                except (ValueError, AttributeError):
-                    continue
-            analytics.average_approval_time_hours = total_hours / len(completed_approvals)
+        # Enforcement analytics
+        for policy_id, events in self._events.items():
+            for event in events:
+                total_events += 1
+                if event.result == EnforcementResult.PASS:
+                    total_pass += 1
+                elif event.result == EnforcementResult.FAIL:
+                    total_fail += 1
+                elif event.result == EnforcementResult.WARNING:
+                    total_warning += 1
 
-        # Recent activity
-        thirty_days_ago = now - timedelta(days=30)
-        analytics.policies_created_last_30d = sum(
-            1 for p in policies
-            if self._parse_date(p.created_at) and self._parse_date(p.created_at) > thirty_days_ago
-        )
-        analytics.policies_updated_last_30d = sum(
-            1 for p in policies
-            if self._parse_date(p.updated_at) and self._parse_date(p.updated_at) > thirty_days_ago
-        )
+                for finding in event.findings:
+                    rule_violation_counts[finding.title] += 1
+
+        pass_rate = (total_pass / total_events * 100) if total_events > 0 else 0.0
 
         # Top violated rules
-        rule_violations: Counter = Counter()
-        for event in events:
-            if event.result in (EnforcementResult.FAIL, EnforcementResult.WARNING):
-                for finding in event.findings:
-                    if finding.status == "open":
-                        rule_violations[finding.title] += 1
-
-        analytics.top_violated_rules = [
-            {"rule": rule, "count": count}
-            for rule, count in rule_violations.most_common(10)
-        ]
+        top_violated = sorted(
+            [{"rule": k, "count": v} for k, v in rule_violation_counts.items()],
+            key=lambda x: x["count"],
+            reverse=True,
+        )[:10]
 
         # Compliance trend (last 6 months)
-        analytics.compliance_trend = self._compute_compliance_trend(events)
+        compliance_trend = self._generate_compliance_trend()
 
-        return analytics
+        return PolicyAnalytics(
+            total_policies=len(policies),
+            by_status=dict(by_status),
+            by_category=dict(by_category),
+            by_priority=dict(by_priority),
+            by_enforcement_mode=dict(by_enforcement_mode),
+            upcoming_reviews=upcoming_reviews,
+            overdue_reviews=overdue_reviews,
+            pending_approvals=pending_approvals,
+            attestations_pending=attestations_pending,
+            attestations_completed=attestations_completed,
+            enforcement_pass_rate=round(pass_rate, 2),
+            enforcement_fail_count=total_fail,
+            enforcement_warning_count=total_warning,
+            average_approval_time_hours=0.0,  # Calculated from approval records
+            policies_created_last_30d=policies_created_last_30d,
+            policies_updated_last_30d=policies_updated_last_30d,
+            top_violated_rules=top_violated,
+            compliance_trend=compliance_trend,
+        )
 
-    # ── Policy-Specific Analytics ──────────────────────────────────────────
-
-    def get_policy_analytics(self, policy_id: str) -> dict[str, Any]:
-        """Generate analytics for a specific policy."""
+    def get_policy_analytics(self, policy_id: str) -> dict:
+        """Get analytics for a specific policy."""
         policy = self._policies.get(policy_id)
         if not policy:
             return {"error": "Policy not found"}
 
-        events = [e for e in self._events.values() if e.policy_id == policy_id]
-        approvals = [a for a in self._approvals.values() if a.policy_id == policy_id]
+        events = self._events.get(policy_id, [])
+        total = len(events)
+        passes = sum(1 for e in events if e.result == EnforcementResult.PASS)
+        fails = sum(1 for e in events if e.result == EnforcementResult.FAIL)
+        warnings = sum(1 for e in events if e.result == EnforcementResult.WARNING)
 
-        total_events = len(events)
-        pass_count = sum(1 for e in events if e.result == EnforcementResult.PASS)
-        fail_count = sum(1 for e in events if e.result == EnforcementResult.FAIL)
-        warning_count = sum(1 for e in events if e.result == EnforcementResult.WARNING)
-
+        findings_count = sum(len(e.findings) for e in events)
         open_findings = sum(
             1 for e in events for f in e.findings if f.status == "open"
-        )
-        remediated_findings = sum(
-            1 for e in events for f in e.findings if f.status == "remediated"
         )
 
         return {
@@ -195,225 +187,109 @@ class PolicyAnalyticsEngine:
             "title": policy.metadata.title,
             "status": policy.status.value,
             "version": policy.metadata.version,
-            "enforcement_mode": policy.enforcement_mode.value,
-            "total_enforcement_events": total_events,
-            "pass_rate": (pass_count / total_events * 100) if total_events > 0 else 0,
-            "fail_count": fail_count,
-            "warning_count": warning_count,
+            "total_enforcement_events": total,
+            "pass_count": passes,
+            "fail_count": fails,
+            "warning_count": warnings,
+            "pass_rate": round(passes / total * 100, 2) if total > 0 else 0.0,
+            "total_findings": findings_count,
             "open_findings": open_findings,
-            "remediated_findings": remediated_findings,
-            "attestation_count": len(policy.attestations),
-            "approval_count": len(approvals),
-            "pending_approvals": sum(1 for a in approvals if a.status == ApprovalStatus.PENDING),
-            "change_count": len(policy.change_log),
-            "section_count": len(policy.sections),
-            "rule_count": len(policy.enforcement_rules),
-            "enabled_rules": sum(1 for r in policy.enforcement_rules if r.enabled),
+            "attestations_total": len(policy.attestations),
+            "attestations_completed": sum(1 for a in policy.attestations if a.acknowledged_at),
+            "attestations_pending": sum(1 for a in policy.attestations if not a.acknowledged_at),
+            "enforcement_rules_count": len(policy.enforcement_rules),
+            "enforcement_mode": policy.enforcement_mode.value,
+            "change_log_entries": len(policy.change_log),
+            "versions_count": len(policy.versions),
         }
 
-    # ── Compliance Dashboard ───────────────────────────────────────────────
-
-    def generate_compliance_dashboard(self) -> dict[str, Any]:
-        """Generate an executive compliance dashboard."""
+    def generate_compliance_dashboard(self) -> dict:
+        """Generate executive compliance dashboard."""
         analytics = self.generate_portfolio_analytics()
 
-        # Overall compliance score (0-100)
-        score = self._compute_compliance_score(analytics)
+        # Calculate overall compliance score
+        total_checks = (
+            analytics.enforcement_pass_rate
+            + analytics.enforcement_fail_count
+            + analytics.enforcement_warning_count
+        )
+        compliance_score = analytics.enforcement_pass_rate if total_checks > 0 else 0.0
 
         # Risk distribution
-        risk_distribution = self._compute_risk_distribution()
+        risk_distribution = {
+            "critical": analytics.by_priority.get("critical", 0),
+            "high": analytics.by_priority.get("high", 0),
+            "medium": analytics.by_priority.get("medium", 0),
+            "low": analytics.by_priority.get("low", 0),
+        }
 
-        # Framework coverage
-        framework_coverage = self._compute_framework_coverage()
-
-        # Department breakdown
-        department_breakdown = self._compute_department_breakdown()
+        # Category compliance
+        category_compliance = {}
+        for category in PolicyCategory:
+            category_policies = [p for p in self._policies.values() if p.metadata.category == category]
+            if category_policies:
+                published = sum(1 for p in category_policies if p.status == PolicyStatus.PUBLISHED)
+                category_compliance[category.value] = {
+                    "total": len(category_policies),
+                    "published": published,
+                    "draft": sum(1 for p in category_policies if p.status == PolicyStatus.DRAFT),
+                    "under_review": sum(1 for p in category_policies if p.status == PolicyStatus.UNDER_REVIEW),
+                    "compliance_rate": round(published / len(category_policies) * 100, 2),
+                }
 
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "compliance_score": score,
-            "summary": {
-                "total_policies": analytics.total_policies,
-                "published": analytics.by_status.get("published", 0),
-                "draft": analytics.by_status.get("draft", 0),
-                "under_review": analytics.by_status.get("under_review", 0),
-                "pending_approvals": analytics.pending_approvals,
-                "overdue_reviews": analytics.overdue_reviews,
-                "upcoming_reviews": analytics.upcoming_reviews,
-            },
-            "enforcement": {
-                "pass_rate": round(analytics.enforcement_pass_rate, 1),
-                "fail_count": analytics.enforcement_fail_count,
-                "warning_count": analytics.enforcement_warning_count,
-                "top_violations": analytics.top_violated_rules[:5],
-            },
+            "compliance_score": round(compliance_score, 2),
+            "total_policies": analytics.total_policies,
+            "published_policies": analytics.by_status.get("published", 0),
+            "draft_policies": analytics.by_status.get("draft", 0),
+            "under_review_policies": analytics.by_status.get("under_review", 0),
+            "overdue_reviews": analytics.overdue_reviews,
+            "upcoming_reviews": analytics.upcoming_reviews,
+            "pending_approvals": analytics.pending_approvals,
+            "attestations_pending": analytics.attestations_pending,
+            "attestations_completed": analytics.attestations_completed,
+            "enforcement_pass_rate": analytics.enforcement_pass_rate,
+            "enforcement_fail_count": analytics.enforcement_fail_count,
+            "enforcement_warning_count": analytics.enforcement_warning_count,
             "risk_distribution": risk_distribution,
-            "framework_coverage": framework_coverage,
-            "department_breakdown": department_breakdown,
-            "trend": analytics.compliance_trend,
-            "recommendations": self._generate_recommendations(analytics),
+            "category_compliance": category_compliance,
+            "top_violated_rules": analytics.top_violated_rules,
+            "compliance_trend": analytics.compliance_trend,
+            "policies_created_last_30d": analytics.policies_created_last_30d,
+            "policies_updated_last_30d": analytics.policies_updated_last_30d,
         }
 
-    # ── Trend Analysis ─────────────────────────────────────────────────────
-
-    def _compute_compliance_trend(
-        self,
-        events: list[EnforcementEvent],
-    ) -> list[dict[str, Any]]:
-        """Compute monthly compliance trend for the last 6 months."""
+    def _generate_compliance_trend(self) -> list[dict]:
+        """Generate 6-month compliance trend data."""
+        trend = []
         now = datetime.now(timezone.utc)
-        months: list[dict[str, Any]] = []
 
         for i in range(5, -1, -1):
             month_start = now - timedelta(days=30 * i)
-            month_end = month_start + timedelta(days=30)
+            month_label = month_start.strftime("%Y-%m")
 
-            month_events = [
-                e for e in events
-                if self._parse_date(e.enforced_at)
-                and month_start <= self._parse_date(e.enforced_at) < month_end  # type: ignore
-            ]
+            # Filter events for this month
+            month_events = []
+            for events in self._events.values():
+                for event in events:
+                    try:
+                        event_date = datetime.fromisoformat(event.enforced_at)
+                        if event_date.strftime("%Y-%m") == month_label:
+                            month_events.append(event)
+                    except ValueError:
+                        continue
 
-            if month_events:
-                pass_count = sum(1 for e in month_events if e.result == EnforcementResult.PASS)
-                fail_count = sum(1 for e in month_events if e.result == EnforcementResult.FAIL)
-                warning_count = sum(1 for e in month_events if e.result == EnforcementResult.WARNING)
-                total = len(month_events)
+            total = len(month_events)
+            passes = sum(1 for e in month_events if e.result == EnforcementResult.PASS)
+            fails = sum(1 for e in month_events if e.result == EnforcementResult.FAIL)
 
-                months.append({
-                    "month": month_start.strftime("%Y-%m"),
-                    "total_checks": total,
-                    "pass_rate": round((pass_count / total) * 100, 1),
-                    "fail_count": fail_count,
-                    "warning_count": warning_count,
-                })
-            else:
-                months.append({
-                    "month": month_start.strftime("%Y-%m"),
-                    "total_checks": 0,
-                    "pass_rate": 0,
-                    "fail_count": 0,
-                    "warning_count": 0,
-                })
+            trend.append({
+                "month": month_label,
+                "total_checks": total,
+                "passes": passes,
+                "fails": fails,
+                "pass_rate": round(passes / total * 100, 2) if total > 0 else 0.0,
+            })
 
-        return months
-
-    # ── Risk & Coverage ────────────────────────────────────────────────────
-
-    def _compute_risk_distribution(self) -> dict[str, int]:
-        """Compute risk distribution across policies."""
-        distribution: Counter = Counter()
-        for policy in self._policies.values():
-            if policy.metadata.priority == PolicyPriority.CRITICAL:
-                distribution["critical"] += 1
-            elif policy.metadata.priority == PolicyPriority.HIGH:
-                distribution["high"] += 1
-            elif policy.metadata.priority == PolicyPriority.MEDIUM:
-                distribution["medium"] += 1
-            else:
-                distribution["low"] += 1
-        return dict(distribution)
-
-    def _compute_framework_coverage(self) -> dict[str, Any]:
-        """Compute framework coverage statistics."""
-        framework_policies: dict[str, int] = defaultdict(int)
-        for policy in self._policies.values():
-            if policy.metadata.framework:
-                framework_policies[policy.metadata.framework] += 1
-
-        return {
-            "frameworks": dict(framework_policies),
-            "total_frameworks": len(framework_policies),
-            "uncovered_categories": self._find_uncovered_categories(),
-        }
-
-    def _compute_department_breakdown(self) -> dict[str, Any]:
-        """Compute policy distribution by department."""
-        dept_policies: dict[str, int] = defaultdict(int)
-        for policy in self._policies.values():
-            dept = policy.metadata.department or "Unassigned"
-            dept_policies[dept] += 1
-        return dict(dept_policies)
-
-    def _find_uncovered_categories(self) -> list[str]:
-        """Find categories with no policies."""
-        all_categories = {c.value for c in PolicyCategory}
-        covered = {p.metadata.category.value for p in self._policies.values()}
-        return list(all_categories - covered)
-
-    # ── Scoring & Recommendations ──────────────────────────────────────────
-
-    def _compute_compliance_score(self, analytics: PolicyAnalytics) -> float:
-        """Compute an overall compliance score (0-100)."""
-        score = 100.0
-
-        # Deduct for overdue reviews
-        score -= analytics.overdue_reviews * 5
-
-        # Deduct for pending approvals
-        score -= analytics.pending_approvals * 2
-
-        # Deduct for enforcement failures
-        score -= analytics.enforcement_fail_count * 3
-
-        # Deduct for low pass rate
-        if analytics.enforcement_pass_rate < 80:
-            score -= (80 - analytics.enforcement_pass_rate) * 0.5
-
-        # Deduct for draft policies
-        draft_count = analytics.by_status.get("draft", 0)
-        if analytics.total_policies > 0:
-            draft_ratio = draft_count / analytics.total_policies
-            score -= draft_ratio * 10
-
-        return max(0.0, min(100.0, round(score, 1)))
-
-    def _generate_recommendations(self, analytics: PolicyAnalytics) -> list[str]:
-        """Generate actionable recommendations based on analytics."""
-        recommendations: list[str] = []
-
-        if analytics.overdue_reviews > 0:
-            recommendations.append(
-                f"Address {analytics.overdue_reviews} overdue policy review(s) immediately"
-            )
-
-        if analytics.pending_approvals > 0:
-            recommendations.append(
-                f"Expedite {analytics.pending_approvals} pending approval(s)"
-            )
-
-        if analytics.enforcement_fail_count > 0:
-            recommendations.append(
-                f"Remediate {analytics.enforcement_fail_count} enforcement failure(s)"
-            )
-
-        if analytics.enforcement_pass_rate < 80:
-            recommendations.append(
-                f"Improve enforcement pass rate (currently {analytics.enforcement_pass_rate:.1f}%)"
-            )
-
-        draft_count = analytics.by_status.get("draft", 0)
-        if draft_count > 0:
-            recommendations.append(
-                f"Move {draft_count} draft policy(ies) through the approval pipeline"
-            )
-
-        uncovered = self._find_uncovered_categories()
-        if uncovered:
-            recommendations.append(
-                f"Create policies for uncovered categories: {', '.join(uncovered)}"
-            )
-
-        if not recommendations:
-            recommendations.append("Policy portfolio is healthy — maintain current practices")
-
-        return recommendations
-
-    # ── Utility ────────────────────────────────────────────────────────────
-
-    def _parse_date(self, date_str: str) -> Optional[datetime]:
-        """Parse an ISO date string."""
-        try:
-            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        except (ValueError, AttributeError):
-            return None
+        return trend

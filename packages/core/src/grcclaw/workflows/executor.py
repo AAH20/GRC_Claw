@@ -221,5 +221,86 @@ class WorkflowExecutor:
                 raise TimeoutError(f"run '{run_id}' did not complete within {timeout}s")
             await asyncio.sleep(0.1)
 
+    # ------------------------------------------------------------------
+    # Batch execution
+    # ------------------------------------------------------------------
 
+    async def execute_batch(
+        self,
+        workflows: list[WorkflowDefinition],
+        parameters: Optional[dict[str, Any]] = None,
+        triggered_by: str = "",
+        max_concurrent: int = 5,
+    ) -> list[WorkflowRun]:
+        """
+        Execute multiple workflows concurrently.
 
+        Args:
+            workflows: List of workflow definitions to execute.
+            parameters: Parameters to pass to each workflow.
+            triggered_by: Who/what triggered the batch.
+            max_concurrent: Maximum number of concurrent executions.
+
+        Returns:
+            List of completed WorkflowRun objects.
+        """
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def run_with_semaphore(wf: WorkflowDefinition) -> WorkflowRun:
+            async with semaphore:
+                return await self.execute(
+                    wf, parameters=parameters, triggered_by=triggered_by, wait=True
+                )
+
+        tasks = [run_with_semaphore(wf) for wf in workflows]
+        return await asyncio.gather(*tasks)
+
+    # ------------------------------------------------------------------
+    # Workflow composition
+    # ------------------------------------------------------------------
+
+    async def execute_chain(
+        self,
+        workflows: list[WorkflowDefinition],
+        parameters: Optional[dict[str, Any]] = None,
+        triggered_by: str = "",
+        pass_context: bool = True,
+    ) -> list[WorkflowRun]:
+        """
+        Execute workflows in sequence, passing context from one to the next.
+
+        Args:
+            workflows: Ordered list of workflow definitions.
+            parameters: Initial parameters.
+            triggered_by: Who/what triggered the chain.
+            pass_context: If True, merge previous run context into next run parameters.
+
+        Returns:
+            List of completed WorkflowRun objects.
+        """
+        runs: list[WorkflowRun] = []
+        current_params = dict(parameters or {})
+
+        for wf in workflows:
+            run = await self.execute(
+                wf, parameters=current_params, triggered_by=triggered_by, wait=True
+            )
+            runs.append(run)
+            if pass_context and run.context:
+                current_params.update(run.context)
+
+        return runs
+
+    # ------------------------------------------------------------------
+    # Statistics
+    # ------------------------------------------------------------------
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get executor statistics."""
+        return {
+            "agent_handlers": list(self._agent_handlers.keys()),
+            "tool_handlers": list(self._tool_handlers.keys()),
+            "notification_handlers": len(self._notification_handlers),
+            "pending_approvals": len(self._approval_callbacks),
+            "engine_stats": self.engine.get_stats(),
+        }

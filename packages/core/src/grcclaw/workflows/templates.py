@@ -8,6 +8,7 @@ audit preparation, and incident response.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Optional
 
 from .schema import (
@@ -20,6 +21,8 @@ from .schema import (
     WorkflowStatus,
     WorkflowTemplate,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _compliance_assessment_workflow() -> WorkflowDefinition:
@@ -588,6 +591,372 @@ def _continuous_compliance_workflow() -> WorkflowDefinition:
     )
 
 
+def _vendor_assessment_workflow() -> WorkflowDefinition:
+    """Template for third-party vendor risk assessment."""
+    return WorkflowDefinition(
+        name="Vendor Assessment",
+        description="Third-party vendor risk assessment workflow",
+        version="1.0.0",
+        status=WorkflowStatus.ACTIVE,
+        trigger=TriggerType.MANUAL,
+        steps=[
+            WorkflowStep(
+                id="identify_vendor",
+                name="Identify Vendor",
+                type=StepType.ACTION,
+                description="Identify vendor and scope of assessment",
+                agent="vendor_agent",
+                tool="identify_vendor",
+                parameters={},
+                next_steps=["send_questionnaire"],
+            ),
+            WorkflowStep(
+                id="send_questionnaire",
+                name="Send Security Questionnaire",
+                type=StepType.ACTION,
+                description="Send security assessment questionnaire",
+                agent="vendor_agent",
+                tool="send_questionnaire",
+                parameters={"template": "vendor_security_assessment"},
+                depends_on=["identify_vendor"],
+                next_steps=["review_responses"],
+            ),
+            WorkflowStep(
+                id="review_responses",
+                name="Review Questionnaire Responses",
+                type=StepType.ACTION,
+                description="Review and score questionnaire responses",
+                agent="assessment_agent",
+                tool="review_responses",
+                parameters={},
+                depends_on=["send_questionnaire"],
+                next_steps=["conduct_due_diligence"],
+            ),
+            WorkflowStep(
+                id="conduct_due_diligence",
+                name="Conduct Due Diligence",
+                type=StepType.PARALLEL,
+                description="Conduct due diligence activities",
+                agent="due_diligence_agent",
+                tool="conduct_due_diligence",
+                parameters={"check_financials": True, "check_litigation": True},
+                depends_on=["review_responses"],
+                next_steps=["risk_rating"],
+            ),
+            WorkflowStep(
+                id="risk_rating",
+                name="Assign Risk Rating",
+                type=StepType.DECISION,
+                description="Assign overall vendor risk rating",
+                parameters={"scale": "low_medium_high_critical"},
+                depends_on=["conduct_due_diligence"],
+                next_steps=["approve_vendor"],
+            ),
+            WorkflowStep(
+                id="approve_vendor",
+                name="Approve or Reject Vendor",
+                type=StepType.HUMAN_APPROVAL,
+                description="Approve or reject vendor based on risk rating",
+                parameters={"approvers": ["procurement", "security", "legal"]},
+                depends_on=["risk_rating"],
+                next_steps=["onboard_vendor"],
+            ),
+            WorkflowStep(
+                id="onboard_vendor",
+                name="Onboard Vendor",
+                type=StepType.ACTION,
+                description="Onboard approved vendor",
+                agent="onboarding_agent",
+                tool="onboard_vendor",
+                parameters={},
+                depends_on=["approve_vendor"],
+            ),
+        ],
+        tags=["vendor", "assessment", "third_party"],
+        timeout_seconds=259200.0,
+    )
+
+
+def _control_testing_workflow() -> WorkflowDefinition:
+    """Template for testing compliance controls."""
+    return WorkflowDefinition(
+        name="Control Testing",
+        description="Test operating effectiveness of compliance controls",
+        version="1.0.0",
+        status=WorkflowStatus.ACTIVE,
+        trigger=TriggerType.SCHEDULED,
+        cron_expression="0 0 1 * *",
+        steps=[
+            WorkflowStep(
+                id="select_controls",
+                name="Select Controls for Testing",
+                type=StepType.ACTION,
+                description="Select controls to test based on risk",
+                agent="testing_agent",
+                tool="select_controls",
+                parameters={"rotation": "annual", "risk_based": True},
+                next_steps=["design_tests"],
+            ),
+            WorkflowStep(
+                id="design_tests",
+                name="Design Test Procedures",
+                type=StepType.ACTION,
+                description="Design test procedures for selected controls",
+                agent="testing_agent",
+                tool="design_tests",
+                parameters={},
+                depends_on=["select_controls"],
+                next_steps=["execute_tests"],
+            ),
+            WorkflowStep(
+                id="execute_tests",
+                name="Execute Tests",
+                type=StepType.PARALLEL,
+                description="Execute test procedures",
+                agent="testing_agent",
+                tool="execute_tests",
+                parameters={"sample_size": 25},
+                depends_on=["design_tests"],
+                next_steps=["evaluate_results"],
+            ),
+            WorkflowStep(
+                id="evaluate_results",
+                name="Evaluate Test Results",
+                type=StepType.DECISION,
+                description="Evaluate test results for operating effectiveness",
+                parameters={"pass_threshold": 0.95},
+                depends_on=["execute_tests"],
+                next_steps=["document_results"],
+            ),
+            WorkflowStep(
+                id="document_results",
+                name="Document Test Results",
+                type=StepType.ACTION,
+                description="Document test results and conclusions",
+                agent="testing_agent",
+                tool="document_results",
+                parameters={},
+                depends_on=["evaluate_results"],
+                next_steps=["report_deficiencies"],
+            ),
+            WorkflowStep(
+                id="report_deficiencies",
+                name="Report Control Deficiencies",
+                type=StepType.NOTIFICATION,
+                description="Report any control deficiencies",
+                parameters={"channels": ["email"]},
+                depends_on=["document_results"],
+            ),
+        ],
+        tags=["control", "testing", "compliance"],
+        timeout_seconds=604800.0,
+    )
+
+
+def _policy_review_workflow() -> WorkflowDefinition:
+    """Template for periodic policy review and update."""
+    return WorkflowDefinition(
+        name="Policy Review",
+        description="Periodic policy review and update workflow",
+        version="1.0.0",
+        status=WorkflowStatus.ACTIVE,
+        trigger=TriggerType.SCHEDULED,
+        cron_expression="0 0 1 1 *",
+        steps=[
+            WorkflowStep(
+                id="identify_policies",
+                name="Identify Policies for Review",
+                type=StepType.ACTION,
+                description="Find policies due for review",
+                agent="policy_agent",
+                tool="list_policies_due",
+                parameters={"review_period_months": 12},
+                next_steps=["assign_reviewers"],
+            ),
+            WorkflowStep(
+                id="assign_reviewers",
+                name="Assign Reviewers",
+                type=StepType.ACTION,
+                description="Assign policy reviewers",
+                agent="policy_agent",
+                tool="assign_reviewers",
+                parameters={},
+                depends_on=["identify_policies"],
+                next_steps=["conduct_review"],
+            ),
+            WorkflowStep(
+                id="conduct_review",
+                name="Conduct Policy Review",
+                type=StepType.ACTION,
+                description="Review policy for relevance and accuracy",
+                agent="reviewer_agent",
+                tool="review_policy",
+                parameters={"check_regulatory_alignment": True},
+                depends_on=["assign_reviewers"],
+                next_steps=["draft_updates"],
+            ),
+            WorkflowStep(
+                id="draft_updates",
+                name="Draft Policy Updates",
+                type=StepType.ACTION,
+                description="Draft necessary policy changes",
+                agent="policy_agent",
+                tool="draft_policy_update",
+                parameters={},
+                depends_on=["conduct_review"],
+                next_steps=["legal_review"],
+            ),
+            WorkflowStep(
+                id="legal_review",
+                name="Legal Review",
+                type=StepType.HUMAN_APPROVAL,
+                description="Legal team review of policy changes",
+                parameters={"approvers": ["legal_team"]},
+                depends_on=["draft_updates"],
+                next_steps=["approve_policy"],
+            ),
+            WorkflowStep(
+                id="approve_policy",
+                name="Approve Updated Policy",
+                type=StepType.HUMAN_APPROVAL,
+                description="Final approval of updated policy",
+                parameters={"approvers": ["policy_owner", "compliance_manager"]},
+                depends_on=["legal_review"],
+                next_steps=["publish_policy"],
+            ),
+            WorkflowStep(
+                id="publish_policy",
+                name="Publish Policy",
+                type=StepType.ACTION,
+                description="Publish updated policy to document repository",
+                agent="publishing_agent",
+                tool="publish_policy",
+                parameters={"notify_stakeholders": True},
+                depends_on=["approve_policy"],
+                next_steps=["acknowledge_receipt"],
+            ),
+            WorkflowStep(
+                id="acknowledge_receipt",
+                name="Acknowledge Receipt",
+                type=StepType.NOTIFICATION,
+                description="Collect acknowledgment from affected personnel",
+                parameters={"deadline_days": 30},
+                depends_on=["publish_policy"],
+            ),
+        ],
+        tags=["policy", "review", "governance"],
+        timeout_seconds=259200.0,
+    )
+
+
+def _risk_remediation_workflow() -> WorkflowDefinition:
+    """Template for risk assessment and remediation tracking."""
+    return WorkflowDefinition(
+        name="Risk Remediation",
+        description="Assess risks and track remediation efforts",
+        version="1.0.0",
+        status=WorkflowStatus.ACTIVE,
+        trigger=TriggerType.MANUAL,
+        steps=[
+            WorkflowStep(
+                id="identify_risks",
+                name="Identify Risks",
+                type=StepType.ACTION,
+                description="Identify and catalog risks",
+                agent="risk_agent",
+                tool="identify_risks",
+                parameters={},
+                next_steps=["assess_risks"],
+            ),
+            WorkflowStep(
+                id="assess_risks",
+                name="Assess Risk Severity",
+                type=StepType.ACTION,
+                description="Assess likelihood and impact of each risk",
+                agent="risk_agent",
+                tool="assess_risk",
+                parameters={"scoring_method": "qualitative"},
+                depends_on=["identify_risks"],
+                next_steps=["prioritize_risks"],
+            ),
+            WorkflowStep(
+                id="prioritize_risks",
+                name="Prioritize Risks",
+                type=StepType.DECISION,
+                description="Prioritize risks based on severity",
+                parameters={"threshold": "medium"},
+                depends_on=["assess_risks"],
+                next_steps=["develop_mitigation"],
+            ),
+            WorkflowStep(
+                id="develop_mitigation",
+                name="Develop Mitigation Plan",
+                type=StepType.ACTION,
+                description="Create mitigation plans for high-priority risks",
+                agent="risk_agent",
+                tool="create_mitigation_plan",
+                parameters={},
+                depends_on=["prioritize_risks"],
+                next_steps=["assign_owners"],
+            ),
+            WorkflowStep(
+                id="assign_owners",
+                name="Assign Risk Owners",
+                type=StepType.ACTION,
+                description="Assign owners to each risk",
+                agent="risk_agent",
+                tool="assign_risk_owner",
+                parameters={},
+                depends_on=["develop_mitigation"],
+                next_steps=["implement_mitigation"],
+            ),
+            WorkflowStep(
+                id="implement_mitigation",
+                name="Implement Mitigation",
+                type=StepType.ACTION,
+                description="Execute mitigation activities",
+                agent="remediation_agent",
+                tool="implement_mitigation",
+                parameters={},
+                depends_on=["assign_owners"],
+                next_steps=["monitor_progress"],
+            ),
+            WorkflowStep(
+                id="monitor_progress",
+                name="Monitor Remediation Progress",
+                type=StepType.WAIT,
+                description="Monitor remediation implementation",
+                parameters={"check_interval_days": 30, "escalate_after_days": 90},
+                depends_on=["implement_mitigation"],
+                next_steps=["verify_mitigation"],
+            ),
+            WorkflowStep(
+                id="verify_mitigation",
+                name="Verify Mitigation Effectiveness",
+                type=StepType.ACTION,
+                description="Verify that mitigation has reduced risk",
+                agent="risk_agent",
+                tool="verify_mitigation",
+                parameters={},
+                depends_on=["monitor_progress"],
+                next_steps=["update_risk_register"],
+            ),
+            WorkflowStep(
+                id="update_risk_register",
+                name="Update Risk Register",
+                type=StepType.ACTION,
+                description="Update risk register with current status",
+                agent="risk_agent",
+                tool="update_risk_register",
+                parameters={},
+                depends_on=["verify_mitigation"],
+            ),
+        ],
+        tags=["risk", "remediation", "assessment"],
+        timeout_seconds=7776000.0,
+    )
+
+
 class WorkflowTemplates:
     """Registry of pre-built workflow templates."""
 
@@ -645,9 +1014,38 @@ class WorkflowTemplates:
             definition_factory=_continuous_compliance_workflow,
             tags=["compliance", "monitoring", "continuous"],
         ))
+        self.register(WorkflowTemplate(
+            name="vendor_assessment",
+            description="Third-party vendor risk assessment workflow",
+            category="risk",
+            definition_factory=_vendor_assessment_workflow,
+            tags=["vendor", "assessment", "third_party"],
+        ))
+        self.register(WorkflowTemplate(
+            name="control_testing",
+            description="Control operating effectiveness testing workflow",
+            category="compliance",
+            definition_factory=_control_testing_workflow,
+            tags=["control", "testing", "compliance"],
+        ))
+        self.register(WorkflowTemplate(
+            name="policy_review",
+            description="Periodic policy review and update workflow",
+            category="governance",
+            definition_factory=_policy_review_workflow,
+            tags=["policy", "review", "governance"],
+        ))
+        self.register(WorkflowTemplate(
+            name="risk_remediation",
+            description="Risk assessment and remediation tracking workflow",
+            category="risk",
+            definition_factory=_risk_remediation_workflow,
+            tags=["risk", "remediation", "assessment"],
+        ))
 
     def register(self, template: WorkflowTemplate) -> None:
         self._templates[template.name] = template
+        logger.debug("registered workflow template '%s'", template.name)
 
     def get(self, name: str) -> Optional[WorkflowTemplate]:
         return self._templates.get(name)
@@ -664,6 +1062,21 @@ class WorkflowTemplates:
             results = [t for t in results if tag in t.tags]
         return results
 
+    def search_templates(self, query: str) -> list[WorkflowTemplate]:
+        """Search templates by name, description, or tags."""
+        query_lower = query.lower()
+        results = []
+        for t in self._templates.values():
+            if (query_lower in t.name.lower()
+                or query_lower in t.description.lower()
+                or any(query_lower in tag.lower() for tag in t.tags)):
+                results.append(t)
+        return results
+
+    def get_categories(self) -> list[str]:
+        """Get all unique template categories."""
+        return sorted(set(t.category for t in self._templates.values()))
+
     def instantiate(
         self,
         name: str,
@@ -674,3 +1087,14 @@ class WorkflowTemplates:
         if template is None:
             raise KeyError(f"workflow template '{name}' not found")
         return template.instantiate(workflow_name or name, **overrides)
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get template registry statistics."""
+        categories: dict[str, int] = {}
+        for t in self._templates.values():
+            categories[t.category] = categories.get(t.category, 0) + 1
+        return {
+            "total_templates": len(self._templates),
+            "by_category": categories,
+            "template_names": list(self._templates.keys()),
+        }

@@ -861,3 +861,146 @@ class ReportGenerator:
             if report.report_id == report_id:
                 return report
         return None
+
+
+class ReportBuilder:
+    """
+    Fluent builder for constructing report definitions.
+    """
+
+    def __init__(self):
+        self._name = ""
+        self._description = ""
+        self._category = "general"
+        self._format = ReportFormat.HTML
+        self._frequency = ReportFrequency.ON_DEMAND
+        self._data_sources: list[DataSourceType] = []
+        self._sections: list[dict[str, Any]] = []
+        self._filters: list[Any] = []
+        self._parameters: dict[str, Any] = {}
+        self._template = ""
+        self._recipients: list[str] = []
+        self._tags: list[str] = []
+        self._owner = ""
+
+    def name(self, name: str) -> ReportBuilder:
+        self._name = name
+        return self
+
+    def description(self, desc: str) -> ReportBuilder:
+        self._description = desc
+        return self
+
+    def category(self, category: str) -> ReportBuilder:
+        self._category = category
+        return self
+
+    def format(self, fmt: ReportFormat) -> ReportBuilder:
+        self._format = fmt
+        return self
+
+    def frequency(self, freq: ReportFrequency) -> ReportBuilder:
+        self._frequency = freq
+        return self
+
+    def data_source(self, source: DataSourceType) -> ReportBuilder:
+        self._data_sources.append(source)
+        return self
+
+    def section(self, title: str, section_type: str = "text", **kwargs) -> ReportBuilder:
+        self._sections.append({
+            "title": title,
+            "type": section_type,
+            **kwargs,
+        })
+        return self
+
+    def filter(self, criteria: Any) -> ReportBuilder:
+        self._filters.append(criteria)
+        return self
+
+    def parameter(self, key: str, value: Any) -> ReportBuilder:
+        self._parameters[key] = value
+        return self
+
+    def template(self, template: str) -> ReportBuilder:
+        self._template = template
+        return self
+
+    def recipients(self, recipients: list[str]) -> ReportBuilder:
+        self._recipients = recipients
+        return self
+
+    def tags(self, tags: list[str]) -> ReportBuilder:
+        self._tags = tags
+        return self
+
+    def owner(self, owner: str) -> ReportBuilder:
+        self._owner = owner
+        return self
+
+    def build(self) -> ReportDefinition:
+        import uuid
+        return ReportDefinition(
+            id=str(uuid.uuid4())[:12],
+            name=self._name,
+            description=self._description,
+            category=self._category,
+            report_format=self._format,
+            frequency=self._frequency,
+            data_sources=self._data_sources,
+            sections=self._sections,
+            filters=self._filters,
+            parameters=self._parameters,
+            template=self._template,
+            recipients=self._recipients,
+            tags=self._tags,
+            owner=self._owner,
+        )
+
+
+class ReportExporter:
+    """
+    Exports reports to various file formats and destinations.
+    """
+
+    def __init__(self):
+        self._export_handlers: dict[ReportFormat, Any] = {}
+
+    def register_handler(self, fmt: ReportFormat, handler: Any) -> None:
+        self._export_handlers[fmt] = handler
+
+    def export(self, output: ReportOutput, file_path: str) -> str:
+        fmt = output.format
+        content = output.content
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return file_path
+
+    def export_to_json(self, output: ReportOutput) -> str:
+        return json.dumps({
+            "output_id": output.output_id,
+            "report_id": output.report_id,
+            "report_name": output.report_name,
+            "format": output.format.value,
+            "content": output.content,
+            "generated_at": output.generated_at,
+            "success": output.success,
+            "metadata": output.metadata,
+        }, indent=2, default=str)
+
+    def export_summary(self, outputs: list[ReportOutput]) -> str:
+        lines = [
+            "# Report Generation Summary",
+            "",
+            f"**Total Reports:** {len(outputs)}",
+            f"**Successful:** {sum(1 for o in outputs if o.success)}",
+            f"**Failed:** {sum(1 for o in outputs if not o.success)}",
+            "",
+            "| Report | Format | Status | Generated |",
+            "|--------|--------|--------|-----------|",
+        ]
+        for o in outputs:
+            status = "OK" if o.success else "FAIL"
+            lines.append(f"| {o.report_name} | {o.format.value} | {status} | {o.generated_at} |")
+        return "\n".join(lines)

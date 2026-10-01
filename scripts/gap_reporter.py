@@ -129,7 +129,7 @@ def generate_markdown_report(gaps: list[Gap], actions: list) -> str:
         lines.append("No remediation actions tracked yet.")
 
     lines.extend(["", "---", "", "## Risks and Blockers", ""])
-    critical_open = [g for g in gaps if g.severity == GapStatus.CRITICAL and g.status not in (GapStatus.CLOSED, GapStatus.MITIGATED)]
+    critical_open = [g for g in gaps if g.severity == GapSeverity.CRITICAL and g.status not in (GapStatus.CLOSED, GapStatus.MITIGATED)]
     if critical_open:
         lines.append("### Critical Open Gaps")
         for g in critical_open:
