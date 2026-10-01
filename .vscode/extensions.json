@@ -1,0 +1,23 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "redhat.vscode-yaml",
+    "ms-azuretools.vscode-docker",
+    "github.copilot",
+    "github.copilot-chat",
+    "eamodio.gitlens",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "vivaxy.vscode-conventional-commits",
+    "christian-kohler.npm-intellisense",
+    "christian-kohler.path-intellisense",
+    "hbenl.vscode-test-explorer",
+    "ms-vscode.test-adapter-converter"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify"
+  ]
+}

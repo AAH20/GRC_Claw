@@ -1,0 +1,142 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.implicitProjectConfig.strictNullChecks": true,
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [100, 120],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.validate": ["javascript", "typescript", "javascriptreact", "typescriptreact"],
+  "eslint.lintTask.enable": true,
+
+  "prettier.semi": true,
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "es5",
+  "prettier.printWidth": 100,
+  "prettier.tabWidth": 2,
+
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/*.tsbuildinfo": true,
+    "**/.turbo": true,
+    "**/coverage": true
+  },
+
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/*.tsbuildinfo": true
+  },
+
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true
+  },
+
+  "files.associations": {
+    "*.yaml": "yaml",
+    "*.yml": "yaml",
+    "grcfile.yaml": "yaml"
+  },
+
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/GRC_Claw/main/schemas/grcfile.schema.json": "grcfile.yaml"
+  },
+
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "/bin/bash"
+    }
+  },
+
+  "debug.javascript.autoAttachFilter": "smart",
+  "debug.node.autoAttach": "on",
+
+  "testing.autoRun.delay": 5000,
+  "testing.followRunningTest": true,
+  "testing.showAllMessages": false,
+
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.suggest.insertMode": "replace"
+  },
+
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.wordWrap": "on"
+  },
+
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": false,
+    "markdown": true
+  },
+
+  "errorLens.enabled": true,
+  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
+
+  "cSpell.enabled": true,
+  "cSpell.language": "en",
+  "cSpell.words": [
+    "grc",
+    "claw",
+    "compliance",
+    "orchestrator",
+    "assurance",
+    "evidence",
+    "policy",
+    "firewall",
+    "gateway",
+    "sdk",
+    "mcp",
+    "otel",
+    "pdp",
+    "pep",
+    "soar",
+    "byoc",
+    "cjadc",
+    "gr00t",
+    "nim",
+    "a2z",
+    "aims",
+    "accm",
+    "rbac",
+    "zk",
+    "federated",
+    "mesh",
+    "drift",
+    "verifier",
+    "procurement",
+    "verifier"
+  ]
+}

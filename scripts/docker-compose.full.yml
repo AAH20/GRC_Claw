@@ -1,0 +1,226 @@
+# GRC_Claw Full Stack Docker Compose
+# Usage: docker compose -f deploy/docker-compose.yml up -d
+
+services:
+  # ── Core Gateway ──────────────────────────────────────────────────────
+  grc-claw-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: ghcr.io/grc-claw/gateway:latest
+    ports:
+      - "127.0.0.1:18791:18791"
+    environment:
+      GRC_CLAW_HOST: 0.0.0.0
+      GRC_CLAW_PORT: 18791
+      GRC_CLAW_GATEWAY_TOKEN: ${GRC_CLAW_GATEWAY_TOKEN:-demo-compose-token}
+      A2Z_SOC_MODE: ${A2Z_SOC_MODE:-demo}
+      A2Z_SOC_BASE_URL: ${A2Z_SOC_BASE_URL:-http://host.docker.internal:3000}
+      A2Z_SOC_API_KEY: ${A2Z_SOC_API_KEY:-}
+      A2Z_SOC_TENANT_ID: ${A2Z_SOC_TENANT_ID:-1}
+      NODE_ENV: production
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:18791/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - grc-claw-net
+
+  # ── Policy Services ───────────────────────────────────────────────────
+  pdp-service:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/pdp-service
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/pdp-service:latest
+    environment:
+      GRPC_PORT: "9090"
+      HTTP_PORT: "8080"
+    expose:
+      - "8080"
+      - "9090"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  pep-gateway:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/pep-gateway
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/pep-gateway:latest
+    environment:
+      GRPC_PORT: "9090"
+      HTTP_PORT: "8080"
+      PDP_SERVICE_URL: pdp-service:9090
+    ports:
+      - "127.0.0.1:8080:8080"
+    expose:
+      - "9090"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      - pdp-service
+    networks:
+      - grc-claw-net
+
+  policy-api:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/policy-api
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/policy-api:latest
+    environment:
+      PORT: "8080"
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  # ── Supporting Services ───────────────────────────────────────────────
+  agent-identity:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/agent-identity
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/agent-identity:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  analytics-engine:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/analytics-engine
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/analytics-engine:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  approval-workflow:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/approval-workflow
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/approval-workflow:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  compliance-mapping:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/compliance-mapping
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/compliance-mapping:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  discovery-engine:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/discovery-engine
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/discovery-engine:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  evidence-collector:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/evidence-collector
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/evidence-collector:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  otel-collector:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/otel-collector
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/otel-collector:latest
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    expose:
+      - "8888"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  reporting-engine:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/reporting-engine
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/reporting-engine:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+  risk-assessment:
+    build:
+      context: ../deployment/grc-claw-deployment/docker/risk-assessment
+      dockerfile: Dockerfile
+    image: ghcr.io/grc-claw/risk-assessment:latest
+    expose:
+      - "8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - grc-claw-net
+
+networks:
+  grc-claw-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

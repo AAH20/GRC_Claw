@@ -1,8 +1,8 @@
 # GRC_Claw Documentation Index
 
-Auto-generated on 2026-10-01 13:03:15 UTC
+Auto-generated on 2026-10-01 13:16:17 UTC
 
-**Total documents:** 244
+**Total documents:** 250
 
 ## Table of Contents
 
@@ -15,10 +15,22 @@ Auto-generated on 2026-10-01 13:03:15 UTC
 - [ISO/IEC 42001 — AI Management System Architecture & Engineering](.cursor/skills/iso-42001-ai-management-engineering/SKILL.md)
   - Designs and implements ISO/IEC 42001 AI Management System (AIMS) architecture, controls, and evidenc
 
+### .Devcontainer
+
+- [GRC_Claw Development Guide](.devcontainer/DEVELOPMENT.md)
+  - - [Prerequisites](#prerequisites)
+- [GRC_Claw Troubleshooting Guide](.devcontainer/TROUBLESHOOTING.md)
+  - - [Installation Issues](#installation-issues)
+
 ### .Github
 
 - [GRC Claw Security Scan Action](.github/actions/scan/README.md)
   - Scans pull requests for IaC misconfigurations and exposed secrets, then maps findings to SOC2 / comp
+
+### Apps
+
+- [Frontend Testing & Documentation Framework](apps/console/docs/TESTING_FRAMEWORK.md)
+  - This directory contains the complete testing and documentation framework for the GRC_Claw console.
 
 ### Deployment
 
@@ -119,6 +131,8 @@ Auto-generated on 2026-10-01 13:03:15 UTC
   - > Last updated: 2026-06-30 | Status: Living Document
 - [GRC_Claw Developer Onboarding Guide](docs/ONBOARDING.md)
   - > **Goal:** Zero to productive in 30 minutes. Every section gives you something to run.
+- [GRC_Claw Documentation Index](docs/generated/INDEX.md)
+  - Auto-generated on 2026-10-01 13:03:15 UTC
 - [GRC_Claw Performance Benchmarks & SLOs — V17](docs/PERFORMANCE-V17.md)
   - > Last updated: 2026-06-30 | Status: Living Document
 - [GRC_Claw Security Architecture V15](docs/SECURITY-V15.md)
@@ -310,6 +324,11 @@ Auto-generated on 2026-10-01 13:03:15 UTC
 - [Publishing to the Terraform Registry](packages/terraform-provider/TERRAFORM_REGISTRY.md)
   - 1. Create account at registry.terraform.io
 
+### Quotes_Output
+
+- [GRC_Claw Quote — Acme Healthcare Corp](quotes_output/quote_D38C394B.md)
+  - **Quote ID:** D38C394B
+
 ### Root
 
 - [Contributing to GRC_Claw](CONTRIBUTING.md)
@@ -328,6 +347,11 @@ Auto-generated on 2026-10-01 13:03:15 UTC
   - **Enterprise AI-agent policy and evidence control plane.** GRC_Claw records
 - [Publishing GRC_Claw to npm](PUBLISHING.md)
   - 1. Create an npm account and organization at npmjs.com
+
+### Scripts
+
+- [GRC_Claw Documentation Framework](scripts/README.md)
+  - Unified documentation tooling for the GRC_Claw repository. Provides search, validation, generation, 
 
 ### Skills
 

@@ -216,7 +216,7 @@ class AlertRule:
     cooldown_minutes: int = 30
     auto_escalate: bool = False
     escalation_delay_minutes: int = 60
-    escalation_severity: AlertSeverity = AlertSeverity.CHRITICAL
+    escalation_severity: AlertSeverity = AlertSeverity.CRITICAL
     channels: list[str] = field(default_factory=list)
     recipients: list[str] = field(default_factory=list)
     template_id: Optional[str] = None

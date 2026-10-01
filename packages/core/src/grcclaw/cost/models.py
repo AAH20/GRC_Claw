@@ -115,6 +115,7 @@ class CostLineItem:
     resource_type: Optional[ResourceType] = None
     tags: dict = field(default_factory=dict)
     allocated_to: str = ""  # department/project/team
+    metadata: dict = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 

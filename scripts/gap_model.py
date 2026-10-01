@@ -107,6 +107,18 @@ class Gap:
     @classmethod
     def from_dict(cls, d: dict) -> "Gap":
         d = dict(d)
+        d.setdefault("description", "")
+        d.setdefault("owner", "")
+        d.setdefault("created_date", "")
+        d.setdefault("target_date", "")
+        d.setdefault("progress", 0)
+        d.setdefault("remediation_plan", "")
+        d.setdefault("dependencies", [])
+        d.setdefault("tags", [])
+        d.setdefault("notes", "")
+        d.setdefault("last_updated", "")
+        d.setdefault("blueprint_ref", "")
+        d.setdefault("metrics", {})
         d["category"] = GapCategory(d.get("category", "tooling"))
         d["status"] = GapStatus(d.get("status", "identified"))
         d["severity"] = GapSeverity(d.get("severity", "medium"))

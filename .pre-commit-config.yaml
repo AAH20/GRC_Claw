@@ -1,0 +1,130 @@
+# GRC_Claw Pre-commit Hooks
+# Install: pre-commit install --install-hooks
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+
+default_language_version:
+  node: 20
+  python: "3.11"
+
+ci:
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
+
+repos:
+  # Basic file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.(md|svg)$
+      - id: end-of-file-fixer
+        exclude: \.(svg)$
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master, --branch, develop]
+
+  # Secret scanning
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: package-lock.json
+
+  # TypeScript / JavaScript
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.17.0
+    hooks:
+      - id: eslint
+        types: [file]
+        types_or: [javascript, jsx, ts, tsx]
+        args: [--fix, --max-warnings=10]
+        additional_dependencies:
+          - eslint@9.17.0
+          - "@typescript-eslint/eslint-plugin@8.18.0"
+          - "@typescript-eslint/parser@8.18.0"
+          - eslint-config-prettier@9.1.0
+          - eslint-plugin-import@2.31.0
+          - eslint-plugin-node@11.1.0
+          - eslint-plugin-promise@7.2.1
+
+  # Prettier formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown, css, html]
+        args: [--write]
+
+  # TypeScript type checking
+  - repo: local
+    hooks:
+      - id: typescript-compile
+        name: TypeScript Compile Check
+        entry: npx tsc --noEmit
+        language: system
+        types: [ts, tsx]
+        pass_filenames: false
+        always_run: true
+
+  # Shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+
+  # Python (for scripts and deployment)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  # Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+
+  # Conventional commits
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--failure-threshold, warning]
+
+  # Docker Compose validation
+  - repo: https://github.com/docker/compose
+    rev: v2.32.0
+    hooks:
+      - id: docker-compose-config
+        files: docker-compose.*\.ya?ml
