@@ -1698,11 +1698,11 @@ A new developer should be productive in GRC_Claw within their first week. Onboar
 5. A maintainer will review within 48 hours
 
 ## Learning Path
-- [Architecture Overview](docs/architecture/overview.md)
-- [Policy Engine Deep Dive](docs/architecture/policy-engine.md)
-- [API Reference](docs/api/reference.html)
-- [Policy DSL Guide](docs/policy-dsl/guide.md)
-- [Plugin Development](docs/guides/plugin-development.md)
+- [Architecture Overview](../docs/ARCHITECTURE-V15.md)
+- [Policy Engine Deep Dive](../specs/grc-claw-policy-engine-spec.md)
+- [API Reference](../specs/grc-claw-openapi.yaml)
+- [Policy DSL Guide](../specs/grc-claw-policy-engine-spec.md)
+- [Plugin Development](../CONTRIBUTING.md)
 ```
 
 #### 16.3.2 Interactive Tutorials
@@ -1788,7 +1788,7 @@ jobs:
               
               Here are some helpful links:
               - [Contributing Guide](CONTRIBUTING.md)
-              - [Architecture Overview](docs/architecture/overview.md)
+              - [Architecture Overview](../docs/ARCHITECTURE-V15.md)
               - [Good First Issues](https://github.com/grc-claw/grc-claw/good-first-issue)
               
               We're excited to have you!`

@@ -344,14 +344,16 @@ class ProgressDashboard:
         # At-risk learners
         at_risk = []
         for d in team_data:
-            if d["engagement_score"] < 50 or (d["last_activity"] and
-                (datetime.now() - datetime.fromisoformat(d["last_activity"])).days > 14):
+            risk_factors = []
+            if d["engagement_score"] < 50:
+                risk_factors.append("low_engagement")
+            if d["last_activity"] and (datetime.now() - datetime.fromisoformat(d["last_activity"])).days > 14:
+                risk_factors.append("inactive")
+            if risk_factors:
                 at_risk.append({
                     "user_id": d["user_id"],
                     "name": d["name"],
-                    "risk_factors": ["low_engagement"] if d["engagement_score"] < 50 else [],
-                                   ["inactive"] if d["last_activity"] and
-                                   (datetime.now() - datetime.fromisoformat(d["last_activity"])).days > 14 else [],
+                    "risk_factors": risk_factors,
                 })
 
         return {

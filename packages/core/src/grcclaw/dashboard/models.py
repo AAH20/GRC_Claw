@@ -2,12 +2,10 @@
 Data models for the GRC_Claw governance dashboard and reporting system.
 """
 
-from __future__ import annotations
-
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dc_field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict, Tuple
 import uuid
 
 
@@ -149,17 +147,17 @@ class FilterCriteria:
     field: str = ""
     operator: str = "eq"  # eq, neq, gt, gte, lt, lte, in, nin, contains, starts_with, ends_with
     value: Any = None
-    values: list[Any] = field(default_factory=list)
+    values: List[Any] = dc_field(default_factory=lambda: [])
     time_range: TimeRange = TimeRange.LAST_30D
     custom_start: Optional[str] = None
     custom_end: Optional[str] = None
-    tags: list[str] = field(default_factory=list)
-    frameworks: list[str] = field(default_factory=list)
-    domains: list[str] = field(default_factory=list)
-    categories: list[str] = field(default_factory=list)
-    statuses: list[str] = field(default_factory=list)
-    owners: list[str] = field(default_factory=list)
-    severity_levels: list[AlertLevel] = field(default_factory=list)
+    tags: List[str] = dc_field(default_factory=lambda: [])
+    frameworks: List[str] = dc_field(default_factory=lambda: [])
+    domains: List[str] = dc_field(default_factory=lambda: [])
+    categories: List[str] = dc_field(default_factory=lambda: [])
+    statuses: List[str] = dc_field(default_factory=lambda: [])
+    owners: List[str] = dc_field(default_factory=lambda: [])
+    severity_levels: List[AlertLevel] = dc_field(default_factory=lambda: [])
 
 
 @dataclass
@@ -175,40 +173,40 @@ class GovernanceScore:
     trend: TrendDirection = TrendDirection.UNKNOWN
     change_pct: float = 0.0
     period: str = ""
-    calculated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    breakdown: dict[str, float] = field(default_factory=dict)
-    recommendations: list[str] = field(default_factory=list)
+    calculated_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    breakdown: Dict[str, float] = dc_field(default_factory=dict)
+    recommendations: List[str] = dc_field(default_factory=lambda: [])
 
 
 @dataclass
 class DashboardWidget:
     """A single widget on the dashboard."""
 
-    id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    id: str = dc_field(default_factory=lambda: str(uuid.uuid4())[:12])
     name: str = ""
     description: str = ""
     widget_type: WidgetType = WidgetType.KPI
     size: WidgetSize = WidgetSize.MEDIUM
     chart_type: Optional[ChartType] = None
     data_source: DataSourceType = DataSourceType.CUSTOM
-    data_query: dict[str, Any] = field(default_factory=dict)
-    filters: list[FilterCriteria] = field(default_factory=list)
+    data_query: Dict[str, Any] = dc_field(default_factory=dict)
+    filters: List[FilterCriteria] = dc_field(default_factory=lambda: [])
     aggregation: MetricAggregation = MetricAggregation.COUNT
     refresh_interval_seconds: int = 300
     position_x: int = 0
     position_y: int = 0
     width: int = 2
     height: int = 1
-    config: dict[str, Any] = field(default_factory=dict)
+    config: Dict[str, Any] = dc_field(default_factory=dict)
     enabled: bool = True
-    tags: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    tags: List[str] = dc_field(default_factory=lambda: [])
+    created_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     last_refreshed: Optional[str] = None
     cached_data: Any = None
     cache_ttl_seconds: int = 60
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -244,7 +242,7 @@ class DashboardWidget:
 class KPIWidget:
     """Key Performance Indicator widget configuration."""
 
-    widget: DashboardWidget = field(default_factory=DashboardWidget)
+    widget: DashboardWidget = dc_field(default_factory=DashboardWidget)
     metric_name: str = ""
     metric_unit: str = ""
     target_value: Optional[float] = None
@@ -263,7 +261,7 @@ class KPIWidget:
 class ChartWidget:
     """Chart widget configuration."""
 
-    widget: DashboardWidget = field(default_factory=DashboardWidget)
+    widget: DashboardWidget = dc_field(default_factory=DashboardWidget)
     chart_type: ChartType = ChartType.LINE
     x_axis_field: str = ""
     y_axis_field: str = ""
@@ -272,7 +270,7 @@ class ChartWidget:
     show_legend: bool = True
     show_tooltips: bool = True
     show_grid: bool = True
-    color_palette: list[str] = field(default_factory=lambda: [
+    color_palette: List[str] = dc_field(default_factory=lambda: [
         "#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6",
         "#06b6d4", "#ec4899", "#f97316", "#14b8a6", "#6366f1",
     ])
@@ -286,17 +284,17 @@ class ChartWidget:
 class TableWidget:
     """Table widget configuration."""
 
-    widget: DashboardWidget = field(default_factory=DashboardWidget)
-    columns: list[dict[str, Any]] = field(default_factory=list)
+    widget: DashboardWidget = dc_field(default_factory=DashboardWidget)
+    columns: List[Dict[str, Any]] = dc_field(default_factory=lambda: [])
     sortable: bool = True
     filterable: bool = True
     paginated: bool = True
     page_size: int = 25
     show_row_numbers: bool = True
     sticky_header: bool = True
-    column_widths: dict[str, int] = field(default_factory=dict)
-    row_actions: list[dict[str, Any]] = field(default_factory=list)
-    conditional_formatting: list[dict[str, Any]] = field(default_factory=list)
+    column_widths: Dict[str, int] = dc_field(default_factory=dict)
+    row_actions: List[Dict[str, Any]] = dc_field(default_factory=lambda: [])
+    conditional_formatting: List[Dict[str, Any]] = dc_field(default_factory=lambda: [])
     export_enabled: bool = True
     group_by: str = ""
     sort_by: str = ""
@@ -307,8 +305,8 @@ class TableWidget:
 class AlertWidget:
     """Alert/notification widget configuration."""
 
-    widget: DashboardWidget = field(default_factory=DashboardWidget)
-    alert_levels: list[AlertLevel] = field(default_factory=lambda: [
+    widget: DashboardWidget = dc_field(default_factory=DashboardWidget)
+    alert_levels: List[AlertLevel] = dc_field(default_factory=lambda: [
         AlertLevel.HIGH, AlertLevel.CRITICAL
     ])
     show_acknowledged: bool = False
@@ -317,7 +315,7 @@ class AlertWidget:
     max_items: int = 50
     auto_refresh: bool = True
     sound_enabled: bool = False
-    color_map: dict[str, str] = field(default_factory=lambda: {
+    color_map: Dict[str, str] = dc_field(default_factory=lambda: {
         "critical": "#ef4444",
         "high": "#f97316",
         "medium": "#f59e0b",
@@ -330,7 +328,7 @@ class AlertWidget:
 class TextWidget:
     """Text/markdown content widget."""
 
-    widget: DashboardWidget = field(default_factory=DashboardWidget)
+    widget: DashboardWidget = dc_field(default_factory=DashboardWidget)
     content: str = ""
     content_type: str = "markdown"  # markdown, html, plain
     auto_scroll: bool = False
@@ -346,7 +344,7 @@ class DashboardLayout:
     row_height: int = 80
     gutter: int = 16
     padding: int = 24
-    responsive_breakpoints: dict[str, int] = field(default_factory=lambda: {
+    responsive_breakpoints: Dict[str, int] = dc_field(default_factory=lambda: {
         "xs": 1,
         "sm": 2,
         "md": 4,
@@ -356,35 +354,35 @@ class DashboardLayout:
     })
     theme: str = "light"  # light, dark, auto
     custom_css: str = ""
-    header_config: dict[str, Any] = field(default_factory=dict)
-    footer_config: dict[str, Any] = field(default_factory=dict)
+    header_config: Dict[str, Any] = dc_field(default_factory=dict)
+    footer_config: Dict[str, Any] = dc_field(default_factory=dict)
 
 
 @dataclass
 class DashboardConfig:
     """Complete dashboard configuration."""
 
-    id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    id: str = dc_field(default_factory=lambda: str(uuid.uuid4())[:12])
     name: str = ""
     description: str = ""
     category: str = "general"  # general, risk, compliance, operational, executive
-    layout: DashboardLayout = field(default_factory=DashboardLayout)
-    widgets: list[DashboardWidget] = field(default_factory=list)
-    filters: list[FilterCriteria] = field(default_factory=list)
-    tags: list[str] = field(default_factory=list)
+    layout: DashboardLayout = dc_field(default_factory=DashboardLayout)
+    widgets: List[DashboardWidget] = dc_field(default_factory=lambda: [])
+    filters: List[FilterCriteria] = dc_field(default_factory=lambda: [])
+    tags: List[str] = dc_field(default_factory=lambda: [])
     owner: str = ""
     is_public: bool = False
     is_default: bool = False
     parent_dashboard_id: Optional[str] = None
     version: int = 1
     enabled: bool = True
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     last_accessed: Optional[str] = None
     access_count: int = 0
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = dc_field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -423,43 +421,43 @@ class DashboardConfig:
 class DashboardSnapshot:
     """Point-in-time snapshot of dashboard data."""
 
-    snapshot_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    snapshot_id: str = dc_field(default_factory=lambda: str(uuid.uuid4())[:12])
     dashboard_id: str = ""
     dashboard_name: str = ""
-    captured_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    widget_data: dict[str, Any] = field(default_factory=dict)
+    captured_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    widget_data: Dict[str, Any] = dc_field(default_factory=dict)
     governance_score: Optional[GovernanceScore] = None
-    summary: dict[str, Any] = field(default_factory=dict)
-    alerts: list[dict[str, Any]] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
+    summary: Dict[str, Any] = dc_field(default_factory=dict)
+    alerts: List[Dict[str, Any]] = dc_field(default_factory=lambda: [])
+    metadata: Dict[str, Any] = dc_field(default_factory=dict)
 
 
 @dataclass
 class ReportDefinition:
     """Definition of a report."""
 
-    id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    id: str = dc_field(default_factory=lambda: str(uuid.uuid4())[:12])
     name: str = ""
     description: str = ""
     category: str = "general"
     report_format: ReportFormat = ReportFormat.MARKDOWN
     frequency: ReportFrequency = ReportFrequency.ON_DEMAND
-    data_sources: list[DataSourceType] = field(default_factory=list)
-    sections: list[dict[str, Any]] = field(default_factory=list)
-    filters: list[FilterCriteria] = field(default_factory=list)
-    parameters: dict[str, Any] = field(default_factory=dict)
+    data_sources: List[DataSourceType] = dc_field(default_factory=lambda: [])
+    sections: List[Dict[str, Any]] = dc_field(default_factory=lambda: [])
+    filters: List[FilterCriteria] = dc_field(default_factory=lambda: [])
+    parameters: Dict[str, Any] = dc_field(default_factory=dict)
     template: str = ""
     output_path: str = ""
-    recipients: list[str] = field(default_factory=list)
-    tags: list[str] = field(default_factory=list)
+    recipients: List[str] = dc_field(default_factory=lambda: [])
+    tags: List[str] = dc_field(default_factory=lambda: [])
     owner: str = ""
     enabled: bool = True
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     last_generated: Optional[str] = None
     generation_count: int = 0
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -487,7 +485,7 @@ class ReportDefinition:
 class ReportSchedule:
     """Schedule configuration for automated report generation."""
 
-    id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    id: str = dc_field(default_factory=lambda: str(uuid.uuid4())[:12])
     report_id: str = ""
     report_name: str = ""
     frequency: ReportFrequency = ReportFrequency.WEEKLY
@@ -497,26 +495,26 @@ class ReportSchedule:
     last_status: str = ""  # pending, running, success, failed
     last_error: Optional[str] = None
     enabled: bool = True
-    recipients: list[str] = field(default_factory=list)
-    output_formats: list[ReportFormat] = field(default_factory=lambda: [ReportFormat.MARKDOWN])
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    recipients: List[str] = dc_field(default_factory=lambda: [])
+    output_formats: List[ReportFormat] = dc_field(default_factory=lambda: [ReportFormat.MARKDOWN])
+    created_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 @dataclass
 class ReportOutput:
     """Generated report output."""
 
-    output_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    output_id: str = dc_field(default_factory=lambda: str(uuid.uuid4())[:12])
     report_id: str = ""
     report_name: str = ""
     format: ReportFormat = ReportFormat.MARKDOWN
     content: str = ""
     file_path: Optional[str] = None
     file_size: int = 0
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = dc_field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     generated_by: str = ""
-    parameters: dict[str, Any] = field(default_factory=dict)
+    parameters: Dict[str, Any] = dc_field(default_factory=dict)
     execution_time_ms: float = 0.0
     success: bool = True
     error: Optional[str] = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = dc_field(default_factory=dict)
