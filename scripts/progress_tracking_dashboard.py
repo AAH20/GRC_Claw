@@ -489,13 +489,16 @@ def main():
             print(json.dumps(result, indent=2))
         else:
             d = result
-            print(f"\n{'='*60}")
-            print(f"Governance Dashboard")
-            print(f"{'='*60}")
-            print(f"Total learners: {d['total_learners']}")
-            print(f"Clause 7.2 readiness: {d['clause_7_2_readiness']}%")
-            print(f"Training investment: {d['training_investment']['total_learning_hours']} hours")
-            print(f"At-risk count: {d['at_risk_count']}")
+            if "error" in d:
+                print(f"\nNo governance data available yet.")
+            else:
+                print(f"\n{'='*60}")
+                print(f"Governance Dashboard")
+                print(f"{'='*60}")
+                print(f"Total learners: {d['total_learners']}")
+                print(f"Clause 7.2 readiness: {d['clause_7_2_readiness']}%")
+                print(f"Training investment: {d['training_investment']['total_learning_hours']} hours")
+                print(f"At-risk count: {d['at_risk_count']}")
 
     else:
         parser.print_help()
