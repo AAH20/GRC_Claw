@@ -1,0 +1,90 @@
+{{- if .Values.agentIdentity.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-identity
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: agent-identity
+    grc.component: agent-identity
+    grc.tier: control-plane
+spec:
+  replicas: {{ .Values.agentIdentity.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: agent-identity
+  template:
+    metadata:
+      labels:
+        app: agent-identity
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: agent-identity
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: identity
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.agentIdentity.image.repository }}:{{ .Values.agentIdentity.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: {{ .Values.agentIdentity.resources.requests.cpu }}
+              memory: {{ .Values.agentIdentity.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.agentIdentity.resources.limits.cpu }}
+              memory: {{ .Values.agentIdentity.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: agent-identity
+                topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: agent-identity
+{{- end }}

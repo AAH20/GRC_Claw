@@ -1,0 +1,24 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-evidence-verified-001",
+  "source": "grc-claw/evidence-orchestrator",
+  "type": "com.grcclaw.evidence.verified",
+  "subject": "agent-123",
+  "time": "2026-10-01T14:25:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "evidence_id": "EVD-2026-001234",
+    "verification_level": "L2",
+    "hash_verified": true,
+    "chain_of_custody_intact": true,
+    "cross_validated": true,
+    "verified_by": "compliance-engine"
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "trace_id": "trace-2026-1001-001",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: grc-claw-observability
+data:
+  config.yaml: "auth:\n  anonymous:\n    enabled: false\n  oauth:\n    enabled: true\n\
+    \    client_id: ${OAUTH_CLIENT_ID}\n    client_secret: ${OAUTH_CLIENT_SECRET}\n\
+    \    auth_url: https://dex.grc-claw.internal/auth\n    token_url: https://dex.grc-claw.internal/token\n\
+    \    api_url: https://dex.grc-claw.internal/userinfo\ndatasources:\n  - name:\
+    \ Prometheus\n    type: prometheus\n    url: http://prometheus:9090\n    access:\
+    \ proxy\n    isDefault: true\n  - name: Loki\n    type: loki\n    url: http://loki:3100\n\
+    \    access: proxy\n  - name: Tempo\n    type: tempo\n    url: http://tempo:3200\n\
+    \    access: proxy\ndashboards:\n  default_home_dashboard_path: /var/lib/grafana/dashboards/overview.json\n"

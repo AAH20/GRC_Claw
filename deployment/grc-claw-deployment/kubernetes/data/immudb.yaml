@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: immudb
+  namespace: grc-claw-data
+  labels:
+    app: immudb
+    grc.component: immudb
+    grc.tier: data
+spec:
+  serviceName: immudb
+  replicas: 3
+  selector:
+    matchLabels:
+      app: immudb
+  template:
+    metadata:
+      labels:
+        app: immudb
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: immudb
+          image: codenotary/immudb:1.9.0
+          ports:
+            - containerPort: 3322
+              name: immudb
+            - containerPort: 9497
+              name: metrics
+          env:
+            - name: IMMUDB_ADDRESS
+              value: "0.0.0.0"
+            - name: IMMUDB_PORT
+              value: "3322"
+            - name: IMMUDB_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immudb-credentials
+                  key: admin-password
+            - name: IMMUDB_MAINTENANCE
+              value: "false"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+          livenessProbe:
+            tcpSocket:
+              port: 3322
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 3322
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/immudb
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: premium-rwo
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immudb
+  namespace: grc-claw-data
+  labels:
+    app: immudb
+spec:
+  selector:
+    app: immudb
+  ports:
+    - port: 3322
+      name: immudb
+      targetPort: 3322
+    - port: 9497
+      name: metrics
+      targetPort: 9497
+  type: ClusterIP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: immudb-pdb
+  namespace: grc-claw-data
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: immudb

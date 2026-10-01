@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: grc-claw-production
+  namespace: argocd
+spec:
+  description: GRC_Claw Production Workloads
+  sourceRepos:
+    - https://github.com/grc-claw/grc-claw-gitops.git
+    - https://github.com/grc-claw/grc-claw-helm.git
+  destinations:
+    - server: https://prod-us-east-1.grc-claw.internal
+      namespace: grc-claw-*
+    - server: https://prod-eu-west-1.grc-claw.internal
+      namespace: grc-claw-*
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.istio.io
+      kind: VirtualService
+    - group: networking.istio.io
+      kind: DestinationRule
+  roles:
+    - name: developer
+      description: Developer read-only access
+      policies:
+        - p, proj:grc-claw-production:developer, applications, get, grc-claw-production/*, allow
+        - p, proj:grc-claw-production:developer, applications, sync, grc-claw-production/*, deny
+      groups:
+        - grc-claw-developers
+    - name: operator
+      description: Operator full access
+      policies:
+        - p, proj:grc-claw-production:operator, applications, *, grc-claw-production/*, allow
+      groups:
+        - grc-claw-operators

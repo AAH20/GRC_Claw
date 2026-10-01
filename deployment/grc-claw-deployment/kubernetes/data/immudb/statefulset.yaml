@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: immudb
+  namespace: grc-claw-data
+  labels:
+    app: immudb
+    grc.component: immudb
+    grc.tier: data
+spec:
+  serviceName: immudb
+  replicas: 3
+  selector:
+    matchLabels:
+      app: immudb
+  template:
+    metadata:
+      labels:
+        app: immudb
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3322'
+        prometheus.io/path: /metrics
+    spec:
+      serviceAccountName: immudb
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+      - name: immudb
+        image: codenotary/immudb:v1.9
+        ports:
+        - containerPort: 3322
+          name: http
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 8Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3322
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3322
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: immudb
+              topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: immudb
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: premium-rwo
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-analytics
+  labels:
+    grc.tier: analytics
+    istio-injection: enabled

@@ -1,0 +1,47 @@
+# GRC_Claw Agent Configuration
+# Per-agent governance settings
+
+agents:
+  - agent_id: hermes-primary
+    name: "Hermes Primary Agent"
+    type: autonomous
+    status: active
+    trust_score: 0.85
+    policies:
+      - production-agent-policy
+      - data-governance-policy
+    enforcement_profile: standard
+    capabilities:
+      - name: terminal
+        risk_tier: high
+        allowed_tools: ["read", "write", "execute"]
+      - name: browser
+        risk_tier: limited
+        allowed_tools: ["navigate", "extract"]
+      - name: api_call
+        risk_tier: limited
+        allowed_tools: ["get", "post"]
+    max_autonomy_level: guarded
+    owner: platform-team@company.com
+    owning_team: Platform Engineering
+
+  - agent_id: customer-service-agent
+    name: "Customer Service Agent"
+    type: semi_autonomous
+    status: active
+    trust_score: 0.92
+    policies:
+      - production-agent-policy
+      - refund-policy
+    enforcement_profile: strict
+    capabilities:
+      - name: read_tickets
+        risk_tier: minimal
+        allowed_tools: ["read"]
+      - name: process_refunds
+        risk_tier: high
+        allowed_tools: ["read", "write"]
+        max_autonomy_level: supervised
+    max_autonomy_level: supervised
+    owner: cs-team@company.com
+    owning_team: Customer Service

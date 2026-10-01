@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: grc-claw-observability
+  labels:
+    app: otel-collector
+spec:
+  selector:
+    app: otel-collector
+  ports:
+  - port: 8888
+    targetPort: 8888
+    name: http
+  type: ClusterIP

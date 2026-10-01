@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-control-plane
+  labels:
+    istio-injection: enabled
+    grc.tier: control-plane
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-evidence
+  labels:
+    istio-injection: enabled
+    grc.tier: evidence
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-analytics
+  labels:
+    istio-injection: enabled
+    grc.tier: analytics
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-observability
+  labels:
+    istio-injection: enabled
+    grc.tier: observability
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-data
+  labels:
+    istio-injection: enabled
+    grc.tier: data
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-ingress
+  labels:
+    istio-injection: enabled
+    grc.tier: ingress
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    grc.tier: gitops

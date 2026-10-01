@@ -1,0 +1,66 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup tools
+        run: |
+          curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          curl -sSL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Lint Helm charts
+        run: |
+          helm lint helm/grc-claw
+          helm template helm/grc-claw --values helm/grc-claw/values/values-${{ github.event.inputs.environment || 'staging' }}.yaml | kubeval --strict
+
+      - name: Validate K8s manifests
+        run: |
+          kustomize build kubernetes/ | kubeval --strict
+
+      - name: Update GitOps repo
+        run: |
+          cd gitops
+          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/grc-claw/${{ matrix.service }}:${{ github.sha }}"' \
+            environments/${{ github.event.inputs.environment || 'staging' }}/us-east-1/${{ matrix.service }}/deployment.yaml
+          git commit -am "deploy: ${{ github.event.inputs.environment || 'staging' }} - ${{ github.sha }}"
+          git push
+
+      - name: Sync ArgoCD
+        run: |
+          argocd app sync grc-claw-${{ github.event.inputs.environment || 'staging' }} \
+            --server ${{ secrets.ARGOCD_SERVER }} \
+            --auth-token ${{ secrets.ARGOCD_TOKEN }}
+          argocd app wait grc-claw-${{ github.event.inputs.environment || 'staging' }} \
+            --server ${{ secrets.ARGOCD_SERVER }} \
+            --auth-token ${{ secrets.ARGOCD_TOKEN }} \
+            --timeout 300
+
+      - name: Run smoke tests
+        run: ./scripts/smoke-tests.sh ${{ github.event.inputs.environment || 'staging' }}
+
+      - name: Run E2E tests (staging only)
+        if: github.event.inputs.environment == 'staging' || github.event.inputs.environment == ''
+        run: ./scripts/e2e-tests.sh staging
+
+      - name: Run performance tests (staging only)
+        if: github.event.inputs.environment == 'staging' || github.event.inputs.environment == ''
+        run: ./scripts/perf-tests.sh staging

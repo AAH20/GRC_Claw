@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  namespace: grc-claw-data
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: redis

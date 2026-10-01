@@ -1,0 +1,181 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pdp-service-netpol
+  namespace: grc-claw-control-plane
+spec:
+  podSelector:
+    matchLabels:
+      app: pdp-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: pep-gateway
+        - podSelector:
+            matchLabels:
+              app: policy-api
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9090
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pep-gateway-netpol
+  namespace: grc-claw-control-plane
+spec:
+  podSelector:
+    matchLabels:
+      app: pep-gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: ingress
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: pdp-service
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9090
+    - to:
+        - podSelector:
+            matchLabels:
+              app: agent-identity
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgresql-netpol
+  namespace: grc-claw-data
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: control-plane
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: evidence
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: analytics
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-netpol
+  namespace: grc-claw-data
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: control-plane
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: evidence
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: analytics
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-netpol
+  namespace: grc-claw-data
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: control-plane
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: evidence
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: analytics
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 9093
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-netpol
+  namespace: grc-claw-data
+spec:
+  podSelector:
+    matchLabels:
+      app: vault
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: control-plane
+        - namespaceSelector:
+            matchLabels:
+              grc.tier: observability
+      ports:
+        - protocol: TCP
+          port: 8200

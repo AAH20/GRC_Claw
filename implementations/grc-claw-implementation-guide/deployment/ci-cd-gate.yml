@@ -1,0 +1,63 @@
+# GitHub Actions — GRC_Claw Compliance Gate
+name: GRC_Claw Compliance Gate
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  compliance-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install grcclaw
+
+      - name: Validate Policies
+        run: |
+          grcclaw lint-policy config/
+          grcclaw validate-policy config/
+
+      - name: Run Tests
+        run: |
+          pytest tests/ -v --cov=src/grcclaw --cov-report=xml
+
+      - name: Run Assessments
+        run: |
+          grcclaw assess --system customer-service-agent --type fairness
+          grcclaw assess --system customer-service-agent --type robustness
+
+      - name: Check Compliance
+        run: |
+          grcclaw verify-compliance \
+            --framework iso-42001 \
+            --controls 6.1,8.1,9.1 \
+            --strict
+
+      - name: Generate Evidence Package
+        run: |
+          grcclaw generate-evidence \
+            --framework iso-42001 \
+            --output evidence/iso-42001-evidence.oscal.json
+
+      - name: Upload Evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-evidence
+          path: evidence/
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml

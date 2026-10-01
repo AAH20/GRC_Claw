@@ -1,0 +1,27 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-risk-001",
+  "source": "grc-claw/risk-engine",
+  "type": "com.grcclaw.risk.detected",
+  "subject": "agent-123",
+  "time": "2026-10-01T14:30:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "risk_id": "RISK-001",
+    "title": "Repeated Policy Violations",
+    "description": "Agent has 3+ DENY decisions in 5 minutes",
+    "category": "security",
+    "likelihood": "likely",
+    "impact": "major",
+    "risk_tier": "high",
+    "treatment": "mitigate"
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "compliance_frameworks": ["ISO-42001"],
+    "risk_tier": "high",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

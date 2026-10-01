@@ -1,0 +1,135 @@
+======================================================================
+GRC_Claw U-AIGMM AI GOVERNANCE MATURITY ASSESSMENT REPORT
+======================================================================
+
+Assessment Date: 2026-10-01T14:46:50.469279
+Questionnaire Version: 1.0
+Weight Profile: default
+
+----------------------------------------------------------------------
+OVERALL MATURITY SCORE
+----------------------------------------------------------------------
+  Score: 2.45 / 5.0
+  Level: 2 - Developing
+  Normalized: 36.2 / 100
+
+----------------------------------------------------------------------
+PILLAR SUMMARY
+----------------------------------------------------------------------
+  Governance & Strategy: 2.82 (Level 3 - Defined)
+  Responsible AI & Ethics: 2.62 (Level 3 - Defined)
+  Technical Foundation: 2.04 (Level 2 - Developing)
+  Operations & Performance: 2.31 (Level 2 - Developing)
+
+----------------------------------------------------------------------
+DOMAIN DETAILS
+----------------------------------------------------------------------
+
+  Governance & Strategy:
+    1.1 AI Governance Framework: 2.67 (Level 3)
+      1.1.1 Governance Structure & Policy: 2.8 (A:2.67 B:3.0)
+      1.1.2 AI System Registry & Inventory: 2.8 (A:2.33 B:3.5)
+      1.1.3 Governance Integration & Reporting: 2.4 (A:2.33 B:2.5)
+    1.2 AI Strategy & Value Alignment: 3.47 (Level 4)
+      1.2.1 AI Strategy & Roadmap: 4.0 (A:3.67 B:4.5)
+      1.2.2 Value Realization & ROI: 3.6 (A:3.33 B:4.0)
+      1.2.3 Stakeholder Alignment & Communication: 2.8 (A:3.33 B:2.0)
+    1.3 Risk & Compliance Management: 2.33 (Level 2)
+      1.3.1 AI Risk Management Framework: 2.8 (A:2.67 B:3.0)
+      1.3.2 Regulatory Compliance & Standards: 2.2 (A:2.0 B:2.5)
+      1.3.3 Risk Assessment & Treatment: 2.0 (A:2.67 B:1.0)
+
+  Responsible AI & Ethics:
+    2.1 Fairness, Transparency & Explainability: 2.47 (Level 2)
+      2.1.1 Fairness & Bias Management: 1.8 (A:2.0 B:1.5)
+      2.1.2 Transparency & Explainability: 3.2 (A:3.67 B:2.5)
+      2.1.3 Ethical Review & Oversight: 2.4 (A:2.67 B:2.0)
+    2.2 Privacy & Data Protection: 2.47 (Level 2)
+      2.2.1 Privacy by Design: 2.8 (A:2.0 B:4.0)
+      2.2.2 Data Subject Rights & Consent: 2.2 (A:2.67 B:1.5)
+      2.2.3 Privacy-Enhancing Technologies: 2.4 (A:2.67 B:2.0)
+    2.3 Human Oversight & Accountability: 2.93 (Level 3)
+      2.3.1 Human Oversight Mechanisms: 3.0 (A:2.33 B:4.0)
+      2.3.2 Meaningful Human Control: 2.6 (A:3.0 B:2.0)
+      2.3.3 Accountability & Audit Trail: 3.2 (A:3.67 B:2.5)
+
+  Technical Foundation:
+    3.1 Data Governance & Quality: 2.33 (Level 2)
+      3.1.1 Data Governance Framework: 1.8 (A:2.33 B:1.0)
+      3.1.2 Data Quality Management: 2.6 (A:2.67 B:2.5)
+      3.1.3 Data Provenance & Traceability: 2.6 (A:3.67 B:1.0)
+    3.2 Model & Platform Security: 2.47 (Level 2)
+      3.2.1 AI Threat Modeling & Assessment: 2.8 (A:2.33 B:3.5)
+      3.2.2 Model Security & Protection: 2.4 (A:2.33 B:2.5)
+      3.2.3 Platform & Infrastructure Security: 2.2 (A:2.0 B:2.5)
+    3.3 Agent Identity & Access Governance: 1.47 (Level 1)
+      3.3.1 Agent Identity Management: 1.6 (A:1.33 B:2.0)
+      3.3.2 Agent Access Control: 1.4 (A:1.67 B:1.0)
+      3.3.3 Agent Lifecycle Management: 1.4 (A:1.0 B:2.0)
+    3.4 Runtime Behavioral Controls: 1.87 (Level 2)
+      3.4.1 Runtime Guardrails & Constraints: 1.6 (A:1.67 B:1.5)
+      3.4.2 Tool & API Governance: 2.0 (A:1.67 B:2.5)
+      3.4.3 Behavioral Baselines & Drift: 2.0 (A:2.67 B:1.0)
+
+  Operations & Performance:
+    4.1 Monitoring & Incident Response: 1.6 (Level 1)
+      4.1.1 AI Monitoring & Detection: 1.8 (A:2.0 B:1.5)
+      4.1.2 Incident Response & Recovery: 1.4 (A:1.33 B:1.5)
+      4.1.3 Operational Resilience: 1.6 (A:1.67 B:1.5)
+    4.2 Workforce & Organizational Readiness: 2.93 (Level 3)
+      4.2.1 AI Literacy & Training: 3.0 (A:3.0 B:3.0)
+      4.2.2 Organizational Culture & Change: 2.6 (A:3.33 B:1.5)
+      4.2.3 Skills & Competency Framework: 3.2 (A:2.67 B:4.0)
+    4.3 Continuous Improvement & Innovation: 2.4 (Level 2)
+      4.3.1 Continuous Improvement Process: 2.2 (A:2.0 B:2.5)
+      4.3.2 Innovation & Emerging Practices: 2.0 (A:2.0 B:2.0)
+      4.3.3 Benchmarking & Peer Learning: 3.0 (A:3.33 B:2.5)
+
+----------------------------------------------------------------------
+GAP ANALYSIS
+----------------------------------------------------------------------
+  Critical Gaps: 3
+    - 3.3 Agent Identity & Access Governance: Score 1.47 is below 2.0 threshold
+    - 4.1 Monitoring & Incident Response: Score 1.6 is below 2.0 threshold
+    - 3.4 Runtime Behavioral Controls: Score 1.87 is below 2.0 threshold
+  High Priority Gaps: 9
+    - 1.3 Risk & Compliance Management: Score 2.33 indicates developing maturity
+    - 3.1 Data Governance & Quality: Score 2.33 indicates developing maturity
+    - 4.3 Continuous Improvement & Innovation: Score 2.4 indicates developing maturity
+    - 2.1 Fairness, Transparency & Explainability: Score 2.47 indicates developing maturity
+    - 2.2 Privacy & Data Protection: Score 2.47 indicates developing maturity
+    - 3.2 Model & Platform Security: Score 2.47 indicates developing maturity
+    - 1.1 AI Governance Framework: Score 2.67 indicates developing maturity
+    - 2.3 Human Oversight & Accountability: Score 2.93 indicates developing maturity
+    - 4.2 Workforce & Organizational Readiness: Score 2.93 indicates developing maturity
+  Strengths: 0
+
+----------------------------------------------------------------------
+BENCHMARK COMPARISON (vs. Industry Aggregate)
+----------------------------------------------------------------------
+  1.1: Score 2.67 vs Benchmark 2.1 (+0.57, ~P75)
+  1.2: Score 3.47 vs Benchmark 2.3 (+1.17, ~P90)
+  1.3: Score 2.33 vs Benchmark 2.0 (+0.33, ~P50)
+  2.1: Score 2.47 vs Benchmark 1.8 (+0.67, ~P75)
+  2.2: Score 2.47 vs Benchmark 2.2 (+0.27, ~P50)
+  2.3: Score 2.93 vs Benchmark 1.9 (+1.03, ~P90)
+  3.1: Score 2.33 vs Benchmark 2.4 (-0.07, ~P25)
+  3.2: Score 2.47 vs Benchmark 2.0 (+0.47, ~P50)
+  3.3: Score 1.47 vs Benchmark 1.5 (-0.03, ~P25)
+  3.4: Score 1.87 vs Benchmark 1.4 (+0.47, ~P50)
+  4.1: Score 1.6 vs Benchmark 2.1 (-0.5, ~P25)
+  4.2: Score 2.93 vs Benchmark 2.3 (+0.63, ~P75)
+  4.3: Score 2.4 vs Benchmark 1.9 (+0.5, ~P75)
+
+----------------------------------------------------------------------
+TOP RECOMMENDATIONS
+----------------------------------------------------------------------
+  1. Address critical gap in 3.3 Agent Identity & Access Governance (current: 1.47, target: 2.0+)
+  2. Address critical gap in 4.1 Monitoring & Incident Response (current: 1.6, target: 2.0+)
+  3. Address critical gap in 3.4 Runtime Behavioral Controls (current: 1.87, target: 2.0+)
+  4. Improve 1.3 Risk & Compliance Management (current: 2.33, target: 3.0+)
+  5. Improve 3.1 Data Governance & Quality (current: 2.33, target: 3.0+)
+
+======================================================================
+END OF REPORT
+======================================================================

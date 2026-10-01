@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: engine-config
+  namespace: grc-claw-analytics
+data:
+  config.yaml: "analytics:\n  risk_scoring:\n    model: ml-based\n    refresh_interval:\
+    \ 300s\n  anomaly_detection:\n    enabled: true\n    sensitivity: 0.95\n  drift_detection:\n\
+    \    enabled: true\n    window: 1h\n"

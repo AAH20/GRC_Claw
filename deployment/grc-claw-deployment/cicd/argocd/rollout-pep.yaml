@@ -1,0 +1,129 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: pep-gateway
+  namespace: grc-claw-control-plane
+spec:
+  replicas: 10
+  strategy:
+    canary:
+      canaryService: pep-gateway-canary
+      stableService: pep-gateway
+      trafficRouting:
+        istio:
+          virtualService:
+            name: pep-gateway-canary
+            routes:
+              - primary
+          destinationRule:
+            name: pep-gateway-canary
+            canarySubsetName: canary
+            stableSubsetName: stable
+      steps:
+        - setWeight: 10
+        - pause: { duration: 10m }
+        - analysis:
+            templates:
+              - templateName: pep-success-rate
+              - templateName: pep-latency
+        - setWeight: 50
+        - pause: { duration: 15m }
+        - analysis:
+            templates:
+              - templateName: pep-success-rate
+              - templateName: pep-latency
+        - setWeight: 100
+        - pause: { duration: 5m }
+      analysis:
+        successfulRunHistoryLimit: 3
+        unsuccessfulRunHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: pep-gateway
+  template:
+    metadata:
+      labels:
+        app: pep-gateway
+    spec:
+      serviceAccountName: pep-gateway
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: pep
+          image: ghcr.io/grc-claw/pep-gateway:v1.2.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 9090
+              name: grpc
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: pep-success-rate
+  namespace: grc-claw-control-plane
+spec:
+  metrics:
+    - name: success-rate
+      interval: 1m
+      count: 5
+      successCondition: result[0] >= 0.995
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            sum(rate(http_requests_total{service="pep-gateway-canary",status=~"2.."}[1m]))
+            /
+            sum(rate(http_requests_total{service="pep-gateway-canary"}[1m]))
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: pep-latency
+  namespace: grc-claw-control-plane
+spec:
+  metrics:
+    - name: p99-latency
+      interval: 1m
+      count: 5
+      successCondition: result[0] <= 0.050
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket{service="pep-gateway-canary"}[1m])) by (le)
+            )

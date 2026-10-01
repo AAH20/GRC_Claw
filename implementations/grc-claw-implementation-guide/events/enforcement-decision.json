@@ -1,0 +1,30 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-enforcement-001",
+  "source": "grc-claw/enforcement-engine",
+  "type": "com.grcclaw.enforcement.decision",
+  "subject": "agent-123",
+  "time": "2026-10-01T12:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "decision_id": "uuid",
+    "agent_id": "uuid",
+    "policy_id": "uuid",
+    "decision": "DENY",
+    "reason": "Policy violation: data_handling",
+    "confidence_score": 0.95,
+    "evidence_ids": ["uuid-1", "uuid-2"]
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "prod",
+    "trace_id": "uuid",
+    "span_id": "uuid",
+    "compliance_frameworks": ["ISO-42001", "SOC2"],
+    "risk_tier": "high",
+    "event_version": "1.0",
+    "schema_version": "1.0",
+    "correlation_id": "uuid",
+    "causation_id": "uuid"
+  }
+}

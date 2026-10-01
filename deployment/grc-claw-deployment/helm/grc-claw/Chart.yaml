@@ -1,0 +1,28 @@
+apiVersion: v2
+name: grc-claw
+description: GRC_Claw - AI Governance, Risk, and Compliance enforcement platform
+type: application
+version: 1.2.0
+appVersion: "1.2.0"
+keywords:
+  - grc
+  - governance
+  - compliance
+  - ai-safety
+  - policy-enforcement
+maintainers:
+  - name: GRC_Claw Team
+    email: team@grc-claw.io
+dependencies:
+  - name: postgresql-ha
+    version: 12.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis-cluster
+    version: 9.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: kafka
+    version: 26.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled

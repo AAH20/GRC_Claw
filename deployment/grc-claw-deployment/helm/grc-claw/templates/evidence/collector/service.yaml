@@ -1,0 +1,17 @@
+{{- if .Values.evidenceCollector.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: evidence-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: evidence-collector
+spec:
+  selector:
+    app: evidence-collector
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+{{- end }}

@@ -1,0 +1,26 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-evidence-001",
+  "source": "grc-claw/evidence-orchestrator",
+  "type": "com.grcclaw.evidence.collected",
+  "subject": "agent-123",
+  "time": "2026-10-01T14:23:07.331Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "evidence_id": "EVD-2026-001234",
+    "type": "policy_evaluation",
+    "title": "Policy Evaluation: export",
+    "description": "Denied by rule 'block-pii-export': PII data must never leave the system",
+    "verification_level": "L1",
+    "compliance_tags": ["iso-42001:6.1", "iso-42001:8.1", "nist-ai-rmf:MEASURE"]
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "trace_id": "trace-2026-1001-001",
+    "compliance_frameworks": ["ISO-42001", "NIST-AI-RMF"],
+    "risk_tier": "high",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

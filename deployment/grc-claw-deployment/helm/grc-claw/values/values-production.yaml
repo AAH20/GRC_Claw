@@ -1,0 +1,49 @@
+global:
+  imageRegistry: ghcr.io/grc-claw
+  storageClass: premium-rwo
+  istio:
+    enabled: true
+  monitoring:
+    enabled: true
+policyApi:
+  replicas: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+pdpService:
+  replicas: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+pepGateway:
+  replicas: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+agentIdentity:
+  replicas: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+evidenceCollector:
+  replicas: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+postgresql:
+  replicaCount: 3
+  persistence:
+    size: 500Gi
+redis:
+  cluster:
+    shards: 3
+    replicasPerShard: 1
+kafka:
+  replicaCount: 3
+  persistence:
+    size: 200Gi

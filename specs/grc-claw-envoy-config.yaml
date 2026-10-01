@@ -1,0 +1,553 @@
+# Envoy Proxy Configuration for GRC_Claw
+# =======================================
+#
+# This Envoy configuration provides:
+# - TLS termination with mTLS support
+# - HTTP/2 and gRPC routing
+# - Rate limiting (local and global via Redis)
+# - Authentication (JWT validation)
+# - Observability (access logs, metrics, tracing)
+# - Circuit breaking and outlier detection
+#
+# Usage:
+#   envoy -c envoy.yaml --service-cluster grc-claw-gateway
+#
+# Or with Docker:
+#   docker run -d --name envoy \
+#     -v $(pwd)/envoy.yaml:/etc/envoy/envoy.yaml \
+#     -p 443:443 -p 9901:9901 \
+#     envoyproxy/envoy:v1.28
+
+# ============================================================
+# Static Resources
+# ============================================================
+
+static_resources:
+  # ==========================================================
+  # Listeners
+  # ==========================================================
+  listeners:
+    # --- HTTPS Listener (REST + GraphQL) ---
+    - name: https_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 443
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                codec_type: AUTO
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    # --- API Routes ---
+                    - name: api
+                      domains: ["api.grc-claw.io", "*.grc-claw.io"]
+                      routes:
+                        # System routes (no auth)
+                        - match:
+                            prefix: "/health"
+                          route:
+                            cluster: rest_api
+                            timeout: 5s
+                        - match:
+                            prefix: "/ready"
+                          route:
+                            cluster: rest_api
+                            timeout: 5s
+                        - match:
+                            prefix: "/metrics"
+                          route:
+                            cluster: rest_api
+                            timeout: 5s
+
+                        # Auth routes
+                        - match:
+                            prefix: "/oauth/"
+                          route:
+                            cluster: auth_service
+                            timeout: 10s
+
+                        # GraphQL
+                        - match:
+                            prefix: "/v1.0/graphql"
+                          route:
+                            cluster: graphql_server
+                            timeout: 30s
+                            rate_limits:
+                              - actions:
+                                  - remote_address: {}
+
+                        # REST API routes
+                        - match:
+                            prefix: "/v1.0/policies"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+                        - match:
+                            prefix: "/v1.0/evidence"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+                        - match:
+                            prefix: "/v1.0/enforcement"
+                          route:
+                            cluster: rest_api
+                            timeout: 10s
+                        - match:
+                            prefix: "/v1.0/assessments"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+                        - match:
+                            prefix: "/v1.0/compliance"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+                        - match:
+                            prefix: "/v1.0/agents"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+                        - match:
+                            prefix: "/v1.0/audit"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+                        - match:
+                            prefix: "/v1.0/webhooks"
+                          route:
+                            cluster: webhook_service
+                            timeout: 30s
+
+                        # Default catch-all
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: rest_api
+                            timeout: 30s
+
+                  http_filters:
+                    # Rate limiting
+                    - name: envoy.filters.http.local_ratelimit
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                        stat_prefix: http_local_rate_limiter
+                        token_bucket:
+                          max_tokens: 1000
+                          tokens_per_fill: 1000
+                          fill_interval: 1s
+                        filter_enabled:
+                          runtime_key: local_rate_limit_enabled
+                          default_value:
+                            numerator: 100
+                            denominator: HUNDRED
+                        filter_enforced:
+                          runtime_key: local_rate_limit_enforced
+                          default_value:
+                            numerator: 100
+                            denominator: HUNDRED
+                        response_headers_to_add:
+                          - append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                            header:
+                              key: x-local-rate-limit
+                              value: "true"
+
+                    # JWT Authentication
+                    - name: envoy.filters.http.jwt_authn
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                        providers:
+                          grc_claw_auth:
+                            issuer: "https://auth.grc-claw.io"
+                            audiences:
+                              - "grc-claw-api"
+                            remote_jwks:
+                              http_uri:
+                                uri: "https://auth.grc-claw.io/.well-known/jwks.json"
+                                cluster: auth_service
+                                timeout: 5s
+                              cache_duration:
+                                seconds: 300
+                            forward: true
+                            forward_payload_header: x-jwt-payload
+                            payload_in_metadata: jwt_payload
+                        rules:
+                          - match:
+                              prefix: "/health"
+                          - match:
+                              prefix: "/ready"
+                          - match:
+                              prefix: "/metrics"
+                          - match:
+                              prefix: "/oauth/"
+                          - match:
+                              prefix: "/"
+                            requires:
+                              provider_name: grc_claw_auth
+
+                    # CORS
+                    - name: envoy.filters.http.cors
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+
+                    # Router
+                    - name: envoy.filters.http.router
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+                access_log:
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+                      log_format:
+                        json_format:
+                          timestamp: "%START_TIME%"
+                          method: "%REQ(:METHOD)%"
+                          path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
+                          protocol: "%PROTOCOL%"
+                          response_code: "%RESPONSE_CODE%"
+                          response_flags: "%RESPONSE_FLAGS%"
+                          bytes_received: "%BYTES_RECEIVED%"
+                          bytes_sent: "%BYTES_SENT%"
+                          duration: "%DURATION%"
+                          upstream_service_time: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"
+                          request_id: "%REQ(X-REQUEST-ID)%"
+                          authority: "%REQ(:AUTHORITY)%"
+                          upstream_host: "%UPSTREAM_HOST%"
+                          upstream_cluster: "%UPSTREAM_CLUSTER%"
+                          remote_address: "%DOWNSTREAM_REMOTE_ADDRESS%"
+
+                use_remote_address: true
+                xff_num_trusted_hops: 1
+
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com.envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              common_tls_context:
+                tls_certificate_sds_secret_configs:
+                  - name: server_cert
+                    sds_config:
+                      path: /etc/envoy/sds/server_cert.yaml
+                validation_context_sds_secret_config:
+                  name: validation_context
+                  sds_config:
+                    path: /etc/envoy/sds/validation_context.yaml
+              require_client_certificate: false
+
+    # --- gRPC Listener (mTLS) ---
+    - name: grpc_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 50051
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_grpc
+                codec_type: AUTO
+                route_config:
+                  name: grpc_route
+                  virtual_hosts:
+                    - name: grpc_service
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            prefix: "/grcclaw.v1.EnforcementService/"
+                          route:
+                            cluster: grpc_server
+                            timeout: 10s
+                        - match:
+                            prefix: "/grcclaw.v1.PolicyService/"
+                          route:
+                            cluster: grpc_server
+                            timeout: 30s
+                        - match:
+                            prefix: "/grcclaw.v1.EvidenceService/"
+                          route:
+                            cluster: grpc_server
+                            timeout: 30s
+                        - match:
+                            prefix: "/grcclaw.v1.AgentService/"
+                          route:
+                            cluster: grpc_server
+                            timeout: 30s
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: grpc_server
+                            timeout: 30s
+
+                  http_filters:
+                    - name: envoy.filters.http.grpc_web
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
+                    - name: envoy.filters.http.cors
+                      typed_config:
+                        "@type": type.googleapis.com.envoy.extensions.filters.http.cors.v3.Cors
+                    - name: envoy.filters.http.router
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+                access_log:
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com.envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              common_tls_context:
+                tls_certificate_sds_secret_configs:
+                  - name: server_cert
+                    sds_config:
+                      path: /etc/envoy/sds/server_cert.yaml
+                validation_context_sds_secret_config:
+                  name: validation_context
+                  sds_config:
+                    path: /etc/envoy/sds/validation_context.yaml
+              require_client_certificate: true
+
+    # --- Admin Listener ---
+    - name: admin_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 9901
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: admin
+                route_config:
+                  name: admin_route
+                  virtual_hosts:
+                    - name: admin
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: admin
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  # ==========================================================
+  # Clusters
+  # ==========================================================
+  clusters:
+    # REST API
+    - name: rest_api
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: rest_api
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: rest-api
+                      port_value: 8080
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: /health
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 1000
+            max_pending_requests: 1000
+            max_requests: 1000
+            max_retries: 3
+      outlier_detection:
+        consecutive_5xx: 5
+        interval: 10s
+        base_ejection_time: 30s
+        max_ejection_percent: 50
+
+    # GraphQL Server
+    - name: graphql_server
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: graphql_server
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: graphql-server
+                      port_value: 8081
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 500
+            max_pending_requests: 500
+            max_requests: 500
+            max_retries: 3
+
+    # gRPC Server
+    - name: grpc_server
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: grpc_server
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: grpc-server
+                      port_value: 50051
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 1000
+            max_pending_requests: 1000
+            max_requests: 1000
+            max_retries: 3
+      outlier_detection:
+        consecutive_5xx: 5
+        interval: 10s
+        base_ejection_time: 30s
+        max_ejection_percent: 50
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            validation_context_sds_secret_config:
+              name: validation_context
+              sds_config:
+                path: /etc/envoy/sds/validation_context.yaml
+          sni: grpc-server
+
+    # Auth Service
+    - name: auth_service
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: auth_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: auth-service
+                      port_value: 8083
+
+    # Webhook Service
+    - name: webhook_service
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: webhook_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: webhook-service
+                      port_value: 8082
+
+    # Admin (self)
+    - name: admin
+      connect_timeout: 1s
+      type: STATIC
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: admin
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 9901
+
+  # ==========================================================
+  # Secrets (SDS - Secret Discovery Service)
+  # ==========================================================
+  secrets:
+    - name: server_cert
+      tls_certificate:
+        certificate_chain:
+          filename: /etc/envoy/certs/server.crt
+        private_key:
+          filename: /etc/envoy/certs/server.key
+    - name: validation_context
+      validation_context:
+        trusted_ca:
+          filename: /etc/envoy/certs/ca.crt
+        match_typed_subject_alt_names:
+          - san_type: DNS
+            matcher:
+              exact: "api.grc-claw.io"
+          - san_type: DNS
+            matcher:
+              exact: "grpc.grc-claw.io"
+
+# ============================================================
+# Admin Interface
+# ============================================================
+
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+  access_log:
+    - name: envoy.access_loggers.stdout
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+
+# ============================================================
+# Tracing (OpenTelemetry / Jaeger)
+# ============================================================
+
+tracing:
+  http:
+    name: envoy.tracers.opentelemetry
+    typed_config:
+      "@type": type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig
+      grpc_service:
+        envoy_grpc:
+          cluster_name: otel_collector
+      service_name: grc-claw-gateway
+
+# ============================================================
+# Rate Limit Service (Global - Redis)
+# ============================================================
+
+rate_limit_service:
+  grpc_service:
+    envoy_grpc:
+      cluster_name: ratelimit_service
+    timeout: 0.25s
+
+# ============================================================
+# Additional Clusters for External Services
+# ============================================================
+
+# Note: These would be added to static_resources.clusters in production
+# - otel_collector: OpenTelemetry collector
+# - ratelimit_service: Redis-based rate limiter

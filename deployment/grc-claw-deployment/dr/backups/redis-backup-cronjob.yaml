@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: redis-backup
+  namespace: grc-claw-data
+spec:
+  schedule: 0 */6 * * *
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: redis:7.2-alpine
+            command:
+            - /bin/sh
+            - -c
+            - redis-cli -h redis-0 BGSAVE && sleep 5 && kubectl cp redis-0:/data/dump.rdb
+              /backup/dump_$(date +%Y%m%d_%H%M%S).rdb
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+          volumes:
+          - name: backup
+            emptyDir: {}
+          restartPolicy: OnFailure

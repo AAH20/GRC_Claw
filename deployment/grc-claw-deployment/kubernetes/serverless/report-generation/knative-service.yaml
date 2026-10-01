@@ -1,0 +1,48 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: report-generation
+  namespace: grc-claw-serverless
+  labels:
+    app: report-generation
+    grc.component: report-generation
+    grc.tier: serverless
+  annotations:
+    autoscaling.knative.dev/minScale: '0'
+    autoscaling.knative.dev/maxScale: '5'
+    autoscaling.knative.dev/target: '1'
+    autoscaling.knative.dev/targetBurstCapacity: '2'
+    autoscaling.knative.dev/scale-down-delay: 5m
+    autoscaling.knative.dev/window: 60s
+    autoscaling.knative.dev/metric: concurrency
+    autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+    spec:
+      containerConcurrency: 1
+      timeoutSeconds: 600
+      containers:
+      - image: ghcr.io/grc-claw/report-generation:v1.2.0
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        env:
+        - name: REPORT_FORMAT
+          value: pdf,csv,oscal
+        - name: TEMPLATE_PATH
+          value: /templates
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL

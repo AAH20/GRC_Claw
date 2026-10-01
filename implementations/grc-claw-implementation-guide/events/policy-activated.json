@@ -1,0 +1,22 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-policy-001",
+  "source": "grc-claw/policy-engine",
+  "type": "com.grcclaw.policy.activated",
+  "subject": "production-agent-policy",
+  "time": "2026-10-01T09:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "policy_id": "production-agent-policy",
+    "version": "2.1.0",
+    "status": "active",
+    "owner": "platform-team@company.com",
+    "rules_count": 4
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

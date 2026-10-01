@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grc-claw-ingress
+  namespace: grc-claw-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/rate-limit: '1000'
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - grc-claw.internal
+    secretName: grc-claw-tls
+  rules:
+  - host: grc-claw.internal
+    http:
+      paths:
+      - path: /api/v1/policies
+        pathType: Prefix
+        backend:
+          service:
+            name: policy-api
+            port:
+              number: 80
+      - path: /api/v1/enforce
+        pathType: Prefix
+        backend:
+          service:
+            name: pep-gateway
+            port:
+              number: 80
+      - path: /api/v1/identity
+        pathType: Prefix
+        backend:
+          service:
+            name: agent-identity
+            port:
+              number: 80
+      - path: /api/v1/evidence
+        pathType: Prefix
+        backend:
+          service:
+            name: evidence-collector
+            port:
+              number: 80
+      - path: /api/v1/analytics
+        pathType: Prefix
+        backend:
+          service:
+            name: analytics-engine
+            port:
+              number: 80

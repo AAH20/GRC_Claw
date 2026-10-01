@@ -1,0 +1,90 @@
+{{- if .Values.evidenceCollector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evidence-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: evidence-collector
+    grc.component: evidence-collector
+    grc.tier: evidence
+spec:
+  replicas: {{ .Values.evidenceCollector.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: evidence-collector
+  template:
+    metadata:
+      labels:
+        app: evidence-collector
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: evidence-collector
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: collector
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.evidenceCollector.image.repository }}:{{ .Values.evidenceCollector.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: {{ .Values.evidenceCollector.resources.requests.cpu }}
+              memory: {{ .Values.evidenceCollector.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.evidenceCollector.resources.limits.cpu }}
+              memory: {{ .Values.evidenceCollector.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: evidence-collector
+                topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: evidence-collector
+{{- end }}

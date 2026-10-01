@@ -1,0 +1,164 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: pdp-service-authz
+  namespace: grc-claw-control-plane
+spec:
+  selector:
+    matchLabels:
+      app: pdp-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-control-plane/sa/pep-gateway"
+              - "cluster.local/ns/grc-claw-control-plane/sa/policy-api"
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/v1/evaluate", "/v1/batch-evaluate", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: pep-gateway-authz
+  namespace: grc-claw-control-plane
+spec:
+  selector:
+    matchLabels:
+      app: pep-gateway
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-ingress/sa/istio-ingressgateway-service-account"
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/v1/enforce", "/v1/check", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-api-authz
+  namespace: grc-claw-control-plane
+spec:
+  selector:
+    matchLabels:
+      app: policy-api
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-ingress/sa/istio-ingressgateway-service-account"
+              - "cluster.local/ns/grc-claw-control-plane/sa/pdp-service"
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/v1/policies/*", "/v1/policies", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: agent-identity-authz
+  namespace: grc-claw-control-plane
+spec:
+  selector:
+    matchLabels:
+      app: agent-identity
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-control-plane/sa/pep-gateway"
+              - "cluster.local/ns/grc-claw-ingress/sa/istio-ingressgateway-service-account"
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/v1/svid/*", "/v1/svid", "/v1/verify", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: evidence-collector-authz
+  namespace: grc-claw-evidence
+spec:
+  selector:
+    matchLabels:
+      app: evidence-collector
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-control-plane/sa/pep-gateway"
+      to:
+        - operation:
+            methods: ["POST"]
+            paths: ["/v1/evidence", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: compliance-mapping-authz
+  namespace: grc-claw-evidence
+spec:
+  selector:
+    matchLabels:
+      app: compliance-mapping
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-ingress/sa/istio-ingressgateway-service-account"
+              - "cluster.local/ns/grc-claw-evidence/sa/evidence-collector"
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/v1/mappings/*", "/v1/mappings", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: analytics-engine-authz
+  namespace: grc-claw-analytics
+spec:
+  selector:
+    matchLabels:
+      app: analytics-engine
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-ingress/sa/istio-ingressgateway-service-account"
+              - "cluster.local/ns/grc-claw-evidence/sa/evidence-collector"
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/v1/score/*", "/v1/score", "/healthz", "/readyz", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: reporting-engine-authz
+  namespace: grc-claw-analytics
+spec:
+  selector:
+    matchLabels:
+      app: reporting-engine
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/grc-claw-ingress/sa/istio-ingressgateway-service-account"
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/v1/reports/*", "/v1/reports", "/healthz", "/readyz", "/metrics"]

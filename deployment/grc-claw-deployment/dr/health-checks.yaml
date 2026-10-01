@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dr-health-check
+  namespace: grc-claw-observability
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: health-check
+              image: curlimages/curl:8.5.0
+              command:
+                - sh
+                - -c
+                - |
+                  # Check primary region health
+                  PRIMARY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.grc-claw.internal/healthz)
+                  if [ "$PRIMARY_STATUS" != "200" ]; then
+                    echo "ALERT: Primary region health check failed with status $PRIMARY_STATUS"
+                    # Trigger PagerDuty alert
+                    curl -X POST https://events.pagerduty.com/v2/enqueue                       -H "Content-Type: application/json"                       -d "{
+                        "routing_key": "$PAGERDUTY_KEY",
+                        "event_action": "trigger",
+                        "payload": {
+                          "summary": "Primary region health check failed",
+                          "severity": "critical",
+                          "source": "dr-health-check"
+                        }
+                      }"
+                  fi
+
+                  # Check replication lag
+                  REPLICATION_LAG=$(kubectl exec -it postgresql-0 -n grc-claw-data --                     psql -U postgres -t -c "SELECT EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp()))::INT;" 2>/dev/null)
+                  if [ "$REPLICATION_LAG" -gt 300 ]; then
+                    echo "ALERT: PostgreSQL replication lag is ${REPLICATION_LAG}s"
+                  fi
+
+                  # Check Kafka MirrorMaker2 lag
+                  MM2_LAG=$(kubectl exec -it mirror-maker-2-0 -n grc-claw-data --                     kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group mm2-group 2>/dev/null |                     awk '{sum += $6} END {print sum}')
+                  if [ "$MM2_LAG" -gt 10000 ]; then
+                    echo "ALERT: Kafka MirrorMaker2 lag is $MM2_LAG messages"
+                  fi
+              env:
+                - name: PAGERDUTY_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: pagerduty-credentials
+                      key: service-key
+          restartPolicy: OnFailure

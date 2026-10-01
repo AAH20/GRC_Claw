@@ -1,0 +1,17 @@
+{{- if .Values.reportingEngine.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-engine
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: reporting-engine
+spec:
+  selector:
+    app: reporting-engine
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+{{- end }}

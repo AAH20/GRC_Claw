@@ -1,0 +1,91 @@
+{{- if .Values.evidence.complianceMapping.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: compliance-mapping
+    grc.component: compliance-mapping
+    grc.tier: evidence
+spec:
+  replicas: {{ .Values.evidence.complianceMapping.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: compliance-mapping
+  template:
+    metadata:
+      labels:
+        app: compliance-mapping
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: compliance-mapping
+      securityContext:
+        {{- include "grc-claw.securityContext" . | nindent 8 }}
+      containers:
+        - name: compliance-mapping
+          image: {{ include "grc-claw.image" (dict "Values" .Values "image" .Values.evidence.complianceMapping.image "tag" .Values.evidence.complianceMapping.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            {{- toYaml .Values.evidence.complianceMapping.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            {{- include "grc-claw.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-mapping
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: compliance-mapping
+spec:
+  selector:
+    app: compliance-mapping
+  ports:
+    - port: 8080
+      name: http
+      targetPort: 8080
+  type: ClusterIP
+---
+{{- if .Values.evidence.complianceMapping.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: compliance-mapping-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: {{ .Values.evidence.complianceMapping.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: compliance-mapping
+{{- end }}
+{{- end }}

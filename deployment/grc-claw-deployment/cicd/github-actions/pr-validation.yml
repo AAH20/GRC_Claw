@@ -1,0 +1,42 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Kubernetes manifests
+        run: |
+          curl -s "https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-darwin-amd64.tar.gz" | tar xz
+          ./kubeval --strict kubernetes/**/*.yaml
+
+      - name: Validate Helm chart
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.0
+      - run: |
+          helm lint helm/grc-claw
+          helm template helm/grc-claw --values helm/grc-claw/values-production.yaml > /dev/null
+          helm template helm/grc-claw --values helm/grc-claw/values-staging.yaml > /dev/null
+          helm template helm/grc-claw --values helm/grc-claw/values-development.yaml > /dev/null
+
+      - name: Check Istio config
+        run: |
+          istioctl analyze istio/ -n grc-claw-control-plane
+
+      - name: Run conftest policy checks
+        run: |
+          conftest test kubernetes/ --policy policies/
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified

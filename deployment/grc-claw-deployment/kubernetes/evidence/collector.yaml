@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evidence-collector
+  namespace: grc-claw-evidence
+  labels:
+    app: evidence-collector
+    grc.component: evidence-collector
+    grc.tier: evidence
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: evidence-collector
+  template:
+    metadata:
+      labels:
+        app: evidence-collector
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: evidence-collector
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: collector
+          image: ghcr.io/grc-claw/evidence-collector:v1.2.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: KAFKA_BROKERS
+              value: "kafka:9092"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: url
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: evidence-collector
+  namespace: grc-claw-evidence
+  labels:
+    app: evidence-collector
+spec:
+  selector:
+    app: evidence-collector
+  ports:
+    - port: 8080
+      name: http
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: evidence-collector-pdb
+  namespace: grc-claw-evidence
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: evidence-collector
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: evidence-collector-hpa
+  namespace: grc-claw-evidence
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: evidence-collector
+  minReplicas: 3
+  maxReplicas: 15
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: kafka_consumer_lag
+          selector:
+            matchLabels:
+              topic: evidence-events
+        target:
+          type: AverageValue
+          averageValue: "10000"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300

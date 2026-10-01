@@ -1,0 +1,97 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: grc-claw-gateway
+  namespace: grc-claw-ingress
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: grc-claw-tls
+      hosts:
+        - "api.grc-claw.internal"
+        - "pep.grc-claw.internal"
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "api.grc-claw.internal"
+        - "pep.grc-claw.internal"
+      tls:
+        httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-gateway-routing
+  namespace: grc-claw-ingress
+spec:
+  hosts:
+    - "api.grc-claw.internal"
+  gateways:
+    - grc-claw-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /v1/policies
+      route:
+        - destination:
+            host: policy-api
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /v1/identity
+      route:
+        - destination:
+            host: agent-identity
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /v1/compliance
+      route:
+        - destination:
+            host: compliance-mapping
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /v1/analytics
+      route:
+        - destination:
+            host: analytics-engine
+            port:
+              number: 8080
+    - match:
+        - uri:
+            prefix: /v1/reports
+      route:
+        - destination:
+            host: reporting-engine
+            port:
+              number: 8080
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: pep-gateway-routing
+  namespace: grc-claw-ingress
+spec:
+  hosts:
+    - "pep.grc-claw.internal"
+  gateways:
+    - grc-claw-gateway
+  http:
+    - route:
+        - destination:
+            host: pep-gateway
+            port:
+              number: 8080

@@ -1,0 +1,88 @@
+# Staging values for GRC_Claw
+
+global:
+  imageRegistry: ghcr.io/grc-claw
+  imagePullPolicy: Always
+  storageClass: standard-rwo
+
+controlPlane:
+  policyApi:
+    replicas: 2
+    hpa:
+      enabled: false
+
+  pdpService:
+    replicas: 2
+    hpa:
+      enabled: false
+
+  pepGateway:
+    replicas: 2
+    hpa:
+      enabled: false
+
+  agentIdentity:
+    replicas: 2
+
+evidence:
+  collector:
+    replicas: 2
+    hpa:
+      enabled: false
+
+  complianceMapping:
+    replicas: 1
+
+analytics:
+  engine:
+    replicas: 1
+    hpa:
+      enabled: false
+
+  reporting:
+    replicas: 1
+
+data:
+  postgresql:
+    replicas: 1
+    storage: 50Gi
+
+  redis:
+    replicas: 3
+    storage: 10Gi
+
+  kafka:
+    replicas: 1
+    storage: 50Gi
+
+  minio:
+    replicas: 1
+    storage: 50Gi
+
+  immudb:
+    replicas: 1
+    storage: 20Gi
+
+  vault:
+    replicas: 1
+    storage: 5Gi
+
+observability:
+  prometheus:
+    retention: 7d
+    storage: 20Gi
+
+  grafana:
+    storage: 5Gi
+
+  loki:
+    retention: 7d
+    storage: 20Gi
+
+  otelCollector:
+    replicas: 1
+
+istio:
+  enabled: true
+  mtls:
+    mode: PERMISSIVE

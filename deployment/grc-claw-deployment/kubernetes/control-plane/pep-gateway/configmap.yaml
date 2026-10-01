@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pep-gateway-config
+  namespace: grc-claw-control-plane
+data:
+  config.yaml: "enforcement:\n  mode: synchronous\n  timeout_ms: 50\n  cache_ttl:\
+    \ 300s\ninterception:\n  mcp_enabled: true\n  envoy_sidecar: true\n"

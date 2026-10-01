@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: grc-claw-control-plane-quota
+  namespace: grc-claw-control-plane
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "80"
+    limits.memory: 160Gi
+    pods: "100"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: grc-claw-evidence-quota
+  namespace: grc-claw-evidence
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    pods: "50"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: grc-claw-analytics-quota
+  namespace: grc-claw-analytics
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    pods: "30"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: grc-claw-data-quota
+  namespace: grc-claw-data
+spec:
+  hard:
+    requests.cpu: "30"
+    requests.memory: 60Gi
+    limits.cpu: "120"
+    limits.memory: 240Gi
+    pods: "50"
+    requests.storage: 2Ti

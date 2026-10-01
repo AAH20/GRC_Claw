@@ -1,0 +1,2539 @@
+openapi: 3.1.0
+info:
+  title: GRC_Claw API
+  description: |
+    GRC_Claw — open-source governance, risk, and compliance platform for agentic AI.
+    
+    This API provides four complementary interfaces:
+    - **REST** — CRUD operations, search, and reporting
+    - **GraphQL** — Complex nested queries for dashboards and analytics
+    - **gRPC** — High-performance enforcement decisions and streaming
+    - **Webhooks** — Event-driven integrations
+    
+    ## Authentication
+    
+    All API requests require authentication via one of:
+    - **OAuth 2.1 / OIDC** — Bearer JWT token (RS256)
+    - **API Key** — `Authorization: Bearer grc_live_...` or `grc_test_...`
+    - **mTLS (SPIFFE)** — X.509 SVID for agent-to-PEP communication
+    
+    ## Rate Limiting
+    
+    Rate limit headers are included in all responses:
+    - `X-RateLimit-Limit` — Request limit per window
+    - `X-RateLimit-Remaining` — Remaining requests in current window
+    - `X-RateLimit-Reset` — Unix timestamp when the window resets
+    
+    ## Error Format
+    
+    All errors follow RFC 7807 (Problem Details for HTTP APIs).
+    
+    ## Versioning
+    
+    Current version: `v1.0`. Version is specified in the URL path.
+    Deprecation notices are sent via webhook 6 months before sunset.
+  version: 1.0.0
+  contact:
+    name: GRC_Claw Architecture Team
+    url: https://api.grc-claw.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: https://api.grc-claw.io
+    description: Production
+  - url: https://api.staging.grc-claw.io
+    description: Staging
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: Policies
+    description: Policy lifecycle management
+  - name: Evidence
+    description: Evidence collection, verification, and export
+  - name: Enforcement
+    description: Enforcement decisions (single, batch, streaming)
+  - name: Assessments
+    description: Risk, compliance, maturity, and readiness assessments
+  - name: Compliance
+    description: Compliance mapping across 10 frameworks
+  - name: Agents
+    description: Agent registry and identity management
+  - name: Audit
+    description: Audit trail querying and verification
+  - name: Webhooks
+    description: Webhook subscriptions and delivery
+  - name: System
+    description: Health, readiness, and metrics
+paths:
+  /v1.0/policies:
+    get:
+      operationId: listPolicies
+      summary: List policies
+      description: Returns a paginated list of policies with optional filtering.
+      tags: [Policies]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, review, active, deprecated, archived]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ethics, safety, privacy, fairness]
+        - name: framework
+          in: query
+          schema:
+            type: string
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 500
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      operationId: createPolicy
+      summary: Create policy
+      description: Creates a new policy in draft status.
+      tags: [Policies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreateRequest'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /v1.0/policies/{policy_id}:
+    parameters:
+      - name: policy_id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getPolicy
+      summary: Get policy
+      description: Returns full policy object including Cedar source and compiled Rego.
+      tags: [Policies]
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updatePolicy
+      summary: Update policy
+      description: Updates an existing policy. Creates a new version.
+      tags: [Policies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyUpdateRequest'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deletePolicy
+      summary: Delete policy
+      description: Deletes a policy. Use `force=true` to delete even if active.
+      tags: [Policies]
+      parameters:
+        - name: force
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: Policy deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/policies/{policy_id}/compile:
+    post:
+      operationId: compilePolicy
+      summary: Compile policy
+      description: Compiles Cedar policy to Rego for OPA evaluation.
+      tags: [Policies]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Compilation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompilationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Policy compilation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /v1.0/policies/{policy_id}/dry-run:
+    post:
+      operationId: dryRunPolicy
+      summary: Dry-run policy
+      description: Evaluates policy against test inputs without enforcement.
+      tags: [Policies]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [test_inputs]
+              properties:
+                test_inputs:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DryRunInput'
+      responses:
+        '200':
+          description: Dry-run results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/policies/{policy_id}/versions:
+    get:
+      operationId: getPolicyVersions
+      summary: Policy version history
+      description: Returns version history for a policy.
+      tags: [Policies]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PolicyVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/policies/{policy_id}/dependencies:
+    get:
+      operationId: getPolicyDependencies
+      summary: Policy dependency graph
+      description: Returns dependency graph for a policy.
+      tags: [Policies]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dependency graph
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyDependencyGraph'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/evidence:
+    get:
+      operationId: searchEvidence
+      summary: Search evidence
+      description: Search evidence with filtering and full-text search.
+      tags: [Evidence]
+      parameters:
+        - name: policy_id
+          in: query
+          schema: { type: string }
+        - name: assessment_id
+          in: query
+          schema: { type: string }
+        - name: evidence_type
+          in: query
+          schema:
+            type: string
+            enum: [artifact, observation, interview, analysis, log]
+        - name: framework
+          in: query
+          schema: { type: string }
+        - name: control_id
+          in: query
+          schema: { type: string }
+        - name: verification_level
+          in: query
+          schema:
+            type: string
+            enum: [L0, L1, L2, L3, L4]
+        - name: environment
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: query
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 500 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: submitEvidence
+      summary: Submit evidence
+      description: Submits new evidence for a policy and/or assessment.
+      tags: [Evidence]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceSubmitRequest'
+      responses:
+        '201':
+          description: Evidence submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/evidence/{evidence_id}:
+    get:
+      operationId: getEvidence
+      summary: Get evidence
+      description: Returns full evidence item with chain of custody and verification status.
+      tags: [Evidence]
+      parameters:
+        - name: evidence_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Evidence details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidence'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/evidence/{evidence_id}/verify:
+    post:
+      operationId: verifyEvidence
+      summary: Verify evidence
+      description: Triggers integrity verification and chain-of-custody validation.
+      tags: [Evidence]
+      parameters:
+        - name: evidence_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceVerification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Evidence verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /v1.0/evidence/export:
+    post:
+      operationId: exportEvidencePackage
+      summary: Export evidence package
+      description: Initiates async evidence package export.
+      tags: [Evidence]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceExportRequest'
+      responses:
+        '202':
+          description: Export initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPackage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/evidence/export/{package_id}:
+    get:
+      operationId: getExportPackage
+      summary: Get export package
+      description: Returns export package status and download URL when complete.
+      tags: [Evidence]
+      parameters:
+        - name: package_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Package status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPackage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/enforcement/decide:
+    post:
+      operationId: enforcementDecide
+      summary: Request enforcement decision
+      description: Evaluates agent action against policies and returns a decision.
+      tags: [Enforcement]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnforcementRequest'
+      responses:
+        '200':
+          description: Enforcement decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnforcementDecision'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/enforcement/decide-batch:
+    post:
+      operationId: enforcementDecideBatch
+      summary: Batch enforcement decisions
+      description: Evaluates multiple agent actions in a single request.
+      tags: [Enforcement]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decisions]
+              properties:
+                decisions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EnforcementRequest'
+      responses:
+        '200':
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EnforcementDecision'
+                  summary:
+                    $ref: '#/components/schemas/BatchSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/enforcement/decisions/{decision_id}:
+    get:
+      operationId: getDecision
+      summary: Get decision
+      description: Returns full decision certificate with evidence.
+      tags: [Enforcement]
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Decision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnforcementDecision'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/enforcement/decisions:
+    get:
+      operationId: listDecisions
+      summary: List decisions
+      description: Returns paginated list of enforcement decisions.
+      tags: [Enforcement]
+      parameters:
+        - name: agent_id
+          in: query
+          schema: { type: string }
+        - name: policy_id
+          in: query
+          schema: { type: string }
+        - name: verdict
+          in: query
+          schema:
+            type: string
+            enum: [ALLOW, ALLOW_WITH_REDACTION, REQUIRE_APPROVAL, DENY, QUARANTINE]
+        - name: date_from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 500 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated decisions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/assessments:
+    get:
+      operationId: listAssessments
+      summary: List assessments
+      description: Returns paginated list of assessments.
+      tags: [Assessments]
+      parameters:
+        - name: assessment_type
+          in: query
+          schema:
+            type: string
+            enum: [risk, compliance, maturity, readiness]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planned, in_progress, completed, cancelled]
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum: [model, system, organization, process]
+        - name: target_id
+          in: query
+          schema: { type: string }
+        - name: methodology
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 500 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated assessments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createAssessment
+      summary: Create assessment
+      description: Creates a new assessment.
+      tags: [Assessments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentCreateRequest'
+      responses:
+        '201':
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/assessments/{assessment_id}:
+    parameters:
+      - name: assessment_id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getAssessment
+      summary: Get assessment
+      description: Returns full assessment with findings.
+      tags: [Assessments]
+      responses:
+        '200':
+          description: Assessment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateAssessment
+      summary: Update assessment
+      description: Updates an existing assessment.
+      tags: [Assessments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentUpdateRequest'
+      responses:
+        '200':
+          description: Assessment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/assessments/{assessment_id}/findings:
+    post:
+      operationId: addFinding
+      summary: Add finding
+      description: Adds a finding to an assessment.
+      tags: [Assessments]
+      parameters:
+        - name: assessment_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindingCreateRequest'
+      responses:
+        '201':
+          description: Finding added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentFinding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/assessments/{assessment_id}/report:
+    post:
+      operationId: generateAssessmentReport
+      summary: Generate assessment report
+      description: Initiates async report generation.
+      tags: [Assessments]
+      parameters:
+        - name: assessment_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum: [pdf, json, csv]
+                include_evidence:
+                  type: boolean
+                include_remediation:
+                  type: boolean
+      responses:
+        '202':
+          description: Report generation initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/compliance/frameworks:
+    get:
+      operationId: listFrameworks
+      summary: List compliance frameworks
+      description: Returns all supported compliance frameworks.
+      tags: [Compliance]
+      responses:
+        '200':
+          description: List of frameworks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ComplianceFramework'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/compliance/frameworks/{framework_id}/controls:
+    get:
+      operationId: listControls
+      summary: List controls
+      description: Returns controls for a specific framework.
+      tags: [Compliance]
+      parameters:
+        - name: framework_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: target_id
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: List of controls
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ComplianceControl'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/compliance/posture:
+    get:
+      operationId: getCompliancePosture
+      summary: Get compliance posture
+      description: Returns compliance posture for a framework and target.
+      tags: [Compliance]
+      parameters:
+        - name: framework
+          in: query
+          required: true
+          schema: { type: string }
+        - name: target_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: target_type
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Compliance posture
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompliancePosture'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/compliance/mappings:
+    post:
+      operationId: createComplianceMapping
+      summary: Create compliance mapping
+      description: Creates a mapping between a control and policy/assessment.
+      tags: [Compliance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceMappingRequest'
+      responses:
+        '201':
+          description: Mapping created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceMapping'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/compliance/reports:
+    post:
+      operationId: generateComplianceReport
+      summary: Generate compliance report
+      description: Initiates async compliance report generation.
+      tags: [Compliance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceReportRequest'
+      responses:
+        '202':
+          description: Report generation initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/compliance/crosswalk:
+    get:
+      operationId: crosswalkQuery
+      summary: Crosswalk query
+      description: Returns cross-framework control mappings.
+      tags: [Compliance]
+      parameters:
+        - name: control_id
+          in: query
+          schema: { type: string }
+        - name: framework
+          in: query
+          schema: { type: string }
+        - name: target_framework
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Crosswalk mappings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrosswalkResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/agents:
+    get:
+      operationId: listAgents
+      summary: List agents
+      description: Returns paginated list of registered agents.
+      tags: [Agents]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [model, agent, pipeline, endpoint]
+        - name: framework
+          in: query
+          schema:
+            type: string
+            enum: [langchain, autogen, crewai, custom, mcp-server]
+        - name: lifecycle_stage
+          in: query
+          schema:
+            type: string
+            enum: [proposed, approved, active, deprecated, terminated]
+        - name: risk_tier
+          in: query
+          schema:
+            type: string
+            enum: [prohibited, high, limited, minimal]
+        - name: trust_score_min
+          in: query
+          schema: { type: integer, minimum: 0, maximum: 100 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 500 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: registerAgent
+      summary: Register agent
+      description: Registers a new agent in the registry.
+      tags: [Agents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRegisterRequest'
+      responses:
+        '201':
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /v1.0/agents/{agent_id}:
+    parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getAgent
+      summary: Get agent
+      description: Returns full agent details including identity and trust score.
+      tags: [Agents]
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateAgent
+      summary: Update agent
+      description: Updates an existing agent.
+      tags: [Agents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpdateRequest'
+      responses:
+        '200':
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/agents/{agent_id}/trust-score:
+    post:
+      operationId: updateAgentTrustScore
+      summary: Update agent trust score
+      description: Updates the trust score for an agent.
+      tags: [Agents]
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value, grade]
+              properties:
+                value:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                grade:
+                  type: string
+                  enum: [A, B, C, D, F]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Trust score updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/agents/{agent_id}/policy-bindings:
+    post:
+      operationId: bindPolicyToAgent
+      summary: Bind policies to agent
+      description: Binds one or more policies to an agent.
+      tags: [Agents]
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [policy_ids]
+              properties:
+                policy_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Policies bound
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/audit:
+    get:
+      operationId: queryAuditTrail
+      summary: Query audit trail
+      description: Returns paginated audit events with filtering.
+      tags: [Audit]
+      parameters:
+        - name: event_type
+          in: query
+          schema: { type: string }
+        - name: actor_id
+          in: query
+          schema: { type: string }
+        - name: resource_type
+          in: query
+          schema: { type: string }
+        - name: resource_id
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100, maximum: 1000 }
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/audit/verify:
+    post:
+      operationId: verifyAuditChain
+      summary: Verify audit chain
+      description: Verifies the integrity of the audit chain between two events.
+      tags: [Audit]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from_event_id, to_event_id]
+              properties:
+                from_event_id:
+                  type: string
+                to_event_id:
+                  type: string
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditVerification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/webhooks/subscriptions:
+    get:
+      operationId: listWebhookSubscriptions
+      summary: List webhook subscriptions
+      description: Returns all webhook subscriptions.
+      tags: [Webhooks]
+      responses:
+        '200':
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookSubscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createWebhookSubscription
+      summary: Create webhook subscription
+      description: Creates a new webhook subscription.
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1.0/webhooks/subscriptions/{subscription_id}:
+    parameters:
+      - name: subscription_id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getWebhookSubscription
+      summary: Get webhook subscription
+      description: Returns a specific webhook subscription.
+      tags: [Webhooks]
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateWebhookSubscription
+      summary: Update webhook subscription
+      description: Updates an existing webhook subscription.
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookSubscriptionUpdateRequest'
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteWebhookSubscription
+      summary: Delete webhook subscription
+      description: Deletes a webhook subscription.
+      tags: [Webhooks]
+      responses:
+        '204':
+          description: Subscription deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/webhooks/subscriptions/{subscription_id}/test:
+    post:
+      operationId: testWebhookSubscription
+      summary: Test webhook subscription
+      description: Sends a test event to the subscriber endpoint.
+      tags: [Webhooks]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription_id:
+                    type: string
+                  test_event_id:
+                    type: string
+                  delivery_status:
+                    type: string
+                    enum: [delivered, failed]
+                  http_status:
+                    type: integer
+                  response_time_ms:
+                    type: integer
+                  delivered_at:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1.0/webhooks/subscriptions/{subscription_id}/deliveries:
+    get:
+      operationId: getWebhookDeliveryHistory
+      summary: Get delivery history
+      description: Returns delivery history for a webhook subscription.
+      tags: [Webhooks]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Delivery history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookDelivery'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      description: Returns system health status.
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+  /ready:
+    get:
+      operationId: readinessCheck
+      summary: Readiness check
+      description: Returns system readiness status.
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: Readiness status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessStatus'
+  /metrics:
+    get:
+      operationId: metrics
+      summary: Prometheus metrics
+      description: Returns Prometheus-formatted metrics.
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v1.0/graphql:
+    post:
+      operationId: graphql
+      summary: GraphQL endpoint
+      description: GraphQL endpoint for complex nested queries.
+      tags: [System]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                variables:
+                  type: object
+                operationName:
+                  type: string
+      responses:
+        '200':
+          description: GraphQL response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                        locations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              line:
+                                type: integer
+                              column:
+                                type: integer
+                        path:
+                          type: array
+                          items:
+                            type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'API key in format: Bearer grc_live_... or Bearer grc_test_...'
+    mtlsAuth:
+      type: mutualTLS
+      description: mTLS with SPIFFE SVID
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema: { type: integer }
+        X-RateLimit-Remaining:
+          schema: { type: integer }
+        X-RateLimit-Reset:
+          schema: { type: integer }
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail, code]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+        trace_id:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              code:
+                type: string
+    Pagination:
+      type: object
+      properties:
+        next_cursor:
+          type: string
+        has_next:
+          type: boolean
+        total:
+          type: integer
+    Policy:
+      type: object
+      properties:
+        id: { type: string }
+        policy_key: { type: string }
+        name: { type: string }
+        description: { type: string }
+        category:
+          type: string
+          enum: [ethics, safety, privacy, fairness]
+        status:
+          type: string
+          enum: [draft, review, active, deprecated, archived]
+        version: { type: string }
+        framework_tags:
+          type: array
+          items: { type: string }
+        effective_date:
+          type: string
+          format: date-time
+        expiry_date:
+          type: string
+          format: date-time
+        owner_id: { type: string }
+        agent_bindings:
+          type: array
+          items: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PolicyCreateRequest:
+      type: object
+      required: [policy_key, name, category]
+      properties:
+        policy_key: { type: string }
+        name: { type: string }
+        description: { type: string }
+        category:
+          type: string
+          enum: [ethics, safety, privacy, fairness]
+        framework_tags:
+          type: array
+          items: { type: string }
+        cedar_policy: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    PolicyUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        cedar_policy: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    PolicyListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Policy'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    PolicyVersion:
+      type: object
+      properties:
+        version: { type: string }
+        status: { type: string }
+        change_summary: { type: string }
+        created_at:
+          type: string
+          format: date-time
+        created_by: { type: string }
+    PolicyDependencyGraph:
+      type: object
+      properties:
+        policy_id: { type: string }
+        dependencies:
+          type: array
+          items:
+            type: object
+            properties:
+              target_policy_id: { type: string }
+              target_policy_name: { type: string }
+              relation_type: { type: string }
+              description: { type: string }
+        dependents:
+          type: array
+          items:
+            type: object
+            properties:
+              source_policy_id: { type: string }
+              source_policy_name: { type: string }
+              relation_type: { type: string }
+              description: { type: string }
+    CompilationResult:
+      type: object
+      properties:
+        policy_id: { type: string }
+        compilation_status:
+          type: string
+          enum: [success, failed, partial]
+        rego_policy: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+        errors:
+          type: array
+          items: { type: string }
+        compiled_at:
+          type: string
+          format: date-time
+    DryRunInput:
+      type: object
+      properties:
+        principal:
+          type: object
+          additionalProperties: true
+        action: { type: string }
+        resource:
+          type: object
+          additionalProperties: true
+        context:
+          type: object
+          additionalProperties: true
+    DryRunResult:
+      type: object
+      properties:
+        policy_id: { type: string }
+        dry_run_results:
+          type: array
+          items:
+            type: object
+            properties:
+              input_index: { type: integer }
+              decision:
+                type: string
+                enum: [ALLOW, DENY]
+              matched_rules:
+                type: array
+                items: { type: string }
+              evaluation_time_ms: { type: number }
+              reason: { type: string }
+        summary:
+          type: object
+          properties:
+            total: { type: integer }
+            allowed: { type: integer }
+            denied: { type: integer }
+            avg_evaluation_time_ms: { type: number }
+    Evidence:
+      type: object
+      properties:
+        evidence_id: { type: string }
+        policy_id: { type: string }
+        assessment_id: { type: string }
+        source:
+          type: object
+          properties:
+            type: { type: string }
+            system: { type: string }
+            collection_method: { type: string }
+        evidence_type:
+          type: string
+          enum: [artifact, observation, interview, analysis, log]
+        content:
+          type: object
+          properties:
+            format: { type: string }
+            data: { type: string }
+            hash: { type: string }
+        context:
+          type: object
+          properties:
+            environment: { type: string }
+            region: { type: string }
+            timestamp:
+              type: string
+              format: date-time
+            metadata:
+              type: object
+              additionalProperties: true
+        validation:
+          type: object
+          properties:
+            status: { type: string }
+            validated_by: { type: string }
+            validated_at:
+              type: string
+              format: date-time
+            confidence_score: { type: number }
+        verification_level:
+          type: string
+          enum: [L0, L1, L2, L3, L4]
+        chain_of_custody:
+          type: array
+          items:
+            type: object
+            properties:
+              action: { type: string }
+              actor: { type: string }
+              timestamp:
+                type: string
+                format: date-time
+              hash: { type: string }
+        retention_class: { type: string }
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    EvidenceSubmitRequest:
+      type: object
+      required: [source, evidence_type, content]
+      properties:
+        policy_id: { type: string }
+        assessment_id: { type: string }
+        source:
+          type: object
+          properties:
+            type: { type: string }
+            system: { type: string }
+            collection_method: { type: string }
+        evidence_type:
+          type: string
+          enum: [artifact, observation, interview, analysis, log]
+        content:
+          type: object
+          properties:
+            format: { type: string }
+            data: { type: string }
+        context:
+          type: object
+          properties:
+            environment: { type: string }
+            region: { type: string }
+            metadata:
+              type: object
+              additionalProperties: true
+        control_mapping:
+          type: object
+          properties:
+            control_id: { type: string }
+            framework: { type: string }
+            control_title: { type: string }
+    EvidenceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    EvidenceVerification:
+      type: object
+      properties:
+        evidence_id: { type: string }
+        verification_result:
+          type: object
+          properties:
+            status: { type: string }
+            verification_level:
+              type: string
+              enum: [L0, L1, L2, L3, L4]
+            hash_match: { type: boolean }
+            chain_of_custody_intact: { type: boolean }
+            schema_valid: { type: boolean }
+            control_mapping_valid: { type: boolean }
+            verified_at:
+              type: string
+              format: date-time
+            verified_by: { type: string }
+    EvidenceExportRequest:
+      type: object
+      required: [framework, time_range, format]
+      properties:
+        framework: { type: string }
+        time_range:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        format:
+          type: string
+          enum: [json, pdf, csv, xml]
+        include_chain_of_custody: { type: boolean }
+    ExportPackage:
+      type: object
+      properties:
+        package_id: { type: string }
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        estimated_completion:
+          type: string
+          format: date-time
+        download_url: { type: string }
+        expires_at:
+          type: string
+          format: date-time
+        package_hash: { type: string }
+        manifest:
+          type: object
+          additionalProperties: true
+    EnforcementRequest:
+      type: object
+      required: [agent_id, action, resource]
+      properties:
+        agent_id: { type: string }
+        action: { type: string }
+        resource: { type: string }
+        context:
+          type: object
+          additionalProperties: true
+        policy_ids:
+          type: array
+          items: { type: string }
+        include_evidence: { type: boolean }
+    EnforcementDecision:
+      type: object
+      properties:
+        decision_id: { type: string }
+        verdict:
+          type: string
+          enum: [ALLOW, ALLOW_WITH_REDACTION, REQUIRE_APPROVAL, DENY, QUARANTINE]
+        policy_id: { type: string }
+        policy_version: { type: string }
+        agent_id: { type: string }
+        action: { type: string }
+        resource: { type: string }
+        context:
+          type: object
+          additionalProperties: true
+        evidence_hash: { type: string }
+        timestamp:
+          type: string
+          format: date-time
+        ttl: { type: integer }
+        signature: { type: string }
+        matched_rules:
+          type: array
+          items: { type: string }
+        evaluation_time_ms: { type: number }
+        reason: { type: string }
+    BatchSummary:
+      type: object
+      properties:
+        total: { type: integer }
+        allowed: { type: integer }
+        denied: { type: integer }
+        require_approval: { type: integer }
+        quarantined: { type: integer }
+        avg_evaluation_time_ms: { type: number }
+    DecisionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnforcementDecision'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Assessment:
+      type: object
+      properties:
+        id: { type: string }
+        assessment_key: { type: string }
+        title: { type: string }
+        description: { type: string }
+        assessment_type:
+          type: string
+          enum: [risk, compliance, maturity, readiness]
+        target_id: { type: string }
+        target_type: { type: string }
+        status:
+          type: string
+          enum: [planned, in_progress, completed, cancelled]
+        methodology: { type: string }
+        score: { type: number }
+        risk_level: { type: string }
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        next_assessment_at:
+          type: string
+          format: date-time
+        lead_assessor: { type: string }
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssessmentFinding'
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AssessmentFinding:
+      type: object
+      properties:
+        id: { type: string }
+        finding_key: { type: string }
+        title: { type: string }
+        description: { type: string }
+        severity: { type: string }
+        category: { type: string }
+        status: { type: string }
+        policy_id: { type: string }
+        evidence_ids:
+          type: array
+          items: { type: string }
+        remediation: { type: string }
+        remediated_by: { type: string }
+        remediated_at:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+    AssessmentCreateRequest:
+      type: object
+      required: [assessment_key, title, assessment_type, target_id, target_type]
+      properties:
+        assessment_key: { type: string }
+        title: { type: string }
+        description: { type: string }
+        assessment_type:
+          type: string
+          enum: [risk, compliance, maturity, readiness]
+        target_id: { type: string }
+        target_type: { type: string }
+        methodology: { type: string }
+        lead_assessor: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    AssessmentUpdateRequest:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        status:
+          type: string
+          enum: [planned, in_progress, completed, cancelled]
+        methodology: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    AssessmentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assessment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    FindingCreateRequest:
+      type: object
+      required: [finding_key, title, severity, category]
+      properties:
+        finding_key: { type: string }
+        title: { type: string }
+        description: { type: string }
+        severity: { type: string }
+        category: { type: string }
+        policy_id: { type: string }
+        evidence_ids:
+          type: array
+          items: { type: string }
+        remediation: { type: string }
+        due_date:
+          type: string
+          format: date-time
+    ComplianceFramework:
+      type: object
+      properties:
+        id: { type: string }
+        framework_key: { type: string }
+        name: { type: string }
+        version: { type: string }
+        description: { type: string }
+        authority: { type: string }
+        effective_date:
+          type: string
+          format: date-time
+        control_count: { type: integer }
+    ComplianceControl:
+      type: object
+      properties:
+        id: { type: string }
+        framework_id: { type: string }
+        control_key: { type: string }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        guidance: { type: string }
+    CompliancePosture:
+      type: object
+      properties:
+        framework: { type: string }
+        target_id: { type: string }
+        target_type: { type: string }
+        controls_assessed: { type: integer }
+        controls_compliant: { type: integer }
+        controls_non_compliant: { type: integer }
+        controls_not_assessed: { type: integer }
+        compliance_score: { type: number }
+        gaps:
+          type: array
+          items:
+            type: object
+            properties:
+              control_id: { type: string }
+              control_title: { type: string }
+              status: { type: string }
+              severity: { type: string }
+              evidence_count: { type: integer }
+              last_assessed:
+                type: string
+                format: date-time
+        trend:
+          type: object
+          properties:
+            direction: { type: string }
+            change: { type: string }
+            period: { type: string }
+    ComplianceMapping:
+      type: object
+      properties:
+        id: { type: string }
+        control_id: { type: string }
+        policy_id: { type: string }
+        assessment_id: { type: string }
+        mapping_type: { type: string }
+        coverage: { type: string }
+        notes: { type: string }
+    ComplianceMappingRequest:
+      type: object
+      required: [control_id, mapping_type, coverage]
+      properties:
+        control_id: { type: string }
+        policy_id: { type: string }
+        assessment_id: { type: string }
+        mapping_type: { type: string }
+        coverage: { type: string }
+        notes: { type: string }
+    ComplianceReportRequest:
+      type: object
+      required: [framework, time_range, format]
+      properties:
+        framework: { type: string }
+        time_range:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        format:
+          type: string
+          enum: [json, pdf, csv, xml]
+        include_evidence: { type: boolean }
+        include_gaps: { type: boolean }
+    CrosswalkResult:
+      type: object
+      properties:
+        grc_control_id: { type: string }
+        mappings:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+    Agent:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        framework: { type: string }
+        owner: { type: string }
+        lifecycle_stage:
+          type: string
+          enum: [proposed, approved, active, deprecated, terminated]
+        risk_tier:
+          type: string
+          enum: [prohibited, high, limited, minimal]
+        capabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              description: { type: string }
+              permissions:
+                type: array
+                items: { type: string }
+              resource_scope: { type: string }
+        identity:
+          type: object
+          properties:
+            spiffe_id: { type: string }
+            mtls_cert: { type: string }
+            cert_expiry:
+              type: string
+              format: date-time
+        trust_score:
+          type: object
+          properties:
+            value: { type: integer }
+            grade: { type: string }
+            last_evaluated:
+              type: string
+              format: date-time
+        policy_bindings:
+          type: array
+          items: { type: string }
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AgentRegisterRequest:
+      type: object
+      required: [name, type, framework, risk_tier]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        framework: { type: string }
+        owner: { type: string }
+        risk_tier:
+          type: string
+          enum: [prohibited, high, limited, minimal]
+        capabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              description: { type: string }
+              permissions:
+                type: array
+                items: { type: string }
+              resource_scope: { type: string }
+    AgentUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        lifecycle_stage:
+          type: string
+          enum: [proposed, approved, active, deprecated, terminated]
+        risk_tier:
+          type: string
+          enum: [prohibited, high, limited, minimal]
+        capabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              description: { type: string }
+              permissions:
+                type: array
+                items: { type: string }
+              resource_scope: { type: string }
+    AgentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    AuditListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id: { type: string }
+              event_type: { type: string }
+              actor:
+                type: object
+                properties:
+                  type: { type: string }
+                  id: { type: string }
+                  name: { type: string }
+              resource:
+                type: object
+                properties:
+                  type: { type: string }
+                  id: { type: string }
+                  name: { type: string }
+              timestamp:
+                type: string
+                format: date-time
+              details:
+                type: object
+                additionalProperties: true
+              integrity_hash: { type: string }
+              previous_event_hash: { type: string }
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    AuditVerification:
+      type: object
+      properties:
+        verification_status: { type: string }
+        events_verified: { type: integer }
+        chain_intact: { type: boolean }
+        first_event_id: { type: string }
+        last_event_id: { type: string }
+        verified_at:
+          type: string
+          format: date-time
+    WebhookSubscription:
+      type: object
+      properties:
+        subscription_id: { type: string }
+        url: { type: string }
+        events:
+          type: array
+          items: { type: string }
+        secret: { type: string }
+        description: { type: string }
+        active: { type: boolean }
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        delivery_stats:
+          type: object
+          properties:
+            total_deliveries: { type: integer }
+            successful_deliveries: { type: integer }
+            failed_deliveries: { type: integer }
+            last_delivery_at:
+              type: string
+              format: date-time
+    WebhookSubscriptionRequest:
+      type: object
+      required: [url, events, secret]
+      properties:
+        url: { type: string }
+        events:
+          type: array
+          items: { type: string }
+        secret: { type: string }
+        description: { type: string }
+        active: { type: boolean }
+        metadata:
+          type: object
+          additionalProperties: true
+    WebhookSubscriptionUpdateRequest:
+      type: object
+      properties:
+        url: { type: string }
+        events:
+          type: array
+          items: { type: string }
+        secret: { type: string }
+        description: { type: string }
+        active: { type: boolean }
+        metadata:
+          type: object
+          additionalProperties: true
+    WebhookDelivery:
+      type: object
+      properties:
+        delivery_id: { type: string }
+        subscription_id: { type: string }
+        event_id: { type: string }
+        event_type: { type: string }
+        status: { type: string }
+        http_status: { type: integer }
+        response_time_ms: { type: integer }
+        attempts: { type: integer }
+        delivered_at:
+          type: string
+          format: date-time
+        next_retry_at:
+          type: string
+          format: date-time
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string }
+        version: { type: string }
+        components:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status: { type: string }
+        timestamp:
+          type: string
+          format: date-time
+    ReadinessStatus:
+      type: object
+      properties:
+        ready: { type: boolean }
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status: { type: string }

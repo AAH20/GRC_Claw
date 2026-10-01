@@ -1,0 +1,86 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: policy-api
+  namespace: grc-claw-control-plane
+spec:
+  replicas: 6
+  strategy:
+    blueGreen:
+      activeService: policy-api-active
+      previewService: policy-api-preview
+      autoPromotionEnabled: false
+      autoPromotionSeconds: 300
+      maxUnavailable: 0
+      scaleDownDelaySeconds: 600
+      scaleDownDelayRevisionLimit: 2
+      previewReplicaCount: 3
+      previewAnalysisTemplates:
+        - templateName: policy-api-health
+  selector:
+    matchLabels:
+      app: policy-api
+  template:
+    metadata:
+      labels:
+        app: policy-api
+    spec:
+      serviceAccountName: policy-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: policy-api
+          image: ghcr.io/grc-claw/policy-api:v1.2.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: policy-api-health
+  namespace: grc-claw-control-plane
+spec:
+  metrics:
+    - name: health-check
+      interval: 1m
+      count: 3
+      successCondition: result[0] == 1
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            up{service="policy-api-preview"}

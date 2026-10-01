@@ -1,0 +1,29 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-vendor-001",
+  "source": "grc-claw/vendor-manager",
+  "type": "com.grcclaw.vendor.risk_changed",
+  "subject": "vendor-001",
+  "time": "2026-10-01T16:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "vendor_id": "vendor-001",
+    "name": "Model Provider Inc",
+    "risk_tier": "medium",
+    "composite_risk_score": 3.2,
+    "risk_dimensions": {
+      "model_risk": 3.5,
+      "data_risk": 2.8,
+      "security_risk": 3.0,
+      "compliance_risk": 3.5,
+      "operational_risk": 3.0,
+      "reputational_risk": 3.2
+    }
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

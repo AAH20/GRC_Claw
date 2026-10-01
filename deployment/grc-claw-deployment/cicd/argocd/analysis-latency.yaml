@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: pdp-latency
+  namespace: grc-claw-control-plane
+spec:
+  metrics:
+  - name: p99-latency
+    interval: 1m
+    count: 5
+    successCondition: result[0] <= 0.050
+    provider:
+      prometheus:
+        address: http://prometheus:9090
+        query: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pdp-service-canary"}[1m]))
+          by (le))

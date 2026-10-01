@@ -1,0 +1,36 @@
+
+MATURITY HEAT MAP
+================================================================================
+
+Domain                                L1   L2   L3   L4   L5   Score  Level
+--------------------------------------------------------------------------------
+1.1 AI Governance Framework            █    █    ▓    ░    ░    2.67      3
+1.2 AI Strategy & Value Alignmen       █    █    █    ▒    ░    3.47      4
+1.3 Risk & Compliance Management       █    █    ▒    ░    ░    2.33      2
+--------------------------------------------------------------------------------
+  Governance & Strategy (Pillar Avg)                             2.82      3
+
+2.1 Fairness, Transparency & Exp       █    █    ▒    ░    ░    2.47      2
+2.2 Privacy & Data Protection          █    █    ▒    ░    ░    2.47      2
+2.3 Human Oversight & Accountabi       █    █    ▓    ░    ░    2.93      3
+--------------------------------------------------------------------------------
+  Responsible AI & Ethics (Pillar Avg)                             2.62      3
+
+3.1 Data Governance & Quality          █    █    ▒    ░    ░    2.33      2
+3.2 Model & Platform Security          █    █    ▒    ░    ░    2.47      2
+3.3 Agent Identity & Access Gove       █    ▒    ░    ░    ░    1.47      1
+3.4 Runtime Behavioral Controls        █    ▓    ░    ░    ░    1.87      2
+--------------------------------------------------------------------------------
+  Technical Foundation (Pillar Avg)                             2.04      2
+
+4.1 Monitoring & Incident Respon       █    ▓    ░    ░    ░    1.60      1
+4.2 Workforce & Organizational R       █    █    ▓    ░    ░    2.93      3
+4.3 Continuous Improvement & Inn       █    █    ▒    ░    ░    2.40      2
+--------------------------------------------------------------------------------
+  Operations & Performance (Pillar Avg)                             2.31      2
+
+================================================================================
+OVERALL                                                         2.45      2
+
+Legend: █ = Met  ▓ = Mostly Met  ▒ = Partially Met  ░ = Not Met
+Color:  Red (<2.0)  Yellow (2.0-2.9)  Light Green (3.0-3.9)  Green (4.0+)

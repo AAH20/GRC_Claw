@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: immudb
+  namespace: grc-claw-data
+  labels:
+    app: immudb
+spec:
+  selector:
+    app: immudb
+  ports:
+  - port: 3322
+    targetPort: 3322
+    name: http
+  type: ClusterIP

@@ -1,0 +1,68 @@
+{{- if .Values.observability.otelCollector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: otel-collector
+    grc.component: otel-collector
+    grc.tier: observability
+spec:
+  replicas: {{ .Values.observability.otelCollector.replicas }}
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      securityContext:
+        {{- include "grc-claw.securityContext" . | nindent 8 }}
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.91.0
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 8888
+              name: metrics
+          resources:
+            {{- toYaml .Values.observability.otelCollector.resources | nindent 12 }}
+          securityContext:
+            {{- include "grc-claw.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel-collector-config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: otel-collector
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - port: 4317
+      name: otlp-grpc
+      targetPort: 4317
+    - port: 4318
+      name: otlp-http
+      targetPort: 4318
+    - port: 8888
+      name: metrics
+      targetPort: 8888
+  type: ClusterIP
+{{- end }}

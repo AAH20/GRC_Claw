@@ -1,0 +1,37 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: grc-claw-metrics
+  namespace: grc-claw-control-plane
+spec:
+  metrics:
+    - providers:
+        - name: prometheus
+      overrides:
+        - match:
+            metric: REQUEST_COUNT
+          tagOverrides:
+            destination_service:
+              operation: UPSERT
+              value: "unknown"
+        - match:
+            metric: REQUEST_DURATION
+          tagOverrides:
+            destination_service:
+              operation: UPSERT
+              value: "unknown"
+---
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: grc-claw-tracing
+  namespace: grc-claw-control-plane
+spec:
+  tracing:
+    - providers:
+        - name: otel
+      randomSamplingPercentage: 100.0
+      customTags:
+        tenant_id:
+          literal:
+            value: "unknown"

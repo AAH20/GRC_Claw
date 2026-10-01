@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup
+  namespace: grc-claw-data
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: ghcr.io/grc-claw/pgbackrest:16.4
+            command:
+            - /bin/bash
+            - -c
+            - pgbackrest --stanza=grc-claw backup --type=full && pgbackrest --stanza=grc-claw
+              verify
+            env:
+            - name: PGBACKREST_REPO1_TYPE
+              value: s3
+            - name: PGBACKREST_REPO1_S3_BUCKET
+              value: grc-claw-backups
+            - name: PGBACKREST_REPO1_S3_REGION
+              value: us-west-2
+            - name: PGBACKREST_REPO1_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: access-key
+            - name: PGBACKREST_REPO1_S3_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secret-key
+            volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+              readOnly: true
+          volumes:
+          - name: pgdata
+            persistentVolumeClaim:
+              claimName: data-postgresql-0
+          restartPolicy: OnFailure

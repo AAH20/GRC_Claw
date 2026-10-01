@@ -1,0 +1,902 @@
+syntax = "proto3";
+
+package grcclaw.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/grc-claw/api/go/v1;grcclawv1";
+option java_package = "io.grccLaw.api.v1";
+option python_package = "grc_claw.api.v1";
+
+// ============================================================
+// Enforcement Service
+// ============================================================
+
+service EnforcementService {
+  // Single enforcement decision
+  rpc Decide(DecideRequest) returns (DecideResponse);
+
+  // Batch enforcement decisions
+  rpc DecideBatch(DecideBatchRequest) returns (DecideBatchResponse);
+
+  // Streaming enforcement decisions (bidirectional)
+  rpc StreamDecisions(stream DecideRequest) returns (stream DecideResponse);
+
+  // Server-streaming: subscribe to decisions for an agent
+  rpc SubscribeDecisions(SubscribeRequest) returns (stream DecideResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message DecideRequest {
+  string request_id = 1;
+  string agent_id = 2;
+  string action = 3;
+  string resource = 4;
+  google.protobuf.Struct context = 5;
+  repeated string policy_ids = 6;
+  bool include_evidence = 7;
+  string tenant_id = 8;
+}
+
+message DecideResponse {
+  string decision_id = 1;
+  string request_id = 2;
+  Verdict verdict = 3;
+  string policy_id = 4;
+  string policy_version = 5;
+  string agent_id = 6;
+  string action = 7;
+  string resource = 8;
+  google.protobuf.Struct context = 9;
+  string evidence_hash = 10;
+  google.protobuf.Timestamp timestamp = 11;
+  int32 ttl_seconds = 12;
+  string signature = 13;
+  repeated string matched_rules = 14;
+  double evaluation_time_ms = 15;
+  string reason = 16;
+  repeated RedactionRule redaction_rules = 17;
+}
+
+enum Verdict {
+  VERDICT_UNSPECIFIED = 0;
+  ALLOW = 1;
+  ALLOW_WITH_REDACTION = 2;
+  REQUIRE_APPROVAL = 3;
+  DENY = 4;
+  QUARANTINE = 5;
+}
+
+message RedactionRule {
+  string field = 1;
+  string strategy = 2;  // "mask", "remove", "hash", "tokenize"
+  string pattern = 3;
+}
+
+message DecideBatchRequest {
+  string request_id = 1;
+  repeated DecideRequest decisions = 2;
+  string tenant_id = 3;
+}
+
+message DecideBatchResponse {
+  string request_id = 1;
+  repeated DecideResponse results = 2;
+  BatchSummary summary = 3;
+}
+
+message BatchSummary {
+  int32 total = 1;
+  int32 allowed = 2;
+  int32 denied = 3;
+  int32 require_approval = 4;
+  int32 quarantined = 5;
+  double avg_evaluation_time_ms = 6;
+}
+
+message SubscribeRequest {
+  string agent_id = 1;
+  string tenant_id = 2;
+  repeated string policy_ids = 3;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  ServingStatus status = 1;
+  string version = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+enum ServingStatus {
+  UNKNOWN = 0;
+  SERVING = 1;
+  NOT_SERVING = 2;
+  SERVICE_UNKNOWN = 3;
+}
+
+// ============================================================
+// Policy Service
+// ============================================================
+
+service PolicyService {
+  rpc GetPolicy(GetPolicyRequest) returns (Policy);
+  rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse);
+  rpc CreatePolicy(CreatePolicyRequest) returns (Policy);
+  rpc UpdatePolicy(UpdatePolicyRequest) returns (Policy);
+  rpc DeletePolicy(DeletePolicyRequest) returns (DeletePolicyResponse);
+  rpc CompilePolicy(CompilePolicyRequest) returns (CompilePolicyResponse);
+  rpc DryRunPolicy(DryRunPolicyRequest) returns (DryRunPolicyResponse);
+  rpc WatchPolicies(WatchPoliciesRequest) returns (stream PolicyChangeEvent);
+}
+
+message GetPolicyRequest {
+  string policy_id = 1;
+  string tenant_id = 2;
+}
+
+message ListPoliciesRequest {
+  string tenant_id = 1;
+  string status = 2;
+  string category = 3;
+  string framework = 4;
+  string agent_id = 5;
+  int32 page = 6;
+  int32 per_page = 7;
+  string sort = 8;
+}
+
+message ListPoliciesResponse {
+  repeated Policy policies = 1;
+  Pagination pagination = 2;
+}
+
+message CreatePolicyRequest {
+  string tenant_id = 1;
+  string policy_key = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5;
+  repeated string framework_tags = 6;
+  string cedar_policy = 7;
+  google.protobuf.Struct metadata = 8;
+}
+
+message UpdatePolicyRequest {
+  string policy_id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string cedar_policy = 5;
+  google.protobuf.Struct metadata = 6;
+}
+
+message DeletePolicyRequest {
+  string policy_id = 1;
+  string tenant_id = 2;
+  bool force = 3;
+}
+
+message DeletePolicyResponse {
+  bool success = 1;
+}
+
+message CompilePolicyRequest {
+  string policy_id = 1;
+  string tenant_id = 2;
+}
+
+message CompilePolicyResponse {
+  string policy_id = 1;
+  CompilationStatus status = 2;
+  string rego_policy = 3;
+  repeated string warnings = 4;
+  repeated string errors = 5;
+  google.protobuf.Timestamp compiled_at = 6;
+}
+
+enum CompilationStatus {
+  COMPILATION_UNSPECIFIED = 0;
+  SUCCESS = 1;
+  FAILED = 2;
+  PARTIAL = 3;
+}
+
+message DryRunPolicyRequest {
+  string policy_id = 1;
+  string tenant_id = 2;
+  repeated google.protobuf.Struct test_inputs = 3;
+}
+
+message DryRunPolicyResponse {
+  string policy_id = 1;
+  repeated DryRunResult results = 2;
+  DryRunSummary summary = 3;
+}
+
+message DryRunResult {
+  int32 input_index = 1;
+  Verdict decision = 2;
+  repeated string matched_rules = 3;
+  double evaluation_time_ms = 4;
+  string reason = 5;
+}
+
+message DryRunSummary {
+  int32 total = 1;
+  int32 allowed = 2;
+  int32 denied = 3;
+  double avg_evaluation_time_ms = 4;
+}
+
+message WatchPoliciesRequest {
+  string tenant_id = 1;
+  string status = 2;
+}
+
+message PolicyChangeEvent {
+  ChangeType change_type = 1;
+  Policy policy = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+enum ChangeType {
+  CHANGE_UNSPECIFIED = 0;
+  CREATED = 1;
+  UPDATED = 2;
+  DELETED = 3;
+  STATUS_CHANGED = 4;
+}
+
+message Policy {
+  string id = 1;
+  string policy_key = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5;
+  string status = 6;
+  string version = 7;
+  repeated string framework_tags = 8;
+  google.protobuf.Timestamp effective_date = 9;
+  google.protobuf.Timestamp expiry_date = 10;
+  string owner_id = 11;
+  repeated string agent_bindings = 12;
+  string cedar_policy = 13;
+  string rego_policy = 14;
+  google.protobuf.Struct metadata = 15;
+  google.protobuf.Timestamp created_at = 16;
+  google.protobuf.Timestamp updated_at = 17;
+  string created_by = 18;
+  string updated_by = 19;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 per_page = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+}
+
+// ============================================================
+// Evidence Service
+// ============================================================
+
+service EvidenceService {
+  rpc SubmitEvidence(SubmitEvidenceRequest) returns (Evidence);
+  rpc GetEvidence(GetEvidenceRequest) returns (Evidence);
+  rpc SearchEvidence(SearchEvidenceRequest) returns (SearchEvidenceResponse);
+  rpc VerifyEvidence(VerifyEvidenceRequest) returns (VerifyEvidenceResponse);
+  rpc WatchEvidence(WatchEvidenceRequest) returns (stream EvidenceEvent);
+}
+
+message SubmitEvidenceRequest {
+  string tenant_id = 1;
+  string policy_id = 2;
+  string assessment_id = 3;
+  EvidenceSource source = 4;
+  string evidence_type = 5;
+  EvidenceContent content = 6;
+  EvidenceContext context = 7;
+  ControlMapping control_mapping = 8;
+}
+
+message GetEvidenceRequest {
+  string evidence_id = 1;
+  string tenant_id = 2;
+}
+
+message SearchEvidenceRequest {
+  string tenant_id = 1;
+  string policy_id = 2;
+  string assessment_id = 3;
+  string evidence_type = 4;
+  string framework = 5;
+  string control_id = 6;
+  string verification_level = 7;
+  string environment = 8;
+  google.protobuf.Timestamp date_from = 9;
+  google.protobuf.Timestamp date_to = 10;
+  string query = 11;
+  int32 page = 12;
+  int32 per_page = 13;
+}
+
+message SearchEvidenceResponse {
+  repeated Evidence evidences = 1;
+  Pagination pagination = 2;
+}
+
+message VerifyEvidenceRequest {
+  string evidence_id = 1;
+  string tenant_id = 2;
+}
+
+message VerifyEvidenceResponse {
+  string evidence_id = 1;
+  VerificationResult result = 2;
+}
+
+message VerificationResult {
+  string status = 1;
+  string verification_level = 2;
+  bool hash_match = 3;
+  bool chain_of_custody_intact = 4;
+  bool schema_valid = 5;
+  bool control_mapping_valid = 6;
+  google.protobuf.Timestamp verified_at = 7;
+  string verified_by = 8;
+}
+
+message WatchEvidenceRequest {
+  string tenant_id = 1;
+  string policy_id = 2;
+}
+
+message EvidenceEvent {
+  string event_type = 1;
+  Evidence evidence = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message Evidence {
+  string id = 1;
+  string policy_id = 2;
+  string assessment_id = 3;
+  EvidenceSource source = 4;
+  string evidence_type = 5;
+  EvidenceContent content = 6;
+  EvidenceContext context = 7;
+  ValidationStatus validation = 8;
+  string verification_level = 9;
+  repeated CustodyEvent chain_of_custody = 10;
+  string retention_class = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp expires_at = 13;
+}
+
+message EvidenceSource {
+  string type = 1;
+  string system = 2;
+  string collection_method = 3;
+}
+
+message EvidenceContent {
+  string format = 1;
+  string data = 2;
+  string hash = 3;
+}
+
+message EvidenceContext {
+  string environment = 1;
+  string region = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  google.protobuf.Struct metadata = 4;
+}
+
+message ValidationStatus {
+  string status = 1;
+  string validated_by = 2;
+  google.protobuf.Timestamp validated_at = 3;
+  double confidence_score = 4;
+}
+
+message CustodyEvent {
+  string action = 1;
+  string actor = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  string hash = 4;
+}
+
+message ControlMapping {
+  string control_id = 1;
+  string framework = 2;
+  string control_title = 3;
+  string control_family = 4;
+}
+
+// ============================================================
+// Agent Service
+// ============================================================
+
+service AgentService {
+  rpc RegisterAgent(RegisterAgentRequest) returns (Agent);
+  rpc GetAgent(GetAgentRequest) returns (Agent);
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  rpc UpdateAgent(UpdateAgentRequest) returns (Agent);
+  rpc UpdateTrustScore(UpdateTrustScoreRequest) returns (Agent);
+  rpc BindPolicies(BindPoliciesRequest) returns (Agent);
+  rpc WatchAgentEvents(WatchAgentEventsRequest) returns (stream AgentEvent);
+}
+
+message RegisterAgentRequest {
+  string tenant_id = 1;
+  string name = 2;
+  string type = 3;
+  string framework = 4;
+  string owner_id = 5;
+  string risk_tier = 6;
+  repeated AgentCapability capabilities = 7;
+}
+
+message GetAgentRequest {
+  string agent_id = 1;
+  string tenant_id = 2;
+}
+
+message ListAgentsRequest {
+  string tenant_id = 1;
+  string type = 2;
+  string framework = 3;
+  string lifecycle_stage = 4;
+  string risk_tier = 5;
+  int32 trust_score_min = 6;
+  int32 page = 7;
+  int32 per_page = 8;
+}
+
+message ListAgentsResponse {
+  repeated Agent agents = 1;
+  Pagination pagination = 2;
+}
+
+message UpdateAgentRequest {
+  string agent_id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string lifecycle_stage = 4;
+  string risk_tier = 5;
+  repeated AgentCapability capabilities = 6;
+}
+
+message UpdateTrustScoreRequest {
+  string agent_id = 1;
+  string tenant_id = 2;
+  int32 value = 3;
+  string grade = 4;
+  string reason = 5;
+}
+
+message BindPoliciesRequest {
+  string agent_id = 1;
+  string tenant_id = 2;
+  repeated string policy_ids = 3;
+}
+
+message WatchAgentEventsRequest {
+  string tenant_id = 1;
+  string agent_id = 2;
+}
+
+message AgentEvent {
+  string event_type = 1;
+  Agent agent = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message Agent {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string framework = 4;
+  string owner_id = 5;
+  string lifecycle_stage = 6;
+  string risk_tier = 7;
+  repeated AgentCapability capabilities = 8;
+  AgentIdentity identity = 9;
+  TrustScore trust_score = 10;
+  repeated string policy_bindings = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message AgentCapability {
+  string name = 1;
+  string description = 2;
+  repeated string permissions = 3;
+  string resource_scope = 4;
+}
+
+message AgentIdentity {
+  string spiffe_id = 1;
+  string mtls_cert = 2;
+  google.protobuf.Timestamp cert_expiry = 3;
+}
+
+message TrustScore {
+  int32 value = 1;
+  string grade = 2;
+  google.protobuf.Timestamp last_evaluated = 3;
+}
+
+// ============================================================
+// Assessment Service
+// ============================================================
+
+service AssessmentService {
+  rpc ListAssessments(ListAssessmentsRequest) returns (ListAssessmentsResponse);
+  rpc CreateAssessment(CreateAssessmentRequest) returns (Assessment);
+  rpc GetAssessment(GetAssessmentRequest) returns (Assessment);
+  rpc StartAssessment(StartAssessmentRequest) returns (Assessment);
+  rpc CompleteAssessment(CompleteAssessmentRequest) returns (Assessment);
+  rpc StreamAssessmentEvents(StreamAssessmentEventsRequest) returns (stream AssessmentEvent);
+}
+
+message ListAssessmentsRequest {
+  string tenant_id = 1;
+  string assessment_type = 2;
+  string status = 3;
+  string target_type = 4;
+  string target_id = 5;
+  string methodology = 6;
+  int32 page = 7;
+  int32 per_page = 8;
+}
+
+message ListAssessmentsResponse {
+  repeated Assessment assessments = 1;
+  Pagination pagination = 2;
+}
+
+message CreateAssessmentRequest {
+  string tenant_id = 1;
+  string assessment_key = 2;
+  string title = 3;
+  string description = 4;
+  string assessment_type = 5;
+  string target_id = 6;
+  string target_type = 7;
+  string methodology = 8;
+  string lead_assessor = 9;
+  google.protobuf.Struct metadata = 10;
+}
+
+message GetAssessmentRequest {
+  string assessment_id = 1;
+  string tenant_id = 2;
+}
+
+message StartAssessmentRequest {
+  string assessment_id = 1;
+  string tenant_id = 2;
+}
+
+message CompleteAssessmentRequest {
+  string assessment_id = 1;
+  string tenant_id = 2;
+  double score = 3;
+  string risk_level = 4;
+}
+
+message StreamAssessmentEventsRequest {
+  string tenant_id = 1;
+  string assessment_id = 2;
+}
+
+message AssessmentEvent {
+  string event_type = 1;
+  Assessment assessment = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message Assessment {
+  string id = 1;
+  string assessment_key = 2;
+  string title = 3;
+  string description = 4;
+  string assessment_type = 5;
+  string target_id = 6;
+  string target_type = 7;
+  string status = 8;
+  string methodology = 9;
+  double score = 10;
+  string risk_level = 11;
+  google.protobuf.Timestamp started_at = 12;
+  google.protobuf.Timestamp completed_at = 13;
+  google.protobuf.Timestamp next_assessment_at = 14;
+  string lead_assessor = 15;
+  google.protobuf.Struct metadata = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+}
+
+// ============================================================
+// Compliance Service
+// ============================================================
+
+service ComplianceService {
+  rpc GetCompliancePosture(GetCompliancePostureRequest) returns (CompliancePosture);
+  rpc ComputeCompliance(ComputeComplianceRequest) returns (CompliancePosture);
+  rpc GetGapAnalysis(GetGapAnalysisRequest) returns (GapAnalysis);
+  rpc StreamComplianceEvents(StreamComplianceEventsRequest) returns (stream ComplianceEvent);
+}
+
+message GetCompliancePostureRequest {
+  string tenant_id = 1;
+  string framework = 2;
+  string target_id = 3;
+  string target_type = 4;
+}
+
+message ComputeComplianceRequest {
+  string tenant_id = 1;
+  string framework = 2;
+  string target_id = 3;
+  string target_type = 4;
+}
+
+message GetGapAnalysisRequest {
+  string tenant_id = 1;
+  string framework = 2;
+  string target_id = 3;
+  string target_type = 4;
+}
+
+message StreamComplianceEventsRequest {
+  string tenant_id = 1;
+  string framework = 2;
+}
+
+message CompliancePosture {
+  string framework = 1;
+  string target_id = 2;
+  string target_type = 3;
+  int32 controls_assessed = 4;
+  int32 controls_compliant = 5;
+  int32 controls_non_compliant = 6;
+  int32 controls_not_assessed = 7;
+  double compliance_score = 8;
+  repeated ComplianceGap gaps = 9;
+  ComplianceTrend trend = 10;
+}
+
+message ComplianceGap {
+  string control_id = 1;
+  string control_title = 2;
+  string status = 3;
+  string severity = 4;
+  int32 evidence_count = 5;
+  google.protobuf.Timestamp last_assessed = 6;
+}
+
+message ComplianceTrend {
+  string direction = 1;
+  string change = 2;
+  string period = 3;
+}
+
+message GapAnalysis {
+  string framework = 1;
+  string target_id = 2;
+  int32 total_gaps = 3;
+  repeated ComplianceGap gaps = 4;
+}
+
+message ComplianceEvent {
+  string event_type = 1;
+  CompliancePosture posture = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// ============================================================
+// Audit Service
+// ============================================================
+
+service AuditService {
+  rpc QueryAuditTrail(QueryAuditTrailRequest) returns (QueryAuditTrailResponse);
+  rpc VerifyAuditTrail(VerifyAuditTrailRequest) returns (VerifyAuditTrailResponse);
+  rpc StreamAuditEvents(StreamAuditEventsRequest) returns (stream AuditEvent);
+  rpc ExportAuditTrail(ExportAuditTrailRequest) returns (stream ExportChunk);
+}
+
+message QueryAuditTrailRequest {
+  string tenant_id = 1;
+  string event_type = 2;
+  string actor_id = 3;
+  string resource_type = 4;
+  string resource_id = 5;
+  google.protobuf.Timestamp date_from = 6;
+  google.protobuf.Timestamp date_to = 7;
+  int32 limit = 8;
+  int32 offset = 9;
+}
+
+message QueryAuditTrailResponse {
+  repeated AuditEvent events = 1;
+  Pagination pagination = 2;
+}
+
+message VerifyAuditTrailRequest {
+  string tenant_id = 1;
+  string from_event_id = 2;
+  string to_event_id = 3;
+}
+
+message VerifyAuditTrailResponse {
+  string verification_status = 1;
+  int32 events_verified = 2;
+  bool chain_intact = 3;
+  string first_event_id = 4;
+  string last_event_id = 5;
+  google.protobuf.Timestamp verified_at = 6;
+}
+
+message StreamAuditEventsRequest {
+  string tenant_id = 1;
+  string event_type = 2;
+}
+
+message ExportAuditTrailRequest {
+  string tenant_id = 1;
+  google.protobuf.Timestamp date_from = 2;
+  google.protobuf.Timestamp date_to = 3;
+  string format = 4;
+}
+
+message ExportChunk {
+  bytes data = 1;
+  int32 sequence = 2;
+  bool is_last = 3;
+}
+
+message AuditEvent {
+  string event_id = 1;
+  string event_type = 2;
+  Actor actor = 3;
+  Resource resource = 4;
+  google.protobuf.Timestamp timestamp = 5;
+  google.protobuf.Struct details = 6;
+  string integrity_hash = 7;
+  string previous_event_hash = 8;
+}
+
+message Actor {
+  string type = 1;
+  string id = 2;
+  string name = 3;
+}
+
+message Resource {
+  string type = 1;
+  string id = 2;
+  string name = 3;
+}
+
+// ============================================================
+// Real-Time Enforcement Service
+// ============================================================
+
+service RealTimeEnforcementService {
+  // Bidirectional streaming for real-time enforcement
+  rpc EnforceStream(stream EnforcementRequest) returns (stream EnforcementResponse);
+
+  // Server streaming for continuous compliance monitoring
+  rpc MonitorCompliance(MonitorComplianceRequest) returns (stream ComplianceUpdate);
+
+  // Client streaming for batch evidence submission
+  rpc SubmitEvidenceStream(stream EvidenceSubmission) returns (SubmissionSummary);
+}
+
+message EnforcementRequest {
+  string request_id = 1;
+  string agent_id = 2;
+  ActionType action_type = 3;
+  string tool_name = 4;
+  string resource = 5;
+  google.protobuf.Struct parameters = 6;
+  string policy_context = 7;
+  string trace_id = 8;
+  map<string, string> metadata = 9;
+}
+
+message EnforcementResponse {
+  string request_id = 1;
+  string decision_id = 2;
+  DecisionType decision = 3;
+  string reason = 4;
+  double confidence_score = 5;
+  int64 evaluation_latency_ms = 6;
+  repeated string evidence_ids = 7;
+  RedactionDetails redaction = 8;
+  EscalationDetails escalation = 9;
+  QuarantineDetails quarantine = 10;
+}
+
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  TOOL_CALL = 1;
+  API_REQUEST = 2;
+  DATA_ACCESS = 3;
+  CODE_EXECUTION = 4;
+  FILE_ACCESS = 5;
+  NETWORK_ACCESS = 6;
+  MODEL_INFERENCE = 7;
+  CUSTOM = 8;
+}
+
+enum DecisionType {
+  DECISION_TYPE_UNSPECIFIED = 0;
+  ALLOW = 1;
+  ALLOW_WITH_REDACTION = 2;
+  REQUIRE_APPROVAL = 3;
+  DENY = 4;
+  QUARANTINE = 5;
+}
+
+message RedactionDetails {
+  repeated string fields_redacted = 1;
+  string redaction_method = 2;
+  string original_hash = 3;
+}
+
+message EscalationDetails {
+  string escalation_id = 1;
+  string escalated_to = 2;
+  string escalation_reason = 3;
+  string status = 4;
+}
+
+message QuarantineDetails {
+  string quarantine_id = 1;
+  string reason = 2;
+  string scope = 3;
+  string status = 4;
+}
+
+message MonitorComplianceRequest {
+  string tenant_id = 1;
+  string framework = 2;
+  string scope_id = 3;
+}
+
+message ComplianceUpdate {
+  string framework = 1;
+  string scope_id = 2;
+  double old_score = 3;
+  double new_score = 4;
+  string change_type = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message EvidenceSubmission {
+  string submission_id = 1;
+  string tenant_id = 2;
+  string policy_id = 3;
+  string control_id = 4;
+  string framework = 5;
+  EvidenceContent content = 6;
+  EvidenceSource source = 7;
+}
+
+message SubmissionSummary {
+  int32 total_submitted = 1;
+  int32 successful = 2;
+  int32 failed = 3;
+  repeated string errors = 4;
+}

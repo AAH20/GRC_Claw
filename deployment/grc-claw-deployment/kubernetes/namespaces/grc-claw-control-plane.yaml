@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-control-plane
+  labels:
+    grc.tier: control-plane
+    istio-injection: enabled

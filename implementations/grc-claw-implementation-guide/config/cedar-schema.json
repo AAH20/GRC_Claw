@@ -1,0 +1,76 @@
+{
+  "": {
+    "entityTypes": {
+      "Agent": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "id": { "type": "String" },
+            "clearance": { "type": "String" },
+            "role": { "type": "String" },
+            "trustScore": { "type": "Long" }
+          }
+        },
+        "memberOfTypes": ["Principal"]
+      },
+      "Action": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "name": { "type": "String" }
+          }
+        }
+      },
+      "Resource": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "id": { "type": "String" },
+            "containsPii": { "type": "Boolean" },
+            "sensitivity": { "type": "String" }
+          }
+        }
+      },
+      "Principal": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "action": { "type": "String" }
+          }
+        }
+      }
+    },
+    "actions": {
+      "export": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Resource"]
+        }
+      },
+      "refund": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Resource"]
+        }
+      },
+      "read": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Resource"]
+        }
+      },
+      "write": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Resource"]
+        }
+      },
+      "api_call": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Resource"]
+        }
+      }
+    }
+  }
+}

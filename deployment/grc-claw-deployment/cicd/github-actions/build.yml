@@ -1,0 +1,74 @@
+name: build
+on:
+  push:
+    branches: [main, 'release/**', 'hotfix/**']
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: grc-claw
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [policy-api, pdp-service, pep-gateway, agent-identity, evidence-collector, compliance-mapping, analytics-engine, reporting-engine, discovery-engine, risk-assessment, otel-collector, approval-workflow]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+
+      - name: Compile and lint
+        run: |
+          make lint
+          make compile
+
+      - name: Run unit tests
+        run: make test-unit
+        # Coverage gate: 80% minimum
+
+      - name: Run integration tests
+        run: make test-integration
+        # Spins up testcontainers for PostgreSQL, Redis, Kafka
+
+      - name: Build container image
+        run: |
+          docker build \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }} \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest \
+            --file dockerfiles/${{ matrix.service }}/Dockerfile \
+            .
+
+      - name: Generate SBOM
+        run: |
+          syft ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }} \
+            -o spdx-json > sbom.json
+
+      - name: Scan image
+        run: |
+          trivy image \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Sign image
+        run: |
+          cosign sign --yes \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}@${{ steps.build.outputs.digest }}
+
+      - name: Push image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
+
+      - name: Update GitOps repo
+        run: |
+          yq e '.spec.template.spec.containers[0].image = "${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}"' \
+            -i gitops/environments/development/us-east-1/${{ matrix.service }}/deployment.yaml
+          git commit -am "chore: update ${{ matrix.service }} to ${{ github.sha }}"
+          git push

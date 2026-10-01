@@ -1,0 +1,83 @@
+# GRC_Claw Compliance Mapping Configuration
+# Cross-framework control mappings
+
+mappings:
+  - mapping_id: MAP-001
+    control_id: GRC-CTRL-001
+    control_name: "AI System Risk Assessment"
+    description: "Conduct and document risk assessment for AI systems before deployment"
+    framework_mappings:
+      iso-42001:
+        version: "2023"
+        control_ids: ["6.1", "6.2"]
+        section_refs: ["Annex A.5"]
+        obligation_level: mandatory
+      nist-ai-rmf:
+        version: "1.0"
+        control_ids: ["GOVERN-1", "MAP-1", "MAP-2"]
+        section_refs: ["2.1", "3.1"]
+        obligation_level: mandatory
+      eu-ai-act:
+        version: "2024"
+        control_ids: ["Article 9", "Article 15"]
+        section_refs: ["Title III, Chapter 2"]
+        obligation_level: mandatory
+      owasp-llm:
+        version: "2025"
+        control_ids: ["LLM01", "LLM02"]
+        section_refs: ["Top 10 for LLM Applications"]
+        obligation_level: recommended
+    evidence_requirements:
+      - type: assessment_result
+        criteria: [risk-assessment, impact-assessment]
+        threshold: 0.8
+      - type: policy_evaluation
+        policy: risk-assessment-policy
+      - type: audit_event
+        retention: "7years"
+
+  - mapping_id: MAP-002
+    control_id: GRC-CTRL-002
+    control_name: "Data Governance"
+    description: "Ensure proper data handling and governance for AI systems"
+    framework_mappings:
+      iso-42001:
+        version: "2023"
+        control_ids: ["8.1", "8.2"]
+        obligation_level: mandatory
+      nist-ai-rmf:
+        version: "1.0"
+        control_ids: ["MAP-3", "MEASURE-1"]
+        obligation_level: mandatory
+      eu-ai-act:
+        version: "2024"
+        control_ids: ["Article 10"]
+        obligation_level: mandatory
+    evidence_requirements:
+      - type: policy_evaluation
+        policy: data-governance-policy
+      - type: audit_event
+        retention: "7years"
+
+  - mapping_id: MAP-003
+    control_id: GRC-CTRL-003
+    control_name: "Human Oversight"
+    description: "Maintain human oversight of AI system decisions"
+    framework_mappings:
+      iso-42001:
+        version: "2023"
+        control_ids: ["6.1", "8.1"]
+        obligation_level: mandatory
+      eu-ai-act:
+        version: "2024"
+        control_ids: ["Article 14"]
+        obligation_level: mandatory
+      owasp-llm:
+        version: "2025"
+        control_ids: ["LLM09"]
+        obligation_level: recommended
+    evidence_requirements:
+      - type: policy_evaluation
+        policy: human-oversight-policy
+      - type: audit_event
+        retention: "7years"

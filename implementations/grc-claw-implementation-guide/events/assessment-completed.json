@@ -1,0 +1,33 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-assessment-001",
+  "source": "grc-claw/assessment-engine",
+  "type": "com.grcclaw.assessment.completed",
+  "subject": "customer-service-agent",
+  "time": "2026-10-01T14:23:07.331Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "assessment_id": "ASSESS-2026-001",
+    "system_id": "customer-service-agent",
+    "assessment_type": "fairness",
+    "overall_score": 0.92,
+    "overall_result": "compliant",
+    "criteria_results": [
+      {
+        "criterion_id": "fairness-demographic-parity",
+        "score": 0.92,
+        "passed": true
+      }
+    ],
+    "evidence_ids": ["EVD-2026-001234", "EVD-2026-001235"]
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "trace_id": "trace-2026-1001-001",
+    "compliance_frameworks": ["ISO-42001", "NIST-AI-RMF"],
+    "risk_tier": "limited",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

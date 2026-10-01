@@ -1,0 +1,21 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-agent-terminated-001",
+  "source": "grc-claw/agent-registry",
+  "type": "com.grcclaw.agent.terminated",
+  "subject": "agent-456",
+  "time": "2026-10-01T17:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "agent_id": "agent-456",
+    "name": "Deprecated Agent",
+    "termination_reason": "Replaced by newer version",
+    "final_trust_score": 0.45
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

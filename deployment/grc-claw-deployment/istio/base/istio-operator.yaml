@@ -1,0 +1,89 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: grc-claw-istio
+  namespace: istio-system
+spec:
+  profile: default
+  meshConfig:
+    defaultConfig:
+      proxyMetadata:
+        ISTIO_META_DNS_CAPTURE: 'true'
+      tracing:
+        sampling: 10.0
+        zipkin:
+          address: tempo:9411
+    enableAutoMtls: true
+    outboundTrafficPolicy:
+      mode: REGISTRY_ONLY
+    extensionProviders:
+    - name: prometheus
+      prometheus: {}
+    - name: otel
+      opentelemetry:
+        service: otel-collector.grc-claw-observability.svc.cluster.local
+        port: 4317
+  components:
+    pilot:
+      k8a:
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8a:
+        service:
+          type: LoadBalancer
+          ports:
+          - name: status-port
+            port: 15021
+            targetPort: 15021
+          - name: http2
+            port: 80
+            targetPort: 8080
+          - name: https
+            port: 443
+            targetPort: 8443
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: true
+      k8a:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+  values:
+    global:
+      proxy:
+        autoInject: enabled
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+    pilot:
+      autoscaleEnabled: true
+      autoscaleMin: 2
+      autoscaleMax: 5
+    gateways:
+      istio-ingressgateway:
+        autoscaleEnabled: true
+        autoscaleMin: 2
+        autoscaleMax: 5

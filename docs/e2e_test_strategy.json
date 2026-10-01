@@ -1,0 +1,594 @@
+{
+  "e2e_test_strategy": {
+    "name": "APEX-OS End-to-End Testing Strategy",
+    "version": "1.0.0",
+    "scope": "Full system integration across ApexAMM, ApexGraphSwarm, Data Center Commander, and Apex FIET",
+    "test_environment": {
+      "description": "Isolated test environment mirroring production topology",
+      "infrastructure": {
+        "kubernetes": "3-region kind clusters (us-east, eu-central, apac-singapore)",
+        "kafka": "3-node cluster with MirrorMaker 2 cross-region replication",
+        "postgresql": "Primary + 2 replicas with TDE",
+        "blockchain": "Hyperledger Fabric 4-validator permissioned network",
+        "observability": "Jaeger + Prometheus + Grafana + Elasticsearch stack"
+      },
+      "data_setup": {
+        "market_data": "Synthetic order book data for 200+ instruments across 12 venues",
+        "historical_returns": "2 years of 1-minute bars for FHS VaR calibration",
+        "agent_registry": "200+ agent definitions with capability mappings",
+        "settlement_accounts": "Pre-funded escrow accounts on permissioned blockchain"
+      }
+    },
+    "test_components": [
+      {
+        "id": "E2E-001",
+        "name": "Full Trading Lifecycle — Signal to Settlement",
+        "description": "Validate complete trading workflow from alpha signal generation through cross-venue PvP settlement",
+        "domains": ["alpha", "prediction", "optimization", "risk", "settlement", "integration"],
+        "services_involved": [
+          "graph_alpha_engine",
+          "tcn_transformer_prediction",
+          "highs_milp_optimizer",
+          "fhs_var_cvar_risk",
+          "pvp_synchronizer",
+          "kafka_event_bus"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Happy Path — Single Venue",
+            "steps": [
+              "Ingest alpha signal from GraphRAG (top-k subgraph retrieval + GAT forward pass)",
+              "Run TCN+Transformer prediction inference (sub-100ms)",
+              "Solve MILP optimization for quote placement (sub-200ms)",
+              "Execute pre-trade risk check (FHS VaR/CVaR, sub-50ms)",
+              "Route order via Kafka to target venue",
+              "Receive fill confirmation via WebSocket",
+              "Trigger PvP settlement with 2-second finality",
+              "Verify audit trail completeness"
+            ],
+            "expected_outcome": "Full lifecycle completes in <3 seconds with all invariants satisfied",
+            "assertions": [
+              "Alpha signal confidence > 0.6",
+              "Prediction MDN produces valid 3-component Gaussian mixture",
+              "MILP optimality gap < 5% or greedy fallback engaged",
+              "Pre-trade risk check passes (CVaR < limit)",
+              "Settlement finality achieved in <2 seconds",
+              "Audit trail contains all 7 stages with valid trace_id"
+            ]
+          },
+          {
+            "name": "Multi-Venue Arbitrage Execution",
+            "steps": [
+              "Detect cross-venue price discrepancy via latency arbitrage detector",
+              "Generate alpha signal for arbitrage opportunity",
+              "Run prediction on both venues simultaneously",
+              "Solve MILP for simultaneous buy/sell across venues",
+              "Execute risk check for combined exposure",
+              "Route orders to both venues via Kafka",
+              "Handle partial fill on one venue",
+              "Trigger PvP settlement with netting"
+            ],
+            "expected_outcome": "Arbitrage executed with net exposure within limits, settlement netted correctly"
+          },
+          {
+            "name": "High-Frequency Signal Decay",
+            "steps": [
+              "Ingest 1000+ signals/second from 40+ sources",
+              "Apply signal decay model with time-weighted reliability",
+              "Verify GraphRAG retrieval latency <10ms",
+              "Validate Platt scaling calibration on rolling 30-day window",
+              "Confirm stale graph fallback to inverse-variance weighting"
+            ],
+            "expected_outcome": "Signal aggregation maintains <10ms latency under 10x load spike"
+          }
+        ],
+        "kill_chain": {
+          "description": "Verify system safely halts when any critical stage fails",
+          "failure_injection_points": [
+            {"stage": "alpha", "failure": "GraphRAG retrieval timeout", "expected_fallback": "Inverse-variance weighting"},
+            {"stage": "prediction", "failure": "ONNX model inference error", "expected_fallback": "Skip trade, alert monitoring"},
+            {"stage": "optimization", "failure": "HiGHS solver timeout >200ms", "expected_fallback": "Greedy water-filling heuristic"},
+            {"stage": "risk", "failure": "Risk engine returns CVaR > limit", "expected_fallback": "Block order, trigger kill switch"},
+            {"stage": "settlement", "failure": "PvP leg failure", "expected_fallback": "Atomic rollback, both legs refunded"}
+          ]
+        }
+      },
+      {
+        "id": "E2E-002",
+        "name": "Risk Kill Chain — Breach Detection to Recovery",
+        "description": "Validate risk limit enforcement, kill switch activation, and graceful recovery",
+        "domains": ["risk", "orchestration", "settlement"],
+        "services_involved": [
+          "risk_monitor",
+          "position_limit_enforcer",
+          "kill_switch_controller",
+          "swarm_coordinator",
+          "failure_detector"
+        ],
+        "test_scenarios": [
+          {
+            "name": "CVaR Breach → Kill Switch → Recovery",
+            "steps": [
+              "Build portfolio approaching CVaR limit (95% of threshold)",
+              "Execute trades that push CVaR beyond limit",
+              "Verify kill switch triggers within 100ms",
+              "Confirm all venue connectors receive cancel-all command",
+              "Verify position limit enforcer blocks new orders",
+              "Wait for risk metrics to decay below threshold",
+              "Verify kill switch disarm and trading resumes",
+              "Validate audit trail captures full breach→recovery cycle"
+            ],
+            "expected_outcome": "Kill switch triggers in <100ms, all orders cancelled, recovery automatic"
+          },
+          {
+            "name": "Cross-Venue Correlation Breakdown",
+            "steps": [
+              "Inject stress scenario (2008 crisis parameters)",
+              "Verify DCC-GARCH correlation update within 5 minutes",
+              "Confirm correlation stress to 95th percentile historical values",
+              "Validate VaR recalculation with stressed correlations",
+              "Verify position limits adjusted downward"
+            ],
+            "expected_outcome": "Risk metrics reflect stressed correlations within 5 minutes"
+          },
+          {
+            "name": "Cascading Failure — Risk Engine → Orchestration",
+            "steps": [
+              "Kill risk engine process",
+              "Verify failure detector identifies missing heartbeats within 300ms",
+              "Confirm swarm coordinator reassigns risk tasks to backup agent",
+              "Validate circuit breaker opens for risk service",
+              "Verify fallback to conservative risk limits",
+              "Restart risk engine and verify state synchronization"
+            ],
+            "expected_outcome": "System degrades gracefully, no trading on stale risk data"
+          }
+        ]
+      },
+      {
+        "id": "E2E-003",
+        "name": "Swarm Orchestration — Agent Failure and Recovery",
+        "description": "Validate hierarchical swarm coordination with Byzantine fault tolerance",
+        "domains": ["orchestration"],
+        "services_involved": [
+          "swarm_coordinator",
+          "failure_detector",
+          "consensus_engine",
+          "task_decomposer"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Tier 3 Agent Failure and Replacement",
+            "steps": [
+              "Register 200+ agents across 12 venues",
+              "Kill 5 random Tier 3 execution agents",
+              "Verify heartbeat detection within 300ms (3 missed heartbeats)",
+              "Confirm task reassignment to healthy agents",
+              "Validate no in-flight task loss",
+              "Verify replacement agents receive full state context"
+            ],
+            "expected_outcome": "Agent failure detected in <300ms, tasks reassigned, zero data loss"
+          },
+          {
+            "name": "Tier 1 Byzantine Fault Tolerance",
+            "steps": [
+              "Deploy 4 Tier 1 global orchestrator nodes",
+              "Inject Byzantine behavior in 1 node (conflicting state proposals)",
+              "Verify PBFT consensus reaches agreement with f=1 tolerance",
+              "Confirm view-change protocol excludes Byzantine node",
+              "Validate global state consistency across remaining 3 nodes"
+            ],
+            "expected_outcome": "PBFT tolerates 1 Byzantine fault, consensus maintained"
+          },
+          {
+            "name": "Cross-Region Consensus Latency",
+            "steps": [
+              "Measure Tier 1 PBFT consensus latency across 3 regions",
+              "Verify consensus completes within 500ms budget",
+              "Inject network partition between regions",
+              "Verify partition-tolerant consensus (CAP theorem validation)",
+              "Confirm state reconciliation after partition heals"
+            ],
+            "expected_outcome": "Consensus within 500ms, partition-tolerant, consistent after heal"
+          }
+        ]
+      },
+      {
+        "id": "E2E-004",
+        "name": "Event-Driven Integration — Kafka Backbone",
+        "description": "Validate event-driven architecture with exactly-once semantics for critical flows",
+        "domains": ["integration"],
+        "services_involved": [
+          "kafka_producer",
+          "kafka_consumer",
+          "schema_registry",
+          "circuit_breaker",
+          "rate_limiter"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Trade Execution Exactly-Once Semantics",
+            "steps": [
+              "Produce TradeExecuted event with idempotent producer",
+              "Simulate consumer failure after processing but before offset commit",
+              "Verify redelivery does not cause duplicate settlement",
+              "Confirm idempotent consumer deduplicates via trade_id",
+              "Validate DLQ routing after 3 retries"
+            ],
+            "expected_outcome": "Exactly-once processing for trade execution, no duplicate settlements"
+          },
+          {
+            "name": "Cross-Region MirrorMaker 2 Replication",
+            "steps": [
+              "Produce events to US-East Kafka cluster",
+              "Verify replication to EU-Central and APAC-Singapore",
+              "Measure replication lag under 1M events/second",
+              "Inject primary region failure",
+              "Verify consumer failover to secondary region",
+              "Confirm zero event loss with transactional producers"
+            ],
+            "expected_outcome": "Cross-region replication with <1s lag, zero loss on failover"
+          },
+          {
+            "name": "Backpressure and Consumer Lag",
+            "steps": [
+              "Generate 10x load spike (10M events/second)",
+              "Verify consumer lag monitoring triggers HPA scaling",
+              "Confirm non-critical consumers paused when lag persists",
+              "Validate rate limiter protects downstream services",
+              "Verify circuit breaker opens for overloaded services"
+            ],
+            "expected_outcome": "System scales horizontally, protects critical paths, degrades gracefully"
+          }
+        ]
+      },
+      {
+        "id": "E2E-005",
+        "name": "Zero-Trust Security — AuthN/AuthZ to Audit",
+        "description": "Validate zero-trust security architecture end-to-end",
+        "domains": ["security"],
+        "services_involved": [
+          "spiffe_spire",
+          "opa_sidecar",
+          "vault_secrets",
+          "keycloak_oidc",
+          "audit_trail"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Service-to-Service mTLS with Certificate Rotation",
+            "steps": [
+              "Verify all services have SPIFFE identities via SVID",
+              "Confirm mTLS handshake on all service-to-service calls",
+              "Trigger 24-hour certificate rotation",
+              "Verify overlapping certificates prevent connection failures",
+              "Validate OPA authorization policies enforce least privilege",
+              "Confirm all auth events logged to immutable audit trail"
+            ],
+            "expected_outcome": "Zero-trust enforced, certificate rotation seamless, full audit trail"
+          },
+          {
+            "name": "Insider Threat Detection",
+            "steps": [
+              "Simulate compromised service attempting unauthorized access",
+              "Verify OPA denies access based on contextual policy",
+              "Confirm audit trail captures attempted breach",
+              "Validate Falco runtime threat detection alerts",
+              "Verify automatic credential revocation via Vault"
+            ],
+            "expected_outcome": "Unauthorized access denied, detected, and audited"
+          }
+        ]
+      },
+      {
+        "id": "E2E-006",
+        "name": "Graph Kernel to Swarm Coordination",
+        "description": "Validate ApexGraphSwarm graph algorithms driving swarm task allocation",
+        "domains": ["orchestration", "optimization"],
+        "services_involved": [
+          "graph_coloring",
+          "bipartite_matching",
+          "community_detection",
+          "consensus",
+          "knapsack",
+          "tsp"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Task Allocation via Bipartite Matching",
+            "steps": [
+              "Generate agent-task compatibility graph",
+              "Run bipartite matching for optimal assignment",
+              "Verify graph coloring prevents conflicting task assignments",
+              "Validate community detection groups related tasks",
+              "Confirm knapsack solver optimizes resource allocation",
+              "Verify TSP solver minimizes agent traversal cost"
+            ],
+            "expected_outcome": "Optimal task allocation with conflict-free assignments"
+          },
+          {
+            "name": "Formal Verification of Consensus Protocol",
+            "steps": [
+              "Model consensus protocol in formal verification framework",
+              "Verify safety property: no two nodes commit different values",
+              "Verify liveness property: consensus eventually reached",
+              "Validate Byzantine fault tolerance bounds",
+              "Confirm model checking passes for all reachable states"
+            ],
+            "expected_outcome": "Consensus protocol formally verified for safety and liveness"
+          }
+        ]
+      },
+      {
+        "id": "E2E-007",
+        "name": "Infrastructure Provisioning and Multi-Cloud",
+        "description": "Validate IaC provisioning, multi-cloud deployment, and compliance",
+        "domains": ["infrastructure", "security"],
+        "services_involved": [
+          "terraform",
+          "kubernetes",
+          "argocd",
+          "checkov",
+          "opa",
+          "sentinel"
+        ],
+        "test_scenarios": [
+          {
+            "name": "GitOps Deployment Pipeline",
+            "steps": [
+              "Commit infrastructure changes to Git",
+              "Verify ArgoCD detects drift and syncs cluster state",
+              "Validate canary deployment (5% → 25% → 50% → 100%)",
+              "Confirm automatic rollback on error rate > 0.1%",
+              "Verify K8s NetworkPolicies enforce default-deny",
+              "Validate HPA scaling based on custom metrics"
+            ],
+            "expected_outcome": "GitOps pipeline deploys safely with canary and auto-rollback"
+          },
+          {
+            "name": "Multi-Cloud Failover",
+            "steps": [
+              "Deploy workloads across AWS, Azure, and GCP",
+              "Inject region failure in primary cloud",
+              "Verify cross-cloud failover within 15 minutes (RTO)",
+              "Validate data consistency with RPO < 1 minute",
+              "Confirm cost optimization across cloud providers"
+            ],
+            "expected_outcome": "Multi-cloud failover within RTO/RPO targets"
+          },
+          {
+            "name": "Compliance as Code",
+            "steps": [
+              "Run Checkov, tfsec, OPA, and Sentinel policy scans",
+              "Verify all IaC passes compliance policies",
+              "Validate SOC 2 Type II controls",
+              "Confirm container security scanning (Trivy)",
+              "Verify runtime threat detection (Falco)"
+            ],
+            "expected_outcome": "All infrastructure passes compliance scanning"
+          }
+        ]
+      },
+      {
+        "id": "E2E-008",
+        "name": "Observability — Metrics, Traces, Logs to Alerting",
+        "description": "Validate full observability stack with SLO-based alerting",
+        "domains": ["monitoring"],
+        "services_involved": [
+          "opentelemetry_collector",
+          "jaeger",
+          "prometheus",
+          "grafana",
+          "elasticsearch",
+          "alertmanager"
+        ],
+        "test_scenarios": [
+          {
+            "name": "End-to-End Trace Correlation",
+            "steps": [
+              "Execute full trading lifecycle",
+              "Verify OpenTelemetry trace context propagates through all 10-15 services",
+              "Confirm trace_id injected into structured JSON logs",
+              "Validate Jaeger captures complete trace with <2ms span granularity",
+              "Verify Prometheus metrics align with trace timing"
+            ],
+            "expected_outcome": "Full trace correlation across all services, MTTD <2 minutes"
+          },
+          {
+            "name": "SLO Burn Rate Alerting",
+            "steps": [
+              "Define SLOs for latency, availability, and correctness",
+              "Inject gradual degradation (latency increase)",
+              "Verify SLO burn rate alert triggers before SLO violation",
+              "Confirm PagerDuty notification for P1 alerts",
+              "Validate alert fatigue reduction via SLO-based routing"
+            ],
+            "expected_outcome": "SLO burn rate alerts fire before violations, P1 pages on-call"
+          }
+        ]
+      },
+      {
+        "id": "E2E-009",
+        "name": "Chaos Engineering — Controlled Failure Injection",
+        "description": "Validate system resilience through controlled failure injection",
+        "domains": ["infrastructure", "risk", "orchestration"],
+        "services_involved": [
+          "chaos_monkey",
+          "circuit_breaker",
+          "failure_recovery",
+          "kill_switch"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Random Service Failure",
+            "steps": [
+              "Randomly kill 10% of microservices during trading hours",
+              "Verify circuit breakers open for failed services",
+              "Confirm fallback mechanisms engage (greedy heuristic, inverse-variance)",
+              "Validate no cascading failures",
+              "Verify automatic recovery when services restart",
+              "Confirm kill switch triggers if risk limits breached during chaos"
+            ],
+            "expected_outcome": "System survives 10% random failure without cascading or risk breach"
+          },
+          {
+            "name": "Network Partition Between Regions",
+            "steps": [
+              "Inject network partition between US-East and EU-Central",
+              "Verify partition-tolerant consensus continues",
+              "Confirm no split-brain in Tier 1 orchestrators",
+              "Validate settlement safety during partition",
+              "Verify state reconciliation after partition heals"
+            ],
+            "expected_outcome": "No split-brain, settlement safe, consistent after heal"
+          },
+          {
+            "name": "Kafka Cluster Degradation",
+            "steps": [
+              "Kill 1 of 3 Kafka brokers",
+              "Verify producer failover to remaining brokers",
+              "Confirm consumer rebalancing completes",
+              "Validate DLQ captures failed messages",
+              "Verify zero data loss with transactional producers"
+            ],
+            "expected_outcome": "Kafka cluster tolerates broker failure, zero data loss"
+          }
+        ]
+      },
+      {
+        "id": "E2E-010",
+        "name": "Regulatory Compliance — MiFID II, RTS 6, Basel III",
+        "description": "Validate regulatory compliance across trading, risk, and reporting",
+        "domains": ["compliance", "risk", "settlement"],
+        "services_involved": [
+          "risk_monitor",
+          "audit_trail",
+          "regulatory_evidence",
+          "market_abuse_surveillance"
+        ],
+        "test_scenarios": [
+          {
+            "name": "Pre-Trade Risk Controls (MiFID II)",
+            "steps": [
+              "Execute orders approaching position limits",
+              "Verify pre-trade risk checks block orders exceeding limits",
+              "Validate transaction reporting includes all required fields",
+              "Confirm algorithmic trading flags set correctly",
+              "Verify best execution analysis across venues"
+            ],
+            "expected_outcome": "All MiFID II pre-trade controls enforced"
+          },
+          {
+            "name": "Kill Switch Testing (RTS 6)",
+            "steps": [
+              "Trigger kill switch via risk breach",
+              "Verify all algorithms halt within regulatory timeframe",
+              "Confirm kill switch test documentation generated",
+              "Validate real-time monitoring captures kill switch event",
+              "Verify post-incident review workflow initiated"
+            ],
+            "expected_outcome": "RTS 6 kill switch requirements fully satisfied"
+          },
+          {
+            "name": "Basel III FRTB Capital Calculation",
+            "steps": [
+              "Run 99% 10-day VaR calculation via FHS",
+              "Validate expected shortfall for FRTB SA",
+              "Verify stress testing with pre-computed scenarios",
+              "Confirm capital calculation matches regulatory formula",
+              "Validate audit trail supports regulatory examination"
+            ],
+            "expected_outcome": "Basel III FRTB calculations accurate and auditable"
+          }
+        ]
+      }
+    ],
+    "test_execution_strategy": {
+      "environments": [
+        {
+          "name": "CI Pipeline",
+          "trigger": "Every PR",
+          "scope": "Unit + integration tests",
+          "duration": "<5 minutes",
+          "coverage_threshold": "80%"
+        },
+        {
+          "name": "Pre-Staging",
+          "trigger": "Merge to develop",
+          "scope": "Full E2E suite (E2E-001 through E2E-010)",
+          "duration": "<30 minutes",
+          "coverage_threshold": "90%"
+        },
+        {
+          "name": "Staging",
+          "trigger": "Nightly",
+          "scope": "Full E2E + chaos engineering",
+          "duration": "<2 hours",
+          "coverage_threshold": "95%"
+        },
+        {
+          "name": "Production Canary",
+          "trigger": "Pre-deployment",
+          "scope": "Smoke tests + critical E2E paths",
+          "duration": "<10 minutes",
+          "coverage_threshold": "99%"
+        }
+      ],
+      "parallelization": {
+        "strategy": "Shard by test component (E2E-001 through E2E-010)",
+        "max_parallel_workers": 10,
+        "isolation": "Each shard runs in isolated namespace"
+      },
+      "data_management": {
+        "synthetic_data": "Deterministic seeds for reproducibility",
+        "state_reset": "Database snapshot restore between test runs",
+        "kafka_cleanup": "Topic truncation and consumer group reset between runs"
+      }
+    },
+    "success_criteria": {
+      "functional": [
+        "All 10 E2E test components pass with 100% scenario success rate",
+        "Kill chain testing verifies safe failure at every injection point",
+        "Cross-domain data consistency maintained throughout all flows"
+      ],
+      "performance": [
+        "Full trading lifecycle <3 seconds end-to-end",
+        "Risk check latency <50ms (p99)",
+        "Settlement finality <2 seconds",
+        "Consensus latency <500ms across regions"
+      ],
+      "reliability": [
+        "System survives 10% random service failure without cascading",
+        "Zero data loss during Kafka broker failure",
+        "Automatic recovery from all injected failures within 5 minutes"
+      ],
+      "compliance": [
+        "All regulatory scenarios pass (MiFID II, RTS 6, Basel III)",
+        "Audit trail completeness verified for all trading flows",
+        "Zero-trust security enforced on all service-to-service calls"
+      ]
+    },
+    "risk_areas": [
+      {
+        "area": "Cross-Region Latency",
+        "mitigation": "Deploy test runners in each region, measure consensus latency with clock synchronization"
+      },
+      {
+        "area": "Kafka Exactly-Once Semantics",
+        "mitigation": "Use transactional producers in test environment, verify deduplication via idempotent consumers"
+      },
+      {
+        "area": "Blockchain Settlement Finality",
+        "mitigation": "Use Hyperledger Fabric in solo consensus mode for testing, verify PvP atomicity"
+      },
+      {
+        "area": "ML Model Determinism",
+        "mitigation": "Use fixed ONNX model weights, deterministic inference mode, fixed random seeds"
+      },
+      {
+        "area": "Chaos Test Safety",
+        "mitigation": "Run chaos tests only in isolated staging environment, kill switch always armed"
+      }
+    ]
+  }
+}

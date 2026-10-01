@@ -1,0 +1,26 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-policy-violated-001",
+  "source": "grc-claw/enforcement-engine",
+  "type": "com.grcclaw.policy.violated",
+  "subject": "hermes-primary",
+  "time": "2026-10-01T14:23:07.331Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "evidence_id": "EVD-2026-001234",
+    "policy_id": "production-agent-policy",
+    "rule_id": "block-pii-export",
+    "effect": "deny",
+    "agent_id": "hermes-primary",
+    "severity": "high"
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "trace_id": "trace-2026-1001-001",
+    "compliance_frameworks": ["ISO-42001", "NIST-AI-RMF"],
+    "risk_tier": "high",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: grc-claw-observability
+data:
+  config.yaml: "receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint:\
+    \ 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nprocessors:\n  batch:\n\
+    \    timeout: 1s\n    send_batch_size: 1024\n  memory_limiter:\n    check_interval:\
+    \ 1s\n    limit_mib: 512\nexporters:\n  prometheusremotewrite:\n    endpoint:\
+    \ http://prometheus:9090/api/v1/write\n  loki:\n    endpoint: http://loki:3100/loki/api/v1/push\n\
+    \  otlp/tempo:\n    endpoint: tempo:4317\n    tls:\n      insecure: true\nservice:\n\
+    \  pipelines:\n    metrics:\n      receivers: [otlp]\n      processors: [memory_limiter,\
+    \ batch]\n      exporters: [prometheusremotewrite]\n    logs:\n      receivers:\
+    \ [otlp]\n      processors: [memory_limiter, batch]\n      exporters: [loki]\n\
+    \    traces:\n      receivers: [otlp]\n      processors: [memory_limiter, batch]\n\
+    \      exporters: [otlp/tempo]\n"

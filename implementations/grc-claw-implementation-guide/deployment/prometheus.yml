@@ -1,0 +1,22 @@
+# Prometheus Configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'grcclaw-api'
+    static_configs:
+      - targets: ['grcclaw-api:8080']
+    metrics_path: /metrics
+
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+
+  - job_name: 'flink-jobmanager'
+    static_configs:
+      - targets: ['flink-jobmanager:8081']

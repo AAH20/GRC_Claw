@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: evidence-collector-pdb
+  namespace: grc-claw-evidence
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: evidence-collector

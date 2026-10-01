@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dr-config
+  namespace: grc-claw-data
+data:
+  dr.conf: '[replication]
+
+    mode = async
+
+    primary_region = us-east-1
+
+    dr_region = us-west-2
+
+    replication_lag_threshold = 30s
+
+
+    [backup]
+
+    postgresql_schedule = "0 2 * * *"
+
+    redis_schedule = "0 */6 * * *"
+
+    retention_days = 30
+
+    cross_region = true
+
+
+    [failover]
+
+    auto_failover = false
+
+    rto_minutes = 240
+
+    rpo_minutes = 30
+
+    health_check_interval = 60s
+
+    '

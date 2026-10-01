@@ -1,0 +1,48 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: compliance-score-recalc
+  namespace: grc-claw-serverless
+  labels:
+    app: compliance-score-recalc
+    grc.component: compliance-score-recalc
+    grc.tier: serverless
+  annotations:
+    autoscaling.knative.dev/minScale: '0'
+    autoscaling.knative.dev/maxScale: '5'
+    autoscaling.knative.dev/target: '3'
+    autoscaling.knative.dev/targetBurstCapacity: '6'
+    autoscaling.knative.dev/scale-down-delay: 5m
+    autoscaling.knative.dev/window: 60s
+    autoscaling.knative.dev/metric: concurrency
+    autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+    spec:
+      containerConcurrency: 3
+      timeoutSeconds: 300
+      containers:
+      - image: ghcr.io/grc-claw/compliance-score-recalc:v1.2.0
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        env:
+        - name: RECALC_MODE
+          value: incremental
+        - name: BATCH_SIZE
+          value: 1000
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL

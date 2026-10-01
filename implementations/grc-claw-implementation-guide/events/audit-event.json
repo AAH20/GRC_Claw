@@ -1,0 +1,29 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-audit-001",
+  "source": "grc-claw/audit-trail",
+  "type": "com.grcclaw.audit.event",
+  "subject": "system",
+  "time": "2026-10-01T14:23:07.331Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "entry_id": "AUDIT-001",
+    "sequence_number": 1,
+    "event_type": "enforcement_decision",
+    "actor": "enforcement-engine",
+    "resource": "agent-123",
+    "outcome": "deny",
+    "details": {
+      "policy_id": "production-agent-policy",
+      "rule_id": "block-pii-export"
+    },
+    "merkle_root": "sha256:abc123..."
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "trace_id": "trace-2026-1001-001",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

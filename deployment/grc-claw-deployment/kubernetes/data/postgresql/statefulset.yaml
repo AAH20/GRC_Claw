@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: grc-claw-data
+  labels:
+    app: postgresql
+    grc.component: postgresql
+    grc.tier: data
+spec:
+  serviceName: postgresql
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '5432'
+        prometheus.io/path: /metrics
+    spec:
+      serviceAccountName: postgresql
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+      - name: postgresql
+        image: ghcr.io/grc-claw/postgresql:16.4
+        ports:
+        - containerPort: 5432
+          name: http
+        resources:
+          requests:
+            cpu: 2000m
+            memory: 4Gi
+          limits:
+            cpu: 8000m
+            memory: 16Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5432
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5432
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        env:
+        - name: POSTGRES_DB
+          value: grc_claw
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: postgresql
+              topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: postgresql
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: premium-rwo
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 500Gi

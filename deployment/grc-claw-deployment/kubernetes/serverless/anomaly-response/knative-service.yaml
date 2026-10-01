@@ -1,0 +1,48 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: anomaly-response
+  namespace: grc-claw-serverless
+  labels:
+    app: anomaly-response
+    grc.component: anomaly-response
+    grc.tier: serverless
+  annotations:
+    autoscaling.knative.dev/minScale: '0'
+    autoscaling.knative.dev/maxScale: '3'
+    autoscaling.knative.dev/target: '1'
+    autoscaling.knative.dev/targetBurstCapacity: '2'
+    autoscaling.knative.dev/scale-down-delay: 5m
+    autoscaling.knative.dev/window: 60s
+    autoscaling.knative.dev/metric: concurrency
+    autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+    spec:
+      containerConcurrency: 1
+      timeoutSeconds: 60
+      containers:
+      - image: ghcr.io/grc-claw/anomaly-response:v1.2.0
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        env:
+        - name: RESPONSE_MODE
+          value: auto
+        - name: ESCALATION_THRESHOLD
+          value: 0.95
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL

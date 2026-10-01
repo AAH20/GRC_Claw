@@ -1,0 +1,87 @@
+{{- if .Values.observability.loki.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: loki
+    grc.component: loki
+    grc.tier: observability
+spec:
+  serviceName: loki
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: loki
+          image: grafana/loki:2.9.0
+          args:
+            - -config.file=/etc/loki/local-config.yaml
+          ports:
+            - containerPort: 3100
+              name: http
+          resources:
+            {{- toYaml .Values.observability.loki.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 3100
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3100
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: data
+              mountPath: /loki
+      volumes:
+        - name: config
+          configMap:
+            name: loki-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: {{ .Values.global.storageClass }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.observability.loki.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: loki
+spec:
+  selector:
+    app: loki
+  ports:
+    - port: 3100
+      name: http
+      targetPort: 3100
+  type: ClusterIP
+{{- end }}

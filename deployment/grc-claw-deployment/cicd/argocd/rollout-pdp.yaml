@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: pdp-service
+  namespace: grc-claw-control-plane
+spec:
+  replicas: 10
+  strategy:
+    canary:
+      canaryService: pdp-service-canary
+      stableService: pdp-service
+      trafficRouting:
+        istio:
+          virtualService:
+            name: pdp-service-canary
+            routes:
+            - primary
+          destinationRule:
+            name: pdp-service-canary
+            canarySubsetName: canary
+            stableSubsetName: stable
+      steps:
+      - setWeight: 5
+        pause:
+          duration: 10m
+        analysis:
+          templates:
+          - templateName: pdp-success-rate
+          args:
+          - name: service-name
+            value: pdp-service-canary
+      - setWeight: 20
+        pause:
+          duration: 10m
+        analysis:
+          templates:
+          - templateName: pdp-success-rate
+          - templateName: pdp-latency
+      - setWeight: 50
+        pause:
+          duration: 15m
+        analysis:
+          templates:
+          - templateName: pdp-success-rate
+          - templateName: pdp-latency
+          - templateName: pdp-decision-accuracy
+      - setWeight: 100
+        pause:
+          duration: 5m
+      analysis:
+        successfulRunHistoryLimit: 3
+        unsuccessfulRunHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: pdp-service
+  template:
+    metadata:
+      labels:
+        app: pdp-service
+    spec:
+      containers:
+      - name: pdp
+        image: ghcr.io/grc-claw/pdp-service:v1.2.0
+        ports:
+        - containerPort: 8080
+        - containerPort: 9090
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 1Gi
+          limits:
+            cpu: 4000m
+            memory: 4Gi

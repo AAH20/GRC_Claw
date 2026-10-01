@@ -1,0 +1,192 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup
+  namespace: grc-claw-data
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: pgbackrest
+              image: ghcr.io/grc-claw/pgbackrest:16.4
+              command:
+                - pgbackrest
+                - --stanza=grc-claw
+                - --type=full
+                - backup
+              env:
+                - name: PGBACKREST_REPO1_TYPE
+                  value: s3
+                - name: PGBACKREST_REPO1_S3_BUCKET
+                  value: grc-claw-backups
+                - name: PGBACKREST_REPO1_S3_REGION
+                  value: us-east-1
+                - name: PGBACKREST_REPO1_S3_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-credentials
+                      key: s3-access-key
+                - name: PGBACKREST_REPO1_S3_KEY_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-credentials
+                      key: s3-secret-key
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: redis-backup
+  namespace: grc-claw-data
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: redis-backup
+              image: redis:7.2-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  redis-cli -h redis -a $REDIS_PASSWORD BGSAVE
+                  sleep 5
+                  cp /data/dump.rdb /backup/dump-$(date +%Y%m%d-%H%M%S).rdb
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: redis-credentials
+                      key: password
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: redis-data
+            - name: backup
+              persistentVolumeClaim:
+                claimName: redis-backup
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: immudb-backup
+  namespace: grc-claw-data
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: immudb-backup
+              image: codenotary/immudb:1.9.0
+              command:
+                - sh
+                - -c
+                - |
+                  immuadmin backup --output /backup/immudb-$(date +%Y%m%d-%H%M%S).bak
+              volumeMounts:
+                - name: data
+                  mountPath: /var/lib/immudb
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: immudb-data
+            - name: backup
+              persistentVolumeClaim:
+                claimName: immudb-backup
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-snapshot
+  namespace: grc-claw-data
+spec:
+  schedule: "0 4 * * *"  # Daily at 4 AM
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: vault-snapshot
+              image: hashicorp/vault:1.15.0
+              command:
+                - sh
+                - -c
+                - |
+                  vault operator raft snapshot save /backup/vault-$(date +%Y%m%d-%H%M%S).snap
+              env:
+                - name: VAULT_ADDR
+                  value: http://vault:8200
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: vault-backup
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-snapshot
+  namespace: kube-system
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          hostNetwork: true
+          containers:
+            - name: etcd-snapshot
+              image: ghcr.io/grc-claw/etcd-snapshot:3.5.9
+              command:
+                - sh
+                - -c
+                - |
+                  etcdctl snapshot save /backup/etcd-$(date +%Y%m%d-%H%M%S).db \
+                    --endpoints=https://127.0.0.1:2379 \
+                    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+                    --cert=/etc/kubernetes/pki/etcd/server.crt \
+                    --key=/etc/kubernetes/pki/etcd/server.key
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: etcd-certs
+                  mountPath: /etc/kubernetes/pki/etcd
+                  readOnly: true
+          volumes:
+            - name: backup
+              hostPath:
+                path: /var/backups/etcd
+            - name: etcd-certs
+              hostPath:
+                path: /etc/kubernetes/pki/etcd
+          restartPolicy: OnFailure

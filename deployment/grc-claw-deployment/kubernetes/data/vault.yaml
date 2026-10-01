@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  namespace: grc-claw-data
+  labels:
+    app: vault
+    grc.component: vault
+    grc.tier: data
+spec:
+  serviceName: vault
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        fsGroup: 100
+      containers:
+        - name: vault
+          image: hashicorp/vault:1.15.0
+          ports:
+            - containerPort: 8200
+              name: vault
+            - containerPort: 8201
+              name: cluster
+          env:
+            - name: VAULT_ADDR
+              value: "http://127.0.0.1:8200"
+            - name: VAULT_CLUSTER_ADDR
+              value: "https://$(POD_NAME).vault:8201"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_SEAL_TYPE
+              value: awskms
+            - name: VAULT_AWSKMS_SEAL_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: vault-unseal-key
+                  key: key-id
+          args:
+            - server
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health
+              port: 8200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health
+              port: 8200
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /vault/data
+            - name: config
+              mountPath: /vault/config
+      volumes:
+        - name: config
+          configMap:
+            name: vault-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: premium-rwo
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: grc-claw-data
+  labels:
+    app: vault
+spec:
+  selector:
+    app: vault
+  ports:
+    - port: 8200
+      name: vault
+      targetPort: 8200
+    - port: 8201
+      name: cluster
+      targetPort: 8201
+  type: ClusterIP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vault-pdb
+  namespace: grc-claw-data
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: vault

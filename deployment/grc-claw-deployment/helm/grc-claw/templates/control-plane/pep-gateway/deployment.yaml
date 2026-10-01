@@ -1,0 +1,92 @@
+{{- if .Values.pepGateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pep-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: pep-gateway
+    grc.component: pep-gateway
+    grc.tier: control-plane
+spec:
+  replicas: {{ .Values.pepGateway.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: pep-gateway
+  template:
+    metadata:
+      labels:
+        app: pep-gateway
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: pep-gateway
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: pep
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.pepGateway.image.repository }}:{{ .Values.pepGateway.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 9090
+              name: grpc
+          resources:
+            requests:
+              cpu: {{ .Values.pepGateway.resources.requests.cpu }}
+              memory: {{ .Values.pepGateway.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.pepGateway.resources.limits.cpu }}
+              memory: {{ .Values.pepGateway.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: pep-gateway
+                topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: pep-gateway
+{{- end }}

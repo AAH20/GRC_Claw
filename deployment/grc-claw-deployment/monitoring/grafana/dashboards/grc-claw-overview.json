@@ -1,0 +1,72 @@
+dashboard:
+  title: GRC_Claw Overview
+  tags:
+  - grc-claw
+  - overview
+  timezone: UTC
+  panels:
+  - title: Enforcement Decisions/sec
+    type: timeseries
+    targets:
+    - expr: sum(rate(grc_decision_total[5m]))
+      legendFormat: decisions/sec
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 0
+  - title: PDP p99 Latency
+    type: timeseries
+    targets:
+    - expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pdp-service"}[5m]))
+        by (le))
+      legendFormat: p99
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 0
+  - title: Error Rate
+    type: timeseries
+    targets:
+    - expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))
+      legendFormat: error rate
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 8
+  - title: Pod Health
+    type: stat
+    targets:
+    - expr: sum(kube_pod_status_phase{phase="Running"})
+      legendFormat: running
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 8
+  - title: Compliance Score
+    type: gauge
+    targets:
+    - expr: avg(grc_compliance_score)
+      legendFormat: score
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 16
+  - title: Evidence Collection Rate
+    type: timeseries
+    targets:
+    - expr: sum(rate(grc_evidence_collected_total[5m]))
+      legendFormat: evidence/sec
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 16
+  time:
+    from: now-6h
+    to: now
+  refresh: 30s

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw-ingress
+  labels:
+    grc.tier: ingress
+    istio-injection: enabled

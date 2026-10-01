@@ -1,0 +1,670 @@
+# Kong API Gateway Configuration for GRC_Claw
+# =============================================
+#
+# This Kong configuration provides:
+# - Authentication (OAuth 2.1 / OIDC / API Key / mTLS)
+# - Rate limiting and quota enforcement
+# - Request routing to backend services
+# - Request/response transformation
+# - TLS termination
+# - Observability (logging, metrics, tracing)
+#
+# Usage:
+#   kong start -c kong.yml
+#
+# Or with Docker:
+#   docker run -d --name kong \
+#     -e "KONG_DATABASE=off" \
+#     -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml" \
+#     -v $(pwd)/kong.yml:/kong/declarative/kong.yml \
+#     -p 8000:8000 -p 8443:8443 \
+#     kong:3.5
+
+_format_version: "3.0"
+_transform: true
+
+# ============================================================
+# Services
+# ============================================================
+
+services:
+  # REST API Service
+  - name: grc-claw-rest
+    url: http://rest-api:8080
+    protocol: http
+    host: rest-api
+    port: 8080
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 3
+    tags: [api, rest]
+
+  # GraphQL Service
+  - name: grc-claw-graphql
+    url: http://graphql-server:8081
+    protocol: http
+    host: graphql-server
+    port: 8081
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 3
+    tags: [api, graphql]
+
+  # gRPC Service (via Kong's gRPC gateway)
+  - name: grc-claw-grpc
+    url: grpc://grpc-server:50051
+    protocol: grpc
+    host: grpc-server
+    port: 50051
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 3
+    tags: [api, grpc]
+
+  # Webhook Service
+  - name: grc-claw-webhooks
+    url: http://webhook-service:8082
+    protocol: http
+    host: webhook-service
+    port: 8082
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 3
+    tags: [api, webhooks]
+
+  # Auth Service (OAuth 2.1 / OIDC)
+  - name: grc-claw-auth
+    url: http://auth-service:8083
+    protocol: http
+    host: auth-service
+    port: 8083
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 3
+    tags: [auth]
+
+  # Health/Metrics (no auth required)
+  - name: grc-claw-system
+    url: http://rest-api:8080
+    protocol: http
+    host: rest-api
+    port: 8080
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 3
+    tags: [system]
+
+# ============================================================
+# Routes
+# ============================================================
+
+routes:
+  # --- System Routes (no auth) ---
+  - name: health
+    service: grc-claw-system
+    paths:
+      - /health
+    strip_path: false
+    methods: [GET]
+    plugins: []
+
+  - name: ready
+    service: grc-claw-system
+    paths:
+      - /ready
+    strip_path: false
+    methods: [GET]
+    plugins: []
+
+  - name: metrics
+    service: grc-claw-system
+    paths:
+      - /metrics
+    strip_path: false
+    methods: [GET]
+    plugins: []
+
+  # --- Auth Routes ---
+  - name: oauth-token
+    service: grc-claw-auth
+    paths:
+      - /oauth/token
+    strip_path: false
+    methods: [POST]
+    plugins: []
+
+  - name: oauth-authorize
+    service: grc-claw-auth
+    paths:
+      - /oauth/authorize
+    strip_path: false
+    methods: [GET, POST]
+    plugins: []
+
+  # --- REST API Routes ---
+  - name: policies
+    service: grc-claw-rest
+    paths:
+      - /v1.0/policies
+    strip_path: false
+    methods: [GET, POST, PUT, DELETE]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+          fault_tolerant: true
+          hide_client_headers: false
+      - name: request-transformer
+        config:
+          add:
+            headers:
+              - X-Request-ID:$(uuid)
+              - X-Tenant-ID:$(consumer.custom_id)
+
+  - name: policy-detail
+    service: grc-claw-rest
+    paths:
+      - /v1.0/policies/(?<policy_id>[^/]+)
+    strip_path: false
+    methods: [GET, PUT, DELETE]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: policy-compile
+    service: grc-claw-rest
+    paths:
+      - /v1.0/policies/(?<policy_id>[^/]+)/compile
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 50
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: policy-dry-run
+    service: grc-claw-rest
+    paths:
+      - /v1.0/policies/(?<policy_id>[^/]+)/dry-run
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 50
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: policy-versions
+    service: grc-claw-rest
+    paths:
+      - /v1.0/policies/(?<policy_id>[^/]+)/versions
+    strip_path: false
+    methods: [GET]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: policy-dependencies
+    service: grc-claw-rest
+    paths:
+      - /v1.0/policies/(?<policy_id>[^/]+)/dependencies
+    strip_path: false
+    methods: [GET]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: evidence
+    service: grc-claw-rest
+    paths:
+      - /v1.0/evidence
+    strip_path: false
+    methods: [GET, POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 5000
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: evidence-detail
+    service: grc-claw-rest
+    paths:
+      - /v1.0/evidence/(?<evidence_id>[^/]+)
+    strip_path: false
+    methods: [GET]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 1000
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: evidence-verify
+    service: grc-claw-rest
+    paths:
+      - /v1.0/evidence/(?<evidence_id>[^/]+)/verify
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 500
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: evidence-export
+    service: grc-claw-rest
+    paths:
+      - /v1.0/evidence/export
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 10
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: enforcement-decide
+    service: grc-claw-rest
+    paths:
+      - /v1.0/enforcement/decide
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 10000
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: enforcement-decide-batch
+    service: grc-claw-rest
+    paths:
+      - /v1.0/enforcement/decide-batch
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 1000
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: enforcement-decisions
+    service: grc-claw-rest
+    paths:
+      - /v1.0/enforcement/decisions
+    strip_path: false
+    methods: [GET]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 500
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: assessments
+    service: grc-claw-rest
+    paths:
+      - /v1.0/assessments
+    strip_path: false
+    methods: [GET, POST, PUT]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: compliance
+    service: grc-claw-rest
+    paths:
+      - /v1.0/compliance
+    strip_path: false
+    methods: [GET, POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: agents
+    service: grc-claw-rest
+    paths:
+      - /v1.0/agents
+    strip_path: false
+    methods: [GET, POST, PUT]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: audit
+    service: grc-claw-rest
+    paths:
+      - /v1.0/audit
+    strip_path: false
+    methods: [GET, POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 500
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  - name: webhooks
+    service: grc-claw-webhooks
+    paths:
+      - /v1.0/webhooks
+    strip_path: false
+    methods: [GET, POST, PUT, DELETE]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+
+  # --- GraphQL Route ---
+  - name: graphql
+    service: grc-claw-graphql
+    paths:
+      - /v1.0/graphql
+    strip_path: false
+    methods: [POST]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 1000
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 10
+          size_unit: megabyte
+
+  # --- gRPC Route ---
+  - name: grpc-enforcement
+    service: grc-claw-grpc
+    protocols: [grpc, grpcs]
+    paths:
+      - /grcclaw.v1.EnforcementService
+    strip_path: false
+
+  - name: grpc-policy
+    service: grc-claw-grpc
+    protocols: [grpc, grpcs]
+    paths:
+      - /grcclaw.v1.PolicyService
+    strip_path: false
+
+  - name: grpc-evidence
+    service: grc-claw-grpc
+    protocols: [grpc, grpcs]
+    paths:
+      - /grcclaw.v1.EvidenceService
+    strip_path: false
+
+  - name: grpc-agent
+    service: grc-claw-grpc
+    protocols: [grpc, grpcs]
+    paths:
+      - /grcclaw.v1.AgentService
+    strip_path: false
+
+# ============================================================
+# Consumers (API Key authentication)
+# ============================================================
+
+consumers:
+  - username: default-consumer
+    custom_id: default-tenant
+    keyauth_credentials:
+      - key: grc_live_default_key
+
+# ============================================================
+# Plugins (Global)
+# ============================================================
+
+plugins:
+  # Global rate limiting
+  - name: rate-limiting
+    config:
+      minute: 1000
+      policy: redis
+      redis_host: redis
+      redis_port: 6379
+      fault_tolerant: true
+      hide_client_headers: false
+
+  # Global request transformer
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - X-Gateway:Kong
+          - X-Request-Time:$(date)
+
+  # Global response transformer
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - X-Content-Type-Options:nosniff
+          - X-Frame-Options:DENY
+          - Strict-Transport-Security:max-age=31536000; includeSubDomains
+
+  # CORS
+  - name: cors
+    config:
+      origins:
+        - "https://app.grc-claw.io"
+        - "https://portal.grc-claw.io"
+      methods: [GET, POST, PUT, DELETE, PATCH, OPTIONS]
+      headers:
+        - Authorization
+        - Content-Type
+        - X-Tenant-ID
+        - X-Request-ID
+        - X-Idempotency-Key
+      exposed_headers:
+        - X-RateLimit-Limit
+        - X-RateLimit-Remaining
+        - X-RateLimit-Reset
+        - X-Request-ID
+      credentials: true
+      max_age: 3600
+
+  # Logging
+  - name: file-log
+    config:
+      path: /var/log/kong/access.log
+      reopen: true
+
+  # Prometheus metrics
+  - name: prometheus
+    config:
+      per_consumer: true
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  # OpenTelemetry tracing
+  - name: opentelemetry
+    config:
+      endpoint: http://otel-collector:4318
+      resource_attributes:
+        service.name: kong-gateway
+
+  # Bot detection
+  - name: bot-detection
+    config:
+      deny:
+        - "curl/"
+        - "wget/"
+        - "python-requests/"
+
+  # IP restriction (optional)
+  # - name: ip-restriction
+  #   config:
+  #     allow:
+  #       - 10.0.0.0/8
+  #       - 172.16.0.0/12
+  #       - 192.168.0.0/16
+
+  # Request size limiting
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 50
+      size_unit: megabyte
+      require_content_length: true
+
+  # Correlation ID
+  - name: correlation-id
+    config:
+      header_name: X-Request-ID
+      generator: uuid
+      echo_downstream: true
+
+# ============================================================
+# Upstreams (Load Balancing)
+# ============================================================
+
+upstreams:
+  - name: rest-api-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+          tcp_failures: 3
+          timeouts: 3
+        http_path: /health
+        timeout: 5
+      passive:
+        healthy:
+          successes: 2
+        unhealthy:
+          http_failures: 3
+          tcp_failures: 3
+          timeouts: 3
+    targets:
+      - target: rest-api-1:8080
+        weight: 100
+      - target: rest-api-2:8080
+        weight: 100
+      - target: rest-api-3:8080
+        weight: 100
+
+  - name: graphql-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+          tcp_failures: 3
+          timeouts: 3
+        http_path: /health
+        timeout: 5
+    targets:
+      - target: graphql-server-1:8081
+        weight: 100
+      - target: graphql-server-2:8081
+        weight: 100
+
+  - name: grpc-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+          tcp_failures: 3
+          timeouts: 3
+        grpc_health_check:
+          service: grcclaw.v1.EnforcementService
+    targets:
+      - target: grpc-server-1:50051
+        weight: 100
+      - target: grpc-server-2:50051
+        weight: 100
+      - target: grpc-server-3:50051
+        weight: 100
+
+# ============================================================
+# Certificates (TLS)
+# ============================================================
+
+certificates:
+  - cert: |
+      -----BEGIN CERTIFICATE-----
+      # Replace with actual certificate
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN PRIVATE KEY-----
+      # Replace with actual private key
+      -----END PRIVATE KEY-----
+    snis:
+      - api.grc-claw.io
+      - grpc.grc-claw.io

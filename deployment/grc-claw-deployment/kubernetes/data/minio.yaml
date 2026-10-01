@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: grc-claw-data
+  labels:
+    app: minio
+    grc.component: minio
+    grc.tier: data
+spec:
+  serviceName: minio
+  replicas: 4
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2024-01-01T16-36-33Z
+          args:
+            - server
+            - --console-address
+            - ":9001"
+            - http://minio-{0...3}.minio.grc-claw-data.svc.cluster.local/export
+          ports:
+            - containerPort: 9000
+              name: s3
+            - containerPort: 9001
+              name: console
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: access-key
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: secret-key
+            - name: MINIO_BROWSER
+              value: "on"
+            - name: MINIO_WORM
+              value: "on"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /export
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: premium-rwo
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 500Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: grc-claw-data
+  labels:
+    app: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - port: 9000
+      name: s3
+      targetPort: 9000
+    - port: 9001
+      name: console
+      targetPort: 9001
+  type: ClusterIP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: minio-pdb
+  namespace: grc-claw-data
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: minio

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reporting-config
+  namespace: grc-claw-analytics
+data:
+  config.yaml: "reporting:\n  grafana:\n    enabled: true\n    dashboards: compliance,risk,evidence\n\
+    \  export:\n    formats: pdf,csv,oscal\n  schedule:\n    compliance_report: \"\
+    0 0 * * *\"\n    risk_report: \"0 */6 * * *\"\n"

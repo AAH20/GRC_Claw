@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-identity-config
+  namespace: grc-claw-control-plane
+data:
+  config.yaml: "spire:\n  socket_path: /run/spire/sockets/agent.sock\n  trust_domain:\
+    \ grc-claw.io\nsvid:\n  ttl: 3600s\n  key_type: ec-p256\n"

@@ -1,0 +1,25 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-exception-001",
+  "source": "grc-claw/exception-manager",
+  "type": "com.grcclaw.exception.created",
+  "subject": "org-123",
+  "time": "2026-10-01T11:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "exception_id": "EXC-001",
+    "type": "policy_exception",
+    "title": "Temporary PII Export Exception",
+    "description": "Emergency data migration requires temporary PII export",
+    "justification": "Critical system migration window",
+    "compensating_controls": ["encryption", "audit_logging"],
+    "status": "pending",
+    "requested_by": "admin@company.com"
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

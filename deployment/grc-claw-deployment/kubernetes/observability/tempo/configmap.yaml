@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: grc-claw-observability
+data:
+  config.yaml: "server:\n  http_listen_port: 3200\ndistributor:\n  receivers:\n  \
+    \  otlp:\n      protocols:\n        grpc:\n          endpoint: 0.0.0.0:4317\n\
+    \        http:\n          endpoint: 0.0.0.0:4318\ningester:\n  trace_idle_period:\
+    \ 10s\n  max_block_duration: 5m\ncompactor:\n  compaction:\n    block_retention:\
+    \ 24h\nstorage:\n  trace:\n    backend: local\n    local:\n      path: /tmp/tempo/traces\n\
+    \    wal:\n      path: /tmp/tempo/wal\n"

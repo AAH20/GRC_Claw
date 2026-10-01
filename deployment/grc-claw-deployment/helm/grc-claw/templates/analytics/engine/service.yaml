@@ -1,0 +1,17 @@
+{{- if .Values.analyticsEngine.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-engine
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: analytics-engine
+spec:
+  selector:
+    app: analytics-engine
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+{{- end }}

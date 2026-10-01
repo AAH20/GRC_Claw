@@ -1,0 +1,78 @@
+# Development values for GRC_Claw
+
+global:
+  imageRegistry: ghcr.io/grc-claw
+  imagePullPolicy: IfNotPresent
+  storageClass: standard
+
+controlPlane:
+  policyApi:
+    replicas: 1
+    hpa:
+      enabled: false
+
+  pdpService:
+    replicas: 1
+    hpa:
+      enabled: false
+
+  pepGateway:
+    replicas: 1
+    hpa:
+      enabled: false
+
+  agentIdentity:
+    replicas: 1
+
+evidence:
+  collector:
+    replicas: 1
+    hpa:
+      enabled: false
+
+  complianceMapping:
+    replicas: 1
+
+analytics:
+  engine:
+    replicas: 1
+    hpa:
+      enabled: false
+
+  reporting:
+    replicas: 1
+
+data:
+  postgresql:
+    enabled: false
+
+  redis:
+    enabled: false
+
+  kafka:
+    enabled: false
+
+  minio:
+    enabled: false
+
+  immudb:
+    enabled: false
+
+  vault:
+    enabled: false
+
+observability:
+  prometheus:
+    enabled: false
+
+  grafana:
+    enabled: false
+
+  loki:
+    enabled: false
+
+  otelCollector:
+    enabled: false
+
+istio:
+  enabled: false

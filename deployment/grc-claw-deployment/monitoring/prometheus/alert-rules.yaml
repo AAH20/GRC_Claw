@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: grc-claw-observability
+data:
+  grc-claw-alerts.yml: |
+    groups:
+      - name: grc-claw-enforcement
+        rules:
+          - alert: PDPServiceDown
+            expr: up{job="kubernetes-pods", pod=~"pdp-service-.*"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              team: platform
+            annotations:
+              summary: "PDP Service instance {{ $labels.pod }} is down"
+              description: "PDP Service pod {{ $labels.pod }} has been down for more than 1 minute."
+
+          - alert: PEPServiceDown
+            expr: up{job="kubernetes-pods", pod=~"pep-gateway-.*"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              team: platform
+            annotations:
+              summary: "PEP Gateway instance {{ $labels.pod }} is down"
+              description: "PEP Gateway pod {{ $labels.pod }} has been down for more than 1 minute."
+
+          - alert: PDPHighLatency
+            expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pdp-service"}[5m])) by (le)) > 0.050
+            for: 5m
+            labels:
+              severity: high
+              team: platform
+            annotations:
+              summary: "PDP Service p99 latency exceeds 50ms"
+              description: "PDP Service p99 latency is {{ $value }}s, exceeding 50ms threshold."
+
+          - alert: PEPHighLatency
+            expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pep-gateway"}[5m])) by (le)) > 0.050
+            for: 5m
+            labels:
+              severity: high
+              team: platform
+            annotations:
+              summary: "PEP Gateway p99 latency exceeds 50ms"
+              description: "PEP Gateway p99 latency is {{ $value }}s, exceeding 50ms threshold."
+
+          - alert: HighErrorRate
+            expr: sum(rate(http_requests_total{service=~"pdp-service|pep-gateway|policy-api",status=~"5.."}[5m])) / sum(rate(http_requests_total{service=~"pdp-service|pep-gateway|policy-api"}[5m])) > 0.01
+            for: 5m
+            labels:
+              severity: high
+              team: platform
+            annotations:
+              summary: "High error rate on control plane services"
+              description: "Error rate is {{ $value | humanizePercentage }}, exceeding 1% threshold."
+
+          - alert: EvidenceCollectorLag
+            expr: kafka_consumer_lag{topic="evidence-events"} > 10000
+            for: 5m
+            labels:
+              severity: medium
+              team: platform
+            annotations:
+              summary: "Evidence collector consumer lag exceeds 10K"
+              description: "Consumer lag is {{ $value }} messages."
+
+          - alert: PostgreSQLReplicationLag
+            expr: pg_replication_lag_seconds > 30
+            for: 5m
+            labels:
+              severity: high
+              team: data
+            annotations:
+              summary: "PostgreSQL replication lag exceeds 30 seconds"
+              description: "Replication lag is {{ $value }}s."
+
+          - alert: RedisMemoryHigh
+            expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+            for: 5m
+            labels:
+              severity: medium
+              team: data
+            annotations:
+              summary: "Redis memory usage above 80%"
+              description: "Redis memory usage is {{ $value | humanizePercentage }}."
+
+          - alert: KafkaUnderReplicatedPartitions
+            expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+            for: 5m
+            labels:
+              severity: high
+              team: data
+            annotations:
+              summary: "Kafka has under-replicated partitions"
+              description: "{{ $value }} partitions are under-replicated."
+
+          - alert: DiskSpaceLow
+            expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.2
+            for: 10m
+            labels:
+              severity: medium
+              team: platform
+            annotations:
+              summary: "Disk space below 20% on {{ $labels.instance }}"
+              description: "Available disk space is {{ $value | humanizePercentage }}."
+
+          - alert: CertificateExpiringSoon
+            expr: certmanager_certificate_expiration_timestamp_seconds - time() < 2592000
+            for: 1h
+            labels:
+              severity: low
+              team: security
+            annotations:
+              summary: "Certificate expiring in less than 30 days"
+              description: "Certificate {{ $labels.name }} expires in {{ $value | humanizeDuration }}."
+
+      - name: grc-claw-slo
+        rules:
+          - alert: SLOBurnRateFast
+            expr: |
+              (
+                sum(rate(http_requests_total{service="pdp-service",status=~"5.."}[1h]))
+                /
+                sum(rate(http_requests_total{service="pdp-service"}[1h]))
+              ) > 0.001
+            for: 5m
+            labels:
+              severity: critical
+              team: platform
+            annotations:
+              summary: "PDP Service SLO burn rate too fast"
+              description: "Error budget is being consumed faster than allowed."
+
+          - alert: SLOBurnRateMedium
+            expr: |
+              (
+                sum(rate(http_requests_total{service="pdp-service",status=~"5.."}[6h]))
+                /
+                sum(rate(http_requests_total{service="pdp-service"}[6h]))
+              ) > 0.0005
+            for: 30m
+            labels:
+              severity: high
+              team: platform
+            annotations:
+              summary: "PDP Service SLO burn rate elevated"
+              description: "Error budget consumption is elevated."

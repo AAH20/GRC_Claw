@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GRC_Claw Capacity & Cost",
+    "tags": ["grc-claw", "capacity"],
+    "timezone": "utc",
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Utilization by Component",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~"grc-claw-.*"}[5m]))",
+            "legendFormat": "{{pod}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Memory Utilization by Component",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~"grc-claw-.*"})",
+            "legendFormat": "{{pod}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Scaling Events",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "kube_deployment_status_replicas{deployment=~"pdp-service|pep-gateway|policy-api"}",
+            "legendFormat": "{{deployment}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Cost per Tenant",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "sum by (tenant_id) (grc_tenant_cost_usd)",
+            "legendFormat": "{{tenant_id}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ],
+    "time": {"from": "now-24h", "to": "now"},
+    "refresh": "30s"
+  }
+}

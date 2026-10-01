@@ -1,0 +1,9 @@
+{{- if .Values.global.createNamespaces }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    istio-injection: enabled
+    grc.tier: {{ .Values.global.tier | default "production" }}
+{{- end }}

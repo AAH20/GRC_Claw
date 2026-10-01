@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdp-service-config
+  namespace: grc-claw-control-plane
+data:
+  config.yaml: "policy:\n  engine: opa\n  bundle_refresh_interval: 30s\n  decision_cache_ttl:\
+    \ 300s\n  max_evaluation_time_ms: 50\ncache:\n  type: redis\n  ttl_seconds: 300\n\
+    \  max_entries: 50000\n"

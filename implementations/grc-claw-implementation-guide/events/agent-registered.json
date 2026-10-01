@@ -1,0 +1,32 @@
+{
+  "specversion": "1.0",
+  "id": "uuid-v4-agent-001",
+  "source": "grc-claw/agent-registry",
+  "type": "com.grcclaw.agent.registered",
+  "subject": "agent-123",
+  "time": "2026-10-01T10:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "agent_id": "agent-123",
+    "name": "Customer Service Agent",
+    "type": "autonomous",
+    "status": "active",
+    "trust_score": 0.85,
+    "capabilities": [
+      {
+        "name": "read_tickets",
+        "risk_tier": "minimal"
+      },
+      {
+        "name": "process_refunds",
+        "risk_tier": "high"
+      }
+    ]
+  },
+  "grcclaw": {
+    "tenant_id": "org-123",
+    "environment": "production",
+    "event_version": "1.0",
+    "schema_version": "1.0"
+  }
+}

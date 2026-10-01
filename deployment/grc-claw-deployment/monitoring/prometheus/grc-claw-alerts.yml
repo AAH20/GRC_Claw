@@ -1,0 +1,117 @@
+groups:
+- name: grc-claw-enforcement
+  rules:
+  - alert: PDPServiceDown
+    expr: up{job="pdp-service"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      component: pdp
+    annotations:
+      summary: PDP service is down
+      description: PDP service has been down for more than 1 minute.
+  - alert: PDPHighLatency
+    expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pdp-service"}[5m]))
+      by (le)) > 0.050
+    for: 2m
+    labels:
+      severity: high
+      component: pdp
+    annotations:
+      summary: PDP p99 latency > 50ms
+      description: PDP service p99 latency exceeds 50ms.
+  - alert: PDPHighErrorRate
+    expr: sum(rate(http_requests_total{service="pdp-service",status=~"5.."}[5m]))
+      / sum(rate(http_requests_total{service="pdp-service"}[5m])) > 0.01
+    for: 2m
+    labels:
+      severity: high
+      component: pdp
+    annotations:
+      summary: PDP error rate > 1%
+      description: PDP service error rate exceeds 1%.
+  - alert: PEPGatewayDown
+    expr: up{job="pep-gateway"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      component: pep
+    annotations:
+      summary: PEP Gateway is down
+      description: PEP Gateway has been down for more than 1 minute.
+  - alert: PEPHighLatency
+    expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pep-gateway"}[5m]))
+      by (le)) > 0.020
+    for: 2m
+    labels:
+      severity: high
+      component: pep
+    annotations:
+      summary: PEP p99 latency > 20ms
+      description: PEP Gateway p99 latency exceeds 20ms.
+  - alert: EvidenceCollectorLag
+    expr: kafka_consumer_group_lag{group="evidence-processors"} > 10000
+    for: 5m
+    labels:
+      severity: medium
+      component: evidence
+    annotations:
+      summary: Evidence collector lag > 10K
+      description: Evidence collector consumer lag exceeds 10,000 messages.
+  - alert: PostgreSQLReplicationLag
+    expr: pg_replication_lag_seconds > 30
+    for: 5m
+    labels:
+      severity: high
+      component: postgresql
+    annotations:
+      summary: PostgreSQL replication lag > 30s
+      description: PostgreSQL replication lag exceeds 30 seconds.
+  - alert: RedisMemoryHigh
+    expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+    for: 5m
+    labels:
+      severity: medium
+      component: redis
+    annotations:
+      summary: Redis memory > 85%
+      description: Redis memory usage exceeds 85%.
+  - alert: KafkaBrokerDown
+    expr: kafka_broker_up == 0
+    for: 1m
+    labels:
+      severity: critical
+      component: kafka
+    annotations:
+      summary: Kafka broker down
+      description: A Kafka broker is down.
+  - alert: DiskSpaceLow
+    expr: kube_pod_container_resource_limits{resource="storage"} > 0.8
+    for: 10m
+    labels:
+      severity: medium
+      component: infrastructure
+    annotations:
+      summary: Disk space > 80%
+      description: Pod storage usage exceeds 80%.
+  - alert: CertificateExpiringSoon
+    expr: certmanager_certificate_expiration_timestamp_seconds - time() < 2592000
+    for: 1h
+    labels:
+      severity: low
+      component: security
+    annotations:
+      summary: Certificate expiring < 30 days
+      description: TLS certificate expires within 30 days.
+- name: grc-claw-slo
+  rules:
+  - alert: SLOBurnRate
+    expr: sum(rate(http_requests_total{service="pdp-service",status=~"5.."}[1h]))
+      / sum(rate(http_requests_total{service="pdp-service"}[1h])) > 0.001
+    for: 5m
+    labels:
+      severity: high
+      component: slo
+    annotations:
+      summary: SLO burn rate exceeded
+      description: Error budget burn rate exceeds threshold.

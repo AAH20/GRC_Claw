@@ -1,0 +1,17 @@
+{{- if .Values.agentIdentity.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-identity
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: agent-identity
+spec:
+  selector:
+    app: agent-identity
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+{{- end }}

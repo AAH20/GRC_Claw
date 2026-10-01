@@ -1,0 +1,48 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: evidence-packaging
+  namespace: grc-claw-serverless
+  labels:
+    app: evidence-packaging
+    grc.component: evidence-packaging
+    grc.tier: serverless
+  annotations:
+    autoscaling.knative.dev/minScale: '0'
+    autoscaling.knative.dev/maxScale: '10'
+    autoscaling.knative.dev/target: '5'
+    autoscaling.knative.dev/targetBurstCapacity: '10'
+    autoscaling.knative.dev/scale-down-delay: 5m
+    autoscaling.knative.dev/window: 60s
+    autoscaling.knative.dev/metric: concurrency
+    autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+    spec:
+      containerConcurrency: 5
+      timeoutSeconds: 300
+      containers:
+      - image: ghcr.io/grc-claw/evidence-packaging:v1.2.0
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        env:
+        - name: EVIDENCE_BUCKET
+          value: grc-claw-evidence
+        - name: OUTPUT_FORMAT
+          value: OSCAL
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL

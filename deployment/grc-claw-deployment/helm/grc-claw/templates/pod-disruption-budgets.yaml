@@ -1,0 +1,17 @@
+{{- if .Values.global.pdb.enabled }}
+{{- range $component, $cfg := .Values }}
+{{- if and (kindIs "dict" $cfg) (hasKey $cfg "minAvailable") }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $component }}-pdb
+  namespace: {{ $.Release.Namespace }}
+spec:
+  minAvailable: {{ $cfg.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $component }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

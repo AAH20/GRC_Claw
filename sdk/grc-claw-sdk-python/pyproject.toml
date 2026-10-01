@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grc-claw-sdk"
+version = "1.0.0"
+description = "Official Python SDK for the GRC_Claw API"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "GRC_Claw Architecture Team"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "httpx>=0.24.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "mypy>=1.0",
+    "ruff>=0.1.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["grc_claw*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true

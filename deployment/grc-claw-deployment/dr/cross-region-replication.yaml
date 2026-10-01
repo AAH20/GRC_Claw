@@ -1,0 +1,130 @@
+# PostgreSQL Cross-Region Replication (Patroni)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patroni-replication-config
+  namespace: grc-claw-data
+data:
+  patroni.yml: |
+    scope: grc-claw-db
+    name: postgresql
+    restapi:
+      listen: 0.0.0.0:8008
+      connect_address: postgresql:8008
+    etcd3:
+      hosts: etcd-0:2379,etcd-1:2379,etcd-2:2379
+    bootstrap:
+      dcs:
+        postgresql:
+          parameters:
+            wal_level: replica
+            hot_standby: "on"
+            max_wal_senders: 10
+            max_replication_slots: 10
+            wal_keep_size: 1GB
+            synchronous_commit: remote_apply
+            synchronous_standby_names: "FIRST 1 (postgresql_1, postgresql_2)"
+      initdb:
+        - encoding: UTF8
+        - data-checksums
+    postgresql:
+      listen: 0.0.0.0:5432
+      connect_address: postgresql:5432
+      data_dir: /var/lib/postgresql/data/pgdata
+      pgpass: /tmp/pgpass
+      authentication:
+        replication:
+          username: replicator
+          password: ${REPLICATOR_PASSWORD}
+        superuser:
+          username: postgres
+          password: ${POSTGRES_PASSWORD}
+      parameters:
+        shared_buffers: 2GB
+        effective_cache_size: 6GB
+        maintenance_work_mem: 512MB
+        checkpoint_completion_target: 0.9
+        wal_buffers: 16MB
+        default_statistics_target: 100
+        random_page_cost: 1.1
+        effective_io_concurrency: 200
+        work_mem: 64MB
+        min_wal_size: 1GB
+        max_wal_size: 4GB
+---
+# Kafka MirrorMaker2 Cross-Region Replication
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirror-maker-2
+  namespace: grc-claw-data
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mirror-maker-2
+  template:
+    metadata:
+      labels:
+        app: mirror-maker-2
+    spec:
+      containers:
+        - name: mm2
+          image: confluentinc/cp-kafka:7.5.0
+          command:
+            - sh
+            - -c
+            - |
+              cat > /tmp/mm2.properties <<EOF
+              clusters = primary, dr
+              primary.bootstrap.servers = kafka-primary.grc-claw.internal:9092
+              dr.bootstrap.servers = kafka-dr.grc-claw.internal:9092
+              primary->dr.enabled = true
+              primary->dr.topics = .*
+              replication.factor = 3
+              checkpoints.topic.replication.factor = 3
+              heartbeats.topic.replication.factor = 3
+              offset-syncs.topic.replication.factor = 3
+              offset.storage.replication.factor = 3
+              status.storage.replication.factor = 3
+              config.storage.replication.factor = 3
+              EOF
+              connect-mirror-maker /tmp/mm2.properties
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+---
+# MinIO Bucket Replication
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-replication-config
+  namespace: grc-claw-data
+data:
+  replication.json: |
+    {
+      "version": "1",
+      "replication": [
+        {
+          "arn": "arn:minio:dr",
+          "url": "https://dr-minio.grc-claw.internal",
+          "credentials": {
+            "accessKey": "${MINIO_DR_ACCESS_KEY}",
+            "secretKey": "${MINIO_DR_SECRET_KEY}"
+          },
+          "buckets": [
+            {
+              "name": "evidence-bucket",
+              "prefix": "",
+              "replicateDeleteMarkers": true,
+              "replicateDeletes": true,
+              "replicateMetadata": true
+            }
+          ]
+        }
+      ]
+    }

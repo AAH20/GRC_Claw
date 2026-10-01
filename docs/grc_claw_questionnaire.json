@@ -1,0 +1,3276 @@
+{
+  "metadata": {
+    "title": "GRC_Claw U-AIGMM Assessment Questionnaire",
+    "version": "1.0",
+    "date": "2026-10-01",
+    "total_questions": 180,
+    "pillars": 4,
+    "domains": 12,
+    "sub_dimensions": 36,
+    "levels": 5,
+    "streams": ["A", "B"]
+  },
+  "pillars": [
+    {
+      "id": "P1",
+      "name": "Governance & Strategy",
+      "domains": [
+        {
+          "id": "1.1",
+          "name": "AI Governance Framework",
+          "sub_dimensions": [
+            {
+              "id": "1.1.1",
+              "name": "Governance Structure & Policy",
+              "questions": [
+                {
+                  "id": "1.1.1.A1",
+                  "stream": "A",
+                  "text": "Does your organization have a documented AI governance policy?",
+                  "type": "ordinal",
+                  "evidence_required": "Policy document",
+                  "standards_mapping": "ISO 42001 §5, §6; NIST AI RMF GOVERN",
+                  "levels": {
+                    "1": "No policy exists",
+                    "2": "Policy drafted but not approved",
+                    "3": "Policy approved and communicated",
+                    "4": "Policy integrated into enterprise GRC",
+                    "5": "Policy drives industry standards"
+                  }
+                },
+                {
+                  "id": "1.1.1.A2",
+                  "stream": "A",
+                  "text": "Is there a designated AI governance body (council, committee)?",
+                  "type": "ordinal",
+                  "evidence_required": "Committee charter, meeting minutes",
+                  "standards_mapping": "ISO 42001 §5.2; NIST AI RMF GOVERN 1.1",
+                  "levels": {
+                    "1": "No body exists",
+                    "2": "Informal group of interested parties",
+                    "3": "Formal body with defined charter",
+                    "4": "Body with decision authority and board reporting",
+                    "5": "Body recognized as industry leader"
+                  }
+                },
+                {
+                  "id": "1.1.1.A3",
+                  "stream": "A",
+                  "text": "Are AI governance roles and responsibilities clearly defined?",
+                  "type": "ordinal",
+                  "evidence_required": "RACI matrix, job descriptions",
+                  "standards_mapping": "ISO 42001 §5.3; NIST AI RMF GOVERN 1.2",
+                  "levels": {
+                    "1": "No defined roles",
+                    "2": "Roles informally assigned",
+                    "3": "RACI matrix published",
+                    "4": "Roles integrated into job descriptions",
+                    "5": "Roles drive organizational design"
+                  }
+                },
+                {
+                  "id": "1.1.1.B1",
+                  "stream": "B",
+                  "text": "How often is AI governance effectiveness reviewed?",
+                  "type": "frequency",
+                  "evidence_required": "Review meeting records, assessment reports",
+                  "standards_mapping": "ISO 42001 §9.3; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly with metrics",
+                    "5": "Continuous with predictive indicators"
+                  }
+                },
+                {
+                  "id": "1.1.1.B2",
+                  "stream": "B",
+                  "text": "What percentage of AI systems have documented governance coverage?",
+                  "type": "percentage",
+                  "evidence_required": "AI system registry, governance records",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF MAP 2.4",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated compliance"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "1.1.2",
+              "name": "AI System Registry & Inventory",
+              "questions": [
+                {
+                  "id": "1.1.2.A1",
+                  "stream": "A",
+                  "text": "Is there an AI system registry/inventory?",
+                  "type": "ordinal",
+                  "evidence_required": "AI inventory database or spreadsheet",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF MAP 2.4",
+                  "levels": {
+                    "1": "No inventory",
+                    "2": "Partial inventory, manually maintained",
+                    "3": "Complete inventory with metadata",
+                    "4": "Real-time inventory with automated discovery",
+                    "5": "Self-maintaining inventory with predictive analytics"
+                  }
+                },
+                {
+                  "id": "1.1.2.A2",
+                  "stream": "A",
+                  "text": "Are AI systems classified by risk level?",
+                  "type": "ordinal",
+                  "evidence_required": "Risk classification matrix",
+                  "standards_mapping": "ISO 42001 §6.1.2; EU AI Act Art. 9",
+                  "levels": {
+                    "1": "No classification",
+                    "2": "Informal classification",
+                    "3": "Documented risk tiers",
+                    "4": "Automated risk classification",
+                    "5": "Dynamic risk classification with ML"
+                  }
+                },
+                {
+                  "id": "1.1.2.A3",
+                  "stream": "A",
+                  "text": "How are governance exceptions tracked and resolved?",
+                  "type": "ordinal",
+                  "evidence_required": "Exception tracking system records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 1.3",
+                  "levels": {
+                    "1": "Not tracked",
+                    "2": "Tracked in spreadsheet",
+                    "3": "Tracked in GRC tool",
+                    "4": "Automated workflow with SLA",
+                    "5": "Self-remediating with audit trail"
+                  }
+                },
+                {
+                  "id": "1.1.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI systems have completed risk assessments?",
+                  "type": "percentage",
+                  "evidence_required": "Risk assessment records",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MAP 2.2",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous validation"
+                  }
+                },
+                {
+                  "id": "1.1.2.B2",
+                  "stream": "B",
+                  "text": "How often is the AI system inventory audited for accuracy?",
+                  "type": "frequency",
+                  "evidence_required": "Audit reports, reconciliation records",
+                  "standards_mapping": "ISO 42001 §9.2; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated reconciliation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "1.1.3",
+              "name": "Governance Integration & Reporting",
+              "questions": [
+                {
+                  "id": "1.1.3.A1",
+                  "stream": "A",
+                  "text": "Is AI governance integrated into enterprise GRC processes?",
+                  "type": "ordinal",
+                  "evidence_required": "GRC process documentation, integration architecture",
+                  "standards_mapping": "ISO 42001 §5.1; NIST AI RMF GOVERN 1.1",
+                  "levels": {
+                    "1": "Not integrated",
+                    "2": "Manual coordination between AI and enterprise GRC",
+                    "3": "Defined integration points",
+                    "4": "Fully integrated with shared workflows",
+                    "5": "AI governance drives enterprise GRC evolution"
+                  }
+                },
+                {
+                  "id": "1.1.3.A2",
+                  "stream": "A",
+                  "text": "Is there board-level reporting on AI governance?",
+                  "type": "ordinal",
+                  "evidence_required": "Board meeting minutes, executive dashboards",
+                  "standards_mapping": "ISO 42001 §5.1; NIST AI RMF GOVERN 1.1",
+                  "levels": {
+                    "1": "No board reporting",
+                    "2": "Informal updates to management",
+                    "3": "Regular board reporting",
+                    "4": "Board dashboard with KPIs",
+                    "5": "Board actively shapes AI governance strategy"
+                  }
+                },
+                {
+                  "id": "1.1.3.A3",
+                  "stream": "A",
+                  "text": "Are AI governance metrics linked to business outcomes?",
+                  "type": "ordinal",
+                  "evidence_required": "Metrics framework, business outcome reports",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "No linkage",
+                    "2": "Qualitative linkage",
+                    "3": "Quantitative metrics defined",
+                    "4": "Real-time outcome dashboards",
+                    "5": "Predictive outcome optimization"
+                  }
+                },
+                {
+                  "id": "1.1.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of governance policies have measurable compliance metrics?",
+                  "type": "percentage",
+                  "evidence_required": "Policy compliance dashboard",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated measurement"
+                  }
+                },
+                {
+                  "id": "1.1.3.B2",
+                  "stream": "B",
+                  "text": "How quickly are governance gaps identified and escalated?",
+                  "type": "ordinal",
+                  "evidence_required": "Escalation logs, gap tracking records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 1.3",
+                  "levels": {
+                    "1": ">30 days",
+                    "2": "15-30 days",
+                    "3": "7-15 days",
+                    "4": "1-7 days",
+                    "5": "<1 day with automated detection"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "1.2",
+          "name": "AI Strategy & Value Alignment",
+          "sub_dimensions": [
+            {
+              "id": "1.2.1",
+              "name": "AI Strategy & Roadmap",
+              "questions": [
+                {
+                  "id": "1.2.1.A1",
+                  "stream": "A",
+                  "text": "Does your organization have a documented AI strategy?",
+                  "type": "ordinal",
+                  "evidence_required": "AI strategy document",
+                  "standards_mapping": "ISO 42001 §4, §6.1; NIST AI RMF MAP",
+                  "levels": {
+                    "1": "No strategy",
+                    "2": "Strategy exists but not approved",
+                    "3": "Approved strategy aligned to business goals",
+                    "4": "Strategy with value metrics and KPIs",
+                    "5": "Strategy drives business model innovation"
+                  }
+                },
+                {
+                  "id": "1.2.1.A2",
+                  "stream": "A",
+                  "text": "Is there an AI use-case portfolio management process?",
+                  "type": "ordinal",
+                  "evidence_required": "Portfolio management process documentation",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "No portfolio management",
+                    "2": "Informal prioritization",
+                    "3": "Structured portfolio with criteria",
+                    "4": "Portfolio optimized for value/risk",
+                    "5": "Dynamic portfolio with predictive value modeling"
+                  }
+                },
+                {
+                  "id": "1.2.1.A3",
+                  "stream": "A",
+                  "text": "Are AI investments linked to measurable business outcomes?",
+                  "type": "ordinal",
+                  "evidence_required": "ROI tracking reports, value realization metrics",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "No linkage",
+                    "2": "Qualitative linkage",
+                    "3": "Quantitative ROI tracking",
+                    "4": "Real-time value dashboards",
+                    "5": "Predictive value optimization"
+                  }
+                },
+                {
+                  "id": "1.2.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI projects deliver measurable value?",
+                  "type": "percentage",
+                  "evidence_required": "Project outcome reports, value metrics",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "<20%",
+                    "2": "20-40%",
+                    "3": "40-60%",
+                    "4": "60-80%",
+                    "5": ">80% with predictive success modeling"
+                  }
+                },
+                {
+                  "id": "1.2.1.B2",
+                  "stream": "B",
+                  "text": "How often is AI strategy reviewed and updated?",
+                  "type": "frequency",
+                  "evidence_required": "Strategy review meeting records",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with environmental scanning"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "1.2.2",
+              "name": "Value Realization & ROI",
+              "questions": [
+                {
+                  "id": "1.2.2.A1",
+                  "stream": "A",
+                  "text": "Is there a process for measuring AI business value?",
+                  "type": "ordinal",
+                  "evidence_required": "Value measurement framework, KPI definitions",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc value tracking",
+                    "3": "Defined value metrics and measurement process",
+                    "4": "Automated value tracking with dashboards",
+                    "5": "Predictive value optimization with ML"
+                  }
+                },
+                {
+                  "id": "1.2.2.A2",
+                  "stream": "A",
+                  "text": "Are AI project outcomes benchmarked against projections?",
+                  "type": "ordinal",
+                  "evidence_required": "Benchmark reports, variance analysis",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "No benchmarking",
+                    "2": "Informal comparison",
+                    "3": "Regular benchmarking process",
+                    "4": "Automated benchmarking with alerts",
+                    "5": "Predictive outcome modeling"
+                  }
+                },
+                {
+                  "id": "1.2.2.A3",
+                  "stream": "A",
+                  "text": "Is there an AI innovation pipeline with stage-gate reviews?",
+                  "type": "ordinal",
+                  "evidence_required": "Innovation pipeline documentation, stage-gate records",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "No pipeline",
+                    "2": "Informal innovation process",
+                    "3": "Defined stage-gate process",
+                    "4": "Automated pipeline with metrics",
+                    "5": "Self-optimizing innovation pipeline"
+                  }
+                },
+                {
+                  "id": "1.2.2.B1",
+                  "stream": "B",
+                  "text": "What is the average ROI of AI projects?",
+                  "type": "ordinal",
+                  "evidence_required": "ROI analysis reports",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 1",
+                  "levels": {
+                    "1": "Negative or unknown",
+                    "2": "0-50%",
+                    "3": "50-150%",
+                    "4": "150-300%",
+                    "5": ">300% with predictive optimization"
+                  }
+                },
+                {
+                  "id": "1.2.2.B2",
+                  "stream": "B",
+                  "text": "How many AI projects were discontinued due to lack of value?",
+                  "type": "count",
+                  "evidence_required": "Project closure records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 1.3",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">50% of projects",
+                    "3": "25-50%",
+                    "4": "10-25%",
+                    "5": "<10% with predictive value assessment"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "1.2.3",
+              "name": "Stakeholder Alignment & Communication",
+              "questions": [
+                {
+                  "id": "1.2.3.A1",
+                  "stream": "A",
+                  "text": "Is there a stakeholder engagement plan for AI initiatives?",
+                  "type": "ordinal",
+                  "evidence_required": "Stakeholder engagement plan",
+                  "standards_mapping": "ISO 42001 §4.1; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No plan",
+                    "2": "Informal engagement",
+                    "3": "Documented engagement plan",
+                    "4": "Regular engagement with feedback loops",
+                    "5": "Continuous co-creation with stakeholders"
+                  }
+                },
+                {
+                  "id": "1.2.3.A2",
+                  "stream": "A",
+                  "text": "Are AI governance decisions communicated transparently?",
+                  "type": "ordinal",
+                  "evidence_required": "Communication records, decision logs",
+                  "standards_mapping": "ISO 42001 §7.4; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No communication",
+                    "2": "Ad-hoc communication",
+                    "3": "Regular communication process",
+                    "4": "Transparent decision-making with rationale",
+                    "5": "Open governance with public reporting"
+                  }
+                },
+                {
+                  "id": "1.2.3.A3",
+                  "stream": "A",
+                  "text": "Is there an AI ethics advisory board with external members?",
+                  "type": "ordinal",
+                  "evidence_required": "Advisory board charter, membership list",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No advisory board",
+                    "2": "Internal ethics committee only",
+                    "3": "External advisors consulted",
+                    "4": "Formal external advisory board",
+                    "5": "Industry-leading ethics advisory board"
+                  }
+                },
+                {
+                  "id": "1.2.3.B1",
+                  "stream": "B",
+                  "text": "How often are stakeholders surveyed about AI governance satisfaction?",
+                  "type": "frequency",
+                  "evidence_required": "Survey results, feedback records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 5.2",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with real-time feedback"
+                  }
+                },
+                {
+                  "id": "1.2.3.B2",
+                  "stream": "B",
+                  "text": "What percentage of stakeholders report understanding AI governance decisions?",
+                  "type": "percentage",
+                  "evidence_required": "Stakeholder survey results",
+                  "standards_mapping": "ISO 42001 §7.4; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous education"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "1.3",
+          "name": "Risk & Compliance Management",
+          "sub_dimensions": [
+            {
+              "id": "1.3.1",
+              "name": "AI Risk Management Framework",
+              "questions": [
+                {
+                  "id": "1.3.1.A1",
+                  "stream": "A",
+                  "text": "Is there an AI risk management framework?",
+                  "type": "ordinal",
+                  "evidence_required": "Risk management framework document",
+                  "standards_mapping": "ISO 42001 §6; NIST AI RMF MANAGE",
+                  "levels": {
+                    "1": "No framework",
+                    "2": "Framework based on existing risk framework",
+                    "3": "AI-specific framework with risk taxonomy",
+                    "4": "Framework integrated with enterprise risk",
+                    "5": "Framework recognized as best practice"
+                  }
+                },
+                {
+                  "id": "1.3.1.A2",
+                  "stream": "A",
+                  "text": "Is there a process for AI regulatory compliance?",
+                  "type": "ordinal",
+                  "evidence_required": "Compliance process documentation, regulatory mapping",
+                  "standards_mapping": "ISO 42001 §6.2; EU AI Act; NIST AI RMF MANAGE",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Manual compliance checking",
+                    "3": "Automated compliance monitoring",
+                    "4": "Predictive compliance with regulatory intelligence",
+                    "5": "Regulatory leadership and contribution"
+                  }
+                },
+                {
+                  "id": "1.3.1.A3",
+                  "stream": "A",
+                  "text": "Are AI risks integrated into the enterprise risk register?",
+                  "type": "ordinal",
+                  "evidence_required": "Enterprise risk register with AI entries",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF MANAGE 1.1",
+                  "levels": {
+                    "1": "Not integrated",
+                    "2": "AI risks tracked separately",
+                    "3": "AI risks in enterprise register",
+                    "4": "AI risks drive enterprise risk priorities",
+                    "5": "AI risk intelligence shapes enterprise strategy"
+                  }
+                },
+                {
+                  "id": "1.3.1.B1",
+                  "stream": "B",
+                  "text": "How many AI-related risk incidents occurred in the past year?",
+                  "type": "count",
+                  "evidence_required": "Incident records, risk event log",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">10",
+                    "3": "5-10",
+                    "4": "1-5",
+                    "5": "0 with predictive prevention"
+                  }
+                },
+                {
+                  "id": "1.3.1.B2",
+                  "stream": "B",
+                  "text": "What is the average time to remediate AI compliance gaps?",
+                  "type": "ordinal",
+                  "evidence_required": "Remediation tracking records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4.1",
+                  "levels": {
+                    "1": "N/A",
+                    "2": ">90 days",
+                    "3": "30-90 days",
+                    "4": "7-30 days",
+                    "5": "<7 days with automated remediation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "1.3.2",
+              "name": "Regulatory Compliance & Standards",
+              "questions": [
+                {
+                  "id": "1.3.2.A1",
+                  "stream": "A",
+                  "text": "Is there a regulatory compliance tracking system for AI?",
+                  "type": "ordinal",
+                  "evidence_required": "Compliance tracking system, regulatory database",
+                  "standards_mapping": "ISO 42001 §6.2; EU AI Act",
+                  "levels": {
+                    "1": "No tracking system",
+                    "2": "Spreadsheet-based tracking",
+                    "3": "GRC tool with AI compliance module",
+                    "4": "Automated regulatory monitoring",
+                    "5": "Predictive regulatory intelligence platform"
+                  }
+                },
+                {
+                  "id": "1.3.2.A2",
+                  "stream": "A",
+                  "text": "Are AI systems subject to regulatory impact assessments?",
+                  "type": "ordinal",
+                  "evidence_required": "Regulatory impact assessment records",
+                  "standards_mapping": "EU AI Act Art. 27; ISO 42001 §6.1.2",
+                  "levels": {
+                    "1": "Not conducted",
+                    "2": "Conducted for high-risk only",
+                    "3": "Conducted for all AI systems",
+                    "4": "Automated assessment with risk scoring",
+                    "5": "Predictive regulatory impact modeling"
+                  }
+                },
+                {
+                  "id": "1.3.2.A3",
+                  "stream": "A",
+                  "text": "Is there a process for responding to regulatory inquiries about AI?",
+                  "type": "ordinal",
+                  "evidence_required": "Regulatory response process, inquiry logs",
+                  "standards_mapping": "ISO 42001 §6.2; EU AI Act",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc response",
+                    "3": "Defined response process",
+                    "4": "Automated response workflow",
+                    "5": "Proactive regulatory engagement"
+                  }
+                },
+                {
+                  "id": "1.3.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI systems have completed regulatory compliance reviews?",
+                  "type": "percentage",
+                  "evidence_required": "Compliance review records",
+                  "standards_mapping": "ISO 42001 §6.2; EU AI Act",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous monitoring"
+                  }
+                },
+                {
+                  "id": "1.3.2.B2",
+                  "stream": "B",
+                  "text": "How many regulatory findings related to AI were issued in the past year?",
+                  "type": "count",
+                  "evidence_required": "Regulatory finding records",
+                  "standards_mapping": "ISO 42001 §10.2; EU AI Act",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">5",
+                    "3": "3-5",
+                    "4": "1-2",
+                    "5": "0 with proactive compliance"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "1.3.3",
+              "name": "Risk Assessment & Treatment",
+              "questions": [
+                {
+                  "id": "1.3.3.A1",
+                  "stream": "A",
+                  "text": "Is there a quantitative AI risk assessment methodology?",
+                  "type": "ordinal",
+                  "evidence_required": "Risk assessment methodology document",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MAP 2.2",
+                  "levels": {
+                    "1": "No methodology",
+                    "2": "Qualitative assessment only",
+                    "3": "Semi-quantitative scoring",
+                    "4": "Fully quantitative with models",
+                    "5": "Predictive risk modeling with ML"
+                  }
+                },
+                {
+                  "id": "1.3.3.A2",
+                  "stream": "A",
+                  "text": "Are AI risk treatment plans tracked to completion?",
+                  "type": "ordinal",
+                  "evidence_required": "Risk treatment tracking records",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF MANAGE 1.3",
+                  "levels": {
+                    "1": "Not tracked",
+                    "2": "Tracked informally",
+                    "3": "Tracked in risk register",
+                    "4": "Automated tracking with SLA",
+                    "5": "Self-healing risk treatment"
+                  }
+                },
+                {
+                  "id": "1.3.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for accepting residual AI risks?",
+                  "type": "ordinal",
+                  "evidence_required": "Risk acceptance records, approval workflow",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF MANAGE 1.3",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal acceptance",
+                    "3": "Documented acceptance process",
+                    "4": "Automated acceptance with approval workflow",
+                    "5": "Dynamic risk acceptance with real-time assessment"
+                  }
+                },
+                {
+                  "id": "1.3.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of identified AI risks have treatment plans?",
+                  "type": "percentage",
+                  "evidence_required": "Risk register with treatment status",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF MANAGE 1.3",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated treatment"
+                  }
+                },
+                {
+                  "id": "1.3.3.B2",
+                  "stream": "B",
+                  "text": "How often is the AI risk register reviewed and updated?",
+                  "type": "frequency",
+                  "evidence_required": "Risk register update logs",
+                  "standards_mapping": "ISO 42001 §6.1; NIST AI RMF MANAGE 1.1",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated updates"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "Responsible AI & Ethics",
+      "domains": [
+        {
+          "id": "2.1",
+          "name": "Fairness, Transparency & Explainability",
+          "sub_dimensions": [
+            {
+              "id": "2.1.1",
+              "name": "Fairness & Bias Management",
+              "questions": [
+                {
+                  "id": "2.1.1.A1",
+                  "stream": "A",
+                  "text": "Are there documented fairness guidelines for AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "Fairness guidelines document",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MEASURE; EU AI Act Art. 13",
+                  "levels": {
+                    "1": "No guidelines",
+                    "2": "Guidelines drafted",
+                    "3": "Guidelines approved and implemented",
+                    "4": "Guidelines with automated enforcement",
+                    "5": "Guidelines drive industry standards"
+                  }
+                },
+                {
+                  "id": "2.1.1.A2",
+                  "stream": "A",
+                  "text": "Are AI systems tested for bias before deployment?",
+                  "type": "ordinal",
+                  "evidence_required": "Bias test results, testing framework",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MEASURE 2.6",
+                  "levels": {
+                    "1": "No testing",
+                    "2": "Ad-hoc testing",
+                    "3": "Systematic bias testing",
+                    "4": "Continuous bias monitoring",
+                    "5": "Predictive bias prevention"
+                  }
+                },
+                {
+                  "id": "2.1.1.A3",
+                  "stream": "A",
+                  "text": "Is there a process for addressing bias complaints?",
+                  "type": "ordinal",
+                  "evidence_required": "Complaint handling process, resolution records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc response",
+                    "3": "Documented complaint process",
+                    "4": "Automated complaint tracking",
+                    "5": "Predictive bias detection and prevention"
+                  }
+                },
+                {
+                  "id": "2.1.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI systems have documented fairness metrics?",
+                  "type": "percentage",
+                  "evidence_required": "Fairness metrics dashboard",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MEASURE 2.6",
+                  "levels": {
+                    "1": "<10%",
+                    "2": "10-30%",
+                    "3": "30-60%",
+                    "4": "60-90%",
+                    "5": ">90% with real-time monitoring"
+                  }
+                },
+                {
+                  "id": "2.1.1.B2",
+                  "stream": "B",
+                  "text": "How often are fairness metrics reviewed?",
+                  "type": "frequency",
+                  "evidence_required": "Fairness review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated alerting"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2.1.2",
+              "name": "Transparency & Explainability",
+              "questions": [
+                {
+                  "id": "2.1.2.A1",
+                  "stream": "A",
+                  "text": "Is explainability required for AI decision systems?",
+                  "type": "ordinal",
+                  "evidence_required": "Explainability requirements document",
+                  "standards_mapping": "ISO 42001 §6.1.2; EU AI Act Art. 13",
+                  "levels": {
+                    "1": "Not required",
+                    "2": "Required for high-risk only",
+                    "3": "Required for all AI systems",
+                    "4": "Automated explainability for all decisions",
+                    "5": "Explainability as competitive advantage"
+                  }
+                },
+                {
+                  "id": "2.1.2.A2",
+                  "stream": "A",
+                  "text": "Are AI system capabilities and limitations documented?",
+                  "type": "ordinal",
+                  "evidence_required": "System documentation, model cards",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MAP 2.3",
+                  "levels": {
+                    "1": "Not documented",
+                    "2": "Partial documentation",
+                    "3": "Standardized documentation for all systems",
+                    "4": "Automated documentation generation",
+                    "5": "Self-documenting AI systems"
+                  }
+                },
+                {
+                  "id": "2.1.2.A3",
+                  "stream": "A",
+                  "text": "Is there a process for providing AI decision explanations to affected parties?",
+                  "type": "ordinal",
+                  "evidence_required": "Explanation delivery process, user communication records",
+                  "standards_mapping": "EU AI Act Art. 13; ISO 42001 §6.1.2",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc explanations",
+                    "3": "Defined explanation process",
+                    "4": "Automated explanation delivery",
+                    "5": "Personalized explanation with context awareness"
+                  }
+                },
+                {
+                  "id": "2.1.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI decisions have documented explanations?",
+                  "type": "percentage",
+                  "evidence_required": "Explanation coverage metrics",
+                  "standards_mapping": "ISO 42001 §6.1.2; EU AI Act Art. 13",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated generation"
+                  }
+                },
+                {
+                  "id": "2.1.2.B2",
+                  "stream": "B",
+                  "text": "How often is explainability effectiveness assessed?",
+                  "type": "frequency",
+                  "evidence_required": "Explainability assessment records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with user feedback loops"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2.1.3",
+              "name": "Ethical Review & Oversight",
+              "questions": [
+                {
+                  "id": "2.1.3.A1",
+                  "stream": "A",
+                  "text": "Is there an ethics review board for AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "Ethics board charter, review records",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No review board",
+                    "2": "Informal ethics discussions",
+                    "3": "Formal ethics review board",
+                    "4": "Board with decision authority",
+                    "5": "Board recognized as industry leader"
+                  }
+                },
+                {
+                  "id": "2.1.3.A2",
+                  "stream": "A",
+                  "text": "Are ethical impact assessments conducted for new AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "Ethical impact assessment records",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MAP 2.2",
+                  "levels": {
+                    "1": "Not conducted",
+                    "2": "Conducted for high-risk only",
+                    "3": "Conducted for all new systems",
+                    "4": "Automated ethical impact assessment",
+                    "5": "Predictive ethical risk modeling"
+                  }
+                },
+                {
+                  "id": "2.1.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for ethical incident response?",
+                  "type": "ordinal",
+                  "evidence_required": "Ethical incident response plan",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc response",
+                    "3": "Documented response process",
+                    "4": "Automated response with escalation",
+                    "5": "Self-healing ethical incident management"
+                  }
+                },
+                {
+                  "id": "2.1.3.B1",
+                  "stream": "B",
+                  "text": "How many ethical incidents occurred in the past year?",
+                  "type": "count",
+                  "evidence_required": "Ethical incident records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">10",
+                    "3": "5-10",
+                    "4": "1-5",
+                    "5": "0 with predictive prevention"
+                  }
+                },
+                {
+                  "id": "2.1.3.B2",
+                  "stream": "B",
+                  "text": "What percentage of AI systems have completed ethical reviews?",
+                  "type": "percentage",
+                  "evidence_required": "Ethical review tracking records",
+                  "standards_mapping": "ISO 42001 §6.1.2; NIST AI RMF MAP 2.2",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous monitoring"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2.2",
+          "name": "Privacy & Data Protection",
+          "sub_dimensions": [
+            {
+              "id": "2.2.1",
+              "name": "Privacy by Design",
+              "questions": [
+                {
+                  "id": "2.2.1.A1",
+                  "stream": "A",
+                  "text": "Is privacy by design implemented for AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "Privacy engineering documentation",
+                  "standards_mapping": "ISO 42001 §6.1.3; GDPR; NIST AI RMF MEASURE 2.7",
+                  "levels": {
+                    "1": "Not implemented",
+                    "2": "Principles documented",
+                    "3": "Privacy impact assessments required",
+                    "4": "Privacy engineering integrated into SDLC",
+                    "5": "Privacy-preserving AI techniques standard"
+                  }
+                },
+                {
+                  "id": "2.2.1.A2",
+                  "stream": "A",
+                  "text": "Is data minimization practiced for AI training and operation?",
+                  "type": "ordinal",
+                  "evidence_required": "Data minimization policy, implementation records",
+                  "standards_mapping": "ISO 42001 §6.1.3; GDPR Art. 5",
+                  "levels": {
+                    "1": "Not practiced",
+                    "2": "Policy exists",
+                    "3": "Enforced for new systems",
+                    "4": "Enforced for all systems with monitoring",
+                    "5": "Automated data minimization"
+                  }
+                },
+                {
+                  "id": "2.2.1.A3",
+                  "stream": "A",
+                  "text": "Are Data Protection Impact Assessments (DPIAs) conducted for AI?",
+                  "type": "ordinal",
+                  "evidence_required": "DPIA records, assessment reports",
+                  "standards_mapping": "GDPR Art. 35; ISO 42001 §6.1.3",
+                  "levels": {
+                    "1": "Not conducted",
+                    "2": "Conducted for high-risk only",
+                    "3": "Conducted for all AI systems",
+                    "4": "Automated DPIA with risk scoring",
+                    "5": "Predictive privacy risk modeling"
+                  }
+                },
+                {
+                  "id": "2.2.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI systems have completed privacy assessments?",
+                  "type": "percentage",
+                  "evidence_required": "Privacy assessment tracking",
+                  "standards_mapping": "ISO 42001 §6.1.3; GDPR",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous validation"
+                  }
+                },
+                {
+                  "id": "2.2.1.B2",
+                  "stream": "B",
+                  "text": "How many privacy incidents related to AI occurred in the past year?",
+                  "type": "count",
+                  "evidence_required": "Privacy incident records",
+                  "standards_mapping": "ISO 42001 §10.2; GDPR",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">5",
+                    "3": "2-5",
+                    "4": "1-2",
+                    "5": "0 with predictive prevention"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2.2.2",
+              "name": "Data Subject Rights & Consent",
+              "questions": [
+                {
+                  "id": "2.2.2.A1",
+                  "stream": "A",
+                  "text": "Is there a process for handling data subject rights requests related to AI?",
+                  "type": "ordinal",
+                  "evidence_required": "DSR handling process, request logs",
+                  "standards_mapping": "GDPR Art. 15-22; ISO 42001 §6.1.3",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Manual process",
+                    "3": "Defined process with SLA",
+                    "4": "Automated DSR handling",
+                    "5": "Self-service DSR portal with AI assistance"
+                  }
+                },
+                {
+                  "id": "2.2.2.A2",
+                  "stream": "A",
+                  "text": "Is consent management implemented for AI data processing?",
+                  "type": "ordinal",
+                  "evidence_required": "Consent management system, consent records",
+                  "standards_mapping": "GDPR Art. 6-7; ISO 42001 §6.1.3",
+                  "levels": {
+                    "1": "Not implemented",
+                    "2": "Basic consent collection",
+                    "3": "Consent management system",
+                    "4": "Granular consent with audit trail",
+                    "5": "Dynamic consent with real-time enforcement"
+                  }
+                },
+                {
+                  "id": "2.2.2.A3",
+                  "stream": "A",
+                  "text": "Are AI training data sources verified for legal basis?",
+                  "type": "ordinal",
+                  "evidence_required": "Data source verification records",
+                  "standards_mapping": "GDPR Art. 6; ISO 42001 §6.1.3",
+                  "levels": {
+                    "1": "Not verified",
+                    "2": "Partial verification",
+                    "3": "Systematic verification process",
+                    "4": "Automated verification with alerts",
+                    "5": "Predictive compliance verification"
+                  }
+                },
+                {
+                  "id": "2.2.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI data processing has documented legal basis?",
+                  "type": "percentage",
+                  "evidence_required": "Legal basis documentation",
+                  "standards_mapping": "GDPR Art. 6; ISO 42001 §6.1.3",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated verification"
+                  }
+                },
+                {
+                  "id": "2.2.2.B2",
+                  "stream": "B",
+                  "text": "How quickly are data subject rights requests fulfilled?",
+                  "type": "ordinal",
+                  "evidence_required": "DSR fulfillment tracking",
+                  "standards_mapping": "GDPR Art. 12; ISO 42001 §6.1.3",
+                  "levels": {
+                    "1": ">30 days",
+                    "2": "15-30 days",
+                    "3": "7-15 days",
+                    "4": "3-7 days",
+                    "5": "<3 days with automated processing"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2.2.3",
+              "name": "Privacy-Enhancing Technologies",
+              "questions": [
+                {
+                  "id": "2.2.3.A1",
+                  "stream": "A",
+                  "text": "Are privacy-enhancing technologies (PETs) used in AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "PET implementation records, architecture docs",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.7",
+                  "levels": {
+                    "1": "Not used",
+                    "2": "Exploratory use",
+                    "3": "PETs used for high-risk systems",
+                    "4": "PETs standard for all AI systems",
+                    "5": "Advanced PETs with federated learning"
+                  }
+                },
+                {
+                  "id": "2.2.3.A2",
+                  "stream": "A",
+                  "text": "Is differential privacy applied to AI training data?",
+                  "type": "ordinal",
+                  "evidence_required": "Differential privacy implementation records",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.7",
+                  "levels": {
+                    "1": "Not applied",
+                    "2": "Applied to some datasets",
+                    "3": "Applied to all sensitive datasets",
+                    "4": "Automated differential privacy",
+                    "5": "Adaptive differential privacy with optimization"
+                  }
+                },
+                {
+                  "id": "2.2.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for privacy risk assessment of AI models?",
+                  "type": "ordinal",
+                  "evidence_required": "Privacy risk assessment records",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.7",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc assessment",
+                    "3": "Defined assessment process",
+                    "4": "Automated assessment with metrics",
+                    "5": "Predictive privacy risk modeling"
+                  }
+                },
+                {
+                  "id": "2.2.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI systems use privacy-enhancing technologies?",
+                  "type": "percentage",
+                  "evidence_required": "PET coverage metrics",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.7",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous optimization"
+                  }
+                },
+                {
+                  "id": "2.2.3.B2",
+                  "stream": "B",
+                  "text": "How often are privacy-enhancing technologies reviewed for effectiveness?",
+                  "type": "frequency",
+                  "evidence_required": "PET review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.7",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated assessment"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2.3",
+          "name": "Human Oversight & Accountability",
+          "sub_dimensions": [
+            {
+              "id": "2.3.1",
+              "name": "Human Oversight Mechanisms",
+              "questions": [
+                {
+                  "id": "2.3.1.A1",
+                  "stream": "A",
+                  "text": "Is human oversight required for high-impact AI decisions?",
+                  "type": "ordinal",
+                  "evidence_required": "Oversight requirements document",
+                  "standards_mapping": "ISO 42001 §6.1.4; EU AI Act Art. 14; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": "Not required",
+                    "2": "Policy exists",
+                    "3": "Oversight mechanisms implemented",
+                    "4": "Automated oversight with escalation",
+                    "5": "Adaptive oversight based on risk"
+                  }
+                },
+                {
+                  "id": "2.3.1.A2",
+                  "stream": "A",
+                  "text": "Are there defined approval gates for AI agent actions?",
+                  "type": "ordinal",
+                  "evidence_required": "Approval gate configuration, workflow docs",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": "No gates",
+                    "2": "Informal approval process",
+                    "3": "Defined gates for high-risk actions",
+                    "4": "Automated gates with audit trail",
+                    "5": "Intelligent gates with risk-adaptive thresholds"
+                  }
+                },
+                {
+                  "id": "2.3.1.A3",
+                  "stream": "A",
+                  "text": "Is there clear accountability for AI system outcomes?",
+                  "type": "ordinal",
+                  "evidence_required": "Accountability matrix, responsibility assignments",
+                  "standards_mapping": "ISO 42001 §5.3; NIST AI RMF GOVERN 1.2",
+                  "levels": {
+                    "1": "No accountability",
+                    "2": "Informal accountability",
+                    "3": "Documented accountability matrix",
+                    "4": "Accountability integrated into governance",
+                    "5": "Accountability as organizational value"
+                  }
+                },
+                {
+                  "id": "2.3.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of high-impact AI decisions have human oversight?",
+                  "type": "percentage",
+                  "evidence_required": "Oversight coverage metrics",
+                  "standards_mapping": "ISO 42001 §6.1.4; EU AI Act Art. 14",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with meaningful oversight"
+                  }
+                },
+                {
+                  "id": "2.3.1.B2",
+                  "stream": "B",
+                  "text": "How often is the effectiveness of human oversight reviewed?",
+                  "type": "frequency",
+                  "evidence_required": "Oversight effectiveness review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with effectiveness metrics"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2.3.2",
+              "name": "Meaningful Human Control",
+              "questions": [
+                {
+                  "id": "2.3.2.A1",
+                  "stream": "A",
+                  "text": "Is meaningful human control maintained over AI agent actions?",
+                  "type": "ordinal",
+                  "evidence_required": "Human control framework, control point documentation",
+                  "standards_mapping": "ISO 42001 §6.1.4; EU AI Act Art. 14",
+                  "levels": {
+                    "1": "No human control",
+                    "2": "Human control for critical actions only",
+                    "3": "Human control for all high-risk actions",
+                    "4": "Adaptive human control with risk-based escalation",
+                    "5": "Intelligent human-AI collaborative control"
+                  }
+                },
+                {
+                  "id": "2.3.2.A2",
+                  "stream": "A",
+                  "text": "Are there override mechanisms for AI agent decisions?",
+                  "type": "ordinal",
+                  "evidence_required": "Override mechanism documentation, override logs",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": "No override mechanisms",
+                    "2": "Manual override for some systems",
+                    "3": "Override mechanisms for all high-risk systems",
+                    "4": "Automated override with audit trail",
+                    "5": "Intelligent override with context awareness"
+                  }
+                },
+                {
+                  "id": "2.3.2.A3",
+                  "stream": "A",
+                  "text": "Is there a process for human review of AI agent behavior?",
+                  "type": "ordinal",
+                  "evidence_required": "Human review process documentation",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": "No review process",
+                    "2": "Ad-hoc review",
+                    "3": "Defined review process",
+                    "4": "Automated review with sampling",
+                    "5": "Continuous review with predictive analytics"
+                  }
+                },
+                {
+                  "id": "2.3.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI agent actions are subject to human review?",
+                  "type": "percentage",
+                  "evidence_required": "Review coverage metrics",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with meaningful review"
+                  }
+                },
+                {
+                  "id": "2.3.2.B2",
+                  "stream": "B",
+                  "text": "How quickly can humans intervene in AI agent operations?",
+                  "type": "ordinal",
+                  "evidence_required": "Intervention time metrics",
+                  "standards_mapping": "ISO 42001 §6.1.4; NIST AI RMF GOVERN 1.5",
+                  "levels": {
+                    "1": ">1 hour",
+                    "2": "30-60 minutes",
+                    "3": "5-30 minutes",
+                    "4": "1-5 minutes",
+                    "5": "<1 minute with real-time intervention"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2.3.3",
+              "name": "Accountability & Audit Trail",
+              "questions": [
+                {
+                  "id": "2.3.3.A1",
+                  "stream": "A",
+                  "text": "Is there a clear accountability chain for AI system outcomes?",
+                  "type": "ordinal",
+                  "evidence_required": "Accountability chain documentation",
+                  "standards_mapping": "ISO 42001 §5.3; NIST AI RMF GOVERN 1.2",
+                  "levels": {
+                    "1": "No accountability chain",
+                    "2": "Informal accountability",
+                    "3": "Documented accountability chain",
+                    "4": "Accountability integrated into governance",
+                    "5": "Accountability as organizational value"
+                  }
+                },
+                {
+                  "id": "2.3.3.A2",
+                  "stream": "A",
+                  "text": "Are AI decision audit trails maintained?",
+                  "type": "ordinal",
+                  "evidence_required": "Audit trail system, log records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.5",
+                  "levels": {
+                    "1": "No audit trails",
+                    "2": "Basic logging",
+                    "3": "Comprehensive audit trails",
+                    "4": "Tamper-evident audit trails",
+                    "5": "Self-verifying audit trails with blockchain"
+                  }
+                },
+                {
+                  "id": "2.3.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for AI incident accountability review?",
+                  "type": "ordinal",
+                  "evidence_required": "Accountability review process, review records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc review",
+                    "3": "Defined review process",
+                    "4": "Automated review with escalation",
+                    "5": "Predictive accountability assessment"
+                  }
+                },
+                {
+                  "id": "2.3.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI decisions have complete audit trails?",
+                  "type": "percentage",
+                  "evidence_required": "Audit trail coverage metrics",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.5",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with tamper-evident verification"
+                  }
+                },
+                {
+                  "id": "2.3.3.B2",
+                  "stream": "B",
+                  "text": "How long are AI audit trails retained?",
+                  "type": "ordinal",
+                  "evidence_required": "Retention policy, archive records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.5",
+                  "levels": {
+                    "1": "<1 year",
+                    "2": "1-3 years",
+                    "3": "3-7 years",
+                    "4": "7-10 years",
+                    "5": ">10 years with automated lifecycle management"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "Technical Foundation",
+      "domains": [
+        {
+          "id": "3.1",
+          "name": "Data Governance & Quality",
+          "sub_dimensions": [
+            {
+              "id": "3.1.1",
+              "name": "Data Governance Framework",
+              "questions": [
+                {
+                  "id": "3.1.1.A1",
+                  "stream": "A",
+                  "text": "Is there a data governance framework for AI data?",
+                  "type": "ordinal",
+                  "evidence_required": "Data governance framework document",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "No framework",
+                    "2": "Framework exists for non-AI data",
+                    "3": "AI-specific data governance framework",
+                    "4": "Framework with automated enforcement",
+                    "5": "Self-optimizing data governance"
+                  }
+                },
+                {
+                  "id": "3.1.1.A2",
+                  "stream": "A",
+                  "text": "Is data lineage tracked for AI training and operation?",
+                  "type": "ordinal",
+                  "evidence_required": "Data lineage diagrams, lineage tracking system",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "Not tracked",
+                    "2": "Tracked for critical datasets",
+                    "3": "Tracked for all AI data",
+                    "4": "Automated lineage with impact analysis",
+                    "5": "Predictive lineage with risk scoring"
+                  }
+                },
+                {
+                  "id": "3.1.1.A3",
+                  "stream": "A",
+                  "text": "Are data quality metrics defined and monitored?",
+                  "type": "ordinal",
+                  "evidence_required": "Data quality metrics dashboard",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.2",
+                  "levels": {
+                    "1": "Not defined",
+                    "2": "Metrics defined for critical data",
+                    "3": "Metrics defined and monitored",
+                    "4": "Automated quality monitoring with alerting",
+                    "5": "Predictive quality management"
+                  }
+                },
+                {
+                  "id": "3.1.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI training data has documented lineage?",
+                  "type": "percentage",
+                  "evidence_required": "Lineage coverage metrics",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated verification"
+                  }
+                },
+                {
+                  "id": "3.1.1.B2",
+                  "stream": "B",
+                  "text": "How often are data quality issues detected and remediated?",
+                  "type": "frequency",
+                  "evidence_required": "Data quality issue tracking",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MEASURE 2.2",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Real-time",
+                    "5": "Predictive prevention"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.1.2",
+              "name": "Data Quality Management",
+              "questions": [
+                {
+                  "id": "3.1.2.A1",
+                  "stream": "A",
+                  "text": "Is there a data quality management process for AI?",
+                  "type": "ordinal",
+                  "evidence_required": "Data quality process documentation",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.2",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc quality checks",
+                    "3": "Defined quality management process",
+                    "4": "Automated quality management",
+                    "5": "Self-optimizing data quality"
+                  }
+                },
+                {
+                  "id": "3.1.2.A2",
+                  "stream": "A",
+                  "text": "Are data quality SLAs defined for AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "Data quality SLA documentation",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.2",
+                  "levels": {
+                    "1": "No SLAs",
+                    "2": "Informal quality expectations",
+                    "3": "Defined SLAs for critical data",
+                    "4": "Automated SLA monitoring",
+                    "5": "Predictive SLA management"
+                  }
+                },
+                {
+                  "id": "3.1.2.A3",
+                  "stream": "A",
+                  "text": "Is there a process for data quality issue escalation?",
+                  "type": "ordinal",
+                  "evidence_required": "Escalation process documentation, escalation logs",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc escalation",
+                    "3": "Defined escalation process",
+                    "4": "Automated escalation with SLA",
+                    "5": "Self-healing data quality management"
+                  }
+                },
+                {
+                  "id": "3.1.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI data meets quality standards?",
+                  "type": "percentage",
+                  "evidence_required": "Data quality metrics",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MEASURE 2.2",
+                  "levels": {
+                    "1": "<50%",
+                    "2": "50-70%",
+                    "3": "70-85%",
+                    "4": "85-95%",
+                    "5": ">95% with predictive quality assurance"
+                  }
+                },
+                {
+                  "id": "3.1.2.B2",
+                  "stream": "B",
+                  "text": "How many data quality incidents affected AI systems in the past year?",
+                  "type": "count",
+                  "evidence_required": "Data quality incident records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">10",
+                    "3": "5-10",
+                    "4": "1-5",
+                    "5": "0 with predictive prevention"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.1.3",
+              "name": "Data Provenance & Traceability",
+              "questions": [
+                {
+                  "id": "3.1.3.A1",
+                  "stream": "A",
+                  "text": "Is data provenance tracked for AI training data?",
+                  "type": "ordinal",
+                  "evidence_required": "Data provenance records, data catalog entries",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "Not tracked",
+                    "2": "Partial tracking",
+                    "3": "Systematic provenance tracking",
+                    "4": "Automated provenance with verification",
+                    "5": "Self-verifying provenance with blockchain"
+                  }
+                },
+                {
+                  "id": "3.1.3.A2",
+                  "stream": "A",
+                  "text": "Are AI model training data sources documented?",
+                  "type": "ordinal",
+                  "evidence_required": "Training data documentation, model cards",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "Not documented",
+                    "2": "Partial documentation",
+                    "3": "Complete documentation for all models",
+                    "4": "Automated documentation generation",
+                    "5": "Self-documenting training pipelines"
+                  }
+                },
+                {
+                  "id": "3.1.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for data versioning in AI pipelines?",
+                  "type": "ordinal",
+                  "evidence_required": "Data versioning system, version control records",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "No versioning",
+                    "2": "Manual versioning",
+                    "3": "Automated data versioning",
+                    "4": "Versioning with impact analysis",
+                    "5": "Self-optimizing data versioning"
+                  }
+                },
+                {
+                  "id": "3.1.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI training data has complete provenance?",
+                  "type": "percentage",
+                  "evidence_required": "Provenance coverage metrics",
+                  "standards_mapping": "ISO 42001 §6.1.3; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated verification"
+                  }
+                },
+                {
+                  "id": "3.1.3.B2",
+                  "stream": "B",
+                  "text": "How often is data provenance audited?",
+                  "type": "frequency",
+                  "evidence_required": "Provenance audit records",
+                  "standards_mapping": "ISO 42001 §9.2; NIST AI RMF MAP 2.1",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated auditing"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3.2",
+          "name": "Model & Platform Security",
+          "sub_dimensions": [
+            {
+              "id": "3.2.1",
+              "name": "AI Threat Modeling & Assessment",
+              "questions": [
+                {
+                  "id": "3.2.1.A1",
+                  "stream": "A",
+                  "text": "Is AI-specific threat modeling conducted?",
+                  "type": "ordinal",
+                  "evidence_required": "Threat model documents, assessment reports",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4; NIST CSF 2.0",
+                  "levels": {
+                    "1": "Not conducted",
+                    "2": "Conducted for high-risk systems",
+                    "3": "Conducted for all AI systems",
+                    "4": "Automated threat modeling",
+                    "5": "Predictive threat intelligence"
+                  }
+                },
+                {
+                  "id": "3.2.1.A2",
+                  "stream": "A",
+                  "text": "Are AI models tested for adversarial robustness?",
+                  "type": "ordinal",
+                  "evidence_required": "Adversarial testing reports, robustness metrics",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "Not tested",
+                    "2": "Ad-hoc testing",
+                    "3": "Systematic adversarial testing",
+                    "4": "Continuous adversarial testing",
+                    "5": "Automated adversarial resilience"
+                  }
+                },
+                {
+                  "id": "3.2.1.A3",
+                  "stream": "A",
+                  "text": "Is the AI supply chain secured?",
+                  "type": "ordinal",
+                  "evidence_required": "Supply chain risk assessment, vendor security reviews",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "Not secured",
+                    "2": "Vendor assessments",
+                    "3": "Supply chain risk management",
+                    "4": "Automated supply chain monitoring",
+                    "5": "Predictive supply chain security"
+                  }
+                },
+                {
+                  "id": "3.2.1.B1",
+                  "stream": "B",
+                  "text": "How many AI security incidents occurred in the past year?",
+                  "type": "count",
+                  "evidence_required": "Security incident records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">10",
+                    "3": "5-10",
+                    "4": "1-5",
+                    "5": "0 with predictive prevention"
+                  }
+                },
+                {
+                  "id": "3.2.1.B2",
+                  "stream": "B",
+                  "text": "What is the mean time to patch AI vulnerabilities?",
+                  "type": "ordinal",
+                  "evidence_required": "Vulnerability management records",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "N/A",
+                    "2": ">90 days",
+                    "3": "30-90 days",
+                    "4": "7-30 days",
+                    "5": "<7 days with automated patching"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.2.2",
+              "name": "Model Security & Protection",
+              "questions": [
+                {
+                  "id": "3.2.2.A1",
+                  "stream": "A",
+                  "text": "Are AI models protected against extraction attacks?",
+                  "type": "ordinal",
+                  "evidence_required": "Model protection controls, extraction test results",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "No protection",
+                    "2": "Basic access controls",
+                    "3": "Model extraction protections",
+                    "4": "Automated extraction detection",
+                    "5": "Self-protecting models with adversarial resilience"
+                  }
+                },
+                {
+                  "id": "3.2.2.A2",
+                  "stream": "A",
+                  "text": "Is model integrity verified throughout the lifecycle?",
+                  "type": "ordinal",
+                  "evidence_required": "Model integrity verification records",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "No verification",
+                    "2": "Manual verification at deployment",
+                    "3": "Automated integrity checks",
+                    "4": "Continuous integrity monitoring",
+                    "5": "Self-verifying models with blockchain"
+                  }
+                },
+                {
+                  "id": "3.2.2.A3",
+                  "stream": "A",
+                  "text": "Are AI model access controls implemented?",
+                  "type": "ordinal",
+                  "evidence_required": "Access control configuration, access logs",
+                  "standards_mapping": "ISO 42001 §8.2; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "No access controls",
+                    "2": "Basic access controls",
+                    "3": "Role-based access controls",
+                    "4": "Attribute-based access controls",
+                    "5": "Dynamic access controls with risk scoring"
+                  }
+                },
+                {
+                  "id": "3.2.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI models have completed security assessments?",
+                  "type": "percentage",
+                  "evidence_required": "Security assessment tracking",
+                  "standards_mapping": "ISO 42001 §8; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous assessment"
+                  }
+                },
+                {
+                  "id": "3.2.2.B2",
+                  "stream": "B",
+                  "text": "How often are AI models re-assessed for security?",
+                  "type": "frequency",
+                  "evidence_required": "Re-assessment schedule, assessment records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.4",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated assessment"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.2.3",
+              "name": "Platform & Infrastructure Security",
+              "questions": [
+                {
+                  "id": "3.2.3.A1",
+                  "stream": "A",
+                  "text": "Is the AI platform infrastructure hardened?",
+                  "type": "ordinal",
+                  "evidence_required": "Infrastructure hardening documentation, security configs",
+                  "standards_mapping": "ISO 42001 §8; NIST CSF 2.0 PR.PS",
+                  "levels": {
+                    "1": "No hardening",
+                    "2": "Basic hardening",
+                    "3": "Systematic hardening process",
+                    "4": "Automated hardening with verification",
+                    "5": "Self-hardening infrastructure"
+                  }
+                },
+                {
+                  "id": "3.2.3.A2",
+                  "stream": "A",
+                  "text": "Are AI platform vulnerabilities managed?",
+                  "type": "ordinal",
+                  "evidence_required": "Vulnerability management records, patch logs",
+                  "standards_mapping": "ISO 42001 §8; NIST CSF 2.0 PR.PS",
+                  "levels": {
+                    "1": "Not managed",
+                    "2": "Ad-hoc patching",
+                    "3": "Defined vulnerability management",
+                    "4": "Automated vulnerability management",
+                    "5": "Self-healing vulnerability management"
+                  }
+                },
+                {
+                  "id": "3.2.3.A3",
+                  "stream": "A",
+                  "text": "Is network segmentation implemented for AI workloads?",
+                  "type": "ordinal",
+                  "evidence_required": "Network architecture diagrams, segmentation configs",
+                  "standards_mapping": "ISO 42001 §8; NIST CSF 2.0 PR.PS",
+                  "levels": {
+                    "1": "No segmentation",
+                    "2": "Basic segmentation",
+                    "3": "Defined segmentation strategy",
+                    "4": "Micro-segmentation with zero trust",
+                    "5": "Adaptive segmentation with ML-based detection"
+                  }
+                },
+                {
+                  "id": "3.2.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI infrastructure components are security hardened?",
+                  "type": "percentage",
+                  "evidence_required": "Hardening coverage metrics",
+                  "standards_mapping": "ISO 42001 §8; NIST CSF 2.0 PR.PS",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated verification"
+                  }
+                },
+                {
+                  "id": "3.2.3.B2",
+                  "stream": "B",
+                  "text": "How often is AI infrastructure penetration tested?",
+                  "type": "frequency",
+                  "evidence_required": "Penetration test reports",
+                  "standards_mapping": "ISO 42001 §9.1; NIST CSF 2.0 PR.PS",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with automated testing"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3.3",
+          "name": "Agent Identity & Access Governance",
+          "sub_dimensions": [
+            {
+              "id": "3.3.1",
+              "name": "Agent Identity Management",
+              "questions": [
+                {
+                  "id": "3.3.1.A1",
+                  "stream": "A",
+                  "text": "Does each AI agent have a unique, attributable identity?",
+                  "type": "ordinal",
+                  "evidence_required": "Agent identity registry, identity assignments",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA; EU AI Act Art. 12",
+                  "levels": {
+                    "1": "No unique identities",
+                    "2": "Some agents have identities",
+                    "3": "All agents have unique identities",
+                    "4": "Identities with cryptographic verification",
+                    "5": "Self-sovereign agent identities"
+                  }
+                },
+                {
+                  "id": "3.3.1.A2",
+                  "stream": "A",
+                  "text": "Are agent credentials short-lived and task-scoped?",
+                  "type": "ordinal",
+                  "evidence_required": "Credential management configuration, credential policies",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "Long-lived static credentials",
+                    "2": "Credentials rotated periodically",
+                    "3": "Short-lived credentials",
+                    "4": "Task-scoped dynamic credentials",
+                    "5": "Self-expiring intent-bound credentials"
+                  }
+                },
+                {
+                  "id": "3.3.1.A3",
+                  "stream": "A",
+                  "text": "Is there a complete agent inventory with ownership?",
+                  "type": "ordinal",
+                  "evidence_required": "Agent inventory database, ownership assignments",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "No inventory",
+                    "2": "Partial inventory",
+                    "3": "Complete inventory with owners",
+                    "4": "Real-time inventory with automated discovery",
+                    "5": "Self-maintaining inventory with predictive analytics"
+                  }
+                },
+                {
+                  "id": "3.3.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of agent actions are attributable to a specific identity?",
+                  "type": "percentage",
+                  "evidence_required": "Attribution metrics, audit logs",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with cryptographic verification"
+                  }
+                },
+                {
+                  "id": "3.3.1.B2",
+                  "stream": "B",
+                  "text": "How often are agent access reviews conducted?",
+                  "type": "frequency",
+                  "evidence_required": "Access review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated certification"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.3.2",
+              "name": "Agent Access Control",
+              "questions": [
+                {
+                  "id": "3.3.2.A1",
+                  "stream": "A",
+                  "text": "Are agent permissions scoped to least privilege?",
+                  "type": "ordinal",
+                  "evidence_required": "Permission configuration, access control policies",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "No scoping",
+                    "2": "Informal scoping",
+                    "3": "Defined least privilege",
+                    "4": "Automated least privilege enforcement",
+                    "5": "Dynamic privilege adjustment based on context"
+                  }
+                },
+                {
+                  "id": "3.3.2.A2",
+                  "stream": "A",
+                  "text": "Is multi-factor authentication required for agent operations?",
+                  "type": "ordinal",
+                  "evidence_required": "MFA configuration, authentication logs",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "No MFA",
+                    "2": "MFA for some operations",
+                    "3": "MFA for all agent operations",
+                    "4": "Phishing-resistant MFA",
+                    "5": "Continuous authentication with behavioral biometrics"
+                  }
+                },
+                {
+                  "id": "3.3.2.A3",
+                  "stream": "A",
+                  "text": "Are agent API keys and secrets managed securely?",
+                  "type": "ordinal",
+                  "evidence_required": "Secrets management system, key rotation records",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "Not managed",
+                    "2": "Basic secrets management",
+                    "3": "Centralized secrets management",
+                    "4": "Automated secrets rotation",
+                    "5": "Self-rotating secrets with hardware security"
+                  }
+                },
+                {
+                  "id": "3.3.2.B1",
+                  "stream": "B",
+                  "text": "How many unauthorized agent actions were detected in the past year?",
+                  "type": "count",
+                  "evidence_required": "Unauthorized action detection logs",
+                  "standards_mapping": "ISO 42001 §10.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">10",
+                    "3": "5-10",
+                    "4": "1-5",
+                    "5": "0 with predictive prevention"
+                  }
+                },
+                {
+                  "id": "3.3.2.B2",
+                  "stream": "B",
+                  "text": "What percentage of agent access requests are automatically validated?",
+                  "type": "percentage",
+                  "evidence_required": "Access validation metrics",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated validation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.3.3",
+              "name": "Agent Lifecycle Management",
+              "questions": [
+                {
+                  "id": "3.3.3.A1",
+                  "stream": "A",
+                  "text": "Is there a defined agent lifecycle management process?",
+                  "type": "ordinal",
+                  "evidence_required": "Lifecycle management process documentation",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal lifecycle management",
+                    "3": "Defined lifecycle process",
+                    "4": "Automated lifecycle management",
+                    "5": "Self-managing agent lifecycle"
+                  }
+                },
+                {
+                  "id": "3.3.3.A2",
+                  "stream": "A",
+                  "text": "Are agent decommissioning procedures defined?",
+                  "type": "ordinal",
+                  "evidence_required": "Decommissioning procedures, decommissioning records",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "No procedures",
+                    "2": "Informal decommissioning",
+                    "3": "Defined decommissioning process",
+                    "4": "Automated decommissioning with verification",
+                    "5": "Self-decommissioning with audit trail"
+                  }
+                },
+                {
+                  "id": "3.3.3.A3",
+                  "stream": "A",
+                  "text": "Is agent ownership transferred during personnel changes?",
+                  "type": "ordinal",
+                  "evidence_required": "Ownership transfer records, HR integration",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "No transfer process",
+                    "2": "Manual transfer",
+                    "3": "Defined transfer process",
+                    "4": "Automated transfer with HR integration",
+                    "5": "Self-transferring ownership with smart contracts"
+                  }
+                },
+                {
+                  "id": "3.3.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of agents have documented ownership?",
+                  "type": "percentage",
+                  "evidence_required": "Ownership documentation",
+                  "standards_mapping": "ISO 42001 §8.2; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated verification"
+                  }
+                },
+                {
+                  "id": "3.3.3.B2",
+                  "stream": "B",
+                  "text": "How often is the agent inventory reconciled with actual deployments?",
+                  "type": "frequency",
+                  "evidence_required": "Reconciliation records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST CSF 2.0 PR.AA",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated reconciliation"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3.4",
+          "name": "Runtime Behavioral Controls",
+          "sub_dimensions": [
+            {
+              "id": "3.4.1",
+              "name": "Runtime Guardrails & Constraints",
+              "questions": [
+                {
+                  "id": "3.4.1.A1",
+                  "stream": "A",
+                  "text": "Are runtime behavioral guardrails implemented for agents?",
+                  "type": "ordinal",
+                  "evidence_required": "Guardrail configuration, policy definitions",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5; NIST CSF 2.0 DE.AE",
+                  "levels": {
+                    "1": "No guardrails",
+                    "2": "Basic rate limiting",
+                    "3": "Defined guardrails for all agents",
+                    "4": "Automated guardrails with policy enforcement",
+                    "5": "Adaptive guardrails with ML-based detection"
+                  }
+                },
+                {
+                  "id": "3.4.1.A2",
+                  "stream": "A",
+                  "text": "Is agent behavior monitored for anomalies?",
+                  "type": "ordinal",
+                  "evidence_required": "Anomaly detection system, monitoring dashboards",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5; NIST CSF 2.0 DE.AE",
+                  "levels": {
+                    "1": "Not monitored",
+                    "2": "Basic logging",
+                    "3": "Anomaly detection defined",
+                    "4": "Real-time anomaly detection",
+                    "5": "Predictive behavior analysis"
+                  }
+                },
+                {
+                  "id": "3.4.1.A3",
+                  "stream": "A",
+                  "text": "Are there defined responses to agent misbehavior?",
+                  "type": "ordinal",
+                  "evidence_required": "Response playbooks, incident response procedures",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.5; NIST CSF 2.0 RS.AN",
+                  "levels": {
+                    "1": "No defined responses",
+                    "2": "Informal response process",
+                    "3": "Documented response playbooks",
+                    "4": "Automated response with escalation",
+                    "5": "Self-healing response with learning"
+                  }
+                },
+                {
+                  "id": "3.4.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of agent actions are governed by runtime controls?",
+                  "type": "percentage",
+                  "evidence_required": "Runtime control coverage metrics",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with adaptive controls"
+                  }
+                },
+                {
+                  "id": "3.4.1.B2",
+                  "stream": "B",
+                  "text": "How quickly are anomalous agent behaviors detected?",
+                  "type": "ordinal",
+                  "evidence_required": "Detection time metrics",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "N/A",
+                    "2": ">24 hours",
+                    "3": "1-24 hours",
+                    "4": "1-60 minutes",
+                    "5": "<1 minute with predictive detection"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.4.2",
+              "name": "Tool & API Governance",
+              "questions": [
+                {
+                  "id": "3.4.2.A1",
+                  "stream": "A",
+                  "text": "Are agent tool/API calls controlled and audited?",
+                  "type": "ordinal",
+                  "evidence_required": "Tool access control configuration, audit logs",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5; NIST CSF 2.0 DE.AE",
+                  "levels": {
+                    "1": "Not controlled",
+                    "2": "Basic access control",
+                    "3": "Tool allowlisting",
+                    "4": "Dynamic tool access with risk scoring",
+                    "5": "Intent-based tool governance"
+                  }
+                },
+                {
+                  "id": "3.4.2.A2",
+                  "stream": "A",
+                  "text": "Is there a process for approving new agent tool integrations?",
+                  "type": "ordinal",
+                  "evidence_required": "Tool approval process, approval records",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal approval",
+                    "3": "Defined approval process",
+                    "4": "Automated approval with risk assessment",
+                    "5": "Self-evaluating tool integration with guardrails"
+                  }
+                },
+                {
+                  "id": "3.4.2.A3",
+                  "stream": "A",
+                  "text": "Are agent tool permissions reviewed regularly?",
+                  "type": "ordinal",
+                  "evidence_required": "Tool permission review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "No reviews",
+                    "2": "Annual reviews",
+                    "3": "Quarterly reviews",
+                    "4": "Monthly reviews",
+                    "5": "Continuous with automated optimization"
+                  }
+                },
+                {
+                  "id": "3.4.2.B1",
+                  "stream": "B",
+                  "text": "What percentage of agent tool calls are audited?",
+                  "type": "percentage",
+                  "evidence_required": "Tool call audit coverage",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with real-time auditing"
+                  }
+                },
+                {
+                  "id": "3.4.2.B2",
+                  "stream": "B",
+                  "text": "How often are runtime control policies reviewed and updated?",
+                  "type": "frequency",
+                  "evidence_required": "Policy review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Quarterly",
+                    "4": "Monthly",
+                    "5": "Continuous with automated optimization"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "3.4.3",
+              "name": "Behavioral Baselines & Drift",
+              "questions": [
+                {
+                  "id": "3.4.3.A1",
+                  "stream": "A",
+                  "text": "Are behavioral baselines established for AI agents?",
+                  "type": "ordinal",
+                  "evidence_required": "Behavioral baseline documentation, baseline metrics",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "No baselines",
+                    "2": "Informal baselines",
+                    "3": "Defined baselines for all agents",
+                    "4": "Automated baseline management",
+                    "5": "Self-learning behavioral baselines"
+                  }
+                },
+                {
+                  "id": "3.4.3.A2",
+                  "stream": "A",
+                  "text": "Is agent behavior drift detected and alerted?",
+                  "type": "ordinal",
+                  "evidence_required": "Drift detection system, alert records",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "No drift detection",
+                    "2": "Manual drift detection",
+                    "3": "Automated drift detection",
+                    "4": "Real-time drift detection with alerting",
+                    "5": "Predictive drift prevention"
+                  }
+                },
+                {
+                  "id": "3.4.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for investigating behavioral anomalies?",
+                  "type": "ordinal",
+                  "evidence_required": "Investigation process documentation, investigation records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc investigation",
+                    "3": "Defined investigation process",
+                    "4": "Automated investigation with escalation",
+                    "5": "Self-investigating with root cause analysis"
+                  }
+                },
+                {
+                  "id": "3.4.3.B1",
+                  "stream": "B",
+                  "text": "How many behavioral anomalies were detected in the past year?",
+                  "type": "count",
+                  "evidence_required": "Anomaly detection records",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">100",
+                    "3": "50-100",
+                    "4": "10-50",
+                    "5": "<10 with predictive prevention"
+                  }
+                },
+                {
+                  "id": "3.4.3.B2",
+                  "stream": "B",
+                  "text": "What is the false positive rate of behavioral anomaly detection?",
+                  "type": "percentage",
+                  "evidence_required": "False positive rate metrics",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.5",
+                  "levels": {
+                    "1": ">50%",
+                    "2": "30-50%",
+                    "3": "15-30%",
+                    "4": "5-15%",
+                    "5": "<5% with ML-based optimization"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "Operations & Performance",
+      "domains": [
+        {
+          "id": "4.1",
+          "name": "Monitoring & Incident Response",
+          "sub_dimensions": [
+            {
+              "id": "4.1.1",
+              "name": "AI Monitoring & Detection",
+              "questions": [
+                {
+                  "id": "4.1.1.A1",
+                  "stream": "A",
+                  "text": "Is there an AI-specific incident response plan?",
+                  "type": "ordinal",
+                  "evidence_required": "IR plan document, playbooks",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.6; NIST CSF 2.0 RS.RP",
+                  "levels": {
+                    "1": "No plan",
+                    "2": "Plan based on general IR plan",
+                    "3": "AI-specific IR plan with playbooks",
+                    "4": "Plan with automated response",
+                    "5": "Plan with predictive response"
+                  }
+                },
+                {
+                  "id": "4.1.1.A2",
+                  "stream": "A",
+                  "text": "Are AI systems monitored for model drift and degradation?",
+                  "type": "ordinal",
+                  "evidence_required": "Monitoring dashboards, drift detection metrics",
+                  "standards_mapping": "ISO 42001 §9; NIST AI RMF MANAGE 2.6; NIST CSF 2.0 DE.AE",
+                  "levels": {
+                    "1": "Not monitored",
+                    "2": "Manual monitoring",
+                    "3": "Automated drift detection",
+                    "4": "Predictive drift prevention",
+                    "5": "Self-mitigating drift management"
+                  }
+                },
+                {
+                  "id": "4.1.1.A3",
+                  "stream": "A",
+                  "text": "Are AI incidents tracked and analyzed?",
+                  "type": "ordinal",
+                  "evidence_required": "Incident tracking system, trend analysis reports",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.6; NIST CSF 2.0 RS.RP",
+                  "levels": {
+                    "1": "Not tracked",
+                    "2": "Tracked in spreadsheet",
+                    "3": "Tracked in incident management system",
+                    "4": "Automated trend analysis",
+                    "5": "Predictive incident prevention"
+                  }
+                },
+                {
+                  "id": "4.1.1.B1",
+                  "stream": "B",
+                  "text": "What is the mean time to detect AI incidents?",
+                  "type": "ordinal",
+                  "evidence_required": "MTD metrics, incident records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "N/A",
+                    "2": ">7 days",
+                    "3": "1-7 days",
+                    "4": "1-24 hours",
+                    "5": "<1 hour with predictive detection"
+                  }
+                },
+                {
+                  "id": "4.1.1.B2",
+                  "stream": "B",
+                  "text": "What is the mean time to recover from AI incidents?",
+                  "type": "ordinal",
+                  "evidence_required": "MTTR metrics, incident records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "N/A",
+                    "2": ">7 days",
+                    "3": "1-7 days",
+                    "4": "1-24 hours",
+                    "5": "<1 hour with automated recovery"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4.1.2",
+              "name": "Incident Response & Recovery",
+              "questions": [
+                {
+                  "id": "4.1.2.A1",
+                  "stream": "A",
+                  "text": "Are AI incident response playbooks defined?",
+                  "type": "ordinal",
+                  "evidence_required": "IR playbook documents",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "No playbooks",
+                    "2": "Informal response procedures",
+                    "3": "Defined playbooks for common scenarios",
+                    "4": "Automated playbook execution",
+                    "5": "Self-healing playbooks with learning"
+                  }
+                },
+                {
+                  "id": "4.1.2.A2",
+                  "stream": "A",
+                  "text": "Is there a process for AI incident post-mortem analysis?",
+                  "type": "ordinal",
+                  "evidence_required": "Post-mortem reports, lessons learned records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF MANAGE 4",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc analysis",
+                    "3": "Defined post-mortem process",
+                    "4": "Automated post-mortem with trend analysis",
+                    "5": "Predictive incident prevention with learning"
+                  }
+                },
+                {
+                  "id": "4.1.2.A3",
+                  "stream": "A",
+                  "text": "Are AI incident response capabilities tested?",
+                  "type": "ordinal",
+                  "evidence_required": "Tabletop exercise records, simulation results",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "Not tested",
+                    "2": "Informal testing",
+                    "3": "Regular tabletop exercises",
+                    "4": "Automated simulation testing",
+                    "5": "Continuous testing with red team exercises"
+                  }
+                },
+                {
+                  "id": "4.1.2.B1",
+                  "stream": "B",
+                  "text": "How many AI incidents occurred in the past year?",
+                  "type": "count",
+                  "evidence_required": "Incident records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "Unknown",
+                    "2": ">20",
+                    "3": "10-20",
+                    "4": "1-10",
+                    "5": "0 with predictive prevention"
+                  }
+                },
+                {
+                  "id": "4.1.2.B2",
+                  "stream": "B",
+                  "text": "What percentage of AI incidents were resolved within SLA?",
+                  "type": "percentage",
+                  "evidence_required": "SLA compliance metrics",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "<50%",
+                    "2": "50-70%",
+                    "3": "70-85%",
+                    "4": "85-95%",
+                    "5": ">95% with automated response"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4.1.3",
+              "name": "Operational Resilience",
+              "questions": [
+                {
+                  "id": "4.1.3.A1",
+                  "stream": "A",
+                  "text": "Is there a business continuity plan for AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "BCP document, recovery procedures",
+                  "standards_mapping": "ISO 42001 §10; NIST CSF 2.0 RC.RP",
+                  "levels": {
+                    "1": "No BCP",
+                    "2": "BCP exists but not AI-specific",
+                    "3": "AI-specific BCP",
+                    "4": "BCP with automated failover",
+                    "5": "Self-healing BCP with predictive recovery"
+                  }
+                },
+                {
+                  "id": "4.1.3.A2",
+                  "stream": "A",
+                  "text": "Are AI system recovery capabilities tested?",
+                  "type": "ordinal",
+                  "evidence_required": "Recovery test records, test results",
+                  "standards_mapping": "ISO 42001 §9.1; NIST CSF 2.0 RC.RP",
+                  "levels": {
+                    "1": "Not tested",
+                    "2": "Informal testing",
+                    "3": "Regular recovery testing",
+                    "4": "Automated recovery testing",
+                    "5": "Continuous testing with chaos engineering"
+                  }
+                },
+                {
+                  "id": "4.1.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for AI system deactivation in emergencies?",
+                  "type": "ordinal",
+                  "evidence_required": "Deactivation procedures, kill switch documentation",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF MANAGE 2.6",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal deactivation",
+                    "3": "Defined deactivation process",
+                    "4": "Automated deactivation with verification",
+                    "5": "Self-deactivating with predictive triggers"
+                  }
+                },
+                {
+                  "id": "4.1.3.B1",
+                  "stream": "B",
+                  "text": "What is the recovery time objective (RTO) for critical AI systems?",
+                  "type": "ordinal",
+                  "evidence_required": "RTO documentation, recovery test results",
+                  "standards_mapping": "ISO 42001 §10; NIST CSF 2.0 RC.RP",
+                  "levels": {
+                    "1": ">24 hours",
+                    "2": "4-24 hours",
+                    "3": "1-4 hours",
+                    "4": "15-60 minutes",
+                    "5": "<15 minutes with automated recovery"
+                  }
+                },
+                {
+                  "id": "4.1.3.B2",
+                  "stream": "B",
+                  "text": "How often is AI operational resilience tested?",
+                  "type": "frequency",
+                  "evidence_required": "Resilience test records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST CSF 2.0 RC.RP",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with automated testing"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4.2",
+          "name": "Workforce & Organizational Readiness",
+          "sub_dimensions": [
+            {
+              "id": "4.2.1",
+              "name": "AI Literacy & Training",
+              "questions": [
+                {
+                  "id": "4.2.1.A1",
+                  "stream": "A",
+                  "text": "Is there an AI literacy/training program?",
+                  "type": "ordinal",
+                  "evidence_required": "Training program documentation, course materials",
+                  "standards_mapping": "ISO 42001 §7, §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No program",
+                    "2": "Ad-hoc training",
+                    "3": "Structured program for all roles",
+                    "4": "Role-specific competency framework",
+                    "5": "Continuous learning culture with AI fluency"
+                  }
+                },
+                {
+                  "id": "4.2.1.A2",
+                  "stream": "A",
+                  "text": "Are there designated AI champions or RAI specialists?",
+                  "type": "ordinal",
+                  "evidence_required": "Champion network documentation, role assignments",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No champions",
+                    "2": "Informal champions",
+                    "3": "Formal champion network",
+                    "4": "Champions with dedicated time and authority",
+                    "5": "Champions driving organizational transformation"
+                  }
+                },
+                {
+                  "id": "4.2.1.A3",
+                  "stream": "A",
+                  "text": "Is AI governance included in employee onboarding?",
+                  "type": "ordinal",
+                  "evidence_required": "Onboarding curriculum, training records",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "Not included",
+                    "2": "Mentioned in onboarding",
+                    "3": "Formal AI governance module",
+                    "4": "Role-specific governance training",
+                    "5": "Personalized AI governance learning path"
+                  }
+                },
+                {
+                  "id": "4.2.1.B1",
+                  "stream": "B",
+                  "text": "What percentage of employees have completed AI literacy training?",
+                  "type": "percentage",
+                  "evidence_required": "Training completion records",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous learning"
+                  }
+                },
+                {
+                  "id": "4.2.1.B2",
+                  "stream": "B",
+                  "text": "How is AI competency assessed and tracked?",
+                  "type": "ordinal",
+                  "evidence_required": "Competency assessment records, skills matrix",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "Not assessed",
+                    "2": "Self-assessment",
+                    "3": "Manager assessment",
+                    "4": "Formal competency certification",
+                    "5": "Continuous skills validation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4.2.2",
+              "name": "Organizational Culture & Change",
+              "questions": [
+                {
+                  "id": "4.2.2.A1",
+                  "stream": "A",
+                  "text": "Is there a change management process for AI initiatives?",
+                  "type": "ordinal",
+                  "evidence_required": "Change management process documentation",
+                  "standards_mapping": "ISO 42001 §7; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal change management",
+                    "3": "Defined change management process",
+                    "4": "Automated change management with metrics",
+                    "5": "Self-optimizing change management"
+                  }
+                },
+                {
+                  "id": "4.2.2.A2",
+                  "stream": "A",
+                  "text": "Are AI governance roles integrated into organizational structure?",
+                  "type": "ordinal",
+                  "evidence_required": "Organizational chart, role definitions",
+                  "standards_mapping": "ISO 42001 §5.3; NIST AI RMF GOVERN 1.2",
+                  "levels": {
+                    "1": "Not integrated",
+                    "2": "Informal integration",
+                    "3": "Defined integration",
+                    "4": "Fully integrated with reporting lines",
+                    "5": "AI governance drives organizational design"
+                  }
+                },
+                {
+                  "id": "4.2.2.A3",
+                  "stream": "A",
+                  "text": "Is there a process for gathering employee feedback on AI governance?",
+                  "type": "ordinal",
+                  "evidence_required": "Feedback collection process, survey results",
+                  "standards_mapping": "ISO 42001 §7.4; NIST AI RMF GOVERN 5.2",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal feedback",
+                    "3": "Defined feedback process",
+                    "4": "Automated feedback collection and analysis",
+                    "5": "Continuous feedback with predictive insights"
+                  }
+                },
+                {
+                  "id": "4.2.2.B1",
+                  "stream": "B",
+                  "text": "How often is employee AI governance satisfaction measured?",
+                  "type": "frequency",
+                  "evidence_required": "Satisfaction survey records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 5.2",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with real-time feedback"
+                  }
+                },
+                {
+                  "id": "4.2.2.B2",
+                  "stream": "B",
+                  "text": "What percentage of employees report understanding AI governance expectations?",
+                  "type": "percentage",
+                  "evidence_required": "Employee survey results",
+                  "standards_mapping": "ISO 42001 §7.4; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous education"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4.2.3",
+              "name": "Skills & Competency Framework",
+              "questions": [
+                {
+                  "id": "4.2.3.A1",
+                  "stream": "A",
+                  "text": "Is there an AI competency framework defined?",
+                  "type": "ordinal",
+                  "evidence_required": "Competency framework document",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No framework",
+                    "2": "Informal competency definitions",
+                    "3": "Defined competency framework",
+                    "4": "Framework with certification paths",
+                    "5": "Self-optimizing competency framework"
+                  }
+                },
+                {
+                  "id": "4.2.3.A2",
+                  "stream": "A",
+                  "text": "Are AI governance skills included in job descriptions?",
+                  "type": "ordinal",
+                  "evidence_required": "Job descriptions, role profiles",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "Not included",
+                    "2": "Included for some roles",
+                    "3": "Included for all relevant roles",
+                    "4": "Integrated into performance reviews",
+                    "5": "AI governance skills drive career progression"
+                  }
+                },
+                {
+                  "id": "4.2.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for identifying AI skills gaps?",
+                  "type": "ordinal",
+                  "evidence_required": "Skills gap analysis, training needs assessment",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Informal gap identification",
+                    "3": "Defined gap analysis process",
+                    "4": "Automated gap analysis with recommendations",
+                    "5": "Predictive skills gap prevention"
+                  }
+                },
+                {
+                  "id": "4.2.3.B1",
+                  "stream": "B",
+                  "text": "What percentage of AI governance roles have defined competency requirements?",
+                  "type": "percentage",
+                  "evidence_required": "Role competency documentation",
+                  "standards_mapping": "ISO 42001 §7.2; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with continuous validation"
+                  }
+                },
+                {
+                  "id": "4.2.3.B2",
+                  "stream": "B",
+                  "text": "How often is the AI competency framework reviewed and updated?",
+                  "type": "frequency",
+                  "evidence_required": "Framework review records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 1.3",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with automated updates"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4.3",
+          "name": "Continuous Improvement & Innovation",
+          "sub_dimensions": [
+            {
+              "id": "4.3.1",
+              "name": "Continuous Improvement Process",
+              "questions": [
+                {
+                  "id": "4.3.1.A1",
+                  "stream": "A",
+                  "text": "Is there a process for continuous improvement of AI governance?",
+                  "type": "ordinal",
+                  "evidence_required": "CI process documentation, improvement records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc improvements",
+                    "3": "Structured improvement process",
+                    "4": "Metrics-driven improvement program",
+                    "5": "Innovation-driven improvement culture"
+                  }
+                },
+                {
+                  "id": "4.3.1.A2",
+                  "stream": "A",
+                  "text": "Are lessons learned from AI incidents systematically captured?",
+                  "type": "ordinal",
+                  "evidence_required": "Lessons learned repository, knowledge base",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF GOVERN 5.2",
+                  "levels": {
+                    "1": "Not captured",
+                    "2": "Captured informally",
+                    "3": "Documented and shared",
+                    "4": "Integrated into training and processes",
+                    "5": "Predictive knowledge management"
+                  }
+                },
+                {
+                  "id": "4.3.1.A3",
+                  "stream": "A",
+                  "text": "Does the organization contribute to AI governance standards/communities?",
+                  "type": "ordinal",
+                  "evidence_required": "Standards body participation, community contributions",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "No contribution",
+                    "2": "Passive participation",
+                    "3": "Active participation",
+                    "4": "Leadership in standards bodies",
+                    "5": "Driving industry standards"
+                  }
+                },
+                {
+                  "id": "4.3.1.B1",
+                  "stream": "B",
+                  "text": "How often is the AI governance maturity reassessed?",
+                  "type": "frequency",
+                  "evidence_required": "Assessment history, reassessment records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Every 2-3 years",
+                    "3": "Annually",
+                    "4": "Semi-annually",
+                    "5": "Continuous with automated assessment"
+                  }
+                },
+                {
+                  "id": "4.3.1.B2",
+                  "stream": "B",
+                  "text": "What percentage of improvement recommendations are implemented?",
+                  "type": "percentage",
+                  "evidence_required": "Implementation tracking records",
+                  "standards_mapping": "ISO 42001 §10.1; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated tracking"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4.3.2",
+              "name": "Innovation & Emerging Practices",
+              "questions": [
+                {
+                  "id": "4.3.2.A1",
+                  "stream": "A",
+                  "text": "Is there an AI governance innovation program?",
+                  "type": "ordinal",
+                  "evidence_required": "Innovation program documentation, pilot records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "No program",
+                    "2": "Ad-hoc innovation",
+                    "3": "Defined innovation program",
+                    "4": "Metrics-driven innovation portfolio",
+                    "5": "Self-optimizing innovation ecosystem"
+                  }
+                },
+                {
+                  "id": "4.3.2.A2",
+                  "stream": "A",
+                  "text": "Are emerging AI governance practices evaluated?",
+                  "type": "ordinal",
+                  "evidence_required": "Emerging practice evaluation records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Not evaluated",
+                    "2": "Informal evaluation",
+                    "3": "Defined evaluation process",
+                    "4": "Automated evaluation with metrics",
+                    "5": "Predictive evaluation with ML"
+                  }
+                },
+                {
+                  "id": "4.3.2.A3",
+                  "stream": "A",
+                  "text": "Is there a process for scaling successful AI governance pilots?",
+                  "type": "ordinal",
+                  "evidence_required": "Pilot scaling process, scaling records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc scaling",
+                    "3": "Defined scaling process",
+                    "4": "Automated scaling with guardrails",
+                    "5": "Self-scaling with continuous validation"
+                  }
+                },
+                {
+                  "id": "4.3.2.B1",
+                  "stream": "B",
+                  "text": "How many AI governance innovations were implemented in the past year?",
+                  "type": "count",
+                  "evidence_required": "Innovation implementation records",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "0",
+                    "2": "1-2",
+                    "3": "3-5",
+                    "4": "6-10",
+                    "5": ">10 with continuous innovation pipeline"
+                  }
+                },
+                {
+                  "id": "4.3.2.B2",
+                  "stream": "B",
+                  "text": "What percentage of AI governance improvements come from frontline employees?",
+                  "type": "percentage",
+                  "evidence_required": "Improvement source tracking",
+                  "standards_mapping": "ISO 42001 §10.1; NIST AI RMF GOVERN 5.2",
+                  "levels": {
+                    "1": "<10%",
+                    "2": "10-25%",
+                    "3": "25-50%",
+                    "4": "50-75%",
+                    "5": ">75% with continuous engagement"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4.3.3",
+              "name": "Benchmarking & Peer Learning",
+              "questions": [
+                {
+                  "id": "4.3.3.A1",
+                  "stream": "A",
+                  "text": "Is AI governance maturity benchmarked against peers?",
+                  "type": "ordinal",
+                  "evidence_required": "Benchmark reports, peer comparison data",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "No benchmarking",
+                    "2": "Informal comparison",
+                    "3": "Regular benchmarking process",
+                    "4": "Automated benchmarking with alerts",
+                    "5": "Predictive benchmarking with market intelligence"
+                  }
+                },
+                {
+                  "id": "4.3.3.A2",
+                  "stream": "A",
+                  "text": "Are industry AI governance best practices monitored?",
+                  "type": "ordinal",
+                  "evidence_required": "Best practice monitoring process, industry reports",
+                  "standards_mapping": "ISO 42001 §10; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Not monitored",
+                    "2": "Informal monitoring",
+                    "3": "Defined monitoring process",
+                    "4": "Automated monitoring with alerts",
+                    "5": "Predictive monitoring with AI"
+                  }
+                },
+                {
+                  "id": "4.3.3.A3",
+                  "stream": "A",
+                  "text": "Is there a process for learning from AI governance failures?",
+                  "type": "ordinal",
+                  "evidence_required": "Failure analysis process, learning records",
+                  "standards_mapping": "ISO 42001 §10.2; NIST AI RMF GOVERN 5.2",
+                  "levels": {
+                    "1": "No process",
+                    "2": "Ad-hoc learning",
+                    "3": "Defined learning process",
+                    "4": "Automated learning with knowledge base",
+                    "5": "Predictive failure prevention"
+                  }
+                },
+                {
+                  "id": "4.3.3.B1",
+                  "stream": "B",
+                  "text": "How often is AI governance benchmarking conducted?",
+                  "type": "frequency",
+                  "evidence_required": "Benchmarking schedule, report records",
+                  "standards_mapping": "ISO 42001 §9.1; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "Never",
+                    "2": "Annually",
+                    "3": "Semi-annually",
+                    "4": "Quarterly",
+                    "5": "Continuous with automated benchmarking"
+                  }
+                },
+                {
+                  "id": "4.3.3.B2",
+                  "stream": "B",
+                  "text": "What percentage of benchmarked practices are adopted?",
+                  "type": "percentage",
+                  "evidence_required": "Practice adoption tracking",
+                  "standards_mapping": "ISO 42001 §10.1; NIST AI RMF GOVERN 1.6",
+                  "levels": {
+                    "1": "<25%",
+                    "2": "25-50%",
+                    "3": "50-75%",
+                    "4": "75-95%",
+                    "5": ">95% with automated adoption"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

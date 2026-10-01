@@ -1,0 +1,116 @@
+# GRC_Claw Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grc-claw
+  namespace: governance
+  labels:
+    app: grc-claw
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: grc-claw
+  template:
+    metadata:
+      labels:
+        app: grc-claw
+    spec:
+      serviceAccountName: grc-claw
+      containers:
+        - name: grc-claw
+          image: grcclaw/server:v1.0.0
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grc-claw-db
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grc-claw-redis
+                  key: url
+            - name: KAFKA_BOOTSTRAP
+              value: "kafka:9092"
+            - name: SPIFFE_ENDPOINT
+              value: "unix:///run/spire/sockets/agent.sock"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: secrets
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: grc-claw-config
+        - name: secrets
+          secret:
+            secretName: grc-claw-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grc-claw
+  namespace: governance
+spec:
+  selector:
+    app: grc-claw
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grc-claw
+  namespace: governance
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: grc-claw
+  namespace: governance
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grc-claw
+  namespace: governance
+subjects:
+  - kind: ServiceAccount
+    name: grc-claw
+    namespace: governance
+roleRef:
+  kind: Role
+  name: grc-claw
+  apiGroup: rbac.authorization.k8s.io

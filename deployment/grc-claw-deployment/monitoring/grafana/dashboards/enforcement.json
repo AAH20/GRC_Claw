@@ -1,0 +1,76 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GRC_Claw Enforcement",
+    "tags": ["grc-claw", "enforcement"],
+    "timezone": "utc",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Decisions per Second",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(grc_decision_total[1m]))",
+            "legendFormat": "decisions/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "p99 Latency",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pdp-service"}[5m])) by (le))",
+            "legendFormat": "PDP p99"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="pep-gateway"}[5m])) by (le))",
+            "legendFormat": "PEP p99"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{service=~"pdp-service|pep-gateway|policy-api",status=~"5.."}[5m])) / sum(rate(http_requests_total{service=~"pdp-service|pep-gateway|policy-api"}[5m]))",
+            "legendFormat": "error rate"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Decision Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (outcome) (grc_decision_total)",
+            "legendFormat": "{{outcome}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Pod Health",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "kube_pod_status_phase{namespace=~"grc-claw-.*",phase="Running"}",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "refresh": "10s"
+  }
+}

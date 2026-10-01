@@ -1,0 +1,25 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: grc-claw-authz
+  namespace: grc-claw-control-plane
+spec:
+  selector:
+    matchLabels:
+      app: pdp-service
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/grc-claw-control-plane/sa/pep-gateway
+        - cluster.local/ns/grc-claw-control-plane/sa/policy-api
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /evaluate
+        - /healthz
+        - /readyz
+        - /metrics

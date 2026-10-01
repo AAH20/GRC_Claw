@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: validator-config
+  namespace: grc-claw-evidence
+data:
+  config.yaml: "validation:\n  strict_mode: true\n  require_hash: true\n  require_signature:\
+    \ true\n"

@@ -1,0 +1,93 @@
+# Production values for GRC_Claw
+
+global:
+  imageRegistry: ghcr.io/grc-claw
+  imagePullPolicy: Always
+  storageClass: premium-rwo
+
+controlPlane:
+  policyApi:
+    replicas: 3
+    hpa:
+      minReplicas: 3
+      maxReplicas: 10
+
+  pdpService:
+    replicas: 3
+    hpa:
+      minReplicas: 3
+      maxReplicas: 20
+
+  pepGateway:
+    replicas: 3
+    hpa:
+      minReplicas: 3
+      maxReplicas: 20
+
+  agentIdentity:
+    replicas: 3
+
+evidence:
+  collector:
+    replicas: 3
+    hpa:
+      minReplicas: 3
+      maxReplicas: 15
+
+  complianceMapping:
+    replicas: 2
+
+analytics:
+  engine:
+    replicas: 2
+    hpa:
+      minReplicas: 2
+      maxReplicas: 8
+
+  reporting:
+    replicas: 2
+
+data:
+  postgresql:
+    replicas: 3
+    storage: 500Gi
+
+  redis:
+    replicas: 6
+    storage: 50Gi
+
+  kafka:
+    replicas: 3
+    storage: 200Gi
+
+  minio:
+    replicas: 4
+    storage: 500Gi
+
+  immudb:
+    replicas: 3
+    storage: 100Gi
+
+  vault:
+    replicas: 3
+    storage: 10Gi
+
+observability:
+  prometheus:
+    retention: 30d
+    storage: 100Gi
+
+  grafana:
+    storage: 10Gi
+
+  loki:
+    retention: 30d
+    storage: 100Gi
+
+  otelCollector:
+    replicas: 2
+
+istio:
+  enabled: true
+  mtls:
+    mode: STRICT

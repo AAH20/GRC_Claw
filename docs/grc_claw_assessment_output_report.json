@@ -1,0 +1,1009 @@
+{
+  "metadata": {
+    "assessment_date": "2026-10-01T14:46:50.469279",
+    "questionnaire_version": "1.0",
+    "total_questions": 180,
+    "weight_profile": "default"
+  },
+  "pillars": [
+    {
+      "id": "P1",
+      "name": "Governance & Strategy",
+      "domains": [
+        {
+          "id": "1.1",
+          "name": "AI Governance Framework",
+          "sub_dimensions": [
+            {
+              "score": 2.8,
+              "stream_a": 2.67,
+              "stream_b": 3.0,
+              "partial_credit": 2.3,
+              "level": 3,
+              "id": "1.1.1",
+              "name": "Governance Structure & Policy"
+            },
+            {
+              "score": 2.8,
+              "stream_a": 2.33,
+              "stream_b": 3.5,
+              "partial_credit": 2.2,
+              "level": 3,
+              "id": "1.1.2",
+              "name": "AI System Registry & Inventory"
+            },
+            {
+              "score": 2.4,
+              "stream_a": 2.33,
+              "stream_b": 2.5,
+              "partial_credit": 2.2,
+              "level": 2,
+              "id": "1.1.3",
+              "name": "Governance Integration & Reporting"
+            }
+          ],
+          "score": 2.67,
+          "level": 3
+        },
+        {
+          "id": "1.2",
+          "name": "AI Strategy & Value Alignment",
+          "sub_dimensions": [
+            {
+              "score": 4.0,
+              "stream_a": 3.67,
+              "stream_b": 4.5,
+              "partial_credit": 3.3,
+              "level": 4,
+              "id": "1.2.1",
+              "name": "AI Strategy & Roadmap"
+            },
+            {
+              "score": 3.6,
+              "stream_a": 3.33,
+              "stream_b": 4.0,
+              "partial_credit": 2.4,
+              "level": 4,
+              "id": "1.2.2",
+              "name": "Value Realization & ROI"
+            },
+            {
+              "score": 2.8,
+              "stream_a": 3.33,
+              "stream_b": 2.0,
+              "partial_credit": 2.3,
+              "level": 3,
+              "id": "1.2.3",
+              "name": "Stakeholder Alignment & Communication"
+            }
+          ],
+          "score": 3.47,
+          "level": 4
+        },
+        {
+          "id": "1.3",
+          "name": "Risk & Compliance Management",
+          "sub_dimensions": [
+            {
+              "score": 2.8,
+              "stream_a": 2.67,
+              "stream_b": 3.0,
+              "partial_credit": 1.4,
+              "level": 3,
+              "id": "1.3.1",
+              "name": "AI Risk Management Framework"
+            },
+            {
+              "score": 2.2,
+              "stream_a": 2.0,
+              "stream_b": 2.5,
+              "partial_credit": 1.2,
+              "level": 2,
+              "id": "1.3.2",
+              "name": "Regulatory Compliance & Standards"
+            },
+            {
+              "score": 2.0,
+              "stream_a": 2.67,
+              "stream_b": 1.0,
+              "partial_credit": 1.3,
+              "level": 2,
+              "id": "1.3.3",
+              "name": "Risk Assessment & Treatment"
+            }
+          ],
+          "score": 2.33,
+          "level": 2
+        }
+      ],
+      "score": 2.82,
+      "level": 3
+    },
+    {
+      "id": "P2",
+      "name": "Responsible AI & Ethics",
+      "domains": [
+        {
+          "id": "2.1",
+          "name": "Fairness, Transparency & Explainability",
+          "sub_dimensions": [
+            {
+              "score": 1.8,
+              "stream_a": 2.0,
+              "stream_b": 1.5,
+              "partial_credit": 1.3,
+              "level": 1,
+              "id": "2.1.1",
+              "name": "Fairness & Bias Management"
+            },
+            {
+              "score": 3.2,
+              "stream_a": 3.67,
+              "stream_b": 2.5,
+              "partial_credit": 2.4,
+              "level": 3,
+              "id": "2.1.2",
+              "name": "Transparency & Explainability"
+            },
+            {
+              "score": 2.4,
+              "stream_a": 2.67,
+              "stream_b": 2.0,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "2.1.3",
+              "name": "Ethical Review & Oversight"
+            }
+          ],
+          "score": 2.47,
+          "level": 2
+        },
+        {
+          "id": "2.2",
+          "name": "Privacy & Data Protection",
+          "sub_dimensions": [
+            {
+              "score": 2.8,
+              "stream_a": 2.0,
+              "stream_b": 4.0,
+              "partial_credit": 2.2,
+              "level": 3,
+              "id": "2.2.1",
+              "name": "Privacy by Design"
+            },
+            {
+              "score": 2.2,
+              "stream_a": 2.67,
+              "stream_b": 1.5,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "2.2.2",
+              "name": "Data Subject Rights & Consent"
+            },
+            {
+              "score": 2.4,
+              "stream_a": 2.67,
+              "stream_b": 2.0,
+              "partial_credit": 1.3,
+              "level": 2,
+              "id": "2.2.3",
+              "name": "Privacy-Enhancing Technologies"
+            }
+          ],
+          "score": 2.47,
+          "level": 2
+        },
+        {
+          "id": "2.3",
+          "name": "Human Oversight & Accountability",
+          "sub_dimensions": [
+            {
+              "score": 3.0,
+              "stream_a": 2.33,
+              "stream_b": 4.0,
+              "partial_credit": 2.3,
+              "level": 3,
+              "id": "2.3.1",
+              "name": "Human Oversight Mechanisms"
+            },
+            {
+              "score": 2.6,
+              "stream_a": 3.0,
+              "stream_b": 2.0,
+              "partial_credit": 2.2,
+              "level": 2,
+              "id": "2.3.2",
+              "name": "Meaningful Human Control"
+            },
+            {
+              "score": 3.2,
+              "stream_a": 3.67,
+              "stream_b": 2.5,
+              "partial_credit": 2.4,
+              "level": 3,
+              "id": "2.3.3",
+              "name": "Accountability & Audit Trail"
+            }
+          ],
+          "score": 2.93,
+          "level": 3
+        }
+      ],
+      "score": 2.62,
+      "level": 3
+    },
+    {
+      "id": "P3",
+      "name": "Technical Foundation",
+      "domains": [
+        {
+          "id": "3.1",
+          "name": "Data Governance & Quality",
+          "sub_dimensions": [
+            {
+              "score": 1.8,
+              "stream_a": 2.33,
+              "stream_b": 1.0,
+              "partial_credit": 1.2,
+              "level": 5,
+              "id": "3.1.1",
+              "name": "Data Governance Framework"
+            },
+            {
+              "score": 2.6,
+              "stream_a": 2.67,
+              "stream_b": 2.5,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "3.1.2",
+              "name": "Data Quality Management"
+            },
+            {
+              "score": 2.6,
+              "stream_a": 3.67,
+              "stream_b": 1.0,
+              "partial_credit": 1.3,
+              "level": 2,
+              "id": "3.1.3",
+              "name": "Data Provenance & Traceability"
+            }
+          ],
+          "score": 2.33,
+          "level": 2
+        },
+        {
+          "id": "3.2",
+          "name": "Model & Platform Security",
+          "sub_dimensions": [
+            {
+              "score": 2.8,
+              "stream_a": 2.33,
+              "stream_b": 3.5,
+              "partial_credit": 1.4,
+              "level": 3,
+              "id": "3.2.1",
+              "name": "AI Threat Modeling & Assessment"
+            },
+            {
+              "score": 2.4,
+              "stream_a": 2.33,
+              "stream_b": 2.5,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "3.2.2",
+              "name": "Model Security & Protection"
+            },
+            {
+              "score": 2.2,
+              "stream_a": 2.0,
+              "stream_b": 2.5,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "3.2.3",
+              "name": "Platform & Infrastructure Security"
+            }
+          ],
+          "score": 2.47,
+          "level": 2
+        },
+        {
+          "id": "3.3",
+          "name": "Agent Identity & Access Governance",
+          "sub_dimensions": [
+            {
+              "score": 1.6,
+              "stream_a": 1.33,
+              "stream_b": 2.0,
+              "partial_credit": 1.2,
+              "level": 1,
+              "id": "3.3.1",
+              "name": "Agent Identity Management"
+            },
+            {
+              "score": 1.4,
+              "stream_a": 1.67,
+              "stream_b": 1.0,
+              "partial_credit": 1.2,
+              "level": 1,
+              "id": "3.3.2",
+              "name": "Agent Access Control"
+            },
+            {
+              "score": 1.4,
+              "stream_a": 1.0,
+              "stream_b": 2.0,
+              "partial_credit": 1.1,
+              "level": 1,
+              "id": "3.3.3",
+              "name": "Agent Lifecycle Management"
+            }
+          ],
+          "score": 1.47,
+          "level": 1
+        },
+        {
+          "id": "3.4",
+          "name": "Runtime Behavioral Controls",
+          "sub_dimensions": [
+            {
+              "score": 1.6,
+              "stream_a": 1.67,
+              "stream_b": 1.5,
+              "partial_credit": 1.2,
+              "level": 1,
+              "id": "3.4.1",
+              "name": "Runtime Guardrails & Constraints"
+            },
+            {
+              "score": 2.0,
+              "stream_a": 1.67,
+              "stream_b": 2.5,
+              "partial_credit": 1.3,
+              "level": 2,
+              "id": "3.4.2",
+              "name": "Tool & API Governance"
+            },
+            {
+              "score": 2.0,
+              "stream_a": 2.67,
+              "stream_b": 1.0,
+              "partial_credit": 1.3,
+              "level": 2,
+              "id": "3.4.3",
+              "name": "Behavioral Baselines & Drift"
+            }
+          ],
+          "score": 1.87,
+          "level": 2
+        }
+      ],
+      "score": 2.04,
+      "level": 2
+    },
+    {
+      "id": "P4",
+      "name": "Operations & Performance",
+      "domains": [
+        {
+          "id": "4.1",
+          "name": "Monitoring & Incident Response",
+          "sub_dimensions": [
+            {
+              "score": 1.8,
+              "stream_a": 2.0,
+              "stream_b": 1.5,
+              "partial_credit": 1.3,
+              "level": 1,
+              "id": "4.1.1",
+              "name": "AI Monitoring & Detection"
+            },
+            {
+              "score": 1.4,
+              "stream_a": 1.33,
+              "stream_b": 1.5,
+              "partial_credit": 1.2,
+              "level": 1,
+              "id": "4.1.2",
+              "name": "Incident Response & Recovery"
+            },
+            {
+              "score": 1.6,
+              "stream_a": 1.67,
+              "stream_b": 1.5,
+              "partial_credit": 1.2,
+              "level": 1,
+              "id": "4.1.3",
+              "name": "Operational Resilience"
+            }
+          ],
+          "score": 1.6,
+          "level": 1
+        },
+        {
+          "id": "4.2",
+          "name": "Workforce & Organizational Readiness",
+          "sub_dimensions": [
+            {
+              "score": 3.0,
+              "stream_a": 3.0,
+              "stream_b": 3.0,
+              "partial_credit": 2.3,
+              "level": 3,
+              "id": "4.2.1",
+              "name": "AI Literacy & Training"
+            },
+            {
+              "score": 2.6,
+              "stream_a": 3.33,
+              "stream_b": 1.5,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "4.2.2",
+              "name": "Organizational Culture & Change"
+            },
+            {
+              "score": 3.2,
+              "stream_a": 2.67,
+              "stream_b": 4.0,
+              "partial_credit": 1.4,
+              "level": 3,
+              "id": "4.2.3",
+              "name": "Skills & Competency Framework"
+            }
+          ],
+          "score": 2.93,
+          "level": 3
+        },
+        {
+          "id": "4.3",
+          "name": "Continuous Improvement & Innovation",
+          "sub_dimensions": [
+            {
+              "score": 2.2,
+              "stream_a": 2.0,
+              "stream_b": 2.5,
+              "partial_credit": 1.2,
+              "level": 2,
+              "id": "4.3.1",
+              "name": "Continuous Improvement Process"
+            },
+            {
+              "score": 2.0,
+              "stream_a": 2.0,
+              "stream_b": 2.0,
+              "partial_credit": 1.4,
+              "level": 2,
+              "id": "4.3.2",
+              "name": "Innovation & Emerging Practices"
+            },
+            {
+              "score": 3.0,
+              "stream_a": 3.33,
+              "stream_b": 2.5,
+              "partial_credit": 2.3,
+              "level": 3,
+              "id": "4.3.3",
+              "name": "Benchmarking & Peer Learning"
+            }
+          ],
+          "score": 2.4,
+          "level": 2
+        }
+      ],
+      "score": 2.31,
+      "level": 2
+    }
+  ],
+  "overall": {
+    "score": 2.45,
+    "level": 2,
+    "normalized": 36.2
+  },
+  "benchmark_comparison": {
+    "financial_services": {
+      "1.1": {
+        "score": 2.67,
+        "benchmark": 2.6,
+        "difference": 0.07,
+        "percentile": 50
+      },
+      "1.2": {
+        "score": 3.47,
+        "benchmark": 2.4,
+        "difference": 1.07,
+        "percentile": 90
+      },
+      "1.3": {
+        "score": 2.33,
+        "benchmark": 2.5,
+        "difference": -0.17,
+        "percentile": 25
+      },
+      "2.1": {
+        "score": 2.47,
+        "benchmark": 2.0,
+        "difference": 0.47,
+        "percentile": 50
+      },
+      "2.2": {
+        "score": 2.47,
+        "benchmark": 2.7,
+        "difference": -0.23,
+        "percentile": 25
+      },
+      "2.3": {
+        "score": 2.93,
+        "benchmark": 2.1,
+        "difference": 0.83,
+        "percentile": 75
+      },
+      "3.1": {
+        "score": 2.33,
+        "benchmark": 2.5,
+        "difference": -0.17,
+        "percentile": 25
+      },
+      "3.2": {
+        "score": 2.47,
+        "benchmark": 2.4,
+        "difference": 0.07,
+        "percentile": 50
+      },
+      "3.3": {
+        "score": 1.47,
+        "benchmark": 1.7,
+        "difference": -0.23,
+        "percentile": 25
+      },
+      "3.4": {
+        "score": 1.87,
+        "benchmark": 1.6,
+        "difference": 0.27,
+        "percentile": 50
+      },
+      "4.1": {
+        "score": 1.6,
+        "benchmark": 2.3,
+        "difference": -0.7,
+        "percentile": 10
+      },
+      "4.2": {
+        "score": 2.93,
+        "benchmark": 2.4,
+        "difference": 0.53,
+        "percentile": 75
+      },
+      "4.3": {
+        "score": 2.4,
+        "benchmark": 2.0,
+        "difference": 0.4,
+        "percentile": 50
+      }
+    },
+    "healthcare": {
+      "1.1": {
+        "score": 2.67,
+        "benchmark": 2.4,
+        "difference": 0.27,
+        "percentile": 50
+      },
+      "1.2": {
+        "score": 3.47,
+        "benchmark": 2.2,
+        "difference": 1.27,
+        "percentile": 90
+      },
+      "1.3": {
+        "score": 2.33,
+        "benchmark": 2.3,
+        "difference": 0.03,
+        "percentile": 50
+      },
+      "2.1": {
+        "score": 2.47,
+        "benchmark": 2.1,
+        "difference": 0.37,
+        "percentile": 50
+      },
+      "2.2": {
+        "score": 2.47,
+        "benchmark": 2.8,
+        "difference": -0.33,
+        "percentile": 25
+      },
+      "2.3": {
+        "score": 2.93,
+        "benchmark": 2.3,
+        "difference": 0.63,
+        "percentile": 75
+      },
+      "3.1": {
+        "score": 2.33,
+        "benchmark": 2.6,
+        "difference": -0.27,
+        "percentile": 25
+      },
+      "3.2": {
+        "score": 2.47,
+        "benchmark": 2.2,
+        "difference": 0.27,
+        "percentile": 50
+      },
+      "3.3": {
+        "score": 1.47,
+        "benchmark": 1.5,
+        "difference": -0.03,
+        "percentile": 25
+      },
+      "3.4": {
+        "score": 1.87,
+        "benchmark": 1.4,
+        "difference": 0.47,
+        "percentile": 50
+      },
+      "4.1": {
+        "score": 1.6,
+        "benchmark": 2.2,
+        "difference": -0.6,
+        "percentile": 10
+      },
+      "4.2": {
+        "score": 2.93,
+        "benchmark": 2.3,
+        "difference": 0.63,
+        "percentile": 75
+      },
+      "4.3": {
+        "score": 2.4,
+        "benchmark": 1.9,
+        "difference": 0.5,
+        "percentile": 75
+      }
+    },
+    "technology": {
+      "1.1": {
+        "score": 2.67,
+        "benchmark": 2.2,
+        "difference": 0.47,
+        "percentile": 50
+      },
+      "1.2": {
+        "score": 3.47,
+        "benchmark": 2.8,
+        "difference": 0.67,
+        "percentile": 75
+      },
+      "1.3": {
+        "score": 2.33,
+        "benchmark": 2.1,
+        "difference": 0.23,
+        "percentile": 50
+      },
+      "2.1": {
+        "score": 2.47,
+        "benchmark": 1.9,
+        "difference": 0.57,
+        "percentile": 75
+      },
+      "2.2": {
+        "score": 2.47,
+        "benchmark": 2.3,
+        "difference": 0.17,
+        "percentile": 50
+      },
+      "2.3": {
+        "score": 2.93,
+        "benchmark": 2.0,
+        "difference": 0.93,
+        "percentile": 75
+      },
+      "3.1": {
+        "score": 2.33,
+        "benchmark": 2.5,
+        "difference": -0.17,
+        "percentile": 25
+      },
+      "3.2": {
+        "score": 2.47,
+        "benchmark": 2.2,
+        "difference": 0.27,
+        "percentile": 50
+      },
+      "3.3": {
+        "score": 1.47,
+        "benchmark": 1.9,
+        "difference": -0.43,
+        "percentile": 25
+      },
+      "3.4": {
+        "score": 1.87,
+        "benchmark": 1.8,
+        "difference": 0.07,
+        "percentile": 50
+      },
+      "4.1": {
+        "score": 1.6,
+        "benchmark": 2.5,
+        "difference": -0.9,
+        "percentile": 10
+      },
+      "4.2": {
+        "score": 2.93,
+        "benchmark": 2.5,
+        "difference": 0.43,
+        "percentile": 50
+      },
+      "4.3": {
+        "score": 2.4,
+        "benchmark": 2.3,
+        "difference": 0.1,
+        "percentile": 50
+      }
+    },
+    "manufacturing": {
+      "1.1": {
+        "score": 2.67,
+        "benchmark": 1.8,
+        "difference": 0.87,
+        "percentile": 75
+      },
+      "1.2": {
+        "score": 3.47,
+        "benchmark": 2.0,
+        "difference": 1.47,
+        "percentile": 90
+      },
+      "1.3": {
+        "score": 2.33,
+        "benchmark": 1.9,
+        "difference": 0.43,
+        "percentile": 50
+      },
+      "2.1": {
+        "score": 2.47,
+        "benchmark": 1.6,
+        "difference": 0.87,
+        "percentile": 75
+      },
+      "2.2": {
+        "score": 2.47,
+        "benchmark": 2.0,
+        "difference": 0.47,
+        "percentile": 50
+      },
+      "2.3": {
+        "score": 2.93,
+        "benchmark": 1.7,
+        "difference": 1.23,
+        "percentile": 90
+      },
+      "3.1": {
+        "score": 2.33,
+        "benchmark": 2.2,
+        "difference": 0.13,
+        "percentile": 50
+      },
+      "3.2": {
+        "score": 2.47,
+        "benchmark": 1.8,
+        "difference": 0.67,
+        "percentile": 75
+      },
+      "3.3": {
+        "score": 1.47,
+        "benchmark": 1.3,
+        "difference": 0.17,
+        "percentile": 50
+      },
+      "3.4": {
+        "score": 1.87,
+        "benchmark": 1.2,
+        "difference": 0.67,
+        "percentile": 75
+      },
+      "4.1": {
+        "score": 1.6,
+        "benchmark": 1.9,
+        "difference": -0.3,
+        "percentile": 25
+      },
+      "4.2": {
+        "score": 2.93,
+        "benchmark": 2.0,
+        "difference": 0.93,
+        "percentile": 75
+      },
+      "4.3": {
+        "score": 2.4,
+        "benchmark": 1.7,
+        "difference": 0.7,
+        "percentile": 75
+      }
+    },
+    "aggregate": {
+      "1.1": {
+        "score": 2.67,
+        "benchmark": 2.1,
+        "difference": 0.57,
+        "percentile": 75
+      },
+      "1.2": {
+        "score": 3.47,
+        "benchmark": 2.3,
+        "difference": 1.17,
+        "percentile": 90
+      },
+      "1.3": {
+        "score": 2.33,
+        "benchmark": 2.0,
+        "difference": 0.33,
+        "percentile": 50
+      },
+      "2.1": {
+        "score": 2.47,
+        "benchmark": 1.8,
+        "difference": 0.67,
+        "percentile": 75
+      },
+      "2.2": {
+        "score": 2.47,
+        "benchmark": 2.2,
+        "difference": 0.27,
+        "percentile": 50
+      },
+      "2.3": {
+        "score": 2.93,
+        "benchmark": 1.9,
+        "difference": 1.03,
+        "percentile": 90
+      },
+      "3.1": {
+        "score": 2.33,
+        "benchmark": 2.4,
+        "difference": -0.07,
+        "percentile": 25
+      },
+      "3.2": {
+        "score": 2.47,
+        "benchmark": 2.0,
+        "difference": 0.47,
+        "percentile": 50
+      },
+      "3.3": {
+        "score": 1.47,
+        "benchmark": 1.5,
+        "difference": -0.03,
+        "percentile": 25
+      },
+      "3.4": {
+        "score": 1.87,
+        "benchmark": 1.4,
+        "difference": 0.47,
+        "percentile": 50
+      },
+      "4.1": {
+        "score": 1.6,
+        "benchmark": 2.1,
+        "difference": -0.5,
+        "percentile": 25
+      },
+      "4.2": {
+        "score": 2.93,
+        "benchmark": 2.3,
+        "difference": 0.63,
+        "percentile": 75
+      },
+      "4.3": {
+        "score": 2.4,
+        "benchmark": 1.9,
+        "difference": 0.5,
+        "percentile": 75
+      }
+    }
+  },
+  "gap_analysis": {
+    "critical_gaps": [
+      {
+        "domain_id": "3.3",
+        "domain_name": "Agent Identity & Access Governance",
+        "score": 1.47,
+        "level": 1,
+        "priority": "P1 - Critical",
+        "gap": "Score 1.47 is below 2.0 threshold"
+      },
+      {
+        "domain_id": "4.1",
+        "domain_name": "Monitoring & Incident Response",
+        "score": 1.6,
+        "level": 1,
+        "priority": "P1 - Critical",
+        "gap": "Score 1.6 is below 2.0 threshold"
+      },
+      {
+        "domain_id": "3.4",
+        "domain_name": "Runtime Behavioral Controls",
+        "score": 1.87,
+        "level": 2,
+        "priority": "P1 - Critical",
+        "gap": "Score 1.87 is below 2.0 threshold"
+      }
+    ],
+    "high_gaps": [
+      {
+        "domain_id": "1.3",
+        "domain_name": "Risk & Compliance Management",
+        "score": 2.33,
+        "level": 2,
+        "priority": "P2 - High",
+        "gap": "Score 2.33 indicates developing maturity"
+      },
+      {
+        "domain_id": "3.1",
+        "domain_name": "Data Governance & Quality",
+        "score": 2.33,
+        "level": 2,
+        "priority": "P2 - High",
+        "gap": "Score 2.33 indicates developing maturity"
+      },
+      {
+        "domain_id": "4.3",
+        "domain_name": "Continuous Improvement & Innovation",
+        "score": 2.4,
+        "level": 2,
+        "priority": "P2 - High",
+        "gap": "Score 2.4 indicates developing maturity"
+      },
+      {
+        "domain_id": "2.1",
+        "domain_name": "Fairness, Transparency & Explainability",
+        "score": 2.47,
+        "level": 2,
+        "priority": "P2 - High",
+        "gap": "Score 2.47 indicates developing maturity"
+      },
+      {
+        "domain_id": "2.2",
+        "domain_name": "Privacy & Data Protection",
+        "score": 2.47,
+        "level": 2,
+        "priority": "P2 - High",
+        "gap": "Score 2.47 indicates developing maturity"
+      },
+      {
+        "domain_id": "3.2",
+        "domain_name": "Model & Platform Security",
+        "score": 2.47,
+        "level": 2,
+        "priority": "P2 - High",
+        "gap": "Score 2.47 indicates developing maturity"
+      },
+      {
+        "domain_id": "1.1",
+        "domain_name": "AI Governance Framework",
+        "score": 2.67,
+        "level": 3,
+        "priority": "P2 - High",
+        "gap": "Score 2.67 indicates developing maturity"
+      },
+      {
+        "domain_id": "2.3",
+        "domain_name": "Human Oversight & Accountability",
+        "score": 2.93,
+        "level": 3,
+        "priority": "P2 - High",
+        "gap": "Score 2.93 indicates developing maturity"
+      },
+      {
+        "domain_id": "4.2",
+        "domain_name": "Workforce & Organizational Readiness",
+        "score": 2.93,
+        "level": 3,
+        "priority": "P2 - High",
+        "gap": "Score 2.93 indicates developing maturity"
+      }
+    ],
+    "strengths": [],
+    "total_gaps": 12,
+    "total_strengths": 0
+  }
+}

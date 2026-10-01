@@ -1,0 +1,51 @@
+{{- range $name, $cfg := .Values.serverless }}
+{{- if $cfg.enabled }}
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $name }}
+    grc.component: {{ $name }}
+    grc.tier: serverless
+  annotations:
+    autoscaling.knative.dev/minScale: "{{ $cfg.minScale }}"
+    autoscaling.knative.dev/maxScale: "{{ $cfg.maxScale }}"
+    autoscaling.knative.dev/target: "{{ $cfg.concurrency }}"
+    autoscaling.knative.dev/scale-down-delay: "5m"
+    autoscaling.knative.dev/window: "60s"
+    autoscaling.knative.dev/metric: "concurrency"
+    autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: "kpa.autoscaling.knative.dev"
+    spec:
+      containerConcurrency: {{ $cfg.concurrency }}
+      timeoutSeconds: {{ $cfg.timeout }}
+      containers:
+        - image: "{{ $.Values.global.imageRegistry }}/{{ $cfg.image.repository }}:{{ $cfg.image.tag }}"
+          resources:
+            requests:
+              cpu: {{ $cfg.resources.requests.cpu }}
+              memory: {{ $cfg.resources.requests.memory }}
+            limits:
+              cpu: {{ $cfg.resources.limits.cpu }}
+              memory: {{ $cfg.resources.limits.memory }}
+          env:
+            - name: EVIDENCE_BUCKET
+              value: grc-claw-evidence
+            - name: OUTPUT_FORMAT
+              value: OSCAL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+{{- end }}
+{{- end }}

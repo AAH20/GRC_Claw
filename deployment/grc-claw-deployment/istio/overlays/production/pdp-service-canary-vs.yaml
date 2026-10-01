@@ -1,0 +1,26 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: pdp-service-canary
+  namespace: grc-claw-control-plane
+spec:
+  hosts:
+  - pdp-service
+  http:
+  - match:
+    - headers:
+        x-canary:
+          exact: 'true'
+    route:
+    - destination:
+        host: pdp-service
+        subset: canary
+      weight: 10
+    - destination:
+        host: pdp-service
+        subset: stable
+      weight: 90
+  - route:
+    - destination:
+        host: pdp-service
+        subset: stable

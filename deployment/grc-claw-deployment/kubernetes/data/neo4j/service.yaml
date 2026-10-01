@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j
+  namespace: grc-claw-data
+  labels:
+    app: neo4j
+spec:
+  selector:
+    app: neo4j
+  ports:
+  - port: 7687
+    targetPort: 7687
+    name: http
+  type: ClusterIP

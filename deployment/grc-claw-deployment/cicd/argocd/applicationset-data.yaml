@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: grc-claw-data
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: prod-us-east-1
+            url: https://prod-us-east-1.grc-claw.internal
+            region: us-east-1
+            tier: production
+          - cluster: prod-eu-west-1
+            url: https://prod-eu-west-1.grc-claw.internal
+            region: eu-west-1
+            tier: production
+          - cluster: staging-us-east-1
+            url: https://staging-us-east-1.grc-claw.internal
+            region: us-east-1
+            tier: staging
+          - cluster: dr-us-west-2
+            url: https://dr-us-west-2.grc-claw.internal
+            region: us-west-2
+            tier: dr
+  template:
+    metadata:
+      name: "grc-claw-data-{{cluster}}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+    spec:
+      project: "grc-claw-{{tier}}"
+      source:
+        repoURL: https://github.com/grc-claw/grc-claw-gitops.git
+        targetRevision: HEAD
+        path: "environments/{{tier}}/{{region}}/data"
+        helm:
+          valueFiles:
+            - "values-{{tier}}.yaml"
+      destination:
+        server: "{{url}}"
+        namespace: grc-claw-data
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

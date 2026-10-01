@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GRC_Claw Data Pipeline",
+    "tags": ["grc-claw", "data"],
+    "timezone": "utc",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Evidence Ingestion Rate",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(kafka_consumer_records_consumed_total{topic="evidence-events"}[1m]))",
+            "legendFormat": "evidence/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Consumer Lag",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "kafka_consumer_lag{topic="evidence-events"}",
+            "legendFormat": "lag"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Storage Utilization",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "minio_bucket_usage_total_bytes / minio_bucket_quota_total_bytes",
+            "legendFormat": "usage"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Partition Health",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "kafka_cluster_partition_underreplicated",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "refresh": "10s"
+  }
+}

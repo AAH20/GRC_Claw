@@ -1,0 +1,58 @@
+# GRC_Claw Policy Configuration
+# Example production policy
+
+apiVersion: grcclaw/v1
+kind: Policy
+metadata:
+  name: production-agent-policy
+  version: "2.1.0"
+  description: "Production governance policy for customer-facing agents"
+  owner: platform-team@company.com
+  labels:
+    environment: production
+    framework: iso-42001
+    severity: high
+spec:
+  defaultAction: deny
+  onTimeout: deny
+  enforcementStrategy: deny_overrides
+  rules:
+    - name: block-pii-export
+      description: "PII data must never leave the system"
+      condition:
+        type: cedar
+        expression: |
+          principal.action == "export" &&
+          resource.containsPii == true
+      effect: deny
+      priority: 1000
+
+    - name: require-approval-for-refunds
+      description: "Refunds over $500 require human approval"
+      condition:
+        type: cedar
+        expression: |
+          principal.action == "refund" &&
+          context.amount > 500
+      effect: require_approval
+      approvers:
+        - role: cs-manager
+      priority: 500
+
+    - name: allow-read-operations
+      description: "Read-only operations are generally allowed"
+      condition:
+        type: cedar
+        expression: |
+          principal.action == "read"
+      effect: allow
+      priority: 100
+
+    - name: rate-limit-external-api
+      description: "External API calls limited to 100/hour"
+      condition:
+        type: rego
+        query: data.grcclaw.rate_limit
+      effect: throttle
+      limit: "100/hour"
+      priority: 500

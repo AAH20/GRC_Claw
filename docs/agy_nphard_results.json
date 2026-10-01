@@ -1,0 +1,98 @@
+{
+  "results": [
+    {
+      "task_id": "np_hard_001_tsp_solver",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 100034,
+      "quality_score": 0,
+      "error": "RESOURCE_EXHAUSTED (429): Individual quota reached. Resets in 86h48m1s.",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_002_sat_solver",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_003_graph_coloring",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_004_knapsack_solver",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_005_vertex_cover",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_006_hamiltonian_path",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_007_max_clique",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_008_set_cover",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_009_bin_packing",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    },
+    {
+      "task_id": "np_hard_010_steiner_tree",
+      "solver": "antigravity_gemini-3.8-flash-high",
+      "cost_usd": 0.0,
+      "latency_ms": 0,
+      "quality_score": 0,
+      "error": "Skipped: quota exhausted on prior task",
+      "success": false
+    }
+  ],
+  "total_cost_usd": 0.0,
+  "total_latency_ms": 100034,
+  "avg_quality": 0,
+  "errors": 10
+}

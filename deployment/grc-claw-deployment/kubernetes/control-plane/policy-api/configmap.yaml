@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policy-api-config
+  namespace: grc-claw-control-plane
+data:
+  config.yaml: "server:\n  port: 8080\n  max_concurrent_requests: 5000\ndatabase:\n\
+    \  pool_size: 20\n  max_overflow: 10\ncache:\n  ttl_seconds: 300\n"

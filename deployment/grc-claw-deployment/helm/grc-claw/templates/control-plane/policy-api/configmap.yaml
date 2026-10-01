@@ -1,0 +1,17 @@
+{{- if .Values.policyApi.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policy-api-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yaml: |
+    server:
+      port: 8080
+      max_concurrent_requests: 5000
+    database:
+      pool_size: 20
+      max_overflow: 10
+    cache:
+      ttl_seconds: 300
+{{- end }}
