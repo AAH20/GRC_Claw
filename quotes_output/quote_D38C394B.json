@@ -1,0 +1,144 @@
+{
+  "quote_id": "D38C394B",
+  "created_at": "2026-10-01T13:06:53.213287+00:00",
+  "valid_until": "",
+  "organization": {
+    "name": "Acme Healthcare Corp",
+    "industry": "healthcare",
+    "agents": 50,
+    "models": 3,
+    "policies": 120,
+    "evidence_volume_gb": 2000,
+    "frameworks": [
+      "HIPAA",
+      "SOC2",
+      "ISO27001",
+      "GDPR"
+    ],
+    "deployment_model": "cloud_saas",
+    "support_level": "premium",
+    "pricing_tier": "growth"
+  },
+  "line_items": [
+    {
+      "description": "GRC Agent License (50 agents)",
+      "quantity": 50.0,
+      "unit_price": 12000,
+      "unit": "agent/year",
+      "category": "license",
+      "subtotal": 600000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 600000.0
+    },
+    {
+      "description": "AI Model License (3 models)",
+      "quantity": 3.0,
+      "unit_price": 6000,
+      "unit": "model/year",
+      "category": "license",
+      "subtotal": 18000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 18000.0
+    },
+    {
+      "description": "Policy Management (120 policies)",
+      "quantity": 120.0,
+      "unit_price": 240,
+      "unit": "policy/year",
+      "category": "management",
+      "subtotal": 28800.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 28800.0
+    },
+    {
+      "description": "Evidence Storage (2000 GB)",
+      "quantity": 2000,
+      "unit_price": 0.5,
+      "unit": "GB/year",
+      "category": "storage",
+      "subtotal": 1000.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 1000.0
+    },
+    {
+      "description": "Framework Compliance: HIPAA",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 3600.0
+    },
+    {
+      "description": "Framework Compliance: SOC2",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 3600.0
+    },
+    {
+      "description": "Framework Compliance: ISO27001",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 3600.0
+    },
+    {
+      "description": "Framework Compliance: GDPR",
+      "quantity": 1.0,
+      "unit_price": 3600,
+      "unit": "framework/year",
+      "category": "compliance",
+      "subtotal": 3600.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 3600.0
+    },
+    {
+      "description": "Support: Premium",
+      "quantity": 1.0,
+      "unit_price": 165550.0,
+      "unit": "package",
+      "category": "support",
+      "subtotal": 165550.0,
+      "discount_pct": 0.0,
+      "discount_amount": 0.0,
+      "total": 165550.0
+    }
+  ],
+  "summary": {
+    "subtotal": 827750.0,
+    "volume_discount_pct": 5.0,
+    "volume_discount_amount": 41387.5,
+    "support_multiplier": 1.25,
+    "deployment_multiplier": 1.0,
+    "total_before_tax": 982953.125,
+    "tax_rate": 0.0,
+    "tax_amount": 0.0,
+    "total": 982953.125,
+    "annual_cost": 982953.125,
+    "monthly_cost": 81912.76041666667
+  },
+  "assumptions": [
+    "Annual billing cycle",
+    "Cloud Saas deployment",
+    "Premium support included",
+    "Up to 2000 GB evidence storage",
+    "4 compliance framework(s): HIPAA, SOC2, ISO27001, GDPR"
+  ],
+  "notes": []
+}

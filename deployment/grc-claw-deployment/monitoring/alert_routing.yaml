@@ -1,0 +1,329 @@
+# GRC_Claw Alert Routing Configuration
+# =====================================
+# Enhanced alert routing with severity-based escalation, team-based routing,
+# and time-based silencing. Consumed by Alertmanager.
+#
+# Environment variables required:
+#   SLACK_WEBHOOK_URL       - Slack incoming webhook
+#   PAGERDUTY_SERVICE_KEY   - PagerDuty integration key
+#   SMTP_PASSWORD           - SMTP auth password
+#   OPSGENIE_API_KEY        - Opsgenie API key (optional)
+
+global:
+  # Resolve alerts after this duration if they haven't fired again
+  resolve_timeout: 5m
+
+  # SMTP configuration for email notifications
+  smtp_smarthost: smtp.grc-claw.internal:587
+  smtp_from: alerts@grc-claw.io
+  smtp_auth_username: alerts@grc-claw.io
+  smtp_auth_password: "${SMTP_PASSWORD}"
+  smtp_require_tls: true
+
+  # Slack configuration
+  slack_api_url: "${SLACK_WEBHOOK_URL}"
+
+  # PagerDuty configuration
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+
+# ── Route Tree ──────────────────────────────────────────────────────────────
+route:
+  # Default receiver
+  receiver: default
+
+  # Group alerts by these labels
+  group_by:
+    - alertname
+    - severity
+    - component
+    - namespace
+
+  # Wait before sending first notification
+  group_wait: 30s
+
+  # Wait before sending notification for new alerts in same group
+  group_interval: 5m
+
+  # Wait before re-sending a resolved alert
+  repeat_interval: 4h
+
+  # Child routes (evaluated in order)
+  routes:
+    # ── Critical Alerts ─────────────────────────────────────────────────
+    - matchers:
+        - severity = "critical"
+      receiver: pagerduty-critical
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 5m
+      continue: true  # Also send to Slack
+
+    # ── High Severity ───────────────────────────────────────────────────
+    - matchers:
+        - severity = "high"
+      receiver: slack-high
+      group_wait: 15s
+      group_interval: 5m
+      repeat_interval: 15m
+
+    # ── Medium Severity ─────────────────────────────────────────────────
+    - matchers:
+        - severity = "medium"
+      receiver: slack-medium
+      group_wait: 1m
+      group_interval: 15m
+      repeat_interval: 1h
+
+    # ── Low Severity ────────────────────────────────────────────────────
+    - matchers:
+        - severity = "low"
+      receiver: slack-low
+      group_wait: 5m
+      group_interval: 1h
+      repeat_interval: 4h
+
+    # ── Component-Specific Routing ──────────────────────────────────────
+    - matchers:
+        - component = "pdp"
+      receiver: team-policy
+      group_wait: 15s
+      repeat_interval: 15m
+
+    - matchers:
+        - component = "pep"
+      receiver: team-policy
+      group_wait: 15s
+      repeat_interval: 15m
+
+    - matchers:
+        - component = "evidence"
+      receiver: team-data
+      group_wait: 30s
+      repeat_interval: 30m
+
+    - matchers:
+        - component = "postgresql"
+      receiver: team-data
+      group_wait: 30s
+      repeat_interval: 30m
+
+    - matchers:
+        - component = "kafka"
+      receiver: team-data
+      group_wait: 30s
+      repeat_interval: 30m
+
+    - matchers:
+        - component = "redis"
+      receiver: team-data
+      group_wait: 30s
+      repeat_interval: 30m
+
+    - matchers:
+        - component = "security"
+      receiver: team-security
+      group_wait: 0s
+      repeat_interval: 15m
+
+    - matchers:
+        - component = "slo"
+      receiver: team-platform
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # ── Namespace-Based Routing ─────────────────────────────────────────
+    - matchers:
+        - namespace = "grc-claw-production"
+      receiver: slack-production
+      group_wait: 15s
+      repeat_interval: 15m
+
+    - matchers:
+        - namespace = "grc-claw-staging"
+      receiver: slack-staging
+      group_wait: 1m
+      repeat_interval: 1h
+
+# ── Receivers ───────────────────────────────────────────────────────────────
+receivers:
+  # Default fallback
+  - name: default
+    slack_configs:
+      - channel: "#grc-claw-alerts"
+        send_resolved: true
+        title: "{{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+
+  # Critical: PagerDuty + Slack
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - service_key: "${PAGERDUTY_SERVICE_KEY}"
+        severity: critical
+        description: "{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}"
+        details:
+          firing: "{{ .Alerts.Firing | len }}"
+          resolved: "{{ .Alerts.Resolved | len }}"
+          component: "{{ .GroupLabels.component }}"
+          namespace: "{{ .GroupLabels.namespace }}"
+    slack_configs:
+      - channel: "#grc-claw-critical"
+        send_resolved: true
+        title: "🚨 CRITICAL: {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+        color: "danger"
+
+  # High severity: Slack
+  - name: slack-high
+    slack_configs:
+      - channel: "#grc-claw-alerts"
+        send_resolved: true
+        title: "⚠️ HIGH: {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+        color: "warning"
+
+  # Medium severity: Slack
+  - name: slack-medium
+    slack_configs:
+      - channel: "#grc-claw-alerts"
+        send_resolved: true
+        title: "MEDIUM: {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  # Low severity: Slack
+  - name: slack-low
+    slack_configs:
+      - channel: "#grc-claw-alerts"
+        send_resolved: true
+        title: "LOW: {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  # Team-specific receivers
+  - name: team-policy
+    slack_configs:
+      - channel: "#grc-claw-policy-team"
+        send_resolved: true
+        title: "[Policy] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  - name: team-data
+    slack_configs:
+      - channel: "#grc-claw-data-team"
+        send_resolved: true
+        title: "[Data] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  - name: team-security
+    slack_configs:
+      - channel: "#grc-claw-security-team"
+        send_resolved: true
+        title: "[Security] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+        color: "danger"
+
+  - name: team-platform
+    slack_configs:
+      - channel: "#grc-claw-platform-team"
+        send_resolved: true
+        title: "[Platform] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  # Environment-specific
+  - name: slack-production
+    slack_configs:
+      - channel: "#grc-claw-prod-alerts"
+        send_resolved: true
+        title: "[PROD] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  - name: slack-staging
+    slack_configs:
+      - channel: "#grc-claw-staging-alerts"
+        send_resolved: true
+        title: "[STAGING] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  # Email receiver for critical alerts
+  - name: email-critical
+    email_configs:
+      - to: "oncall@grc-claw.io"
+        send_resolved: true
+        headers:
+          Subject: "[CRITICAL] {{ .GroupLabels.alertname }}"
+        html: |
+          <h2>Critical Alert: {{ .GroupLabels.alertname }}</h2>
+          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Component:</strong> {{ .GroupLabels.component }}</p>
+          <p><strong>Namespace:</strong> {{ .GroupLabels.namespace }}</p>
+          <p><a href="{{ .ExternalURL }}">View in Alertmanager</a></p>
+
+# ── Inhibit Rules ───────────────────────────────────────────────────────────
+inhibit_rules:
+  # Critical inhibits high
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "high"
+    equal:
+      - alertname
+      - component
+      - namespace
+
+  # High inhibits medium
+  - source_matchers:
+      - severity = "high"
+    target_matchers:
+      - severity = "medium"
+    equal:
+      - alertname
+      - component
+      - namespace
+
+  # Medium inhibits low
+  - source_matchers:
+      - severity = "medium"
+    target_matchers:
+      - severity = "low"
+    equal:
+      - alertname
+      - component
+      - namespace
+
+  # PDP down inhibits PDP latency alerts
+  - source_matchers:
+      - alertname = "PDPServiceDown"
+    target_matchers:
+      - alertname = "PDPHighLatency"
+    equal:
+      - namespace
+
+  # PEP down inhibits PEP latency alerts
+  - source_matchers:
+      - alertname = "PEPGatewayDown"
+    target_matchers:
+      - alertname = "PEPHighLatency"
+    equal:
+      - namespace
+
+  # Kafka broker down inhibits consumer lag alerts
+  - source_matchers:
+      - alertname = "KafkaBrokerDown"
+    target_matchers:
+      - alertname = "EvidenceCollectorLag"
+    equal:
+      - namespace
+
+# ── Time-Based Silencing (Mute Timings) ─────────────────────────────────────
+# Note: Mute timings are configured via Alertmanager API or UI, not in config file.
+# Example API call to create a mute:
+#   POST /api/v2/v1/mute-timings
+#   {
+#     "matchers": [
+#       {"name": "alertname", "value": "PDPHighLatency", "isRegex": false}
+#     ],
+#     "start": "2024-01-01T00:00:00Z",
+#     "end": "2024-01-01T06:00:00Z",
+#     "createdBy": "SRE Team",
+#     "comment": "Planned maintenance window"
+#   }

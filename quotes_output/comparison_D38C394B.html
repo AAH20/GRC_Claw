@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRC_Claw Quote Comparison</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a2e; background: #f8f9fa; padding: 2rem; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 2rem; }
+        .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .content { padding: 2rem; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #dee2e6; }
+        th { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
+        td { font-variant-numeric: tabular-nums; }
+        tr.highlight { background: #e7f3ff; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        tr.highlight:hover { background: #d4e9ff; }
+        .savings { margin-top: 1.5rem; padding: 1rem; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745; }
+        .savings strong { color: #155724; }
+        .footer { padding: 1rem 2rem; background: #f8f9fa; text-align: center; font-size: 0.8rem; color: #6c757d; }
+        @media print { body { background: white; padding: 0; } .container { box-shadow: none; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GRC_Claw Quote Comparison</h1>
+            <p>Side-by-side comparison of 4 quotes</p>
+        </div>
+        <div class="content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Attribute</th>
+                        <th>Acme Healthcare Corp<br><small>Cloud Saas / Premium</small></th><th>Acme Healthcare Corp<br><small>Private Cloud / Premium</small></th><th>Acme Healthcare Corp<br><small>On Premises / Premium</small></th><th>Acme Healthcare Corp<br><small>Hybrid / Premium</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><th>Organization</th><td>Acme Healthcare Corp</td><td>Acme Healthcare Corp</td><td>Acme Healthcare Corp</td><td>Acme Healthcare Corp</td></tr><tr><th>Industry</th><td>Healthcare</td><td>Healthcare</td><td>Healthcare</td><td>Healthcare</td></tr><tr><th>Agents</th><td>50</td><td>50</td><td>50</td><td>50</td></tr><tr><th>Models</th><td>3</td><td>3</td><td>3</td><td>3</td></tr><tr><th>Policies</th><td>120</td><td>120</td><td>120</td><td>120</td></tr><tr><th>Evidence (GB)</th><td>2,000</td><td>2,000</td><td>2,000</td><td>2,000</td></tr><tr><th>Frameworks</th><td>4</td><td>4</td><td>4</td><td>4</td></tr><tr><th>Deployment</th><td>Cloud Saas</td><td>Private Cloud</td><td>On Premises</td><td>Hybrid</td></tr><tr><th>Support</th><td>Premium</td><td>Premium</td><td>Premium</td><td>Premium</td></tr><tr><th>Pricing Tier</th><td>Growth</td><td>Growth</td><td>Growth</td><td>Growth</td></tr><tr><th>Subtotal</th><td>$827,750</td><td>$1,059,520</td><td>$1,225,070</td><td>$960,190</td></tr><tr><th>Volume Discount</th><td>5%</td><td>5%</td><td>5%</td><td>5%</td></tr><tr><th>Support Multiplier</th><td>1.25x</td><td>1.25x</td><td>1.25x</td><td>1.25x</td></tr><tr><th>Deployment Multiplier</th><td>1.00x</td><td>1.35x</td><td>1.60x</td><td>1.20x</td></tr><tr class="highlight"><th>Annual Cost</th><td>⭐ $982,953</td><td>$1,698,543</td><td>$2,327,633</td><td>$1,368,271</td></tr><tr class="highlight"><th>Monthly Cost</th><td>⭐ $81,913</td><td>$141,545</td><td>$193,969</td><td>$114,023</td></tr><tr><th>Cost per Agent</th><td>$19,659</td><td>$33,971</td><td>$46,553</td><td>$27,365</td></tr><tr><th>Cost per Policy</th><td>$8,191</td><td>$14,155</td><td>$19,397</td><td>$11,402</td></tr>
+                </tbody>
+            </table>
+            <div class="savings">
+                <strong>💡 Savings Opportunity:</strong>
+                Choosing the most cost-effective option saves
+                <strong>$1,344,680/year</strong>
+                compared to the most expensive option.
+            </div>
+        </div>
+        <div class="footer">
+            <p>GRC_Claw — Governance, Risk & Compliance AI Agents</p>
+        </div>
+    </div>
+</body>
+</html>

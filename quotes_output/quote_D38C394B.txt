@@ -1,0 +1,63 @@
+════════════════════════════════════════════════════════════
+                    GRC_Claw QUOTE
+════════════════════════════════════════════════════════════
+
+  Quote ID:    D38C394B
+  Generated:   2026-10-01
+  Valid Until: 30 days from generation
+
+────────────────────────────────────────────────────────────
+  ORGANIZATION
+────────────────────────────────────────────────────────────
+  Name:        Acme Healthcare Corp
+  Industry:    Healthcare
+  Deployment:  Cloud Saas
+  Support:     Premium
+  Tier:        Growth
+
+────────────────────────────────────────────────────────────
+  LINE ITEMS
+────────────────────────────────────────────────────────────
+  GRC Agent License (50 agents)
+    50 x $12,000.00 = $600,000.00
+  AI Model License (3 models)
+    3 x $6,000.00 = $18,000.00
+  Policy Management (120 policies)
+    120 x $240.00 = $28,800.00
+  Evidence Storage (2000 GB)
+    2,000 x $0.50 = $1,000.00
+  Framework Compliance: HIPAA
+    1 x $3,600.00 = $3,600.00
+  Framework Compliance: SOC2
+    1 x $3,600.00 = $3,600.00
+  Framework Compliance: ISO27001
+    1 x $3,600.00 = $3,600.00
+  Framework Compliance: GDPR
+    1 x $3,600.00 = $3,600.00
+  Support: Premium
+    1 x $165,550.00 = $165,550.00
+
+────────────────────────────────────────────────────────────
+  SUMMARY
+────────────────────────────────────────────────────────────
+  Subtotal:            $  827,750.00
+  Volume Discount:     -$  41,387.50 (5%)
+  Support Multiplier:          1.25x
+  Deployment Mult.:            1.00x
+  Tax (0%):          $        0.00
+                              ────────────
+  TOTAL ANNUAL:        $  982,953.12
+  Monthly:             $   81,912.76
+
+────────────────────────────────────────────────────────────
+  ASSUMPTIONS
+────────────────────────────────────────────────────────────
+  • Annual billing cycle
+  • Cloud Saas deployment
+  • Premium support included
+  • Up to 2000 GB evidence storage
+  • 4 compliance framework(s): HIPAA, SOC2, ISO27001, GDPR
+
+════════════════════════════════════════════════════════════
+  GRC_Claw — Governance, Risk & Compliance AI Agents
+════════════════════════════════════════════════════════════

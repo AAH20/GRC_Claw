@@ -8,7 +8,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "test:visual": "node scripts/visual-regression.mjs",
+    "test:visual:update": "node scripts/visual-regression.mjs --update",
+    "test:a11y": "node scripts/accessibility-audit.mjs",
+    "test:perf": "node scripts/performance-budget.mjs",
+    "docs:components": "node scripts/generate-component-docs.mjs",
+    "docs:watch": "node scripts/generate-component-docs.mjs --watch"
   },
   "dependencies": {
     "react": "^18.3.1",

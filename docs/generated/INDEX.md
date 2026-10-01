@@ -1,0 +1,540 @@
+# GRC_Claw Documentation Index
+
+Auto-generated on 2026-10-01 13:03:15 UTC
+
+**Total documents:** 244
+
+## Table of Contents
+
+### .Cursor
+
+- [ISO 42001 Implementation Examples](.cursor/skills/iso-42001-ai-management-engineering/examples.md)
+  - ```typescript
+- [ISO/IEC 42001 Reference](.cursor/skills/iso-42001-ai-management-engineering/reference.md)
+  - Standard: **ISO/IEC 42001:2023** — Information technology — Artificial intelligence — Management sys
+- [ISO/IEC 42001 — AI Management System Architecture & Engineering](.cursor/skills/iso-42001-ai-management-engineering/SKILL.md)
+  - Designs and implements ISO/IEC 42001 AI Management System (AIMS) architecture, controls, and evidenc
+
+### .Github
+
+- [GRC Claw Security Scan Action](.github/actions/scan/README.md)
+  - Scans pull requests for IaC misconfigurations and exposed secrets, then maps findings to SOC2 / comp
+
+### Deployment
+
+- [GRC Claw Sovereign Deployment](deploy/sovereign/README.md)
+  - Deploy the complete GRC Claw stack into your own cloud account for air-gapped or data-residency-regu
+- [GRC_Claw API Implementation Guide](deployment/grc-claw-api/IMPLEMENTATION_GUIDE.md)
+  - **Version:** 1.0.0
+- [GRC_Claw API Specification](deployment/grc-claw-api-spec.md)
+  - **Version:** 1.2
+- [GRC_Claw Deployment Governance Specification](deployment/grc-claw-deployment-governance-spec.md)
+  - **Version:** 1.0
+- [GRC_Claw Deployment Implementation Guide](deployment/grc-claw-deployment/DEPLOYMENT-GUIDE.md)
+  - **Version:** 1.0
+- [GRC_Claw Deployment Specification](deployment/grc-claw-deployment-spec.md)
+  - **Version:** 2.0
+- [GRC_Claw Disaster Recovery - Failover Runbook](deployment/grc-claw-deployment/dr/runbooks/dr-failover.md)
+  - This runbook covers the procedures for failing over GRC_Claw from the primary region to the DR regio
+- [GRC_Claw Disaster Recovery Runbook](deployment/grc-claw-deployment/dr/runbook-failover.md)
+  - This runbook covers disaster recovery procedures for GRC_Claw, including component failure, zone fai
+
+### Documentation
+
+- [ADR-001: Modular Monorepo for OSS + A2Z Bridge](docs/adr/001-modular-monorepo.md)
+  - - **Status:** accepted
+- [ADR-002: Mandatory Three-Phase Exec Policy for Agents](docs/adr/002-agentic-exec-policy.md)
+  - - **Status:** accepted
+- [AI Bill of Materials (AI-BOM) — Standard Submission Package](docs/AI_BOM_STANDARD_SUBMISSION.md)
+  - **Prepared by:** GRC_Claw / A2Z SOC
+- [AI Governance Vendor Landscape Analysis & GRC_Claw Competitive Strategy](docs/ai_governance_landscape_analysis.md)
+  - **Date:** October 2026
+- [APEX Adversarial Co-Evolution Engine (ACEE) — Architecture](docs/apex-adversarial-coevolution-architecture.md)
+  - **Domain:** Cyber Warfare
+- [APEX C2 + AGENTIC AI: STRATEGIC ANALYSIS & PROJECT CONCEPT](docs/APEX_C2_AGENTIC_AI_STRATEGIC_ANALYSIS.md)
+  - **Project Name: APEX SENTINEL C2** (Sentinel = Sovereign, Intelligent, Networked, Tactical, Interope
+- [APEX-OS: Cyber Warfare — Graph-Based Attack Path Mapping Architecture](docs/cyber-attack-graph-architecture.md)
+  - **Domain:** Cyber Warfare — Attack Path Mapping, Threat Correlation, Critical Asset Protection
+- [APEX-OS: Graph-Native Orbital Intelligence Engine](docs/orbital-graph-architecture.md)
+  - **Domain:** Space Domain — Orbital Intelligence & Space Situational Awareness (SSA)
+- [Agent Output Contract — Deep-Dive Analysis & Integration Guide](docs/agent-output-contract-integration-guide.md)
+  - **Target:** Ahmed Hassan — validating Hermes Agent deliverables against local file contracts
+- [Agent Reliability Benchmark (ARB) — Deep-Dive Analysis & Hermes Integration Guide](docs/agent-reliability-benchmark-analysis.md)
+  - **Source:** [uujjrmi/agent-reliability-benchmark](https://github.com/uujjrmi/agent-reliability-bench
+- [AgentIncident × Hermes Agent — Integration Guide](docs/agentincident-integration-guide.md)
+  - **For:** Ahmed Hassan (CISO/GRC, AI Infrastructure)
+- [Agentic AI Security in GRC_Claw](docs/AGENTIC_AI_SECURITY.md)
+  - GRC_Claw is marketed as **safe agentic GRC**: AI assists audits and control testing without becoming
+- [Apex Cognition — Education + Agentic AI Domain Analysis](docs/Apex_Cognition_Education_Agentic_AI_Analysis.md)
+  - **Date:** 2026-10-01
+- [Apex Nexus — Go-To-Market Strategy](docs/apex-nexus-gtm-strategy.md)
+  - **Classification: Strategic Analysis**
+- [Apex Nexus — Technology Stack & Architecture Analysis](docs/APEX_NEXUS_TECH_STACK.md)
+  - > **Concept**: The first graph-native, real-time decision intelligence platform that fuses critical 
+- [Apex Omni-Fusion Engine (AOFE)](docs/Apex-Omni-Fusion-Engine-Analysis.md)
+  - **Author:** Ahmed Hassan (@AAH20)
+- [Apex Orbital Sentinel (AOS)](docs/Apex-Orbital-Sentinel-Concept.md)
+  - **Apex Orbital Sentinel (AOS)**
+- [Apex Sovereign — Financial Model & Business Plan](docs/Apex_Sovereign_Financial_Model.md)
+  - > **Concept:** Unified multi-domain command, control & orchestration platform integrating all existi
+- [Apex System — Market Sizing & TAM Analysis](docs/apex_market_tam_analysis.md)
+  - **Date:** October 2026
+- [Apex System — Team & Resource Plan](docs/apex-team-resource-plan.md)
+  - **Date:** 2026-10-01
+- [Arize Phoenix — Deep-Dive Integration Guide for Ahmed Hassan's Stack](docs/phoenix-otel-integration-guide.md)
+  - > **Target stack:** Hermes Agent + Prometheus/Grafana + vendor-neutral OTel tracing
+- [Backend Engineering Standards — V15](docs/BACKEND-V15.md)
+  - Every `api/*.ts` file is a **thin route** — it parses input, delegates to `api/_lib/`, and returns t
+- [Bring Your Own Connector (BYOC) — LLMs & MCP](docs/BYOC_CONNECTORS.md)
+  - GRC_Claw lets operators plug in **their own LLM providers** and **MCP servers** without forking the 
+- [CAMEL-AI Deep-Dive: Multi-Agent Scaling Simulation for 330 Agent Slots](docs/camel-ai-scaling-simulation-guide.md)
+  - **Target:** Ahmed Hassan — Agent Scaling Simulation
+- [Cascading Failure Analysis Engine — Architecture](docs/cascading-failure-architecture.md)
+  - A real-time engine that models critical infrastructure as a multi-layer dependency graph, simulates 
+- [Claims, evidence, and limitations](docs/CLAIMS_AND_LIMITATIONS.md)
+  - This document is the public boundary between working code, reference
+- [Competitive Analysis — V15](docs/COMPETITIVE-V15.md)
+  - ```
+- [Data Center Commander — v1.0.0 Release](docs/RELEASE-IAC.md)
+  - **Release Date:** 2026-09-29
+- [Deep-Dive Analysis: 567-labs/instructor](docs/instructor-deep-dive.md)
+  - > **For:** Ahmed Hassan — 330 agent slots, production structured output validation
+- [Deep-Dive Analysis: agent-ecosystem/skill-validator](docs/skill-validator-deep-dive.md)
+  - > **For:** Ahmed Hassan — 529-repo agent skill validation & scoring
+- [Deep-Dive Analysis: block/agent-task-queue](docs/agent-task-queue-deep-dive.md)
+  - > **For:** Ahmed Hassan — 330 agent slots, preventing concurrent execution of expensive operations
+- [Deep-Dive Analysis: thedotmack/claude-mem (95K+ Stars)](docs/claude-mem-deep-dive.md)
+  - > **For:** Ahmed Hassan — Agent context management for long-running tasks
+- [DeepEval Deep-Dive: Architecture, Features & Hermes Agent Integration Guide](docs/deepeval-integration-guide.md)
+  - > **Repository:** [confident-ai/deepeval](https://github.com/confident-ai/deepeval) — 18K+ stars, Ap
+- [Executive overview](docs/EXECUTIVE_OVERVIEW.md)
+  - GRC_Claw is an open-source policy and evidence control plane for enterprise AI
+- [GR00T + CJADC2 + GRC_Claw Integration Documentation](docs/GR00T-CJADC2-INTEGRATION.md)
+  - > **Version:** 1.0.0 | **Status:** Production-Grade | **Last Updated:** 2026-07-08
+- [GRC_Claw Architecture V15](docs/ARCHITECTURE-V15.md)
+  - > Last updated: 2026-06-30 | Status: Living Document
+- [GRC_Claw CLI Reference](docs/CLI-REFERENCE.md)
+  - > **Version:** v16.0 | **Last Updated:** 2026-06-30
+- [GRC_Claw Developer Guide V15](docs/DEVELOPER-V15.md)
+  - > Last updated: 2026-06-30 | Status: Living Document
+- [GRC_Claw Developer Onboarding Guide](docs/ONBOARDING.md)
+  - > **Goal:** Zero to productive in 30 minutes. Every section gives you something to run.
+- [GRC_Claw Performance Benchmarks & SLOs — V17](docs/PERFORMANCE-V17.md)
+  - > Last updated: 2026-06-30 | Status: Living Document
+- [GRC_Claw Security Architecture V15](docs/SECURITY-V15.md)
+  - > Last updated: 2026-06-30 | Status: Living Document
+- [Guardrails AI (`guardrails-ai/guardrails`) — Deep-Dive Analysis](docs/guardrails-ai-deep-dive.md)
+  - > **For:** Ahmed Hassan — Production agent I/O guardrails, ISO 42001 (GRC_Claw) alignment
+- [ISO/IEC 42001 AIMS in GRC_Claw](docs/ISO_42001_AIMS.md)
+  - GRC_Claw implements **ISO/IEC 42001:2023** (AI Management System) as architecture, code, and API—not
+- [Infra Agent Assurance](docs/INFRA-AGENT-ASSURANCE.md)
+  - > **Package:** `@grc-claw/infra-agent-assurance` | **Version:** 0.1.0 | **Status:** Initial implemen
+- [Label Studio Deep-Dive Analysis](docs/label-studio-deep-dive.md)
+  - **Repository:** https://github.com/HumanSignal/label-studio
+- [Langfuse Integration Guide for Ahmed Hassan's Agent Systems](docs/langfuse-integration-guide.md)
+  - Langfuse is an open-source LLM observability platform (35K+ GitHub stars, MIT license) built on a **
+- [Letta (formerly MemGPT) — Deep-Dive Analysis](docs/letta-deep-dive.md)
+  - > **For:** Ahmed Hassan — 330 concurrent agents, session management & resume
+- [LiteLLM + Hermes Agent Integration Guide](docs/litellm-hermes-integration-guide.md)
+  - LiteLLM (BerriAI, ~59K GitHub stars, YC W23) is an open-source AI gateway that provides a **single O
+- [MLflow Deep-Dive & Integration Guide for Agent Experiment Tracking](docs/mlflow-integration-guide.md)
+  - **Target Stack:** Ahmed Hassan's multi-model evaluation pipeline (LongCat 2.5, Codex, Antigravity Pr
+- [Marketing: GRC_Claw × A2Z SOC](docs/MARKETING_A2Z_SOC.md)
+  - Use this copy for GitHub README badges, landing pages, and conference one-pagers.
+- [Microsoft Agent Governance Toolkit — Deep-Dive & Hermes Agent Integration Guide](docs/agent-governance-toolkit-integration-guide.md)
+  - **For:** Ahmed Hassan (CISO/GRC) — GRC_Claw ISO 42001 Governance Chassis
+- [Microsoft Presidio × Hermes Agent — Enterprise PII Protection Integration Guide](docs/presidio-hermes-integration-guide.md)
+  - **Author:** Ahmed Hassan (CISO)
+- [Monetization Strategy V15](docs/MONETIZATION-V15.md)
+  - | SKU | ID | $/mo | $/yr | Entitlement | Primary Motion |
+- [Multi-Domain Deconfliction Engine Architecture](docs/deconfliction-engine-architecture.md)
+  - **Domain:** Autonomous Weapons — Air / Land / Sea / Space / Cyber
+- [Multi-INT Knowledge Graph Fusion Architecture](docs/multi-int-fusion-architecture.md)
+  - This architecture defines a comprehensive multi-INT (HUMINT, SIGINT, GEOINT, OSINT, MASINT, CYBINT, 
+- [NVIDIA + GRC_Claw Integration Documentation](docs/NVIDIA-INTEGRATION.md)
+  - > **Version:** 1.0.0 | **Status:** Production-Grade | **Last Updated:** 2026-07-07
+- [NVIDIA/garak Deep-Dive Analysis & Integration Guide](docs/garak-deep-dive.md)
+  - **garak** (Generative AI Red-teaming & Assessment Kit) is NVIDIA's open-source LLM vulnerability sca
+- [Ollama Integration Guide — Running GRC_Claw locally with Open Source LLMs](docs/OLLAMA_INTEGRATION.md)
+  - This guide outlines how to:
+- [Open Multi-Agent (OMA) — Deep-Dive Analysis & Integration Guide](docs/open-multi-agent-deep-dive.md)
+  - > **For:** Ahmed Hassan — Agent Task Decomposition with ApexGraphSwarm
+- [OpenAI Swarm Deep-Dive & ApexGraphSwarm Integration Guide](docs/swarm-integration-guide.md)
+  - > **For:** Ahmed Hassan — lightweight multi-agent orchestration with handoff patterns
+- [QA Strategy — V15](docs/QA-V15.md)
+  - ```
+- [RouteLLM Deep-Dive: Architecture, Integration & Production Guide](docs/routellm-deep-dive.md)
+  - > **For:** Ahmed Hassan — 330 agent slots, FinOps optimization
+- [SEO / AI SEO Strategy V15](docs/SEO-AI-SEO-V15.md)
+  - | Rule | Detail |
+- [Security Audit Report — GRC_Claw v21.0](docs/SECURITY-AUDIT.md)
+  - GRC_Claw has been designed from the ground up with security-first architecture. This report document
+- [SigNoz Deep-Dive: Agent Monitoring & Alerting for Hermes Agent](docs/signoz-deep-dive.md)
+  - > **For:** Ahmed Hassan — production agent monitoring with Nerve telemetry
+- [Sinon × Hermes Agent — Deep-Dive Analysis & Integration Guide](docs/sinon-hermes-integration-guide.md)
+  - **For:** Ahmed Hassan — AI agent pentest testing for security assurance
+- [Skill executor](docs/SKILL_EXECUTOR.md)
+  - GRC_Claw runs Cursor-style skills (markdown playbooks under `.cursor/skills/<id>/SKILL.md`) through 
+- [Sovereign Local AI Architecture: Airgapped Systems & Open Weight Models](docs/SOVEREIGN_LOCAL_AI.md)
+  - This document details GRC_Claw's architecture for fully airgapped deployments, utilizing local open-
+- [Stakpak → A2Z SOC + GRC_Claw Migration Guide](docs/STAKPAK-MIGRATION-GUIDE.md)
+  - > **Version:** 1.0 | **Last Updated:** 2026-07-17
+- [UI/UX Standards V15](docs/UI-UX-V15.md)
+  - | Component | File | Purpose |
+- [vLLM Deep-Dive: Agent KV-Cache Optimization for Cost Reduction](docs/vllm-agent-kv-cache-optimization-guide.md)
+  - **Target**: Ahmed Hassan — 330 agent slots, redundant computation elimination
+
+### Examples
+
+- [6G Nemotron Attestation Example](examples/6g-nemotron-attestation/README.md)
+  - A NIM-hosted Nemotron network-operations agent, governed by GRC_Claw's Agent Registry and Policy Fir
+- [Agent policy denial: reproducible offline example](examples/agent-policy-denial/README.md)
+  - An agent is permitted to read a fictional inventory item, then attempts a fictional customer export 
+- [Executive active-defense assurance loop](examples/executive-active-defense/README.md)
+  - This is the focused executive demonstration path for GRC_Claw. It connects a
+
+### Gap Blueprints
+
+- [GRC_Claw Implementation Blueprints — Gaps 11–15](gap-blueprints/grc-claw-blueprints-gaps-11-15.md)
+  - **Document ID:** GRC-BP-001
+- [GRC_Claw Implementation Blueprints — Gaps 16–20](gap-blueprints/grc-claw-blueprints-16-20.md)
+  - **Version:** 1.0
+- [GRC_Claw Implementation Blueprints — Gaps 6–10](gap-blueprints/grc-claw-gap-6-10-blueprints.md)
+  - **Version:** 1.0
+- [GRC_Claw — AI Governance Gap Analysis](gap-blueprints/grc-claw-gap-analysis.md)
+  - **Synthesized from Wave 1 Research**
+
+### Homebrew
+
+- [homebrew-grc](homebrew/README.md)
+  - Homebrew tap for GRC_Claw CLI.
+
+### Implementations
+
+- [GRC_Claw AI Incident Management — Implementation Guide](implementations/grc-claw-incident-management/IMPLEMENTATION_GUIDE.md)
+  - **Reference:** GRC-AIM-001 v2.0
+- [GRC_Claw API Implementation Guide](implementations/grc-claw-api-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Agent Governance Implementation Guide](implementations/grc-claw-agent-governance-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Automation Engine: Complete Implementation Guide](implementations/grc-claw-implementation-guide.md)
+  - **Document ID:** GRC-IMPL-001
+- [GRC_Claw Automation Implementation Guide](implementations/grc-claw-automation-implementation-guide.md)
+  - **Document ID:** GRC-AUTO-001
+- [GRC_Claw Change Management Implementation Guide](implementations/grc-claw-change-management-implementation-guide.md)
+  - **Document ID:** GRC-CHG-IMPL-001
+- [GRC_Claw Compliance Management Implementation Guide](implementations/grc-claw-compliance-implementation-guide.md)
+  - **Document ID:** GRC-CMS-IMP-001
+- [GRC_Claw Evidence Management Implementation Guide](implementations/grc-claw-evidence-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Integration Implementation Guide](implementations/grc-claw-integration-implementation-guide.md)
+  - **Document ID:** GRC-IMPL-001
+- [GRC_Claw Knowledge Management Implementation Guide](implementations/grc-claw-knowledge-management-implementation-guide.md)
+  - **Document ID:** GRC-KMS-IMPL-001
+- [GRC_Claw Maintainability Implementation Guide](implementations/grc-claw-maintainability-implementation-guide.md)
+  - **Document ID:** GRC-MNT-IMPL-001
+- [GRC_Claw Model Governance Implementation Guide](implementations/grc-claw-model-governance-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Privacy Implementation Guide](implementations/grc-claw-privacy-implementation-guide.md)
+  - **Document ID:** GRC-PRV-IMP-001
+- [GRC_Claw QA Implementation Guide](implementations/grc-claw-qa-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Reliability Engineering Implementation Guide](implementations/grc-claw-reliability-implementation-guide.md)
+  - **Document ID:** GRC-REL-IMPL-001
+- [GRC_Claw Reporting Engine: Implementation Guide](implementations/grc-claw-reporting-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Risk Management Implementation Guide](implementations/grc-claw-risk-management/README.md)
+  - **Document ID:** GRC-RISK-IMPL-001
+- [GRC_Claw Scalability Implementation Guide](implementations/grc-claw-scalability-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Stakeholder Engagement Implementation Guide](implementations/grc-claw-stakeholder-engagement/README.md)
+  - **Version:** 1.0
+- [GRC_Claw Storage Implementation Guide](implementations/grc-claw-storage-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Training Implementation Guide](implementations/grc-claw-training-implementation-guide.md)
+  - **Document ID:** GRC-TIG-001
+- [GRC_Claw UI Implementation Guide](implementations/grc-claw-ui-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw — Detailed Implementation Plans for Top 20 Gaps](implementations/grc-claw-implementation-plans.md)
+  - **Version:** 1.0
+- [GRC_Claw — Implementation Guide](implementations/grc-claw-implementation-guide/IMPLEMENTATION_GUIDE.md)
+  - **Version:** 1.0.0
+
+### Integrations
+
+- [A2Z SOC × GRC_Claw Integration Contract](integrations/a2z-soc/README.md)
+  - GRC_Claw (OSS) connects to **Private A2Z SOC** via `@grc-claw/a2z-connector`. No proprietary A2Z cod
+- [ISO/IEC 42001 — GRC_Claw integration](integrations/iso-42001/README.md)
+  - This folder documents how **GRC_Claw** supports an **AIMS** (AI Management System) aligned with ISO/
+
+### Packages
+
+- [@grc-claw/agent-identity](packages/agent-identity/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/agent-runtime](packages/agent-runtime/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/ai-supply-chain](packages/ai-supply-chain/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/aims](packages/aims/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/cli](packages/cli/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/compliance-copilot](packages/compliance-copilot/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/compliance-orchestrator](packages/compliance-orchestrator/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/core](packages/core/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/evidence](packages/evidence/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/frameworks](packages/frameworks/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/ingest](packages/ingest/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/observability](packages/observability/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/sdk](packages/sdk/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/sdk](packages/sdk/README.md)
+  - Compliance-as-Code SDK with `grcfile.yaml` support and CLI primitives for the GRC_Claw platform.
+- [@grc-claw/security-graph](packages/security-graph/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/soar](packages/soar/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [@grc-claw/zk-compliance](packages/zk-compliance/CHANGELOG.md)
+  - - 9eafd06: Initial public release of GRC_Claw v1.0.
+- [GRC Terraform Provider](packages/terraform-provider/docs/index.md)
+  - Manage A2Z SOC GRC controls and evidence as infrastructure-as-code using the `grc` Terraform provide
+- [GRC_Claw Python SDK](packages/grc-claw-python/README.md)
+  - Python SDK for the GRC_Claw compliance automation platform. Scan codebases, run CMMC assessments, an
+- [Publishing to the Terraform Registry](packages/terraform-provider/TERRAFORM_REGISTRY.md)
+  - 1. Create account at registry.terraform.io
+
+### Root
+
+- [Contributing to GRC_Claw](CONTRIBUTING.md)
+  - 1. Create `packages/cloud-connectors/src/<service>.ts`
+- [GRC_Claw](README.ar.md)
+  - محرك مفتوح المصدر لأتمتة الحوكمة والمخاطر والامتثال (GRC)، مرخّص بالكامل تحت رخصة MIT.
+- [GRC_Claw Architecture](ARCHITECTURE.md)
+  - GRC_Claw implements the **netsec-grc-architecture-engineering** skill: architecture-first, OpenClaw-
+- [GRC_Claw Changelog](CHANGELOG.md)
+  - All notable changes documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
+- [GRC_Claw Community](COMMUNITY.md)
+  - - GitHub Discussions: github.com/AAH20/GRC_Claw/discussions
+- [GRC_Claw Strategic Implementation Summary](STRATEGIC_IMPLEMENTATION.md)
+  - **Location**: `packages/compliance-orchestrator/`
+- [GRC_Claw v24.0](README.md)
+  - **Enterprise AI-agent policy and evidence control plane.** GRC_Claw records
+- [Publishing GRC_Claw to npm](PUBLISHING.md)
+  - 1. Create an npm account and organization at npmjs.com
+
+### Skills
+
+- [AI Agent Governance](skills/ai-agent-governance/SKILL.md)
+  - Register an autonomous agent's identity, check a runtime policy decision before it acts, and log a h
+
+### Specifications
+
+- [GRC_Claw AI Ethics Specification](specs/grc-claw-ethics-specification.md)
+  - **Version:** 1.0
+- [GRC_Claw AI Financial Governance Specification](specs/GRC_Claw_Financial_Governance_Specification.md)
+  - **Version:** 1.0
+- [GRC_Claw AI Governance Training & Awareness Framework](specs/grc-claw-ai-training-framework.md)
+  - | Dimension | IAPP AIGP | GAICC ISO 42001 | IEEE CertifAIEd | CertNexus CEET |
+- [GRC_Claw AI Incident Management Specification](specs/grc-claw-ai-incident-management-spec.md)
+  - **Document ID:** GRC-AIM-001
+- [GRC_Claw AI Privacy Specification](specs/grc-claw-ai-privacy-spec.md)
+  - **Document ID:** GRC-PRV-001
+- [GRC_Claw AI Security Specification](specs/GRC_Claw_Security_Specification.md)
+  - **Version:** 1.0
+- [GRC_Claw API Specification](specs/grc-claw-api-spec.md)
+  - **Version:** 1.2
+- [GRC_Claw API Versioning & Deprecation Automation](specs/grc-claw-versioning-automation.md)
+  - ```
+- [GRC_Claw Agent Governance Specification](specs/grc-claw-agent-governance-spec.md)
+  - **Version:** 1.1
+- [GRC_Claw Agent Governance — Cryptographic Protocols & Formal Verification](specs/grc-claw-agent-governance-cryptographic-protocols.md)
+  - **Version:** 1.0
+- [GRC_Claw Automation Engine: Deep-Dive Analysis & Open-Source Proposal](specs/grc-claw-automation-engine-proposal.md)
+  - After analyzing 8 platforms (4 commercial, 4 open-source), the AI governance automation market revea
+- [GRC_Claw Automation Engine: Deep-Dive Expansion](specs/grc-claw-automation-engine-deep-dive.md)
+  - **Document ID:** GRC-AUTO-001
+- [GRC_Claw Business Continuity Specification](specs/grc-claw-business-continuity-spec.md)
+  - **Document ID:** GRC-BCP-001
+- [GRC_Claw CI Implementation & Automation Guide](specs/grc-claw-ci-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Change Management Specification](specs/grc-claw-change-management-spec.md)
+  - **Document ID:** GRC-CHG-001
+- [GRC_Claw Competitive Positioning Strategy](specs/GRC_Claw_Competitive_Positioning_Strategy.md)
+  - **Version:** 1.0 | **Date:** October 2026 | **Author:** Strategy Team
+- [GRC_Claw Compliance Automation Specification](specs/grc-claw-compliance-automation-spec.md)
+  - **Document ID:** GRC-CAS-001
+- [GRC_Claw Compliance Evidence Specification](specs/grc-claw-evidence-spec.md)
+  - **Version:** 1.1
+- [GRC_Claw Compliance Mapping Specification](specs/grc-claw-compliance-mapping-spec-v2.md)
+  - **Document ID:** GRC-CMS-001
+- [GRC_Claw Compliance Mapping Specification](specs/grc-claw-compliance-mapping-spec.md)
+  - **Document ID:** GRC-CMS-001
+- [GRC_Claw Component Design Specification](specs/grc-claw-component-design.md)
+  - **Version:** 1.0
+- [GRC_Claw Data Governance Specification](specs/grc-claw-data-governance-spec.md)
+  - **Version:** 1.0
+- [GRC_Claw Data Storage Specification](specs/grc-claw-storage-spec.md)
+  - **Version:** 1.1
+- [GRC_Claw Database Implementation Guide](specs/grc-claw-database-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Deployment Governance Specification](specs/grc-claw-deployment-governance-spec.md)
+  - **Version:** 1.0
+- [GRC_Claw Deployment Specification](specs/grc-claw-deployment-spec.md)
+  - **Version:** 2.0
+- [GRC_Claw Developer Portal Design](specs/grc-claw-developer-portal.md)
+  - | Layer | Technology | Rationale |
+- [GRC_Claw Enterprise Integration Layer: Bridging COBIT, ITIL, TOGAF & ISO 42001 for Agentic AI Governance](specs/grc-claw-integration-layer.md)
+  - GRC_Claw operates in a gap that no existing framework natively fills: **governing autonomous AI agen
+- [GRC_Claw Environmental Governance Implementation Guide](specs/GRC_Claw_Environmental_Governance_Implementation_Guide.md)
+  - **Document ID:** GRC-CLW-ENV-IMP-001
+- [GRC_Claw Environmental Governance Specification](specs/GRC_Claw_Environmental_Governance_Specification.md)
+  - **Document ID:** GRC-CLW-ENV-001
+- [GRC_Claw Evidence Collection — Deep Implementation Specification](specs/grc-claw-evidence-deep-spec.md)
+  - **Document ID:** GRC-EVD-002
+- [GRC_Claw Financial Governance Implementation Guide](specs/GRC_Claw_Financial_Governance_Implementation_Guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Frontend Implementation Guide](specs/grc-claw-frontend-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw GTM Execution Plan](specs/GRC_Claw_GTM_Execution_Plan.md)
+  - **Version:** 1.0 | **Date:** October 2026 | **Author:** Strategy Team
+- [GRC_Claw GTM Execution Plan — Detailed](specs/GRC_Claw_GTM_Execution_Plan_Detailed.md)
+  - **Version:** 2.0 | **Date:** October 2026 | **Author:** Strategy Team
+- [GRC_Claw Integration Specification](specs/grc-claw-integration-specification.md)
+  - **Document ID:** GRC-INT-001
+- [GRC_Claw Knowledge Management Specification](specs/grc-claw-knowledge-management-spec.md)
+  - **Document ID:** GRC-KMS-001
+- [GRC_Claw Maintainability Specification](specs/grc-claw-maintainability-spec.md)
+  - **Document ID:** GRC-MNT-001
+- [GRC_Claw Metric Definition Document](specs/grc-claw-metric-definitions.md)
+  - **Version:** 1.0
+- [GRC_Claw Metrics Layer: Detailed Definitions & Measurement Methodology](specs/grc-claw-metrics-definitions.md)
+  - **Version:** 1.0
+- [GRC_Claw Model Governance Specification](specs/grc-claw-model-governance-spec.md)
+  - **Version:** 2.0
+- [GRC_Claw Monitoring & Observability Specification](specs/GRC_CLAW_MONITORING_OBSERVABILITY_SPEC.md)
+  - **Version:** 1.0.0
+- [GRC_Claw Monitoring & Observability — Deep Dive Specification](specs/GRC_CLAW_MONITORING_DEEP_DIVE_SPEC.md)
+  - **Version:** 2.0.0
+- [GRC_Claw Monitoring Automation & Predictive Analytics Specification](specs/GRC_CLAW_MONITORING_AUTOMATION_SPEC.md)
+  - **Version:** 1.0.0
+- [GRC_Claw Monitoring Implementation Guide](specs/GRC_CLAW_MONITORING_IMPLEMENTATION_GUIDE.md)
+  - **Version:** 1.0.0
+- [GRC_Claw Performance Engineering Implementation Guide](specs/grc-claw-performance-engineering-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Performance Specification](specs/grc-claw-performance-spec.md)
+  - **Version:** 2.0
+- [GRC_Claw Policy Engine Specification](specs/grc-claw-policy-engine-spec.md)
+  - **Version:** 1.0
+- [GRC_Claw Policy Implementation Guide](specs/grc-claw-policy-implementation-guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Quality Assurance Specification](specs/grc-claw-qa-specification.md)
+  - **Version:** 2.0
+- [GRC_Claw RACI-Plus Framework — Detailed Role Descriptions & Competency Requirements](specs/grc-claw-role-descriptions.md)
+  - **Version:** 1.0
+- [GRC_Claw Reference Architecture](specs/grc-claw-reference-architecture.md)
+  - **Version:** 1.0
+- [GRC_Claw Reliability Specification](specs/grc-claw-reliability-spec.md)
+  - **Document ID:** GRC-REL-001
+- [GRC_Claw Reporting Engine: Deep-Dive Analysis & Proposal](specs/grc-claw-reporting-engine-analysis.md)
+  - This report provides a comprehensive analysis of AI governance communication and reporting across fi
+- [GRC_Claw Reporting Engine: Deep-Dive Expansion](specs/grc-claw-reporting-engine-deep-dive.md)
+  - **Version:** 1.0
+- [GRC_Claw Risk Assessment Framework — Quantitative Deepening](specs/grc-claw-risk-assessment-framework-v2.md)
+  - **Document ID:** GRC-RISK-002
+- [GRC_Claw Risk Treatment Optimization Framework](specs/grc-claw-risk-treatment-optimization.md)
+  - **Document ID:** GRC-RISK-002
+- [GRC_Claw Scalability Specification](specs/grc-claw-scalability-spec.md)
+  - **Version:** 2.0
+- [GRC_Claw Security Automation Specification](specs/GRC_Claw_Security_Automation_Specification.md)
+  - **Document ID:** GRC-SEC-AUTO-001
+- [GRC_Claw Security Implementation Guide](specs/GRC_Claw_Security_Implementation_Guide.md)
+  - **Document ID:** GRC-SEC-IMPL-001
+- [GRC_Claw Security Specification](specs/grc-claw-security-spec.md)
+  - **Document ID:** GRC-SEC-001
+- [GRC_Claw Security Specification — Deepening Addendum](specs/GRC_Claw_Security_Deepening.md)
+  - **Document ID:** GRC-SEC-001-A
+- [GRC_Claw Stakeholder Engagement Specification](specs/grc-claw-stakeholder-engagement-spec.md)
+  - **Version:** 2.0
+- [GRC_Claw Testing & Validation Specification](specs/GRC_Claw_Testing_Validation_Spec.md)
+  - **Version:** 1.0
+- [GRC_Claw Testing & Validation — Deepening Specification](specs/GRC_Claw_Testing_Deepening.md)
+  - **Version:** 2.0
+- [GRC_Claw Testing Implementation Guide](specs/GRC_Claw_Testing_Implementation_Guide.md)
+  - **Version:** 1.0
+- [GRC_Claw Third-Party AI Risk Management Specification](specs/grc-claw-third-party-risk-spec.md)
+  - **Document ID:** GRC-TPR-001
+- [GRC_Claw Training Framework Deepening](specs/grc-claw-training-framework-deepening.md)
+  - **Document ID:** GRC-TFD-001
+- [GRC_Claw Transparency & Explainability Specification](specs/grc-claw-transparency-explainability-spec.md)
+  - **Document ID:** GRC-TE-001
+- [GRC_Claw U-AIGMM Assessment Methodology & Improvement Planning Expansion](specs/GRC_Claw_Maturity_Assessment_Expansion.md)
+  - **Version:** 1.0
+- [GRC_Claw U-AIGMM Assessment Report Template](specs/GRC_Claw_Reporting_Template.md)
+  - **Version:** 1.0
+- [GRC_Claw U-AIGMM Benchmark Data by Industry](specs/GRC_Claw_Benchmark_Data.md)
+  - **Version:** 1.0
+- [GRC_Claw U-AIGMM Improvement Roadmap Template](specs/GRC_Claw_Improvement_Roadmap_Template.md)
+  - **Version:** 1.0
+- [GRC_Claw U-AIGMM Maturity Level Definitions & Evidence Requirements](specs/GRC_Claw_Maturity_Level_Definitions.md)
+  - **Version:** 1.0
+- [GRC_Claw UI Specification — Advanced Patterns Deepening](specs/grc-claw-ui-specification-deepened.md)
+  - **Version:** 2.0 (Extension of grc-claw-ui-specification.md v1.0)
+- [GRC_Claw Unified AI Governance Maturity Model (U-AIGMM)](specs/GRC_Claw_Unified_AI_Governance_Maturity_Model.md)
+  - **Version:** 1.0
+- [GRC_Claw Unified AI Governance Metrics Layer](specs/grc-claw-unified-metrics-layer.md)
+  - **Version:** 1.0
+- [GRC_Claw Unified Architecture Document](specs/grc-claw-unified-architecture.md)
+  - **Version:** 1.0
+- [GRC_Claw Unified Continuous Improvement Framework](specs/grc-claw-ci-framework.md)
+  - GRC_Claw's Wave 1 identified PDCA, NIST RMF, and maturity models as foundational frameworks. The gap
+- [GRC_Claw Unified Risk Assessment Framework](specs/grc-claw-risk-assessment-framework.md)
+  - **Document ID:** GRC-RISK-001
+- [GRC_Claw User Interface Specification](specs/grc-claw-ui-specification.md)
+  - **Version:** 1.0
+- [GRC_Claw — Expanded Technical Specification](specs/GRC_CLAW_EXPANDED_SPEC.md)
+  - **Version:** 1.1.0
+- [GRC_Claw — Human Oversight Specification](specs/GRC_Claw_Human_Oversight_Specification.md)
+  - **Document ID:** GRC-CLW-HO-001
+- [GRC_Claw — Legal & Regulatory Compliance Specification](specs/GRC_Claw_Legal_Regulatory_Compliance_Spec.md)
+  - **Document ID:** GRC-CLW-COMP-001
+- [GRC_Claw — Phase 1 Sprint Plan](specs/grc-claw-sprint-plan.md)
+  - **Version:** 1.0
+- [GRC_Claw — Phase 1 Sprint-by-Sprint Plan](specs/grc-claw-phase1-sprint-plan.md)
+  - **Version:** 1.0
+- [GRC_Claw — Product Roadmap](specs/grc-claw-roadmap.md)
+  - **Version:** 1.0
+- [GRC_Claw — Technical Specification](specs/GRC_CLAW_TECHNICAL_SPEC.md)
+  - **Version:** 1.0.0
+- [GRC_Claw — Top 5 Gap Implementation Blueprints](specs/grc-claw-top5-blueprints.md)
+  - **Version:** 1.0
+- [Unified Governance Crosswalk: ISO 42001 × NIST AI RMF × EU AI Act × OWASP Agentic Top 10](specs/grc-claw-unified-crosswalk.md)
+  - **Version:** 1.0
+
+### Speculative
+
+- [GRC_Claw — Future Research Directions](speculative/FUTURE_RESEARCH.md)
+  - This document archives research directions that are beyond current deployable technology but represe
+
+### Strategy
+
+- [AI Ethics Frameworks & Tools Landscape Research](strategy/ai-ethics-landscape-research.md)
+  - - **Published:** 2019 (First Edition)
+- [AI Governance RACI-Plus Framework](strategy/ai-governance-raci-plus-framework.md)
+  - **Version:** 1.0
+- [ISO/IEC 42001:2023 — Comprehensive Implementation Deep-Dive](strategy/ISO-42001-Deep-Dive.md)
+  - > **For:** GRC_Claw — ISO 42001 implementation landscape research
+- [NIST AI RMF Deep-Dive: Implementation Landscape & ISO 42001 Mapping](strategy/nist-ai-rmf-deep-dive.md)
+  - **Prepared for:** GRC_Claw positioning as a bridge between NIST AI RMF and ISO 42001
+- [Open-Source AI Governance Landscape Report](strategy/ai-governance-landscape-report.md)
+  - - **License:** MIT
+- [Unified AI Governance Policy Template](strategy/unified-ai-governance-policy-template.md)
+  - **Version:** 1.0
+- [Unified AI Governance Policy — Implementation Guide](strategy/unified-ai-governance-policy-implementation-guide.md)
+  - **Companion to:** `unified-ai-governance-policy-template.md`

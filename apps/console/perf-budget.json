@@ -1,0 +1,8 @@
+{
+  "initialJS": 300,
+  "initialCSS": 20,
+  "totalJS": 500,
+  "totalCSS": 50,
+  "maxChunkSize": 150,
+  "maxChunks": 10
+}

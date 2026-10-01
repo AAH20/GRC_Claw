@@ -1,0 +1,1019 @@
+{
+  "info": {
+    "name": "GRC_Claw API",
+    "description": "Governance, Risk, and Compliance platform for agentic AI - Complete API collection covering all 54 endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "api_key",
+      "value": "grc_test_your_api_key_here"
+    },
+    {
+      "key": "agent_id",
+      "value": "agent-1"
+    },
+    {
+      "key": "policy_id",
+      "value": "pol-001"
+    },
+    {
+      "key": "assessment_id",
+      "value": "asm-001"
+    },
+    {
+      "key": "evidence_id",
+      "value": "evd-001"
+    },
+    {
+      "key": "decision_id",
+      "value": "dec-001"
+    },
+    {
+      "key": "subscription_id",
+      "value": "sub-001"
+    },
+    {
+      "key": "framework_id",
+      "value": "fw-001"
+    },
+    {
+      "key": "package_id",
+      "value": "pkg-001"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Health check endpoint"
+          }
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ready",
+              "host": ["{{base_url}}"],
+              "path": ["ready"]
+            },
+            "description": "Readiness check endpoint"
+          }
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Prometheus metrics endpoint"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/agents?limit=50&cursor=",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "agents"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "" },
+                { "key": "type", "value": "agent", "disabled": true },
+                { "key": "framework", "value": "langchain", "disabled": true },
+                { "key": "lifecycle_stage", "value": "active", "disabled": true },
+                { "key": "risk_tier", "value": "limited", "disabled": true },
+                { "key": "trust_score_min", "value": "50", "disabled": true }
+              ]
+            },
+            "description": "List agents with filtering and pagination"
+          }
+        },
+        {
+          "name": "Register Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/agents",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "agents"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Data Analyst Agent\",\n  \"type\": \"agent\",\n  \"framework\": \"langchain\",\n  \"owner\": \"team-data\",\n  \"risk_tier\": \"limited\",\n  \"capabilities\": [\n    {\n      \"name\": \"read_data\",\n      \"description\": \"Read data from approved sources\",\n      \"permissions\": [\"data:read\"],\n      \"resource_scope\": \"s3://grc-data/*\"\n    }\n  ]\n}"
+            },
+            "description": "Register a new agent"
+          }
+        },
+        {
+          "name": "Get Agent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "agents", "{{agent_id}}"]
+            },
+            "description": "Get an agent by ID"
+          }
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "agents", "{{agent_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lifecycle_stage\": \"active\",\n  \"risk_tier\": \"limited\"\n}"
+            },
+            "description": "Update an agent"
+          }
+        },
+        {
+          "name": "Update Trust Score",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/agents/{{agent_id}}/trust-score",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "agents", "{{agent_id}}", "trust-score"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 85,\n  \"grade\": \"B\",\n  \"reason\": \"Quarterly trust evaluation passed\"\n}"
+            },
+            "description": "Update agent trust score"
+          }
+        },
+        {
+          "name": "Bind Policies",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/agents/{{agent_id}}/policy-bindings",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "agents", "{{agent_id}}", "policy-bindings"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policy_ids\": [\"pol-001\", \"pol-002\"]\n}"
+            },
+            "description": "Bind policies to an agent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Policies",
+      "item": [
+        {
+          "name": "List Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies?limit=50&cursor=",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "" },
+                { "key": "status", "value": "active", "disabled": true },
+                { "key": "category", "value": "safety", "disabled": true },
+                { "key": "framework", "value": "NIST-800-53", "disabled": true },
+                { "key": "agent_id", "value": "agent-1", "disabled": true }
+              ]
+            },
+            "description": "List policies with filtering and pagination"
+          }
+        },
+        {
+          "name": "Create Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policy_key\": \"DATA-ACCESS-001\",\n  \"name\": \"Data Access Control\",\n  \"description\": \"Controls access to sensitive data stores\",\n  \"category\": \"safety\",\n  \"framework_tags\": [\"NIST-800-53\", \"SOC2\"],\n  \"cedar_policy\": \"permit(principal, action, resource) when { principal has permission };\"\n}"
+            },
+            "description": "Create a new policy"
+          }
+        },
+        {
+          "name": "Get Policy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}"]
+            },
+            "description": "Get a policy by ID"
+          }
+        },
+        {
+          "name": "Update Policy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Data Access Control v2\",\n  \"description\": \"Updated policy description\"\n}"
+            },
+            "description": "Update a policy (creates new version)"
+          }
+        },
+        {
+          "name": "Delete Policy",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}?force=false",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}"],
+              "query": [
+                { "key": "force", "value": "false" }
+              ]
+            },
+            "description": "Delete a policy"
+          }
+        },
+        {
+          "name": "Compile Policy",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}/compile",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}", "compile"]
+            },
+            "description": "Compile Cedar policy to Rego"
+          }
+        },
+        {
+          "name": "Dry-Run Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}/dry-run",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}", "dry-run"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"test_inputs\": [\n    {\n      \"principal\": { \"id\": \"agent-1\", \"type\": \"agent\" },\n      \"action\": \"read\",\n      \"resource\": { \"id\": \"s3://grc-data/dataset-1\", \"type\": \"data\" },\n      \"context\": { \"environment\": \"production\" }\n    }\n  ]\n}"
+            },
+            "description": "Dry-run policy against test inputs"
+          }
+        },
+        {
+          "name": "Get Policy Versions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}/versions",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}", "versions"]
+            },
+            "description": "Get policy version history"
+          }
+        },
+        {
+          "name": "Get Policy Dependencies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/policies/{{policy_id}}/dependencies",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "policies", "{{policy_id}}", "dependencies"]
+            },
+            "description": "Get policy dependency graph"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence",
+      "item": [
+        {
+          "name": "Search Evidence",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/evidence?limit=50&cursor=",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "evidence"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "" },
+                { "key": "policy_id", "value": "pol-001", "disabled": true },
+                { "key": "evidence_type", "value": "artifact", "disabled": true },
+                { "key": "framework", "value": "NIST-800-53", "disabled": true },
+                { "key": "verification_level", "value": "L2", "disabled": true },
+                { "key": "environment", "value": "production", "disabled": true }
+              ]
+            },
+            "description": "Search evidence with filtering and pagination"
+          }
+        },
+        {
+          "name": "Submit Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/evidence",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "evidence"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policy_id\": \"pol-001\",\n  \"assessment_id\": \"asm-001\",\n  \"source\": {\n    \"type\": \"automated_scan\",\n    \"system\": \"config-auditor\",\n    \"collection_method\": \"api\"\n  },\n  \"evidence_type\": \"artifact\",\n  \"content\": {\n    \"format\": \"json\",\n    \"data\": \"{\\\"compliant\\\": true, \\\"controls\\\": [\\\"AC-2\\\"]}\"\n  },\n  \"context\": {\n    \"environment\": \"production\",\n    \"region\": \"us-east-1\"\n  },\n  \"control_mapping\": {\n    \"control_id\": \"AC-2\",\n    \"framework\": \"NIST-800-53\",\n    \"control_title\": \"Account Management\"\n  }\n}"
+            },
+            "description": "Submit new evidence"
+          }
+        },
+        {
+          "name": "Get Evidence",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/evidence/{{evidence_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "evidence", "{{evidence_id}}"]
+            },
+            "description": "Get evidence by ID"
+          }
+        },
+        {
+          "name": "Verify Evidence",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/evidence/{{evidence_id}}/verify",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "evidence", "{{evidence_id}}", "verify"]
+            },
+            "description": "Verify evidence integrity"
+          }
+        },
+        {
+          "name": "Export Evidence Package",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/evidence/export",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "evidence", "export"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"framework\": \"NIST-800-53\",\n  \"time_range\": {\n    \"from\": \"2025-01-01T00:00:00Z\",\n    \"to\": \"2025-12-31T23:59:59Z\"\n  },\n  \"format\": \"json\",\n  \"include_chain_of_custody\": true\n}"
+            },
+            "description": "Export evidence package (async)"
+          }
+        },
+        {
+          "name": "Get Export Package",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/evidence/export/{{package_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "evidence", "export", "{{package_id}}"]
+            },
+            "description": "Get export package status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enforcement",
+      "item": [
+        {
+          "name": "Request Decision",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/enforcement/decide",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "enforcement", "decide"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"agent-1\",\n  \"action\": \"read\",\n  \"resource\": \"s3://grc-data/dataset-1\",\n  \"context\": { \"environment\": \"production\" },\n  \"policy_ids\": [\"pol-001\"],\n  \"include_evidence\": true\n}"
+            },
+            "description": "Request a single enforcement decision"
+          }
+        },
+        {
+          "name": "Batch Decide",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/enforcement/decide-batch",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "enforcement", "decide-batch"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decisions\": [\n    {\n      \"agent_id\": \"agent-1\",\n      \"action\": \"read\",\n      \"resource\": \"s3://grc-data/dataset-1\",\n      \"policy_ids\": [\"pol-001\"]\n    },\n    {\n      \"agent_id\": \"agent-2\",\n      \"action\": \"write\",\n      \"resource\": \"s3://grc-data/dataset-2\",\n      \"policy_ids\": [\"pol-002\"]\n    }\n  ]\n}"
+            },
+            "description": "Request batch enforcement decisions"
+          }
+        },
+        {
+          "name": "Get Decision",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/enforcement/decisions/{{decision_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "enforcement", "decisions", "{{decision_id}}"]
+            },
+            "description": "Get an enforcement decision by ID"
+          }
+        },
+        {
+          "name": "List Decisions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/enforcement/decisions?limit=50&cursor=",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "enforcement", "decisions"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "" },
+                { "key": "agent_id", "value": "agent-1", "disabled": true },
+                { "key": "policy_id", "value": "pol-001", "disabled": true },
+                { "key": "verdict", "value": "ALLOW", "disabled": true }
+              ]
+            },
+            "description": "List enforcement decisions with filtering"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assessments",
+      "item": [
+        {
+          "name": "List Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/assessments?limit=50&cursor=",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "assessments"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "" },
+                { "key": "assessment_type", "value": "risk", "disabled": true },
+                { "key": "status", "value": "planned", "disabled": true },
+                { "key": "target_type", "value": "agent", "disabled": true },
+                { "key": "target_id", "value": "agent-1", "disabled": true }
+              ]
+            },
+            "description": "List assessments with filtering and pagination"
+          }
+        },
+        {
+          "name": "Create Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/assessments",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "assessments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessment_key\": \"RISK-2025-001\",\n  \"title\": \"Q1 2025 Risk Assessment\",\n  \"description\": \"Quarterly risk assessment for production agents\",\n  \"assessment_type\": \"risk\",\n  \"target_id\": \"agent-1\",\n  \"target_type\": \"agent\",\n  \"methodology\": \"NIST RMF\",\n  \"lead_assessor\": \"assessor@company.com\"\n}"
+            },
+            "description": "Create a new assessment"
+          }
+        },
+        {
+          "name": "Get Assessment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/assessments/{{assessment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "assessments", "{{assessment_id}}"]
+            },
+            "description": "Get an assessment by ID"
+          }
+        },
+        {
+          "name": "Update Assessment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/assessments/{{assessment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "assessments", "{{assessment_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"score\": 85.5,\n  \"risk_level\": \"medium\"\n}"
+            },
+            "description": "Update an assessment"
+          }
+        },
+        {
+          "name": "Add Finding",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/assessments/{{assessment_id}}/findings",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "assessments", "{{assessment_id}}", "findings"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"finding_key\": \"FND-001\",\n  \"title\": \"Excessive permissions detected\",\n  \"description\": \"Agent has permissions beyond its role\",\n  \"severity\": \"high\",\n  \"category\": \"access_control\",\n  \"policy_id\": \"pol-001\",\n  \"evidence_ids\": [\"evd-001\"],\n  \"remediation\": \"Review and reduce permissions\",\n  \"due_date\": \"2025-03-15T00:00:00Z\"\n}"
+            },
+            "description": "Add a finding to an assessment"
+          }
+        },
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/assessments/{{assessment_id}}/report",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "assessments", "{{assessment_id}}", "report"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"pdf\",\n  \"include_evidence\": true,\n  \"include_remediation\": true\n}"
+            },
+            "description": "Generate an assessment report (async)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compliance",
+      "item": [
+        {
+          "name": "List Frameworks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/compliance/frameworks",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "compliance", "frameworks"]
+            },
+            "description": "List compliance frameworks"
+          }
+        },
+        {
+          "name": "List Controls",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/compliance/frameworks/{{framework_id}}/controls",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "compliance", "frameworks", "{{framework_id}}", "controls"],
+              "query": [
+                { "key": "category", "value": "Access Control", "disabled": true },
+                { "key": "status", "value": "compliant", "disabled": true },
+                { "key": "target_id", "value": "agent-1", "disabled": true }
+              ]
+            },
+            "description": "List controls for a framework"
+          }
+        },
+        {
+          "name": "Get Compliance Posture",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/compliance/posture",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "compliance", "posture"],
+              "query": [
+                { "key": "framework", "value": "NIST-800-53", "disabled": true },
+                { "key": "target_id", "value": "all-production", "disabled": true },
+                { "key": "target_type", "value": "organization", "disabled": true }
+              ]
+            },
+            "description": "Get compliance posture"
+          }
+        },
+        {
+          "name": "Create Mapping",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/compliance/mappings",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "compliance", "mappings"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"control_id\": \"AC-2\",\n  \"policy_id\": \"pol-001\",\n  \"assessment_id\": \"asm-001\",\n  \"mapping_type\": \"automated\",\n  \"coverage\": \"full\",\n  \"notes\": \"Mapped via automated scan\"\n}"
+            },
+            "description": "Create a compliance mapping"
+          }
+        },
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/compliance/reports",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "compliance", "reports"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"framework\": \"NIST-800-53\",\n  \"time_range\": {\n    \"from\": \"2025-01-01T00:00:00Z\",\n    \"to\": \"2025-12-31T23:59:59Z\"\n  },\n  \"format\": \"json\",\n  \"include_evidence\": true,\n  \"include_gaps\": true\n}"
+            },
+            "description": "Generate a compliance report (async)"
+          }
+        },
+        {
+          "name": "Get Crosswalk",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/compliance/crosswalk",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "compliance", "crosswalk"],
+              "query": [
+                { "key": "control_id", "value": "ctrl-001", "disabled": true },
+                { "key": "framework", "value": "NIST-800-53", "disabled": true },
+                { "key": "target_framework", "value": "SOC2", "disabled": true }
+              ]
+            },
+            "description": "Get cross-framework control mapping"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Query Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/audit?limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "audit"],
+              "query": [
+                { "key": "limit", "value": "100" },
+                { "key": "event_type", "value": "policy.created", "disabled": true },
+                { "key": "actor_id", "value": "user-1", "disabled": true },
+                { "key": "resource_type", "value": "policy", "disabled": true },
+                { "key": "resource_id", "value": "pol-001", "disabled": true }
+              ]
+            },
+            "description": "Query audit trail with filtering"
+          }
+        },
+        {
+          "name": "Verify Audit Chain",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/audit/verify",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "audit", "verify"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_event_id\": null,\n  \"to_event_id\": null\n}"
+            },
+            "description": "Verify audit chain integrity"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions?limit=50&cursor=",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "" }
+              ]
+            },
+            "description": "List webhook subscriptions"
+          }
+        },
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\"policy.created\", \"enforcement.decision_made\"],\n  \"secret\": \"whsec_test_secret_key_1234567890\",\n  \"description\": \"Policy and enforcement notifications\",\n  \"active\": true\n}"
+            },
+            "description": "Create a webhook subscription"
+          }
+        },
+        {
+          "name": "Get Subscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions/{{subscription_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "{{subscription_id}}"]
+            },
+            "description": "Get a webhook subscription by ID"
+          }
+        },
+        {
+          "name": "Update Subscription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions/{{subscription_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "{{subscription_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false,\n  \"description\": \"Temporarily disabled\"\n}"
+            },
+            "description": "Update a webhook subscription"
+          }
+        },
+        {
+          "name": "Delete Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions/{{subscription_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "{{subscription_id}}"]
+            },
+            "description": "Delete a webhook subscription"
+          }
+        },
+        {
+          "name": "Test Subscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions/{{subscription_id}}/test",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "{{subscription_id}}", "test"]
+            },
+            "description": "Send a test event to the subscription"
+          }
+        },
+        {
+          "name": "Get Delivery History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/webhooks/subscriptions/{{subscription_id}}/deliveries",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "webhooks", "subscriptions", "{{subscription_id}}", "deliveries"],
+              "query": [
+                { "key": "status_filter", "value": "delivered", "disabled": true },
+                { "key": "date_from", "value": "2025-01-01T00:00:00Z", "disabled": true },
+                { "key": "date_to", "value": "2025-12-31T23:59:59Z", "disabled": true }
+              ]
+            },
+            "description": "Get webhook delivery history"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Composed",
+      "item": [
+        {
+          "name": "Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/composed/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "composed", "dashboard"]
+            },
+            "description": "Get aggregated dashboard overview"
+          }
+        },
+        {
+          "name": "Agent 360",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/composed/agents/{{agent_id}}/360",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "composed", "agents", "{{agent_id}}", "360"]
+            },
+            "description": "Get 360-degree view of an agent"
+          }
+        },
+        {
+          "name": "Compliance Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/composed/compliance-report",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "composed", "compliance-report"]
+            },
+            "description": "Get aggregated compliance report across frameworks"
+          }
+        },
+        {
+          "name": "Executive Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1.0/composed/executive-summary",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "composed", "executive-summary"]
+            },
+            "description": "Get high-level executive summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL",
+      "item": [
+        {
+          "name": "GraphQL Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1.0/graphql",
+              "host": ["{{base_url}}"],
+              "path": ["v1.0", "graphql"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"{\\n  agents {\\n    id\\n    name\\n    type\\n    riskTier\\n  }\\n}\"\n}"
+            },
+            "description": "GraphQL query endpoint"
+          }
+        }
+      ]
+    }
+  ]
+}

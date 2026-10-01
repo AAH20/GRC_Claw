@@ -1,0 +1,318 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GRC_Claw SLO Tracking",
+    "tags": ["grc-claw", "slo", "error-budget"],
+    "timezone": "utc",
+    "panels": [
+      {
+        "id": 1,
+        "title": "PDP Service Availability (30d)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "1 - (sum(rate(http_requests_total{service=\"pdp-service\",status=~\"5..\"}[30d])) / sum(rate(http_requests_total{service=\"pdp-service\"}[30d])))",
+            "legendFormat": "availability"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0.99},
+                {"color": "yellow", "value": 0.995},
+                {"color": "green", "value": 0.999}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "PDP Error Budget Remaining (30d)",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "0.001 - (sum(rate(http_requests_total{service=\"pdp-service\",status=~\"5..\"}[30d])) / sum(rate(http_requests_total{service=\"pdp-service\"}[30d])))",
+            "legendFormat": "budget"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": -0.001,
+            "max": 0.001,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": -0.001},
+                {"color": "yellow", "value": 0},
+                {"color": "green", "value": 0.0005}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "PEP Gateway Availability (30d)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "1 - (sum(rate(http_requests_total{service=\"pep-gateway\",status=~\"5..\"}[30d])) / sum(rate(http_requests_total{service=\"pep-gateway\"}[30d])))",
+            "legendFormat": "availability"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0.99},
+                {"color": "yellow", "value": 0.995},
+                {"color": "green", "value": 0.999}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "PEP Error Budget Remaining (30d)",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "0.001 - (sum(rate(http_requests_total{service=\"pep-gateway\",status=~\"5..\"}[30d])) / sum(rate(http_requests_total{service=\"pep-gateway\"}[30d])))",
+            "legendFormat": "budget"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": -0.001,
+            "max": 0.001,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": -0.001},
+                {"color": "yellow", "value": 0},
+                {"color": "green", "value": 0.0005}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "PDP Latency SLO (p99 < 50ms)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"pdp-service\"}[5m])) by (le))",
+            "legendFormat": "p99"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"pdp-service\"}[5m])) by (le))",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "0.050",
+            "legendFormat": "SLO threshold"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+      },
+      {
+        "id": 6,
+        "title": "PEP Latency SLO (p99 < 20ms)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"pep-gateway\"}[5m])) by (le))",
+            "legendFormat": "p99"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"pep-gateway\"}[5m])) by (le))",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "0.020",
+            "legendFormat": "SLO threshold"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
+      },
+      {
+        "id": 7,
+        "title": "Error Budget Burn Rate (1h)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{service=\"pdp-service\",status=~\"5..\"}[1h])) / sum(rate(http_requests_total{service=\"pdp-service\"}[1h]))",
+            "legendFormat": "PDP burn rate"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{service=\"pep-gateway\",status=~\"5..\"}[1h])) / sum(rate(http_requests_total{service=\"pep-gateway\"}[1h]))",
+            "legendFormat": "PEP burn rate"
+          },
+          {
+            "expr": "0.001",
+            "legendFormat": "SLO limit"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "custom": {
+              "drawStyle": "line",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
+      },
+      {
+        "id": 8,
+        "title": "Error Budget Burn Rate (6h)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{service=\"pdp-service\",status=~\"5..\"}[6h])) / sum(rate(http_requests_total{service=\"pdp-service\"}[6h]))",
+            "legendFormat": "PDP burn rate"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{service=\"pep-gateway\",status=~\"5..\"}[6h])) / sum(rate(http_requests_total{service=\"pep-gateway\"}[6h]))",
+            "legendFormat": "PEP burn rate"
+          },
+          {
+            "expr": "0.0005",
+            "legendFormat": "SLO limit"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "custom": {
+              "drawStyle": "line",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+      },
+      {
+        "id": 9,
+        "title": "SLO Compliance Summary",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "vector(1)",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "renameByName": {
+                "Value": "Status"
+              }
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 22}
+      },
+      {
+        "id": 10,
+        "title": "Evidence Processing SLO",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(grc_evidence_processing_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p99"
+          },
+          {
+            "expr": "5.0",
+            "legendFormat": "SLO threshold (5s)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30}
+      },
+      {
+        "id": 11,
+        "title": "Compliance Score SLO",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "avg(grc_compliance_score)",
+            "legendFormat": "avg score"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 0.8},
+                {"color": "green", "value": 0.9}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30}
+      }
+    ],
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 39,
+    "version": 1
+  }
+}
