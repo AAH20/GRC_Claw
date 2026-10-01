@@ -230,6 +230,31 @@ GRC_Claw uses a **custom quote model** — no fixed pricing. Each organization r
 
 ---
 
+## Benchmark Intelligence
+
+GRC_Claw's benchmark intelligence compares your compliance posture against anonymized industry peers across every major framework, by industry cohort and org size. Percentile ranking per framework with opt-in anonymized contribution.
+
+**Key signals tracked:**
+- **Evidence freshness** — how current your compliance evidence is across all frameworks
+- **Policy denial rate** — frequency of agent policy denials as a security posture indicator
+- **Verifier acceptance** — auditor and verifier network acceptance rates
+
+**Outcomes measured:**
+- **Audit cycle time** — reduction in days from audit start to completion
+- **Remediation latency** — time from finding to verified remediation
+
+---
+
+## Phase 38: Trust Transaction Network — Graph-First Category Control
+
+The Trust Transaction Network is GRC_Claw's graph-first category-control moat — a signed, portable trust object format that auditors, insurers, procurement teams, MSPs, and AI platforms can consume without trusting the vendor. The Phase 38 graph-first category control roadmap defines how this network becomes the defensible category.
+
+Every agent action, evidence artifact, and compliance decision becomes a **signed trust transaction** — a hash-chained, tamper-evident receipt that can be independently verified by any party in the network.
+
+The network effect: every new tenant, verifier, and framework mapping increases the value of the trust graph. Competitors can copy dashboards; they cannot quickly reproduce a normalized, versioned, auditor-usable graph of controls, evidence, mappings, owners, systems, and attestations.
+
+---
+
 ## Version History
 
 Complete version history from v10.0 to v24.0, including all documentation suites, moat roadmaps, and competitive analysis: **[docs/versioning/README.md](docs/versioning/README.md)**
