@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Sales Forecaster
+# Description: AI sales forecasting and prediction
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the sales-forecaster service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sales-forecaster-monitor
+  namespace: monitoring
+  labels:
+    app: sales-forecaster
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: sales-forecaster
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: sales_forecaster_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for sales-forecaster
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sales-forecaster-rules
+  namespace: monitoring
+  labels:
+    app: sales-forecaster
+    release: prometheus
+spec:
+  groups:
+  - name: sales-forecaster-recording-rules
+    interval: 30s
+    rules:
+    - record: sales_forecaster:api_request_rate:rate5m
+      expr: rate(sales_forecaster_api_requests_total[5m])
+    - record: sales_forecaster:api_error_rate:rate5m
+      expr: rate(sales_forecaster_api_errors_total[5m])
+    - record: sales_forecaster:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(sales_forecaster_api_latency_seconds_bucket[5m]))
+  - name: sales-forecaster-alerts-1
+    rules:
+    - alert: SalesForecasterHighErrorRate
+      expr: rate(sales_forecaster_api_errors_total[5m]) / rate(sales_forecaster_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: sales-forecaster
+      annotations:
+        summary: '{{ $labels.service }}: SalesForecasterHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered SalesForecasterHighErrorRate
+          for more than 5 minutes.'
+    - alert: SalesForecasterLowAccuracy
+      expr: sales_forecaster_accuracy < 0.7
+      for: 5m
+      labels:
+        severity: critical
+        service: sales-forecaster
+      annotations:
+        summary: '{{ $labels.service }}: SalesForecasterLowAccuracy is firing'
+        description: '{{ $labels.service }} has triggered SalesForecasterLowAccuracy
+          for more than 5 minutes.'
+    - alert: SalesForecasterHighMAPE
+      expr: sales_forecaster_mape > 0.3
+      for: 5m
+      labels:
+        severity: warning
+        service: sales-forecaster
+      annotations:
+        summary: '{{ $labels.service }}: SalesForecasterHighMAPE is firing'
+        description: '{{ $labels.service }} has triggered SalesForecasterHighMAPE
+          for more than 5 minutes.'
+    - alert: SalesForecasterHighLatency
+      expr: histogram_quantile(0.95, rate(sales_forecaster_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: sales-forecaster
+      annotations:
+        summary: '{{ $labels.service }}: SalesForecasterHighLatency is firing'
+        description: '{{ $labels.service }} has triggered SalesForecasterHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for sales-forecaster alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: sales-forecaster
+    receiver: sales-forecaster-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: sales-forecaster-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#sales-forecaster-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

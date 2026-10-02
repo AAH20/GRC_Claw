@@ -1,0 +1,119 @@
+# Healthcare Marketing Platform Configuration
+# Copy this file and adjust values for your environment.
+# Sensitive values should be set via environment variables (see .env.example).
+
+app:
+  name: "Healthcare Marketing Platform"
+  version: "0.1.0"
+  environment: "development"  # development | staging | production
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  log_level: "INFO"  # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  cors_origins:
+    - "http://localhost:3000"
+    - "https://healthcare-marketing.example.com"
+
+langchain:
+  model_name: "gpt-4"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 60
+  max_retries: 3
+  cache_enabled: true
+
+agents:
+  content:
+    enabled: true
+    max_content_length: 10000
+    supported_formats:
+      - "blog_post"
+      - "social_media"
+      - "email"
+      - "landing_page"
+      - "video_script"
+  compliance:
+    enabled: true
+    strict_mode: true
+    hipaa_validation: true
+    fda_guidelines: true
+    require_legal_review: true
+  campaigns:
+    enabled: true
+    max_concurrent_campaigns: 10
+    default_duration_days: 30
+    channels:
+      - "email"
+      - "social_media"
+      - "paid_ads"
+      - "content_marketing"
+  analytics:
+    enabled: true
+    metrics_retention_days: 365
+    real_time_tracking: true
+  reporting:
+    enabled: true
+    default_format: "pdf"
+    schedule: "weekly"  # daily | weekly | monthly
+
+integrations:
+  salesforce:
+    enabled: false
+    api_version: "v58.0"
+    sandbox: false
+    sync_interval_minutes: 15
+  hubspot:
+    enabled: false
+    api_version: "v3"
+    sync_interval_minutes: 15
+  mailchimp:
+    enabled: false
+    api_version: "3.0"
+    sync_interval_minutes: 30
+
+hipaa:
+  encryption:
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+  audit_logging:
+    enabled: true
+    retention_days: 2555  # 7 years
+    log_level: "detailed"
+  phi_detection:
+    enabled: true
+    auto_redact: true
+    patterns:
+      - "ssn"
+      - "mrn"
+      - "dob"
+      - "phone"
+      - "email"
+      - "address"
+  access_control:
+    session_timeout_minutes: 30
+    mfa_required: true
+    max_failed_logins: 5
+
+database:
+  # Database configuration - use environment variables for credentials
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false
+
+redis:
+  # Redis configuration for caching and session management
+  db: 0
+  max_connections: 50
+  socket_timeout: 5
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  health_check:
+    interval_seconds: 30
+    timeout_seconds: 10
+  tracing:
+    enabled: false
+    jaeger_endpoint: "http://jaeger:14268/api/traces"

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: feedback-management-vault-secrets
+spec:
+  vaultAuthRef: feedback-management-vault-auth
+  mount: secret
+  path: feedback-management
+  destination:
+    create: true
+    name: feedback-management-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: feedback-management
+
+target:
+  kind: Deployment
+  name: feedback-management

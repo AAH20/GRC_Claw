@@ -1,0 +1,191 @@
+# Promtail configuration for GRC Claw monitoring stack
+# Collects logs from all agentic AI marketing services and ships to Loki.
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    tenant_id: grc-claw
+    batchwait: 1s
+    batchsize: 1048576
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+    external_labels:
+      cluster: grc-claw
+      environment: production
+
+scrape_configs:
+  # --- Docker container logs ---
+  - job_name: docker-containers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*-log.jsonl
+    pipeline_stages:
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            attrs:
+      - json:
+          expressions:
+            tag:
+          source: attrs
+      - regex:
+          expression: (?P<image_name>(?:[^|])*[^|])
+          source: tag
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+      - labels:
+          stream:
+      - labeldrop:
+          - attrs
+      - output:
+          source: output
+
+  # --- Agent Health Service logs ---
+  - job_name: agent-health
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: agent-health
+          service: agent-health
+          __path__: /var/log/grc-claw/agent-health/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            agent_id: agent_id
+            timestamp: ts
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
+          agent_id:
+      - output:
+          source: msg
+
+  # --- Campaign Performance Service logs ---
+  - job_name: campaign-performance
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: campaign-performance
+          service: campaign-performance
+          __path__: /var/log/grc-claw/campaign-performance/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            campaign_id: campaign_id
+            timestamp: ts
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
+          campaign_id:
+      - output:
+          source: msg
+
+  # --- Cost Explorer Service logs ---
+  - job_name: cost-explorer
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: cost-explorer
+          service: cost-explorer
+          __path__: /var/log/grc-claw/cost-explorer/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            timestamp: ts
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  # --- Lead Scoring Service logs ---
+  - job_name: lead-scoring
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: lead-scoring
+          service: lead-scoring
+          __path__: /var/log/grc-claw/lead-scoring/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            lead_id: lead_id
+            timestamp: ts
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
+          lead_id:
+      - output:
+          source: msg
+
+  # --- Journey Orchestration Service logs ---
+  - job_name: journey-orchestration
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: journey-orchestration
+          service: journey-orchestration
+          __path__: /var/log/grc-claw/journey-orchestration/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            journey_id: journey_id
+            timestamp: ts
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
+          journey_id:
+      - output:
+          source: msg
+
+  # --- System journal logs ---
+  - job_name: journal
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd-journal
+        service: system
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+      - source_labels: ['__journal__hostname']
+        target_label: 'hostname'

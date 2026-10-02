@@ -1,0 +1,38 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: networkpolicy-patch
+patch: |-
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: real-estate-marketing-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: real-estate-marketing
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: real-estate-marketing-prod
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+target:
+  kind: Deployment
+  name: real-estate-marketing

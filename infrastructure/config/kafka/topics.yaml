@@ -1,0 +1,79 @@
+# =============================================================================
+# GRC Claw — Kafka Topic Configuration
+# =============================================================================
+# Defines all Kafka topics used by the GRC Claw platform.
+# This file is consumed by scripts/init-kafka.sh
+# =============================================================================
+
+topics:
+  # ---------------------------------------------------------------------------
+  # Agent Events
+  # ---------------------------------------------------------------------------
+  - name: grc.agent.events
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    cleanup_policy: delete
+    description: "Events emitted by AI agents (task started, completed, failed)"
+    min_insync_replicas: 2
+    compression_type: producer
+
+  # ---------------------------------------------------------------------------
+  # Campaign Events
+  # ---------------------------------------------------------------------------
+  - name: grc.campaign.events
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    cleanup_policy: delete
+    description: "Campaign lifecycle events (created, started, paused, completed)"
+    min_insync_replicas: 2
+    compression_type: producer
+
+  # ---------------------------------------------------------------------------
+  # Audit Log
+  # ---------------------------------------------------------------------------
+  - name: grc.audit.log
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    cleanup_policy: delete
+    description: "Audit trail for all data mutations"
+    min_insync_replicas: 2
+    compression_type: producer
+
+  # ---------------------------------------------------------------------------
+  # Metrics
+  # ---------------------------------------------------------------------------
+  - name: grc.metrics
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 86400000  # 1 day
+    cleanup_policy: delete
+    description: "Time-series metrics from agents and campaigns"
+    min_insync_replicas: 1
+    compression_type: lz4
+
+  # ---------------------------------------------------------------------------
+  # Notifications
+  # ---------------------------------------------------------------------------
+  - name: grc.notifications
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    cleanup_policy: delete
+    description: "User and system notifications"
+    min_insync_replicas: 1
+    compression_type: producer
+
+  # ---------------------------------------------------------------------------
+  # Dead Letter Queue
+  # ---------------------------------------------------------------------------
+  - name: grc.dlq
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    cleanup_policy: delete
+    description: "Dead letter queue for failed messages"
+    min_insync_replicas: 2
+    compression_type: producer

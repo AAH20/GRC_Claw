@@ -1,12 +1,56 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
 dist/
-dist-test/
-*.tsbuildinfo
-.env
-.env.local
-*.log
+build/
+.venv/
+venv/
+venv3/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-/var/
-coverage/
-.turbo/
-examples/agent-policy-denial/out/
+Thumbs.db
+
+# Analysis (generated reports)
+analysis/
+
+# Data (large files)
+data/
+
+# Deployment (large files)
+deployment/terraform/
+
+# Media (large files)
+media/
+
+# Homebrew
+homebrew/
+
+# Quotes
+quotes_o/
+
+# Node
+node_modules/
+package-lock.json
+
+# Large generated files
+*.mp4
+*.mov
+*.wav
+*.mp3

@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: macvlan-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seo-optimizer
+spec:
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: macvlan-conf
+
+target:
+  kind: Deployment
+  name: seo-optimizer

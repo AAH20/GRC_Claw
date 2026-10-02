@@ -1,0 +1,16 @@
+apiVersion: builtin
+kind: CommonLabelsTransformer
+metadata:
+  name: common-labels-config
+labels:
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+  platform: grc-claw
+  tier: backend
+fieldSpecs:
+  - path: metadata/labels
+    create: true
+  - path: spec/template/metadata/labels
+    create: true
+  - path: spec/selector/matchLabels
+    create: true

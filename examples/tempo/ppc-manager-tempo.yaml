@@ -1,0 +1,595 @@
+# Tempo Tracing Configuration for ppc-manager
+# Pay-per-click advertising management and optimization
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: ppc-manager-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: ppc-manager
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ppc-manager-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find PPC keywords with quality scores below 3
+      - name: "Find PPC keywords with quality scores below 3"
+        type: search
+        query:
+          service.name: "ppc-manager"
+          span.name: "ppc.bid_adjust"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show daily spend vs budget by campaign
+      - name: "Show daily spend vs budget by campaign"
+        type: search
+        query:
+          service.name: "ppc-manager"
+          span.name: "ppc.keyword_sync"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify keywords with CPC above $10
+      - name: "Identify keywords with CPC above $10"
+        type: search
+        query:
+          service.name: "ppc-manager"
+          span.name: "ppc.budget_update"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "ppc-manager"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "ppc-manager"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "ppc-manager"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "ppc.campaign_id"
+        description: "Span attribute for ppc.campaign_id"
+        type: string
+      - key: "ppc.ad_group"
+        description: "Span attribute for ppc.ad_group"
+        type: string
+      - key: "ppc.keyword"
+        description: "Span attribute for ppc.keyword"
+        type: string
+      - key: "ppc.bid_amount"
+        description: "Span attribute for ppc.bid_amount"
+        type: string
+      - key: "ppc.quality_score"
+        description: "Span attribute for ppc.quality_score"
+        type: string
+      - key: "ppc.impressions"
+        description: "Span attribute for ppc.impressions"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ppc-manager-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: ppc-manager.tracing.alerts
+      rules:
+        - alert: low-quality-score
+          expr: |
+            quality_score < 3
+          for: 5m
+          labels:
+            severity: warning
+            service: ppc-manager
+            team: marketing-engineering
+          annotations:
+            summary: "PPC keyword quality score below 3"
+            description: "Alert for ppc-manager: PPC keyword quality score below 3"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/ppc-manager/low-quality-score"
+            dashboard_url: "https://grafana.grc-claw.com/d/ppc-manager-tracing"
+
+        - alert: budget-exceeded
+          expr: |
+            daily_spend > daily_budget
+          for: 5m
+          labels:
+            severity: critical
+            service: ppc-manager
+            team: marketing-engineering
+          annotations:
+            summary: "PPC daily budget exceeded"
+            description: "Alert for ppc-manager: PPC daily budget exceeded"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/ppc-manager/budget-exceeded"
+            dashboard_url: "https://grafana.grc-claw.com/d/ppc-manager-tracing"
+
+        - alert: high-cpc
+          expr: |
+            cpc > 10.0
+          for: 5m
+          labels:
+            severity: warning
+            service: ppc-manager
+            team: marketing-engineering
+          annotations:
+            summary: "CPC exceeds $10 threshold"
+            description: "Alert for ppc-manager: CPC exceeds $10 threshold"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/ppc-manager/high-cpc"
+            dashboard_url: "https://grafana.grc-claw.com/d/ppc-manager-tracing"
+
+
+    - name: ppc-manager.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="ppc-manager",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="ppc-manager"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: ppc-manager
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for ppc-manager"
+            description: "Error rate exceeds 5% for ppc-manager"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="ppc-manager"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: ppc-manager
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for ppc-manager"
+            description: "P95 latency exceeds 2 seconds for ppc-manager"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="ppc-manager"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="ppc-manager"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: ppc-manager
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for ppc-manager"
+            description: "Trace volume is 2x above 1-hour average for ppc-manager"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: ppc-manager-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "ppc-manager - Tempo Tracing Dashboard",
+      "uid": "ppc-manager-tracing",
+      "tags": ["tempo", "tracing", "ppc-manager", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ppc-manager\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ppc-manager\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"ppc-manager\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"ppc-manager\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ppc-manager\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ppc-manager\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"ppc-manager\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ppc-manager-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: ppc-manager
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: ppc-manager-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: ppc-manager
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ppc-manager-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: ppc-manager
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ppc-manager-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ppc-manager
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ppc-manager-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: ppc-manager
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ppc-manager-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

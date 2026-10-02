@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: event-management-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: event-management.rules
+      rules:
+        - alert: event_management_high_error_rate
+          expr: rate(http_requests_total{job="event-management",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in event-management"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: event_management_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="event-management"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in event-management"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: event-management

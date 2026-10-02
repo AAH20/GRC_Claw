@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: affiliate-marketing-vault-secrets
+spec:
+  vaultAuthRef: affiliate-marketing-vault-auth
+  mount: secret
+  path: affiliate-marketing
+  destination:
+    create: true
+    name: affiliate-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: affiliate-marketing
+
+target:
+  kind: Deployment
+  name: affiliate-marketing

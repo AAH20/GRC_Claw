@@ -1,0 +1,28 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: affinity-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campaign-optimizer
+spec:
+  template:
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - campaign-optimizer
+                topologyKey: kubernetes.io/hostname
+
+target:
+  kind: Deployment
+  name: campaign-optimizer

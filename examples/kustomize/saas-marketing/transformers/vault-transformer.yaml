@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: saas-marketing-vault-secrets
+spec:
+  vaultAuthRef: saas-marketing-vault-auth
+  mount: secret
+  path: saas-marketing
+  destination:
+    create: true
+    name: saas-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: saas-marketing
+
+target:
+  kind: Deployment
+  name: saas-marketing

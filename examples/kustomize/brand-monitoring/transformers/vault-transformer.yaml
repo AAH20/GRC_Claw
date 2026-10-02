@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: brand-monitoring-vault-secrets
+spec:
+  vaultAuthRef: brand-monitoring-vault-auth
+  mount: secret
+  path: brand-monitoring
+  destination:
+    create: true
+    name: brand-monitoring-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: brand-monitoring
+
+target:
+  kind: Deployment
+  name: brand-monitoring

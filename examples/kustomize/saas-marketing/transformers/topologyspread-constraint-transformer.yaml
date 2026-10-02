@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: topologyspread-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saas-marketing
+spec:
+  template:
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: saas-marketing
+
+target:
+  kind: Deployment
+  name: saas-marketing

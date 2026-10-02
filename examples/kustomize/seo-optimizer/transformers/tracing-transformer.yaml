@@ -1,0 +1,32 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: tracing-patch
+patch: |-
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: seo-optimizer-tracing
+spec:
+  mode: sidecar
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+    processors:
+      batch:
+    exporters:
+      jaeger:
+        endpoint: jaeger-collector:14250
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [jaeger]
+
+target:
+  kind: Deployment
+  name: seo-optimizer

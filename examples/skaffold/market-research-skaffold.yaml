@@ -1,0 +1,169 @@
+# Skaffold configuration for Market Research
+# Conducts market research and analysis
+# Production-grade Kubernetes deployment with build, deploy, and port-forward
+
+apiVersion: skaffold/v4beta7
+kind: Config
+
+metadata:
+  name: market-research
+  labels:
+    app: market-research
+    project: grc-claw
+    tier: backend
+    environment: development
+
+build:
+  artifacts:
+    - image: grc-claw/market-research
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          APP_NAME: "Market Research"
+          APP_ENV: "development"
+          LOG_LEVEL: "debug"
+      sync:
+        manual:
+          - src: "src/**/*.py"
+            dest: /app/src
+            strip: "src/"
+          - src: "src/**/*.js"
+            dest: /app/src
+            strip: "src/"
+          - src: "src/**/*.ts"
+            dest: /app/src
+            strip: "src/"
+  local:
+    push: false
+    useDockerCLI: true
+    useBuildkit: true
+
+deploy:
+  kubectl:
+    manifests:
+      - k8s/namespace.yaml
+      - k8s/configmap.yaml
+      - k8s/secret.yaml
+      - k8s/deployment.yaml
+      - k8s/service.yaml
+      - k8s/ingress.yaml
+      - k8s/hpa.yaml
+      - k8s/pdb.yaml
+    flags:
+      global:
+        - --validate=true
+
+portForward:
+  - resourceType: service
+    resourceName: market-research
+    namespace: grc-claw
+    port: 8109
+    localPort: 8109
+    address: 0.0.0.0
+
+profiles:
+  - name: development
+    build:
+      artifacts:
+        - image: grc-claw/market-research
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              APP_ENV: "development"
+              LOG_LEVEL: "debug"
+              DEBUG: "true"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+    portForward:
+      - resourceType: service
+        resourceName: market-research
+        namespace: grc-claw
+        port: 8109
+        localPort: 8109
+
+  - name: staging
+    build:
+      artifacts:
+        - image: grc-claw/market-research
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              APP_ENV: "staging"
+              LOG_LEVEL: "info"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/secret.yaml
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+          - k8s/ingress.yaml
+          - k8s/hpa.yaml
+    portForward:
+      - resourceType: service
+        resourceName: market-research
+        namespace: grc-claw-staging
+        port: 8109
+        localPort: 8109
+
+  - name: production
+    build:
+      artifacts:
+        - image: grc-claw/market-research
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              APP_ENV: "production"
+              LOG_LEVEL: "warn"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/secret.yaml
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+          - k8s/ingress.yaml
+          - k8s/hpa.yaml
+          - k8s/pdb.yaml
+    portForward:
+      - resourceType: service
+        resourceName: market-research
+        namespace: grc-claw-production
+        port: 8109
+        localPort: 8109
+
+  - name: debug
+    build:
+      artifacts:
+        - image: grc-claw/market-research
+          docker:
+            dockerfile: Dockerfile.debug
+            buildArgs:
+              APP_ENV: "development"
+              LOG_LEVEL: "debug"
+              DEBUG: "true"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/deployment-debug.yaml
+          - k8s/service.yaml
+    portForward:
+      - resourceType: service
+        resourceName: market-research
+        namespace: grc-claw
+        port: 8109
+        localPort: 8109
+      - resourceType: pod
+        resourceName: market-research-debug
+        namespace: grc-claw
+        port: 5678
+        localPort: 5678

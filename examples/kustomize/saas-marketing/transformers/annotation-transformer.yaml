@@ -1,0 +1,13 @@
+apiVersion: builtin
+kind: AnnotationTransformer
+metadata:
+  name: common-annotations
+annotations:
+  app.kubernetes.io/description: "Saas Marketing service for GRC Claw platform"
+  monitoring: "true"
+  backup: "enabled"
+fieldSpecs:
+  - path: metadata/annotations
+    create: true
+  - path: spec/template/metadata/annotations
+    create: true

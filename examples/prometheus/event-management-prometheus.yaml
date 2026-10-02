@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Event Management
+# Description: Marketing event management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the event-management service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: event-management-monitor
+  namespace: monitoring
+  labels:
+    app: event-management
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: event-management
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: event_management_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for event-management
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: event-management-rules
+  namespace: monitoring
+  labels:
+    app: event-management
+    release: prometheus
+spec:
+  groups:
+  - name: event-management-recording-rules
+    interval: 30s
+    rules:
+    - record: event_management:api_request_rate:rate5m
+      expr: rate(event_management_api_requests_total[5m])
+    - record: event_management:api_error_rate:rate5m
+      expr: rate(event_management_api_errors_total[5m])
+    - record: event_management:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(event_management_api_latency_seconds_bucket[5m]))
+  - name: event-management-alerts-1
+    rules:
+    - alert: EventManagementHighErrorRate
+      expr: rate(event_management_api_errors_total[5m]) / rate(event_management_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: event-management
+      annotations:
+        summary: '{{ $labels.service }}: EventManagementHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered EventManagementHighErrorRate
+          for more than 5 minutes.'
+    - alert: EventManagementLowAttendanceRate
+      expr: event_management_attendance_rate < 0.5
+      for: 5m
+      labels:
+        severity: warning
+        service: event-management
+      annotations:
+        summary: '{{ $labels.service }}: EventManagementLowAttendanceRate is firing'
+        description: '{{ $labels.service }} has triggered EventManagementLowAttendanceRate
+          for more than 5 minutes.'
+    - alert: EventManagementLowROI
+      expr: event_management_roi < 1.0
+      for: 5m
+      labels:
+        severity: warning
+        service: event-management
+      annotations:
+        summary: '{{ $labels.service }}: EventManagementLowROI is firing'
+        description: '{{ $labels.service }} has triggered EventManagementLowROI for
+          more than 5 minutes.'
+    - alert: EventManagementHighLatency
+      expr: histogram_quantile(0.95, rate(event_management_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: event-management
+      annotations:
+        summary: '{{ $labels.service }}: EventManagementHighLatency is firing'
+        description: '{{ $labels.service }} has triggered EventManagementHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for event-management alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: event-management
+    receiver: event-management-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: event-management-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#event-management-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

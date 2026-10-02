@@ -1,0 +1,2242 @@
+openapi: 3.1.0
+info:
+  title: Agency Marketing API
+  description: Agency marketing platform for multi-client campaign management, reporting,
+    and client communication.
+  version: 1.0.0
+  contact:
+    name: GRC Claw API Support
+    email: api@grc-claw.com
+    url: https://grc-claw.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://grc-claw.com/terms
+  externalDocs:
+    description: Find more info here
+    url: https://docs.grc-claw.com
+servers:
+- url: https://api.grc-claw.com/v1
+  description: Production server
+- url: https://staging-api.grc-claw.com/v1
+  description: Staging server
+- url: http://localhost:8000/v1
+  description: Local development server
+tags:
+- name: Health
+  description: Health check and monitoring endpoints
+- name: Auth
+  description: Authentication and authorization endpoints
+- name: Clients
+  description: Client management
+- name: Campaigns
+  description: Client campaign management
+- name: Reports
+  description: Client reporting
+- name: White Label
+  description: White-label management
+- name: Billing
+  description: Agency billing management
+- name: Analytics
+  description: Agency analytics
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      description: Returns the health status of the API and its dependencies.
+      tags:
+      - Health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              example:
+                status: healthy
+                timestamp: '2024-01-15T10:30:00Z'
+                version: 1.0.0
+                uptime: 72h 15m 30s
+                services:
+                  database:
+                    status: up
+                    latency_ms: 12.5
+                  cache:
+                    status: up
+                    latency_ms: 3.2
+                  queue:
+                    status: up
+                    latency_ms: 8.1
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: SERVICE_UNHEALTHY
+                  message: One or more services are unhealthy
+                  details:
+                    database: down
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+  /auth/token:
+    post:
+      operationId: getToken
+      summary: Get access token
+      description: Obtain a JWT access token using client credentials or refresh token.
+      tags:
+      - Auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - client_credentials
+                  - refresh_token
+                  - password
+                  description: OAuth2 grant type
+                client_id:
+                  type: string
+                  description: Client identifier
+                client_secret:
+                  type: string
+                  format: password
+                  description: Client secret
+                refresh_token:
+                  type: string
+                  description: Refresh token for token renewal
+                username:
+                  type: string
+                  description: Username for password grant
+                password:
+                  type: string
+                  format: password
+                  description: Password for password grant
+                scope:
+                  type: string
+                  description: Requested scopes (space-separated)
+            example:
+              grant_type: client_credentials
+              client_id: my-client-id
+              client_secret: my-client-secret
+              scope: read write
+      responses:
+        '200':
+          description: Token obtained successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - access_token
+                - token_type
+                - expires_in
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                    description: Token expiration time in seconds
+                    example: 3600
+                  refresh_token:
+                    type: string
+                    description: Refresh token for obtaining new access tokens
+                  scope:
+                    type: string
+                    example: read write
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                token_type: Bearer
+                expires_in: 3600
+                refresh_token: dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...
+                scope: read write
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Refresh access token
+      description: Obtain a new access token using a refresh token.
+      tags:
+      - Auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid refresh token
+            example:
+              refresh_token: dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - access_token
+                - token_type
+                - expires_in
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                    example: 3600
+                  refresh_token:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /auth/revoke:
+    post:
+      operationId: revokeToken
+      summary: Revoke token
+      description: Revoke an access or refresh token.
+      tags:
+      - Auth
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              properties:
+                token:
+                  type: string
+                  description: Token to revoke
+                token_type_hint:
+                  type: string
+                  enum:
+                  - access_token
+                  - refresh_token
+                  description: Hint about the token type
+      responses:
+        '200':
+          description: Token revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revoked:
+                    type: boolean
+                    example: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /clients:
+    get:
+      operationId: listClients
+      summary: List clients
+      description: Retrieve a paginated list of clients.
+      tags:
+      - Clients
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createClients
+      summary: Create clients
+      description: Create a new clients.
+      tags:
+      - Clients
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Clients created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /clients/{id}:
+    get:
+      operationId: getClients
+      summary: Get clients by ID
+      description: Retrieve a specific clients by its unique identifier.
+      tags:
+      - Clients
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Clients found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateClients
+      summary: Update clients
+      description: Update an existing clients.
+      tags:
+      - Clients
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Clients updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteClients
+      summary: Delete clients
+      description: Delete a clients by its unique identifier.
+      tags:
+      - Clients
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Clients deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      summary: List campaigns
+      description: Retrieve a paginated list of campaigns.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createCampaigns
+      summary: Create campaigns
+      description: Create a new campaigns.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Campaigns created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /campaigns/{id}:
+    get:
+      operationId: getCampaigns
+      summary: Get campaigns by ID
+      description: Retrieve a specific campaigns by its unique identifier.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Campaigns found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateCampaigns
+      summary: Update campaigns
+      description: Update an existing campaigns.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Campaigns updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteCampaigns
+      summary: Delete campaigns
+      description: Delete a campaigns by its unique identifier.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Campaigns deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /campaigns/{id}/launch:
+    post:
+      operationId: launchCampaigns
+      summary: Launch campaigns
+      description: Perform launch action on a campaigns.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Launch action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /campaigns/{id}/pause:
+    post:
+      operationId: pauseCampaigns
+      summary: Pause campaigns
+      description: Perform pause action on a campaigns.
+      tags:
+      - Campaigns
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Pause action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /reports:
+    get:
+      operationId: listReports
+      summary: List reports
+      description: Retrieve a paginated list of reports.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createReports
+      summary: Create reports
+      description: Create a new reports.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Reports created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /reports/{id}:
+    get:
+      operationId: getReports
+      summary: Get reports by ID
+      description: Retrieve a specific reports by its unique identifier.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Reports found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateReports
+      summary: Update reports
+      description: Update an existing reports.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Reports updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteReports
+      summary: Delete reports
+      description: Delete a reports by its unique identifier.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Reports deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /reports/{id}/generate:
+    post:
+      operationId: generateReports
+      summary: Generate reports
+      description: Perform generate action on a reports.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Generate action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /reports/{id}/schedule:
+    post:
+      operationId: scheduleReports
+      summary: Schedule reports
+      description: Perform schedule action on a reports.
+      tags:
+      - Reports
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Schedule action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /white-label:
+    get:
+      operationId: listWhiteLabel
+      summary: List white label
+      description: Retrieve a paginated list of white label.
+      tags:
+      - White Label
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of white label
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createWhiteLabel
+      summary: Create white label
+      description: Create a new white label.
+      tags:
+      - White Label
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: White Label created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /white-label/{id}:
+    get:
+      operationId: getWhiteLabel
+      summary: Get white label by ID
+      description: Retrieve a specific white label by its unique identifier.
+      tags:
+      - White Label
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: White Label found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateWhiteLabel
+      summary: Update white label
+      description: Update an existing white label.
+      tags:
+      - White Label
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: White Label updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteWhiteLabel
+      summary: Delete white label
+      description: Delete a white label by its unique identifier.
+      tags:
+      - White Label
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: White Label deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /white-label/{id}/configure:
+    post:
+      operationId: configureWhiteLabel
+      summary: Configure white label
+      description: Perform configure action on a white label.
+      tags:
+      - White Label
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Configure action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /billing:
+    get:
+      operationId: listBilling
+      summary: List billing
+      description: Retrieve a paginated list of billing.
+      tags:
+      - Billing
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of billing
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createBilling
+      summary: Create billing
+      description: Create a new billing.
+      tags:
+      - Billing
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Billing created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /billing/{id}:
+    get:
+      operationId: getBilling
+      summary: Get billing by ID
+      description: Retrieve a specific billing by its unique identifier.
+      tags:
+      - Billing
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Billing found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateBilling
+      summary: Update billing
+      description: Update an existing billing.
+      tags:
+      - Billing
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Billing updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteBilling
+      summary: Delete billing
+      description: Delete a billing by its unique identifier.
+      tags:
+      - Billing
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Billing deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics: {}
+  /analytics/{id}:
+    get:
+      operationId: getAnalytics
+      summary: Get analytics by ID
+      description: Retrieve a specific analytics by its unique identifier.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Analytics found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/summary:
+    post:
+      operationId: summaryAnalytics
+      summary: Summary analytics
+      description: Perform summary action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Summary action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/performance:
+    post:
+      operationId: performanceAnalytics
+      summary: Performance analytics
+      description: Perform performance action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Performance action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/roi:
+    post:
+      operationId: roiAnalytics
+      summary: Roi analytics
+      description: Perform roi action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Roi action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/utilization:
+    post:
+      operationId: utilizationAnalytics
+      summary: Utilization analytics
+      description: Perform utilization action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Utilization action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication. Obtain a token from /auth/token endpoint.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication for service-to-service communication.
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.grc-claw.com/oauth/authorize
+          tokenUrl: https://auth.grc-claw.com/oauth/token
+          scopes:
+            read: Read access to resources
+            write: Write access to resources
+            admin: Administrative access
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              example: NOT_FOUND
+            message:
+              type: string
+              example: Resource not found
+            details:
+              type: object
+              nullable: true
+              example: null
+            request_id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 5
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+    HealthStatus:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: string
+          example: 72h 15m 30s
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - up
+                - down
+                - degraded
+              latency_ms:
+                type: number
+                example: 45.2
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      example: 1
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      example: 20
+    SortParam:
+      name: sort
+      in: query
+      description: Sort field
+      required: false
+      schema:
+        type: string
+        enum:
+        - created_at
+        - updated_at
+        - name
+        - score
+        - status
+      example: created_at
+    OrderParam:
+      name: order
+      in: query
+      description: Sort order
+      required: false
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      example: desc
+    IdParam:
+      name: id
+      in: path
+      description: Resource identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+  responses:
+    UnauthorizedError:
+      description: Authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Authentication required
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: FORBIDDEN
+              message: Insufficient permissions
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              details:
+                field: name
+                reason: required field missing
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: RATE_LIMIT_EXCEEDED
+              message: Rate limit exceeded. Try again later.
+              details:
+                retry_after: 60
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: An internal error occurred
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+security:
+- BearerAuth: []
+externalDocs:
+  description: Find more info here
+  url: https://docs.grc-claw.com

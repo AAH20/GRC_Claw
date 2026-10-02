@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for Customer Segmentation
+# Description: AI customer segmentation and clustering
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the customer-segmentation service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: customer-segmentation-monitor
+  namespace: monitoring
+  labels:
+    app: customer-segmentation
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: customer-segmentation
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: customer_segmentation_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for customer-segmentation
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: customer-segmentation-rules
+  namespace: monitoring
+  labels:
+    app: customer-segmentation
+    release: prometheus
+spec:
+  groups:
+  - name: customer-segmentation-recording-rules
+    interval: 30s
+    rules:
+    - record: customer_segmentation:api_request_rate:rate5m
+      expr: rate(customer_segmentation_api_requests_total[5m])
+    - record: customer_segmentation:api_error_rate:rate5m
+      expr: rate(customer_segmentation_api_errors_total[5m])
+    - record: customer_segmentation:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(customer_segmentation_api_latency_seconds_bucket[5m]))
+  - name: customer-segmentation-alerts-1
+    rules:
+    - alert: CustomerSegmentationHighErrorRate
+      expr: rate(customer_segmentation_api_errors_total[5m]) / rate(customer_segmentation_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: customer-segmentation
+      annotations:
+        summary: '{{ $labels.service }}: CustomerSegmentationHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered CustomerSegmentationHighErrorRate
+          for more than 5 minutes.'
+    - alert: CustomerSegmentationLowSilhouetteScore
+      expr: customer_segmentation_silhouette_score < 0.5
+      for: 5m
+      labels:
+        severity: warning
+        service: customer-segmentation
+      annotations:
+        summary: '{{ $labels.service }}: CustomerSegmentationLowSilhouetteScore is
+          firing'
+        description: '{{ $labels.service }} has triggered CustomerSegmentationLowSilhouetteScore
+          for more than 5 minutes.'
+    - alert: CustomerSegmentationDataStale
+      expr: customer_segmentation_data_freshness_seconds > 86400
+      for: 5m
+      labels:
+        severity: warning
+        service: customer-segmentation
+      annotations:
+        summary: '{{ $labels.service }}: CustomerSegmentationDataStale is firing'
+        description: '{{ $labels.service }} has triggered CustomerSegmentationDataStale
+          for more than 5 minutes.'
+    - alert: CustomerSegmentationHighLatency
+      expr: histogram_quantile(0.95, rate(customer_segmentation_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: customer-segmentation
+      annotations:
+        summary: '{{ $labels.service }}: CustomerSegmentationHighLatency is firing'
+        description: '{{ $labels.service }} has triggered CustomerSegmentationHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for customer-segmentation alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: customer-segmentation
+    receiver: customer-segmentation-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: customer-segmentation-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#customer-segmentation-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

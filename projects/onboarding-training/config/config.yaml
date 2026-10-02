@@ -1,0 +1,77 @@
+# Onboarding & Training runtime configuration.
+# Copy to .env and fill in real values. Never commit .env.
+
+# --- Application ---
+app_env: "production"
+log_level: "info"
+debug: false
+
+# --- Server ---
+host: "0.0.0.0"
+port: 8000
+workers: 2
+request_timeout_seconds: 60
+cors_origins:
+  - "https://grc.local"
+  - "https://onboarding.grc.local"
+
+# --- Models (LangChain DeepAgents + grc-marketing-core) ---
+openai_api_key: "${OPENAI_API_KEY}"
+openai_model: "gpt-4o-mini"
+model_temperature: 0.2
+model_max_tokens: 4096
+deepagents_max_iterations: 25
+
+# --- Agents ---
+content_creation:
+  enabled: true
+  default_language: "en"
+  max_lessons_per_course: 30
+  max_quiz_questions_per_lesson: 10
+
+delivery:
+  enabled: true
+  default_lms: "canvas"
+  publish_draft: false
+  retry_attempts: 3
+
+assessment:
+  enabled: true
+  mastery_threshold: 0.75
+  passing_score: 0.70
+  max_grading_retries: 3
+
+optimization:
+  enabled: true
+  min_feedback_samples: 20
+  auto_apply: false
+
+performance_analytics:
+  enabled: true
+  default_lookback_days: 30
+  alert_completion_threshold: 0.40
+
+# --- LMS Integrations ---
+canvas:
+  enabled: true
+  base_url: "https://canvas.instructure.com/api/v1"
+  timeout_seconds: 30
+  page_size: 100
+
+moodle:
+  enabled: true
+  base_url: "https://moodle.example.com"
+  webservice_endpoint: "/webservice/rest/server.php"
+  timeout_seconds: 30
+
+scorm:
+  enabled: true
+  version: "2004"
+  strict_mode: false
+
+# --- Observability ---
+prometheus_enabled: true
+metrics_path: "/metrics"
+health_path: "/health"
+structured_logging: true
+sentry_dsn: "${SENTRY_DSN:-null}"

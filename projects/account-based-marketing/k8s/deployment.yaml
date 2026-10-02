@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abm-api
+  labels:
+    app: abm-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: abm-api
+  template:
+    metadata:
+      labels:
+        app: abm-api
+    spec:
+      containers:
+        - name: abm-api
+          image: abm:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: SALESFORCE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: abm-secrets
+                  key: salesforce-client-id
+            - name: SALESFORCE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: abm-secrets
+                  key: salesforce-client-secret
+            - name: HUBSPOT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: abm-secrets
+                  key: hubspot-api-key
+            - name: LINKEDIN_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: abm-secrets
+                  key: linkedin-access-token
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

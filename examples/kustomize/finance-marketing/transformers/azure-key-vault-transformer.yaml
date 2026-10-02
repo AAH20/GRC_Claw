@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: azure-key-vault-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finance-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        secrets-store.csi.k8s.io/enable: "true"
+
+target:
+  kind: Deployment
+  name: finance-marketing

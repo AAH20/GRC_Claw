@@ -1,0 +1,117 @@
+# Email Marketing - Kustomize Example
+# Production-grade Kustomize configuration for the Email Marketing service.
+
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: email-marketing
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: email-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: email-marketing
+    newTag: v1.8.2
+
+configMapGenerator:
+  - name: email-marketing-config
+    literals:
+      - LOG_LEVEL=info
+      - SMTP_HOST=smtp.sendgrid.net
+      - SMTP_PORT=587
+      - TEMPLATE_ENGINE=handlebars
+      - CAMPAIGN_BATCH_SIZE=500
+      - TRACKING_DOMAIN=email.grc-claw.io
+      - UNSUBSCRIBE_URL=https://grc-claw.io/unsubscribe
+
+secretGenerator:
+  - name: email-marketing-secrets
+    literals:
+      - SENDGRID_API_KEY=changeme
+      - DB_PASSWORD=changeme
+      - JWT_SECRET=changeme
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: email-marketing
+
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: email-marketing
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OVERLAYS
+# ─────────────────────────────────────────────────────────────────────────────
+# overlays/dev/kustomization.yaml
+# overlays/staging/kustomization.yaml
+# overlays/prod/kustomization.yaml
+#
+# Example overlay (prod):
+# ---
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+#
+# resources:
+#   - ../../base
+#
+# namePrefix: prod-
+#
+# replicas:
+#   - name: email-marketing
+#     count: 6
+#
+# patches:
+#   - path: patches/prod-resources.yaml
+#   - path: patches/prod-autoscaling.yaml
+#
+# configMapGenerator:
+#   - name: email-marketing-config
+#     behavior: merge
+#     literals:
+#       - LOG_LEVEL=warn
+#       - CAMPAIGN_BATCH_SIZE=2000
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# TRANSFORMERS
+# ─────────────────────────────────────────────────────────────────────────────
+# transformers/labels-transformer.yaml
+# transformers/namespace-transformer.yaml
+# transformers/image-transformer.yaml
+#
+# Example transformer (common annotations):
+# ---
+# apiVersion: builtin
+# kind: AnnotationsTransformer
+# metadata:
+#   name: common-annotations
+# annotations:
+#   monitoring.io/scrape: "true"
+#   monitoring.io/port: "8080"
+# fieldSpecs:
+#   - path: metadata/annotations
+#     create: true
+#
+# Example transformer (image transformer):
+# ---
+# apiVersion: builtin
+# kind: ImageTagTransformer
+# metadata:
+#   name: email-marketing-image
+# imageTag:
+#   name: email-marketing
+#   newTag: v1.8.2
+# fieldSpecs:
+#   - path: spec/template/spec/containers/0/image
+#     create: true

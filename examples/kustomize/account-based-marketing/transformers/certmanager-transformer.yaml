@@ -1,0 +1,20 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: certmanager-patch
+patch: |-
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: account-based-marketing-cert
+spec:
+  secretName: account-based-marketing-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - account-based-marketing.grc-claw.example.com
+
+target:
+  kind: Deployment
+  name: account-based-marketing

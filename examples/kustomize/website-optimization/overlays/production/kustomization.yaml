@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: website-optimization-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+
+configMapGenerator:
+  - name: website-optimization-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/website-optimization
+    newTag: stable
+
+replicas:
+  - name: website-optimization
+    count: 3

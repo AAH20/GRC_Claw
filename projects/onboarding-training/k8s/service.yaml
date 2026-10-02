@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: onboarding-training
+  labels:
+    app.kubernetes.io/name: onboarding-training
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: grc-marketing
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: onboarding-training
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: onboarding-training
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+spec:
+  tls:
+    - hosts:
+        - onboarding.grc.local
+      secretName: onboarding-training-tls
+  rules:
+    - host: onboarding.grc.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: onboarding-training
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: onboarding-training
+  labels:
+    app.kubernetes.io/name: onboarding-training
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: onboarding-training
+  labels:
+    app.kubernetes.io/name: onboarding-training
+data:
+  scorm-publisher: "GRC Marketing"

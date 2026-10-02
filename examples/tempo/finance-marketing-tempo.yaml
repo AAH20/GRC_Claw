@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for finance-marketing
+# Financial services marketing and compliance
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: finance-marketing-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: finance-marketing
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-marketing-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find financial campaigns with compliance issues
+      - name: "Find financial campaigns with compliance issues"
+        type: search
+        query:
+          service.name: "finance-marketing"
+          span.name: "fin.campaign"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show lead quality by product
+      - name: "Show lead quality by product"
+        type: search
+        query:
+          service.name: "finance-marketing"
+          span.name: "fin.compliance"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify high-conversion financial campaigns
+      - name: "Identify high-conversion financial campaigns"
+        type: search
+        query:
+          service.name: "finance-marketing"
+          span.name: "fin.lead"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "finance-marketing"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "finance-marketing"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "finance-marketing"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "fin.product_id"
+        description: "Span attribute for fin.product_id"
+        type: string
+      - key: "fin.campaign_type"
+        description: "Span attribute for fin.campaign_type"
+        type: string
+      - key: "fin.compliance_status"
+        description: "Span attribute for fin.compliance_status"
+        type: string
+      - key: "fin.lead_quality"
+        description: "Span attribute for fin.lead_quality"
+        type: string
+      - key: "fin.conversion_rate"
+        description: "Span attribute for fin.conversion_rate"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: finance-marketing-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: finance-marketing.tracing.alerts
+      rules:
+        - alert: compliance-issue
+          expr: |
+            compliance_status == 'issue'
+          for: 5m
+          labels:
+            severity: critical
+            service: finance-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Financial marketing compliance issue"
+            description: "Alert for finance-marketing: Financial marketing compliance issue"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/finance-marketing/compliance-issue"
+            dashboard_url: "https://grafana.grc-claw.com/d/finance-marketing-tracing"
+
+        - alert: low-lead-quality
+          expr: |
+            lead_quality < 0.5
+          for: 5m
+          labels:
+            severity: warning
+            service: finance-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Low financial lead quality"
+            description: "Alert for finance-marketing: Low financial lead quality"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/finance-marketing/low-lead-quality"
+            dashboard_url: "https://grafana.grc-claw.com/d/finance-marketing-tracing"
+
+        - alert: high-conversion
+          expr: |
+            conversion_rate > 0.1
+          for: 5m
+          labels:
+            severity: info
+            service: finance-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High financial conversion rate"
+            description: "Alert for finance-marketing: High financial conversion rate"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/finance-marketing/high-conversion"
+            dashboard_url: "https://grafana.grc-claw.com/d/finance-marketing-tracing"
+
+
+    - name: finance-marketing.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="finance-marketing",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="finance-marketing"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: finance-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for finance-marketing"
+            description: "Error rate exceeds 5% for finance-marketing"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="finance-marketing"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: finance-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for finance-marketing"
+            description: "P95 latency exceeds 2 seconds for finance-marketing"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="finance-marketing"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="finance-marketing"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: finance-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for finance-marketing"
+            description: "Trace volume is 2x above 1-hour average for finance-marketing"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: finance-marketing-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "finance-marketing - Tempo Tracing Dashboard",
+      "uid": "finance-marketing-tracing",
+      "tags": ["tempo", "tracing", "finance-marketing", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"finance-marketing\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"finance-marketing\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"finance-marketing\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"finance-marketing\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"finance-marketing\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"finance-marketing\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"finance-marketing\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: finance-marketing-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: finance-marketing
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: finance-marketing-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: finance-marketing
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: finance-marketing-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: finance-marketing
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: finance-marketing-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: finance-marketing
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: finance-marketing-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: finance-marketing
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: finance-marketing-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

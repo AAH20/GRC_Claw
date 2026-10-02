@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: healthcare-marketing-rules
+spec:
+  rules: |
+    - rule: healthcare_marketing_unexpected_process
+      desc: Detect unexpected processes in healthcare-marketing container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/healthcare-marketing" and
+        not proc.name in ("healthcare-marketing", "sh", "bash")
+      output: >
+        Unexpected process in healthcare-marketing container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: healthcare-marketing

@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: website-optimization-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+
+configMapGenerator:
+  - name: website-optimization-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/website-optimization
+    newTag: staging

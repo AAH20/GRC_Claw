@@ -1,0 +1,166 @@
+# Prometheus Monitoring Configuration for PPC Manager
+# Description: Pay-per-click advertising management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the ppc-manager service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ppc-manager-monitor
+  namespace: monitoring
+  labels:
+    app: ppc-manager
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ppc-manager
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: ppc_manager_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for ppc-manager
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ppc-manager-rules
+  namespace: monitoring
+  labels:
+    app: ppc-manager
+    release: prometheus
+spec:
+  groups:
+  - name: ppc-manager-recording-rules
+    interval: 30s
+    rules:
+    - record: ppc_manager:api_request_rate:rate5m
+      expr: rate(ppc_manager_api_requests_total[5m])
+    - record: ppc_manager:api_error_rate:rate5m
+      expr: rate(ppc_manager_api_errors_total[5m])
+    - record: ppc_manager:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(ppc_manager_api_latency_seconds_bucket[5m]))
+  - name: ppc-manager-alerts-1
+    rules:
+    - alert: PPCManagerHighErrorRate
+      expr: rate(ppc_manager_api_errors_total[5m]) / rate(ppc_manager_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: ppc-manager
+      annotations:
+        summary: '{{ $labels.service }}: PPCManagerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered PPCManagerHighErrorRate
+          for more than 5 minutes.'
+    - alert: PPCManagerLowROAS
+      expr: ppc_manager_roas < 1.5
+      for: 5m
+      labels:
+        severity: warning
+        service: ppc-manager
+      annotations:
+        summary: '{{ $labels.service }}: PPCManagerLowROAS is firing'
+        description: '{{ $labels.service }} has triggered PPCManagerLowROAS for more
+          than 5 minutes.'
+    - alert: PPCManagerHighCPA
+      expr: ppc_manager_cpa > 50
+      for: 5m
+      labels:
+        severity: warning
+        service: ppc-manager
+      annotations:
+        summary: '{{ $labels.service }}: PPCManagerHighCPA is firing'
+        description: '{{ $labels.service }} has triggered PPCManagerHighCPA for more
+          than 5 minutes.'
+    - alert: PPCManagerLowQualityScore
+      expr: ppc_manager_quality_score < 5
+      for: 5m
+      labels:
+        severity: warning
+        service: ppc-manager
+      annotations:
+        summary: '{{ $labels.service }}: PPCManagerLowQualityScore is firing'
+        description: '{{ $labels.service }} has triggered PPCManagerLowQualityScore
+          for more than 5 minutes.'
+    - alert: PPCManagerBudgetPacingOff
+      expr: abs(ppc_manager_budget_pacing - 1.0) > 0.2
+      for: 5m
+      labels:
+        severity: warning
+        service: ppc-manager
+      annotations:
+        summary: '{{ $labels.service }}: PPCManagerBudgetPacingOff is firing'
+        description: '{{ $labels.service }} has triggered PPCManagerBudgetPacingOff
+          for more than 5 minutes.'
+  - name: ppc-manager-alerts-2
+    rules:
+    - alert: PPCManagerHighLatency
+      expr: histogram_quantile(0.95, rate(ppc_manager_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: ppc-manager
+      annotations:
+        summary: '{{ $labels.service }}: PPCManagerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered PPCManagerHighLatency for
+          more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for ppc-manager alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: ppc-manager
+    receiver: ppc-manager-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: ppc-manager-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#ppc-manager-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

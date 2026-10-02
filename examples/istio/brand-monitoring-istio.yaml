@@ -1,0 +1,286 @@
+---
+# Istio Service Mesh Configuration for brand-monitoring
+# Production-grade configuration with traffic management, security, and observability
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: brand-monitoring-gateway
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+    managed-by: istio
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "brand-monitoring.grc.svc.cluster.local"
+    - "brand-monitoring.example.com"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: brand-monitoring-tls-cert
+      minProtocolVersion: TLSV1_2
+      cipherSuites:
+      - TLS_AES_256_GCM_SHA384
+      - TLS_CHACHA20_POLY1305_SHA256
+    hosts:
+    - "brand-monitoring.grc.svc.cluster.local"
+    - "brand-monitoring.example.com"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: brand-monitoring-vs
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+spec:
+  hosts:
+  - "brand-monitoring.grc.svc.cluster.local"
+  - "brand-monitoring.example.com"
+  gateways:
+  - brand-monitoring-gateway
+  - mesh
+  http:
+  - name: "primary-route"
+    match:
+    - uri:
+        prefix: /api/v1/
+    - headers:
+        x-canary:
+          exact: "true"
+    route:
+    - destination:
+        host: brand-monitoring
+        subset: stable
+        port:
+          number: 8080
+      weight: 90
+    - destination:
+        host: brand-monitoring
+        subset: canary
+        port:
+          number: 8080
+      weight: 10
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: gateway-error,connect-failure,refused-stream
+    fault:
+      delay:
+        percentage:
+          value: 0.1
+        fixedDelay: 5s
+    corsPolicy:
+      allowOrigins:
+      - exact: "https://app.example.com"
+      allowMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      allowHeaders:
+      - authorization
+      - content-type
+      - x-request-id
+      - x-b3-traceid
+      - x-b3-spanid
+      - x-b3-parentspanid
+      - x-b3-sampled
+      - x-b3-flags
+      maxAge: "24h"
+      allowCredentials: true
+  - name: "health-check-route"
+    match:
+    - uri:
+        exact: /health
+    route:
+    - destination:
+        host: brand-monitoring
+        port:
+          number: 8080
+    timeout: 5s
+  - name: "metrics-route"
+    match:
+    - uri:
+        exact: /metrics
+    route:
+    - destination:
+        host: brand-monitoring
+        port:
+          number: 9090
+    timeout: 5s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: brand-monitoring-dr
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+spec:
+  host: brand-monitoring
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30s
+        tcpKeepalive:
+          time: 300s
+          interval: 75s
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 100
+        maxRetries: 3
+    loadBalancer:
+      simple: LEAST_CONN
+      localityLbSetting:
+        enabled: true
+        failover:
+        - from: us-east
+          to: us-west
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+    portLevelSettings:
+    - port:
+        number: 8080
+      connectionPool:
+        http:
+          http2MaxRequests: 1000
+  subsets:
+  - name: stable
+    labels:
+      version: stable
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN
+  - name: canary
+    labels:
+      version: canary
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: brand-monitoring-peer-auth
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+spec:
+  selector:
+    matchLabels:
+      app: brand-monitoring
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8080:
+      mode: STRICT
+    9090:
+      mode: PERMISSIVE
+---
+# Authorization Policy for fine-grained access control
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: brand-monitoring-authz
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+spec:
+  selector:
+    matchLabels:
+      app: brand-monitoring
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/grc/sa/api-gateway"
+        - "cluster.local/ns/grc/sa/mesh-ingress"
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        paths:
+        - "/api/v1/*"
+        - "/health"
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
+    to:
+    - operation:
+        methods:
+        - GET
+        paths:
+        - "/public/*"
+---
+# Sidecar resource for egress traffic control
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: brand-monitoring-sidecar
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+spec:
+  workloadSelector:
+    labels:
+      app: brand-monitoring
+  egress:
+  - hosts:
+    - "istio-system/*"
+    - "grc/*"
+    - "external-systems/*"
+  outboundTrafficPolicy:
+    mode: REGISTRY_ONLY
+---
+# ServiceEntry for external dependencies
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: brand-monitoring-external
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    tier: mesh
+spec:
+  hosts:
+  - "api.external-service.com"
+  - "cdn.example.net"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  resolution: DNS
+  location: MESH_EXTERNAL
+  exportTo:
+  - "."
+---

@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Onboarding Training Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: onboarding-training
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: onboarding-training
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: onboarding-training-config
+    literals:
+      - LOG_LEVEL=info
+      - LMS_INTEGRATION_URL=http://lms:8080
+      - COURSE_COMPLETION_THRESHOLD=0.8
+      - CERTIFICATE_GENERATION=true
+      - TRAINING_TRACKS=standard,enterprise,premium
+
+commonLabels:
+  app.kubernetes.io/part-of: onboarding-training
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: training-team@example.com
+
+namespace: learning
+
+images:
+  - name: onboarding-training
+    newName: registry.example.com/learning/onboarding-training
+    newTag: v1.9.3
+
+replicas:
+  - name: onboarding-training
+    count: 2

@@ -1,0 +1,19 @@
+apiVersion: builtin
+kind: VarTransformer
+metadata:
+  name: var-config
+vars:
+  - name: SERVICE_NAME
+    objref:
+      kind: Service
+      name: smb-marketing
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name
+  - name: NAMESPACE
+    objref:
+      kind: Namespace
+      name: smb-marketing-prod
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name

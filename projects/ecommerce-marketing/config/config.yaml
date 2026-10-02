@@ -1,0 +1,66 @@
+app:
+  name: ecommerce-marketing
+  version: 0.1.0
+  environment: development
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+
+agents:
+  product_recommendations:
+    model: gpt-4o
+    max_recommendations: 10
+    cache_ttl: 300
+    min_confidence: 0.7
+
+  cart_abandonment:
+    model: gpt-4o
+    recovery_window_hours: 48
+    max_reminders: 3
+    reminder_intervals: [1, 24, 48]
+
+  email:
+    model: gpt-4o
+    max_subject_length: 100
+    ab_test_enabled: true
+    ab_test_split: 0.5
+
+  social:
+    model: gpt-4o
+    platforms: [twitter, facebook, instagram, linkedin]
+    max_post_length: 280
+    schedule_lookahead_days: 7
+
+  analytics:
+    model: gpt-4o
+    metrics_retention_days: 90
+    realtime_enabled: true
+
+integrations:
+  shopify:
+    api_version: "2024-01"
+    rate_limit: 2
+    timeout: 30
+    retry_attempts: 3
+
+  woocommerce:
+    api_version: v3
+    rate_limit: 10
+    timeout: 30
+    retry_attempts: 3
+
+  stripe:
+    api_version: "2024-06-20"
+    rate_limit: 100
+    timeout: 30
+    retry_attempts: 3
+
+cache:
+  backend: redis
+  ttl: 300
+  max_size: 10000
+
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  health_check_interval: 30

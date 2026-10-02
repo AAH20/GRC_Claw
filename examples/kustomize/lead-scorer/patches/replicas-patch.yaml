@@ -1,0 +1,6 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lead-scorer
+spec:
+  replicas: 1

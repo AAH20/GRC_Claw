@@ -1,0 +1,166 @@
+# Prometheus Monitoring Configuration for Email Marketing
+# Description: Email marketing campaign management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the email-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: email-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: email-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: email-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: email_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for email-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: email-marketing-rules
+  namespace: monitoring
+  labels:
+    app: email-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: email-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: email_marketing:api_request_rate:rate5m
+      expr: rate(email_marketing_api_requests_total[5m])
+    - record: email_marketing:api_error_rate:rate5m
+      expr: rate(email_marketing_api_errors_total[5m])
+    - record: email_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(email_marketing_api_latency_seconds_bucket[5m]))
+  - name: email-marketing-alerts-1
+    rules:
+    - alert: EmailMarketingHighErrorRate
+      expr: rate(email_marketing_api_errors_total[5m]) / rate(email_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: email-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EmailMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered EmailMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: EmailMarketingHighBounceRate
+      expr: email_marketing_bounce_rate > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: email-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EmailMarketingHighBounceRate is firing'
+        description: '{{ $labels.service }} has triggered EmailMarketingHighBounceRate
+          for more than 5 minutes.'
+    - alert: EmailMarketingHighComplaintRate
+      expr: email_marketing_complaint_rate > 0.001
+      for: 5m
+      labels:
+        severity: critical
+        service: email-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EmailMarketingHighComplaintRate is firing'
+        description: '{{ $labels.service }} has triggered EmailMarketingHighComplaintRate
+          for more than 5 minutes.'
+    - alert: EmailMarketingHighUnsubscribeRate
+      expr: email_marketing_unsubscribe_rate > 0.005
+      for: 5m
+      labels:
+        severity: warning
+        service: email-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EmailMarketingHighUnsubscribeRate is firing'
+        description: '{{ $labels.service }} has triggered EmailMarketingHighUnsubscribeRate
+          for more than 5 minutes.'
+    - alert: EmailMarketingLowOpenRate
+      expr: email_marketing_open_rate < 0.15
+      for: 5m
+      labels:
+        severity: warning
+        service: email-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EmailMarketingLowOpenRate is firing'
+        description: '{{ $labels.service }} has triggered EmailMarketingLowOpenRate
+          for more than 5 minutes.'
+  - name: email-marketing-alerts-2
+    rules:
+    - alert: EmailMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(email_marketing_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: email-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EmailMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered EmailMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for email-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: email-marketing
+    receiver: email-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: email-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#email-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

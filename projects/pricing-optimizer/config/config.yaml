@@ -1,0 +1,62 @@
+app:
+  name: pricing-optimizer
+  version: 0.1.0
+  environment: development
+  log_level: INFO
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+
+agents:
+  market_intelligence:
+    update_interval_minutes: 60
+    max_competitors: 10
+    data_sources:
+      - shopify
+      - woocommerce
+      - stripe
+
+  pricing_engine:
+    min_margin_percent: 10.0
+    max_price_change_percent: 25.0
+    elasticity_model: log_linear
+    optimization_strategy: profit_maximization
+
+  testing:
+    min_sample_size: 100
+    confidence_level: 0.95
+    max_test_duration_days: 14
+
+  implementation:
+    batch_size: 50
+    rollback_on_failure: true
+    dry_run: false
+
+  monitoring:
+    metrics_interval_minutes: 5
+    anomaly_threshold_std: 2.0
+    alert_channels:
+      - webhook
+
+integrations:
+  shopify:
+    api_version: "2024-01"
+    rate_limit_per_second: 2
+    timeout_seconds: 30
+
+  woocommerce:
+    api_version: "v3"
+    rate_limit_per_second: 2
+    timeout_seconds: 30
+
+  stripe:
+    api_version: "2023-10-16"
+    rate_limit_per_second: 10
+    timeout_seconds: 30
+
+cache:
+  backend: redis
+  ttl_seconds: 300
+  redis_url: redis://localhost:6379/0

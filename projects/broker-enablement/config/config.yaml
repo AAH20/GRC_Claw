@@ -1,0 +1,70 @@
+app:
+  name: broker-enablement
+  version: "0.1.0"
+  environment: development
+  log_level: INFO
+  debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  reload: false
+
+database:
+  url: postgresql://user:password@localhost:5432/broker_enablement
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+
+redis:
+  url: redis://localhost:6379/0
+  max_connections: 50
+
+agents:
+  partner_onboarding:
+    max_retries: 3
+    timeout_seconds: 300
+    model: gpt-4
+  partner_enablement:
+    max_retries: 3
+    timeout_seconds: 300
+    model: gpt-4
+  commission_tracking:
+    max_retries: 3
+    timeout_seconds: 120
+    model: gpt-4
+  performance_analytics:
+    max_retries: 3
+    timeout_seconds: 180
+    model: gpt-4
+  multi_tenant_orchestration:
+    max_retries: 3
+    timeout_seconds: 60
+    model: gpt-4
+
+integrations:
+  salesforce:
+    api_version: v58.0
+    timeout_seconds: 30
+    sandbox: false
+  hubspot:
+    api_version: v3
+    timeout_seconds: 30
+  stripe:
+    api_version: "2024-06-20"
+    timeout_seconds: 30
+
+security:
+  secret_key: 
+  algorithm: HS256
+  access_token_expire_minutes: 30
+  allowed_hosts:
+    - "localhost"
+  cors_origins:
+    - "http://localhost:3000"
+
+rate_limiting:
+  enabled: true
+  requests_per_minute: 100
+  burst_size: 20

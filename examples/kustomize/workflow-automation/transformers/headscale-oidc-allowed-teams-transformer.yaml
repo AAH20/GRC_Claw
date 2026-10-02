@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-teams-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-automation
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-teams: "team1"
+
+target:
+  kind: Deployment
+  name: workflow-automation

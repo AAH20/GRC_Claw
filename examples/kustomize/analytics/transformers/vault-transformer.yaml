@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: analytics-vault-secrets
+spec:
+  vaultAuthRef: analytics-vault-auth
+  mount: secret
+  path: analytics
+  destination:
+    create: true
+    name: analytics-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: analytics
+
+target:
+  kind: Deployment
+  name: analytics

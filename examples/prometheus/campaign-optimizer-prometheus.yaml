@@ -1,0 +1,154 @@
+# Prometheus Monitoring Configuration for Campaign Optimizer
+# Description: AI-powered campaign optimization and A/B testing
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the campaign-optimizer service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: campaign-optimizer-monitor
+  namespace: monitoring
+  labels:
+    app: campaign-optimizer
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: campaign-optimizer
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: campaign_optimizer_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for campaign-optimizer
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: campaign-optimizer-rules
+  namespace: monitoring
+  labels:
+    app: campaign-optimizer
+    release: prometheus
+spec:
+  groups:
+  - name: campaign-optimizer-recording-rules
+    interval: 30s
+    rules:
+    - record: campaign_optimizer:api_request_rate:rate5m
+      expr: rate(campaign_optimizer_api_requests_total[5m])
+    - record: campaign_optimizer:api_error_rate:rate5m
+      expr: rate(campaign_optimizer_api_errors_total[5m])
+    - record: campaign_optimizer:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(campaign_optimizer_api_latency_seconds_bucket[5m]))
+  - name: campaign-optimizer-alerts-1
+    rules:
+    - alert: CampaignOptimizerHighErrorRate
+      expr: rate(campaign_optimizer_api_errors_total[5m]) / rate(campaign_optimizer_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: campaign-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: CampaignOptimizerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered CampaignOptimizerHighErrorRate
+          for more than 5 minutes.'
+    - alert: CampaignOptimizerLowROAS
+      expr: campaign_optimizer_roas < 1.0
+      for: 5m
+      labels:
+        severity: warning
+        service: campaign-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: CampaignOptimizerLowROAS is firing'
+        description: '{{ $labels.service }} has triggered CampaignOptimizerLowROAS
+          for more than 5 minutes.'
+    - alert: CampaignOptimizerHighLatency
+      expr: histogram_quantile(0.95, rate(campaign_optimizer_api_latency_seconds_bucket[5m]))
+        > 2.0
+      for: 5m
+      labels:
+        severity: warning
+        service: campaign-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: CampaignOptimizerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered CampaignOptimizerHighLatency
+          for more than 5 minutes.'
+    - alert: CampaignOptimizerBudgetExhausted
+      expr: campaign_optimizer_budget_utilization > 0.95
+      for: 5m
+      labels:
+        severity: warning
+        service: campaign-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: CampaignOptimizerBudgetExhausted is firing'
+        description: '{{ $labels.service }} has triggered CampaignOptimizerBudgetExhausted
+          for more than 5 minutes.'
+    - alert: CampaignOptimizerModelAccuracyDrop
+      expr: campaign_optimizer_model_accuracy < 0.7
+      for: 5m
+      labels:
+        severity: critical
+        service: campaign-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: CampaignOptimizerModelAccuracyDrop is firing'
+        description: '{{ $labels.service }} has triggered CampaignOptimizerModelAccuracyDrop
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for campaign-optimizer alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: campaign-optimizer
+    receiver: campaign-optimizer-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: campaign-optimizer-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#campaign-optimizer-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

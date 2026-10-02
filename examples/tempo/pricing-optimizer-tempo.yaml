@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for pricing-optimizer
+# Dynamic pricing optimization and management
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: pricing-optimizer-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: pricing-optimizer
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pricing-optimizer-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find products with margins below 10%
+      - name: "Find products with margins below 10%"
+        type: search
+        query:
+          service.name: "pricing-optimizer"
+          span.name: "pricing.calculate"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show price changes greater than 30%
+      - name: "Show price changes greater than 30%"
+        type: search
+        query:
+          service.name: "pricing-optimizer"
+          span.name: "pricing.update"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify products priced above competitors
+      - name: "Identify products priced above competitors"
+        type: search
+        query:
+          service.name: "pricing-optimizer"
+          span.name: "pricing.competitor_check"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "pricing-optimizer"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "pricing-optimizer"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "pricing-optimizer"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "pricing.product_id"
+        description: "Span attribute for pricing.product_id"
+        type: string
+      - key: "pricing.current_price"
+        description: "Span attribute for pricing.current_price"
+        type: string
+      - key: "pricing.recommended_price"
+        description: "Span attribute for pricing.recommended_price"
+        type: string
+      - key: "pricing.margin"
+        description: "Span attribute for pricing.margin"
+        type: string
+      - key: "pricing.competitor_price"
+        description: "Span attribute for pricing.competitor_price"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pricing-optimizer-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: pricing-optimizer.tracing.alerts
+      rules:
+        - alert: margin-thin
+          expr: |
+            margin < 0.1
+          for: 5m
+          labels:
+            severity: critical
+            service: pricing-optimizer
+            team: marketing-engineering
+          annotations:
+            summary: "Pricing margin below 10%"
+            description: "Alert for pricing-optimizer: Pricing margin below 10%"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/pricing-optimizer/margin-thin"
+            dashboard_url: "https://grafana.grc-claw.com/d/pricing-optimizer-tracing"
+
+        - alert: price-anomaly
+          expr: |
+            price_change > 0.3
+          for: 5m
+          labels:
+            severity: warning
+            service: pricing-optimizer
+            team: marketing-engineering
+          annotations:
+            summary: "Significant price change detected"
+            description: "Alert for pricing-optimizer: Significant price change detected"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/pricing-optimizer/price-anomaly"
+            dashboard_url: "https://grafana.grc-claw.com/d/pricing-optimizer-tracing"
+
+        - alert: competitor-underpriced
+          expr: |
+            our_price > competitor_price * 1.2
+          for: 5m
+          labels:
+            severity: warning
+            service: pricing-optimizer
+            team: marketing-engineering
+          annotations:
+            summary: "Price significantly above competitor"
+            description: "Alert for pricing-optimizer: Price significantly above competitor"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/pricing-optimizer/competitor-underpriced"
+            dashboard_url: "https://grafana.grc-claw.com/d/pricing-optimizer-tracing"
+
+
+    - name: pricing-optimizer.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="pricing-optimizer",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="pricing-optimizer"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: pricing-optimizer
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for pricing-optimizer"
+            description: "Error rate exceeds 5% for pricing-optimizer"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="pricing-optimizer"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: pricing-optimizer
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for pricing-optimizer"
+            description: "P95 latency exceeds 2 seconds for pricing-optimizer"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="pricing-optimizer"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="pricing-optimizer"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: pricing-optimizer
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for pricing-optimizer"
+            description: "Trace volume is 2x above 1-hour average for pricing-optimizer"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: pricing-optimizer-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "pricing-optimizer - Tempo Tracing Dashboard",
+      "uid": "pricing-optimizer-tracing",
+      "tags": ["tempo", "tracing", "pricing-optimizer", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"pricing-optimizer\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"pricing-optimizer\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"pricing-optimizer\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"pricing-optimizer\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"pricing-optimizer\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"pricing-optimizer\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"pricing-optimizer\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pricing-optimizer-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: pricing-optimizer
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: pricing-optimizer-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: pricing-optimizer
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pricing-optimizer-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: pricing-optimizer
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pricing-optimizer-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pricing-optimizer
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pricing-optimizer-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: pricing-optimizer
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pricing-optimizer-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

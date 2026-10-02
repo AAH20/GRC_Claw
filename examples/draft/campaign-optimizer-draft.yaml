@@ -1,0 +1,262 @@
+# Campaign Optimizer — Draft Example
+# Production-grade configuration for AI-driven campaign optimization
+apiVersion: grc/v1
+kind: Draft
+metadata:
+  name: campaign-optimizer
+  description: AI-powered marketing campaign optimization and A/B testing
+  version: 1.0.0
+  labels:
+    app: campaign-optimizer
+    tier: marketing
+    domain: growth
+
+spec:
+  # ── Build Configuration ──────────────────────────────────────────────
+  build:
+    language: python
+    version: "3.11"
+    framework: fastapi
+    entrypoint: app.main:app
+    dockerfile: Dockerfile
+    buildArgs:
+      PYTHON_VERSION: "3.11"
+      POETRY_VERSION: "1.7.0"
+    dependencies:
+      - fastapi>=0.104.0
+      - uvicorn[standard]>=0.24.0
+      - pydantic>=2.0
+      - scikit-learn>=1.3.0
+      - pandas>=2.0
+      - numpy>=1.24
+      - httpx>=0.25
+      - redis>=5.0
+      - celery>=5.3
+      - sqlalchemy>=2.0
+      - alembic>=1.12
+      - prometheus-client>=0.19
+    devDependencies:
+      - pytest>=7.4
+      - pytest-asyncio>=0.21
+      - pytest-cov>=4.1
+      - ruff>=0.1
+      - mypy>=1.7
+      - black>=23.0
+      - pre-commit>=3.5
+    scripts:
+      build: |
+        poetry install --no-interaction
+        poetry run python -m compileall app/
+      test: |
+        poetry run pytest tests/ -v --cov=app --cov-report=term-missing
+      lint: |
+        poetry run ruff check app/ tests/
+        poetry run mypy app/
+    artifacts:
+      - path: dist/
+        type: python-wheel
+      - path: coverage.xml
+        type: coverage-report
+    cache:
+      - path: .pytest-cache
+      - path: __pycache__
+      - path: .mypy_cache
+
+  # ── Deploy Configuration ─────────────────────────────────────────────
+  deploy:
+    strategy: rolling
+    replicas: 3
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    ports:
+      - name: http
+        port: 8080
+        protocol: TCP
+      - name: metrics
+        port: 9090
+        protocol: TCP
+    env:
+      - name: ENVIRONMENT
+        value: production
+      - name: LOG_LEVEL
+        value: INFO
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: campaign-optimizer-db
+            key: url
+      - name: REDIS_URL
+        valueFrom:
+          secretKeyRef:
+            name: campaign-optimizer-cache
+            key: url
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: llm-api-keys
+            key: openai
+      - name: CAMPAIGN_BUDGET_LIMIT
+        value: "10000"
+      - name: OPTIMIZATION_INTERVAL_MINUTES
+        value: "15"
+      - name: MAX_CONCURRENT_CAMPAIGNS
+        value: "50"
+      - name: ML_MODEL_PATH
+        value: /models/campaign-optimizer
+    healthCheck:
+      path: /health
+      port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      path: /ready
+      port: 8080
+      initialDelaySeconds: 15
+      periodSeconds: 5
+    livenessProbe:
+      path: /health
+      port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 15
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    service:
+      type: ClusterIP
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - campaign-optimizer.grc.local
+      tls:
+        - secretName: campaign-optimizer-tls
+          hosts:
+            - campaign-optimizer.grc.local
+    monitoring:
+      enabled: true
+      serviceMonitor:
+        interval: 30s
+        scrapeTimeout: 10s
+      alerts:
+        - name: HighErrorRate
+          expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+          for: 5m
+          severity: warning
+        - name: CampaignOptimizationLatency
+          expr: histogram_quantile(0.95, rate(campaign_optimization_duration_seconds_bucket[5m])) > 30
+          for: 10m
+          severity: warning
+    backup:
+      enabled: true
+      schedule: "0 2 * * *"
+      retentionDays: 30
+
+  # ── Dev Configuration ────────────────────────────────────────────────
+  dev:
+    environment: development
+    debug: true
+    hotReload: true
+    ports:
+      - name: http
+        port: 8080
+      - name: metrics
+        port: 9090
+      - name: debug
+        port: 5678
+    env:
+      - name: ENVIRONMENT
+        value: development
+      - name: LOG_LEVEL
+        value: DEBUG
+      - name: DATABASE_URL
+        value: postgresql://localhost:5432/campaign_optimizer_dev
+      - name: REDIS_URL
+        value: redis://localhost:6379/0
+      - name: MOCK_LLM_RESPONSES
+        value: "true"
+      - name: SEED_DATA
+        value: "true"
+    volumes:
+      - name: source-code
+        mountPath: /app
+        hostPath: .
+      - name: ml-models
+        mountPath: /models
+        hostPath: ./models
+    scripts:
+      dev: |
+        poetry install
+        poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+      test: |
+        poetry run pytest tests/ -v --cov=app --cov-report=html --cov-report=term
+      test:watch: |
+        poetry run pytest tests/ -v -f
+      lint: |
+        poetry run ruff check app/ tests/ --fix
+        poetry run mypy app/
+      format: |
+        poetry run black app/ tests/
+      typecheck: |
+        poetry run mypy app/ --strict
+      seed: |
+        poetry run python scripts/seed_dev_data.py
+      migrate: |
+        poetry run alembic upgrade head
+      migrate:create: |
+        poetry run alembic revision --autogenerate -m "$(message)"
+    dockerCompose:
+      services:
+        app:
+          build:
+            context: ..
+            dockerfile: Dockerfile
+          ports:
+            - "8080:8080"
+            - "9090:9090"
+          volumes:
+            - ..:/app
+          environment:
+            - ENVIRONMENT=development
+            - DATABASE_URL=postgresql://postgres:postgres@db:5432/campaign_optimizer_dev
+            - REDIS_URL=redis://redis:6379/0
+          depends_on:
+            - db
+            - redis
+        db:
+          image: postgres:16-alpine
+          environment:
+            POSTGRES_DB: campaign_optimizer_dev
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+          ports:
+            - "5432:5432"
+          volumes:
+            - pgdata:/var/lib/postgresql/data
+        redis:
+          image: redis:7-alpine
+          ports:
+            - "6379:6379"
+      volumes:
+        pgdata:
+    preCommitHooks:
+      - id: ruff
+      - id: mypy
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml

@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: customer-retention-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+
+configMapGenerator:
+  - name: customer-retention-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/customer-retention
+    newTag: staging

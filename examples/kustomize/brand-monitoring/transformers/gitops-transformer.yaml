@@ -1,0 +1,29 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: gitops-patch
+patch: |-
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: brand-monitoring
+  namespace: argocd
+spec:
+  project: grc-claw
+  source:
+    repoURL: https://github.com/grc-claw/brand-monitoring.git
+    targetRevision: HEAD
+    path: overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: brand-monitoring-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+target:
+  kind: Deployment
+  name: brand-monitoring

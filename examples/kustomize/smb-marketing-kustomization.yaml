@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# SMB Marketing Service - Production Kustomize Example
+# Small and medium business marketing automation and campaign management
+
+namespace: smb-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: smb-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: smb-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: smb-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: smb-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: smb-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - CAMPAIGN_TEMPLATES=email,social,sms,display
+      - AUTOMATION_TRIGGERS=signup,abandoned_cart,inactivity
+      - MAX_CAMPAIGNS_PER_TENANT=50
+      - TENANT_ISOLATION=namespace
+      - BILLING_MODEL=subscription
+      - WHITE_LABEL_ENABLED=true
+
+secretGenerator:
+  - name: smb-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/smb-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: smb-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: smb-marketing
+    newName: registry.grc-claw.io/marketing/smb-marketing
+    newTag: v2.3.4
+
+replicas:
+  - name: smb-marketing
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -smb

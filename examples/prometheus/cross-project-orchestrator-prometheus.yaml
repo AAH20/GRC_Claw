@@ -1,0 +1,158 @@
+# Prometheus Monitoring Configuration for Cross-Project Orchestrator
+# Description: Cross-project orchestration and coordination
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the cross-project-orchestrator service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cross-project-orchestrator-monitor
+  namespace: monitoring
+  labels:
+    app: cross-project-orchestrator
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cross-project-orchestrator
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: cross_project_orchestrator_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for cross-project-orchestrator
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cross-project-orchestrator-rules
+  namespace: monitoring
+  labels:
+    app: cross-project-orchestrator
+    release: prometheus
+spec:
+  groups:
+  - name: cross-project-orchestrator-recording-rules
+    interval: 30s
+    rules:
+    - record: cross_project_orchestrator:api_request_rate:rate5m
+      expr: rate(cross_project_orchestrator_api_requests_total[5m])
+    - record: cross_project_orchestrator:api_error_rate:rate5m
+      expr: rate(cross_project_orchestrator_api_errors_total[5m])
+    - record: cross_project_orchestrator:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(cross_project_orchestrator_api_latency_seconds_bucket[5m]))
+  - name: cross-project-orchestrator-alerts-1
+    rules:
+    - alert: CrossProjectOrchestratorHighErrorRate
+      expr: rate(cross_project_orchestrator_api_errors_total[5m]) / rate(cross_project_orchestrator_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: cross-project-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: CrossProjectOrchestratorHighErrorRate is
+          firing'
+        description: '{{ $labels.service }} has triggered CrossProjectOrchestratorHighErrorRate
+          for more than 5 minutes.'
+    - alert: CrossProjectOrchestratorLowSuccessRate
+      expr: cross_project_orchestrator_success_rate < 0.95
+      for: 5m
+      labels:
+        severity: critical
+        service: cross-project-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: CrossProjectOrchestratorLowSuccessRate is
+          firing'
+        description: '{{ $labels.service }} has triggered CrossProjectOrchestratorLowSuccessRate
+          for more than 5 minutes.'
+    - alert: CrossProjectOrchestratorHighQueueDepth
+      expr: cross_project_orchestrator_queue_depth > 100
+      for: 5m
+      labels:
+        severity: warning
+        service: cross-project-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: CrossProjectOrchestratorHighQueueDepth is
+          firing'
+        description: '{{ $labels.service }} has triggered CrossProjectOrchestratorHighQueueDepth
+          for more than 5 minutes.'
+    - alert: CrossProjectOrchestratorHighLatency
+      expr: histogram_quantile(0.95, rate(cross_project_orchestrator_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: cross-project-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: CrossProjectOrchestratorHighLatency is firing'
+        description: '{{ $labels.service }} has triggered CrossProjectOrchestratorHighLatency
+          for more than 5 minutes.'
+    - alert: CrossProjectOrchestratorHighResourceUtilization
+      expr: cross_project_orchestrator_resource_utilization > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        service: cross-project-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: CrossProjectOrchestratorHighResourceUtilization
+          is firing'
+        description: '{{ $labels.service }} has triggered CrossProjectOrchestratorHighResourceUtilization
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for cross-project-orchestrator alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: cross-project-orchestrator
+    receiver: cross-project-orchestrator-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: cross-project-orchestrator-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#cross-project-orchestrator-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

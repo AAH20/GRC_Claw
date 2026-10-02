@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: business-intelligence-intercept
+  namespace: default
+  labels:
+    app: business-intelligence
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Business intelligence platform providing marketing KPIs, competitive
+      analysis, and market trend reporting with AI-powered insights.
+    telepresence.io/service: business-intelligence
+    telepresence.io/deployment: business-intelligence
+spec:
+  service:
+    name: business-intelligence
+    namespace: default
+    ports:
+    - name: http
+      port: 8104
+      targetPort: 8104
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /reports
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: business-intelligence
+    namespace: default
+    containerPort: 8104
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: BI_ENGINE
+      value: apache-superset
+    volumes:
+    - name: bi-data
+      mountPath: /data
+      hostPath: /tmp/bi-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8104
+  preview:
+    enabled: true
+    path: /reports
+    headers: *id001
+    port: 8104
+    targetPort: 8104
+    protocol: http

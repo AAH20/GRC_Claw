@@ -1,0 +1,81 @@
+# Cross-Project Orchestrator Configuration
+# This file serves as documentation for all available settings.
+# Actual values are provided via environment variables (see .env.example).
+
+orchestrator:
+  environment: development
+  port: 8080
+  log_level: INFO
+  workers: 4
+
+agents:
+  project_discovery:
+    enabled: true
+    scan_interval_seconds: 300
+    project_roots:
+      - /projects
+    exclude_patterns:
+      - "*.tmp"
+      - "*.cache"
+      - "__pycache__"
+
+  dependency_resolution:
+    enabled: true
+    max_depth: 10
+    cache_ttl_seconds: 3600
+    conflict_strategy: "highest_version"
+
+  resource_allocation:
+    enabled: true
+    allocation_strategy: "weighted_fair"
+    rebalance_interval_seconds: 600
+    overcommit_ratio: 1.2
+
+  health_monitoring:
+    enabled: true
+    check_interval_seconds: 60
+    alert_threshold:
+      cpu_percent: 80
+      memory_percent: 85
+      error_rate: 0.05
+    retention_days: 30
+
+  cost_optimization:
+    enabled: true
+    analysis_interval_seconds: 3600
+    budget_alert_threshold: 0.8
+    recommendations:
+      - rightsizing
+      - spot_instances
+      - reserved_capacity
+
+integrations:
+  kubernetes:
+    enabled: true
+    namespace: default
+    in_cluster: true
+    kubeconfig_path: null
+
+  terraform:
+    enabled: true
+    state_path: ./tfstate
+    workspace: default
+    auto_approve: false
+
+  prometheus:
+    enabled: true
+    url: http://localhost:9090
+    scrape_interval: 15
+    timeout: 10
+
+api:
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+  cors:
+    enabled: true
+    allow_origins:
+      - "*"
+  auth:
+    enabled: false
+    type: api_key

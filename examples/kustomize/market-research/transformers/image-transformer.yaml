@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: ImageTransformer
+metadata:
+  name: image-config
+image:
+  name: grcclaw/market-research
+  newTag: stable
+fieldSpecs:
+  - path: spec/template/spec/containers/image
+    create: true

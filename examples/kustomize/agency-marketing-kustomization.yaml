@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Agency Marketing Service - Production Kustomize Example
+# Multi-client campaign management, reporting, and white-label operations
+
+namespace: agency-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: agency-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: agency-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: agency-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: agency-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: agency-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - MULTI_TENANT=true
+      - MAX_CLIENTS_PER_AGENCY=100
+      - REPORTING_DASHBOARD=grafana
+      - WHITE_LABEL_DOMAIN=agency.grc-claw.io
+      - BRAND_CUSTOMIZATION=full
+      - CLIENT_PORTAL_ENABLED=true
+      - BILLING_AGGREGATION=consolidated
+
+secretGenerator:
+  - name: agency-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/agency-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: agency-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: agency-marketing
+    newName: registry.grc-claw.io/marketing/agency-marketing
+    newTag: v1.7.0
+
+replicas:
+  - name: agency-marketing
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -ag

@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Influencer Marketing Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: influencer-marketing
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: influencer-marketing
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: influencer-marketing-config
+    literals:
+      - LOG_LEVEL=info
+      - INFLUENCER_DISCOVERY_API_URL=http://discovery:8080
+      - FRAUD_DETECTION_THRESHOLD=0.75
+      - ENGAGEMENT_RATE_MINIMUM=0.02
+      - CAMPAIGN_BUDGET_CURRENCY=USD
+
+commonLabels:
+  app.kubernetes.io/part-of: influencer-marketing
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: influencer-team@example.com
+
+namespace: marketing
+
+images:
+  - name: influencer-marketing
+    newName: registry.example.com/marketing/influencer-marketing
+    newTag: v1.2.8
+
+replicas:
+  - name: influencer-marketing
+    count: 2

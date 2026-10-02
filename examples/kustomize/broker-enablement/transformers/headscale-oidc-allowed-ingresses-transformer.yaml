@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-ingresses-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker-enablement
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-ingresses: "broker-enablement-*"
+
+target:
+  kind: Deployment
+  name: broker-enablement

@@ -1,0 +1,16 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: priorityclass-patch
+patch: |-
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: journey-orchestrator-priority
+value: 1000
+globalDefault: false
+description: "Priority class for journey-orchestrator service"
+
+target:
+  kind: Deployment
+  name: journey-orchestrator

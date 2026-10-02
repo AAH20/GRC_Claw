@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-marketing
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: '100'
+spec:
+  tls:
+  - hosts:
+    - api.ecommerce-marketing.example.com
+    secretName: ecommerce-marketing-tls
+  rules:
+  - host: api.ecommerce-marketing.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ecommerce-marketing
+            port:
+              number: 80

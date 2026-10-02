@@ -1,0 +1,15 @@
+# Kubernetes Pod Disruption Budget for Journey Orchestrator
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: journey-orchestrator
+  namespace: journey-orchestrator
+  labels:
+    app: journey-orchestrator
+    component: api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: journey-orchestrator
+      component: api

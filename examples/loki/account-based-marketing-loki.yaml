@@ -1,0 +1,543 @@
+# Loki Logging Configuration for Account-Based Marketing
+# Targets high-value accounts with personalized campaigns
+# Production-grade Promtail, LogQL queries, and alerting rules
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: account-based-marketing-loki-config
+  namespace: monitoring
+  labels:
+    app: account-based-marketing
+    component: logging
+    managed-by: promtail
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+      log_level: info
+
+    positions:
+      filename: /var/log/promtail/positions.yaml
+
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+        tenant_id: account-based-marketing
+        batchwait: 1s
+        batchsize: 1048576
+        backoff_config:
+          min_period: 500ms
+          max_period: 5m
+          max_retries: 10
+        external_labels:
+          environment: production
+          service: account-based-marketing
+          team: marketing-ops
+
+    scrape_configs:
+      - job_name: account-based-marketing-app-logs
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - marketing
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: account-based-marketing.*
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_container_name]
+            target_label: container
+          - target_label: job
+            replacement: account-based-marketing
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                msg: message
+                trace_id: trace_id
+                user_id: user_id
+                campaign_id: campaign_id
+                timestamp: ts
+          - labels:
+              level:
+              trace_id:
+              user_id:
+              campaign_id:
+          - timestamp:
+              source: timestamp
+              format: RFC3339
+          - output:
+              source: msg
+
+      - job_name: account-based-marketing-audit-logs
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: account-based-marketing-audit
+              __path__: /var/log/account-based-marketing/audit.log
+        pipeline_stages:
+          - json:
+              expressions:
+                event_type: event_type
+                actor: actor
+                resource: resource
+                outcome: outcome
+                ip_address: ip
+          - labels:
+              event_type:
+              actor:
+              resource:
+              outcome:
+          - output:
+              source: event_type
+
+      - job_name: account-based-marketing-metrics-logs
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: account-based-marketing-metrics
+              __path__: /var/log/account-based-marketing/metrics.log
+        pipeline_stages:
+          - regex:
+              expression: '(?P<metric_name>\w+)\s+(?P<metric_value>[\d.]+)\s+(?P<unit>\w+)'
+          - labels:
+              metric_name:
+              unit:
+          - output:
+              source: metric_name
+
+---
+# LogQL Query Examples for Account-Based Marketing
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: account-based-marketing-loki-queries
+  namespace: monitoring
+  labels:
+    app: account-based-marketing
+    component: logql-queries
+data:
+  queries.yaml: |
+    # Common LogQL queries for Account-Based Marketing
+    queries:
+      - name: error-rate
+        description: "Error rate over time"
+        query: |
+          sum(rate({job="account-based-marketing" | json | level="ERROR" | __error__=""}[5m])) by (pod)
+        interval: 1m
+        alert_threshold: "> 0.05"
+
+      - name: request-latency-p95
+        description: "P95 request latency"
+        query: |
+          histogram_quantile(0.95, sum(rate({job="account-based-marketing" | json | unwrap duration_ms | __error__=""}[5m])) by (le, pod))
+        interval: 1m
+        alert_threshold: "> 500"
+
+      - name: request-latency-p99
+        description: "P99 request latency"
+        query: |
+          histogram_quantile(0.99, sum(rate({job="account-based-marketing" | json | unwrap duration_ms | __error__=""}[5m])) by (le, pod))
+        interval: 1m
+        alert_threshold: "> 1000"
+
+      - name: active-users
+        description: "Active users in last 5 minutes"
+        query: |
+          count(count_over_time({job="account-based-marketing" | json | user_id != "" | __error__=""}[5m])) by (pod)
+        interval: 5m
+        alert_threshold: "< 10"
+
+      - name: top-errors
+        description: "Top 10 error messages"
+        query: |
+          topk(10, sum by (msg) (rate({job="account-based-marketing" | json | level="ERROR" | __error__=""}[15m])))
+        interval: 15m
+
+      - name: slow-requests
+        description: "Requests slower than 1s"
+        query: |
+          {job="account-based-marketing" | json | duration_ms > 1000 | __error__=""}
+        interval: 5m
+        alert_threshold: "> 100"
+
+      - name: audit-events
+        description: "Audit events by type"
+        query: |
+          sum by (event_type) (rate({job="account-based-marketing-audit" | json | __error__=""}[5m]))
+        interval: 5m
+
+      - name: failed-logins
+        description: "Failed login attempts"
+        query: |
+          sum(rate({job="account-based-marketing-audit" | json | event_type="login" | outcome="failure" | __error__=""}[5m])) by (actor)
+        interval: 1m
+        alert_threshold: "> 10"
+
+      - name: campaign-performance
+        description: "Campaign performance metrics"
+        query: |
+          sum by (campaign_id) (rate({job="account-based-marketing" | json | campaign_id != "" | __error__=""}[5m]))
+        interval: 5m
+
+      - name: trace-lookup
+        description: "Find all logs for a trace ID"
+        query: |
+          {job="account-based-marketing" | json | trace_id="<TRACE_ID>" | __error__=""}
+        interval: 1m
+
+      - name: user-activity
+        description: "User activity timeline"
+        query: |
+          {job="account-based-marketing" | json | user_id="<USER_ID>" | __error__=""}
+        interval: 1m
+
+      - name: metric-gauge
+        description: "Current metric values"
+        query: |
+          {job="account-based-marketing-metrics" | __error__=""}
+        interval: 30s
+
+      - name: log-volume
+        description: "Log volume per minute"
+        query: |
+          sum(rate({job="account-based-marketing" | __error__=""}[1m])) by (pod)
+        interval: 1m
+        alert_threshold: "> 10000"
+
+      - name: unique-errors
+        description: "Unique error messages in last hour"
+        query: |
+          count(count_over_time({job="account-based-marketing" | json | level="ERROR" | __error__=""}[1h])) by (msg)
+        interval: 1h
+        alert_threshold: "> 50"
+
+---
+# Alerting Rules for Account-Based Marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: account-based-marketing-loki-alerts
+  namespace: monitoring
+  labels:
+    app: account-based-marketing
+    component: alerting
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+    - name: account-based-marketing.alerts
+      interval: 30s
+      rules:
+        - alert: Account-BasedMarketingHighErrorRate
+          expr: |
+            sum(rate({job="account-based-marketing" | json | level="ERROR" | __error__=""}[5m])) by (pod) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "High error rate in Account-Based Marketing"
+            description: "Error rate for pod {{ $labels.pod }} is {{ $value }} errors/sec, exceeding 5% threshold"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/high-error-rate"
+            dashboard: "https://grafana.internal/d/account-based-marketing/overview"
+
+        - alert: Account-BasedMarketingHighLatency
+          expr: |
+            histogram_quantile(0.95, sum(rate({job="account-based-marketing" | json | unwrap duration_ms | __error__=""}[5m])) by (le, pod)) > 500
+          for: 5m
+          labels:
+            severity: warning
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "High P95 latency in Account-Based Marketing"
+            description: "P95 latency for pod {{ $labels.pod }} is {{ $value }}ms, exceeding 500ms threshold"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/high-latency"
+
+        - alert: Account-BasedMarketingHighLatencyP99
+          expr: |
+            histogram_quantile(0.99, sum(rate({job="account-based-marketing" | json | unwrap duration_ms | __error__=""}[5m])) by (le, pod)) > 1000
+          for: 5m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "High P99 latency in Account-Based Marketing"
+            description: "P99 latency for pod {{ $labels.pod }} is {{ $value }}ms, exceeding 1000ms threshold"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/high-latency"
+
+        - alert: Account-BasedMarketingPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{pod=~"account-based-marketing.*"}[15m]) * 60 * 5 > 0
+          for: 5m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "Pod crash looping in Account-Based Marketing"
+            description: "Pod {{ $labels.pod }} is restarting frequently ({{ $value }} restarts in 5m)"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/crash-looping"
+
+        - alert: Account-BasedMarketingHighMemoryUsage
+          expr: |
+            container_memory_usage_bytes{pod=~"account-based-marketing.*"} / container_spec_memory_limit_bytes{pod=~"account-based-marketing.*"} > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "High memory usage in Account-Based Marketing"
+            description: "Pod {{ $labels.pod }} memory usage is {{ $value | humanizePercentage }}, exceeding 85%"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/high-memory"
+
+        - alert: Account-BasedMarketingHighCPUUsage
+          expr: |
+            rate(container_cpu_usage_seconds_total{pod=~"account-based-marketing.*"}[5m]) > 0.8
+          for: 10m
+          labels:
+            severity: warning
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "High CPU usage in Account-Based Marketing"
+            description: "Pod {{ $labels.pod }} CPU usage is {{ $value }} cores, exceeding 0.8 cores"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/high-cpu"
+
+        - alert: Account-BasedMarketingDiskSpaceLow
+          expr: |
+            kubelet_volume_stats_available_bytes{pod=~"account-based-marketing.*"} / kubelet_volume_stats_capacity_bytes{pod=~"account-based-marketing.*"} < 0.1
+          for: 5m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "Low disk space in Account-Based Marketing"
+            description: "Volume {{ $labels.volume }} has less than 10% space remaining"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/disk-space"
+
+        - alert: Account-BasedMarketingFailedLoginsSpike
+          expr: |
+            sum(rate({job="account-based-marketing-audit" | json | event_type="login" | outcome="failure" | __error__=""}[5m])) by (actor) > 10
+          for: 2m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: security
+          annotations:
+            summary: "Failed login spike in Account-Based Marketing"
+            description: "User {{ $labels.actor }} has {{ $value }} failed logins/sec"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/failed-logins"
+
+        - alert: Account-BasedMarketingLogVolumeSpike
+          expr: |
+            sum(rate({job="account-based-marketing" | __error__=""}[1m])) by (pod) > 10000
+          for: 5m
+          labels:
+            severity: warning
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "Log volume spike in Account-Based Marketing"
+            description: "Pod {{ $labels.pod }} is generating {{ $value }} logs/sec"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/log-volume"
+
+        - alert: Account-BasedMarketingNoLogsReceived
+          expr: |
+            absent({job="account-based-marketing" | __error__=""}) == 1
+          for: 10m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "No logs received from Account-Based Marketing"
+            description: "No logs have been received from account-based-marketing for 10 minutes"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/no-logs"
+
+        - alert: Account-BasedMarketingDeploymentStuck
+          expr: |
+            kube_deployment_status_replicas_unavailable{deployment=~"account-based-marketing.*"} > 0
+          for: 15m
+          labels:
+            severity: critical
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "Deployment stuck in Account-Based Marketing"
+            description: "Deployment {{ $labels.deployment }} has {{ $value }} unavailable replicas for 15m"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/deployment-stuck"
+
+        - alert: Account-BasedMarketingHighRequestRate
+          expr: |
+            sum(rate({job="account-based-marketing" | __error__=""}[1m])) by (pod) > 5000
+          for: 5m
+          labels:
+            severity: warning
+            service: account-based-marketing
+            team: marketing-ops
+          annotations:
+            summary: "High request rate in Account-Based Marketing"
+            description: "Pod {{ $labels.pod }} is handling {{ $value }} requests/sec"
+            runbook: "https://wiki.internal/runbooks/account-based-marketing/high-request-rate"
+
+---
+# Grafana Dashboard ConfigMap for Account-Based Marketing
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: account-based-marketing-loki-dashboard
+  namespace: monitoring
+  labels:
+    app: account-based-marketing
+    component: grafana-dashboard
+    grafana_dashboard: "1"
+data:
+  account-based-marketing-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Account-Based Marketing - Loki Logs",
+        "tags": ["account-based-marketing", "loki", "logging"],
+        "timezone": "utc",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate({job=\"account-based-marketing\" | json | level=\"ERROR\" | __error__=\"\"}[5m])) by (pod)",
+                "legendFormat": "{pod}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ops",
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "red", "value": 0.05}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Request Latency (P95)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate({job=\"account-based-marketing\" | json | unwrap duration_ms | __error__=\"\"}[5m])) by (le, pod))",
+                "legendFormat": "{pod}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ms",
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 200},
+                    {"color": "red", "value": 500}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 3,
+            "title": "Log Volume",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "sum(rate({job=\"account-based-marketing\" | __error__=\"\"}[1m])) by (pod)",
+                "legendFormat": "{pod}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ops"
+              }
+            }
+          },
+          {
+            "id": 4,
+            "title": "Top Errors",
+            "type": "bargauge",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "topk(10, sum by (msg) (rate({job=\"account-based-marketing\" | json | level=\"ERROR\" | __error__=\"\"}[15m])))",
+                "legendFormat": "{msg}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ops",
+                "min": 0
+              }
+            }
+          },
+          {
+            "id": 5,
+            "title": "Pod Status",
+            "type": "table",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "kube_pod_status_phase{pod=~\"account-based-marketing.*\"}",
+                "format": "table",
+                "instant": true,
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "title": "Live Logs",
+            "type": "logs",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+            "targets": [
+              {
+                "expr": "{job=\"account-based-marketing\" | json | __error__=\"\"}",
+                "refId": "A"
+              }
+            ],
+            "options": {
+              "showTime": true,
+              "showLabels": true,
+              "wrapLogMessage": true,
+              "sortOrder": "Descending"
+            }
+          }
+        ]
+      }
+    }

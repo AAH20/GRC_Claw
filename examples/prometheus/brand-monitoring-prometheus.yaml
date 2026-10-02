@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Brand Monitoring
+# Description: Brand monitoring and reputation management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the brand-monitoring service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: brand-monitoring-monitor
+  namespace: monitoring
+  labels:
+    app: brand-monitoring
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: brand-monitoring
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: brand_monitoring_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for brand-monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: brand-monitoring-rules
+  namespace: monitoring
+  labels:
+    app: brand-monitoring
+    release: prometheus
+spec:
+  groups:
+  - name: brand-monitoring-recording-rules
+    interval: 30s
+    rules:
+    - record: brand_monitoring:api_request_rate:rate5m
+      expr: rate(brand_monitoring_api_requests_total[5m])
+    - record: brand_monitoring:api_error_rate:rate5m
+      expr: rate(brand_monitoring_api_errors_total[5m])
+    - record: brand_monitoring:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(brand_monitoring_api_latency_seconds_bucket[5m]))
+  - name: brand-monitoring-alerts-1
+    rules:
+    - alert: BrandMonitoringHighErrorRate
+      expr: rate(brand_monitoring_api_errors_total[5m]) / rate(brand_monitoring_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+      annotations:
+        summary: '{{ $labels.service }}: BrandMonitoringHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered BrandMonitoringHighErrorRate
+          for more than 5 minutes.'
+    - alert: BrandMonitoringNegativeSentiment
+      expr: brand_monitoring_sentiment_score < -0.3
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+      annotations:
+        summary: '{{ $labels.service }}: BrandMonitoringNegativeSentiment is firing'
+        description: '{{ $labels.service }} has triggered BrandMonitoringNegativeSentiment
+          for more than 5 minutes.'
+    - alert: BrandMonitoringHighAlertRate
+      expr: rate(brand_monitoring_alert_triggered_total[1h]) > 5
+      for: 5m
+      labels:
+        severity: warning
+        service: brand-monitoring
+      annotations:
+        summary: '{{ $labels.service }}: BrandMonitoringHighAlertRate is firing'
+        description: '{{ $labels.service }} has triggered BrandMonitoringHighAlertRate
+          for more than 5 minutes.'
+    - alert: BrandMonitoringHighLatency
+      expr: histogram_quantile(0.95, rate(brand_monitoring_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: brand-monitoring
+      annotations:
+        summary: '{{ $labels.service }}: BrandMonitoringHighLatency is firing'
+        description: '{{ $labels.service }} has triggered BrandMonitoringHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for brand-monitoring alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: brand-monitoring
+    receiver: brand-monitoring-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: brand-monitoring-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#brand-monitoring-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

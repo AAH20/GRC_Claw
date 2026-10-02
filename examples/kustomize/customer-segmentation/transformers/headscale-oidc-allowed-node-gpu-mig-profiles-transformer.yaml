@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-mig-profiles-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-segmentation
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-mig-profiles: "1g.5gb"
+
+target:
+  kind: Deployment
+  name: customer-segmentation

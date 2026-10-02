@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: market-research-intercept
+  namespace: default
+  labels:
+    app: market-research
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Market research platform that aggregates consumer data, competitor
+      analysis, and industry trends for strategic planning.
+    telepresence.io/service: market-research
+    telepresence.io/deployment: market-research
+spec:
+  service:
+    name: market-research
+    namespace: default
+    ports:
+    - name: http
+      port: 8109
+      targetPort: 8109
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /research
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: market-research
+    namespace: default
+    containerPort: 8109
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: RESEARCH_SOURCES
+      value: consumer,competitor,industry
+    volumes:
+    - name: research-data
+      mountPath: /data
+      hostPath: /tmp/research-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8109
+  preview:
+    enabled: true
+    path: /research
+    headers: *id001
+    port: 8109
+    targetPort: 8109
+    protocol: http

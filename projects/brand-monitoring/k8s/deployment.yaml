@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brand-monitoring
+  labels:
+    app: brand-monitoring
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: brand-monitoring
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: brand-monitoring
+        version: v1
+    spec:
+      containers:
+        - name: brand-monitoring
+          image: ghcr.io/ahmedhassan/brand-monitoring:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: redis-url
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: openai-api-key
+            - name: TWITTER_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: twitter-bearer-token
+            - name: REDDIT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: reddit-client-id
+            - name: REDDIT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: reddit-client-secret
+            - name: NEWSAPI_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: brand-monitoring-secrets
+                  key: newsapi-key
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

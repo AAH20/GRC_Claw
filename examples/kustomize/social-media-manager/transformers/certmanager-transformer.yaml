@@ -1,0 +1,20 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: certmanager-patch
+patch: |-
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: social-media-manager-cert
+spec:
+  secretName: social-media-manager-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - social-media-manager.grc-claw.example.com
+
+target:
+  kind: Deployment
+  name: social-media-manager

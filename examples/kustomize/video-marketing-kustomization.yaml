@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Video Marketing Service - Production Kustomize Example
+# Video creation, hosting, analytics, and distribution management
+
+namespace: video-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: video-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: video-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: video-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: video-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: video-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - VIDEO_ENCODING_FORMAT=h264,h265,vp9
+      - MAX_VIDEO_SIZE_MB=500
+      - THUMBNAIL_INTERVAL_SEC=10
+      - STREAMING_PROTOCOL=hls,dash
+      - CDN_ENABLED=true
+      - ANALYTICS_TRACKING=true
+
+secretGenerator:
+  - name: video-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/video-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: video-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: video-marketing
+    newName: registry.grc-claw.io/marketing/video-marketing
+    newTag: v1.5.2
+
+replicas:
+  - name: video-marketing
+    count: 2
+
+namePrefix: prod-
+nameSuffix: -vm

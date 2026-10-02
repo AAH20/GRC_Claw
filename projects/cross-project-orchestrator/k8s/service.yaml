@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cross-project-orchestrator
+  namespace: orchestrator
+  labels:
+    app: cross-project-orchestrator
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: cross-project-orchestrator

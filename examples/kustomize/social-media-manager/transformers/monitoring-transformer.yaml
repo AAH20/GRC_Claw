@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: monitoring-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: social-media-manager-metrics
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: social-media-manager
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics
+
+target:
+  kind: Deployment
+  name: social-media-manager

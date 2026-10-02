@@ -1,0 +1,100 @@
+# =============================================================================
+# GRC Claw — PostgreSQL ConfigMap (Init Scripts)
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: grc-claw
+data:
+  01-schema.sql: |
+    -- GRC Claw — Core Schema
+    CREATE SCHEMA IF NOT EXISTS grc_claw;
+    CREATE SCHEMA IF NOT EXISTS audit;
+    CREATE SCHEMA IF NOT EXISTS analytics;
+
+    -- Agent registry
+    CREATE TABLE IF NOT EXISTS grc_claw.agents (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name            VARCHAR(255) NOT NULL,
+        type            VARCHAR(100) NOT NULL,
+        status          VARCHAR(50) NOT NULL DEFAULT 'active',
+        config          JSONB NOT NULL DEFAULT '{}',
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    -- Campaign tracking
+    CREATE TABLE IF NOT EXISTS grc_claw.campaigns (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        agent_id        UUID NOT NULL REFERENCES grc_claw.agents(id),
+        name            VARCHAR(255) NOT NULL,
+        status          VARCHAR(50) NOT NULL DEFAULT 'draft',
+        budget          DECIMAL(15,2) NOT NULL DEFAULT 0,
+        spent           DECIMAL(15,2) NOT NULL DEFAULT 0,
+        metrics         JSONB NOT NULL DEFAULT '{}',
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    -- Event log (partitioned by month)
+    CREATE TABLE IF NOT EXISTS grc_claw.events (
+        id              BIGSERIAL,
+        event_type      VARCHAR(100) NOT NULL,
+        agent_id        UUID REFERENCES grc_claw.agents(id),
+        campaign_id     UUID REFERENCES grc_claw.campaigns(id),
+        payload         JSONB NOT NULL DEFAULT '{}',
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (id, created_at)
+    ) PARTITION BY RANGE (created_at);
+
+    -- Create initial partitions
+    CREATE TABLE IF NOT EXISTS grc_claw.events_2024_10
+        PARTITION OF grc_claw.events
+        FOR VALUES FROM ('2024-10-01') TO ('2024-11-01');
+
+    CREATE TABLE IF NOT EXISTS grc_claw.events_2024_11
+        PARTITION OF grc_claw.events
+        FOR VALUES FROM ('2024-11-01') TO ('2024-12-01');
+
+    -- Indexes
+    CREATE INDEX IF NOT EXISTS idx_agents_status ON grc_claw.agents(status);
+    CREATE INDEX IF NOT EXISTS idx_campaigns_agent ON grc_claw.campaigns(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_campaigns_status ON grc_claw.campaigns(status);
+    CREATE INDEX IF NOT EXISTS idx_events_type ON grc_claw.events(event_type);
+    CREATE INDEX IF NOT EXISTS idx_events_agent ON grc_claw.events(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_events_created ON grc_claw.events(created_at);
+
+    -- Audit log
+    CREATE TABLE IF NOT EXISTS audit.log (
+        id              BIGSERIAL PRIMARY KEY,
+        table_name      VARCHAR(255) NOT NULL,
+        record_id       UUID NOT NULL,
+        action          VARCHAR(50) NOT NULL,
+        old_data        JSONB,
+        new_data        JSONB,
+        performed_by    VARCHAR(255),
+        performed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    -- Analytics materialized view
+    CREATE MATERIALIZED VIEW IF NOT EXISTS analytics.campaign_summary AS
+    SELECT
+        c.id AS campaign_id,
+        c.name AS campaign_name,
+        c.status,
+        c.budget,
+        c.spent,
+        COUNT(e.id) AS event_count,
+        MAX(e.created_at) AS last_event_at
+    FROM grc_claw.campaigns c
+    LEFT JOIN grc_claw.events e ON e.campaign_id = c.id
+    GROUP BY c.id, c.name, c.status, c.budget, c.spent;
+
+    -- Refresh policy (manual or scheduled)
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_summary_id
+        ON analytics.campaign_summary(campaign_id);

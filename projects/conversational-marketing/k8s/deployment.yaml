@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conversational-marketing
+  labels:
+    app: conversational-marketing
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: conversational-marketing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: conversational-marketing
+        version: v1
+    spec:
+      containers:
+        - name: conversational-marketing
+          image: conversational-marketing:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: conversational-marketing-secrets
+                  key: openai-api-key
+            - name: WHATSAPP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: conversational-marketing-secrets
+                  key: whatsapp-token
+            - name: FACEBOOK_PAGE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: conversational-marketing-secrets
+                  key: facebook-page-token
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: conversational-marketing-secrets
+                  key: slack-bot-token
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        fsGroup: 999

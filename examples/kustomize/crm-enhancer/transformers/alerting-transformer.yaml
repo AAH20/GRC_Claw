@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: crm-enhancer-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: crm-enhancer.rules
+      rules:
+        - alert: crm_enhancer_high_error_rate
+          expr: rate(http_requests_total{job="crm-enhancer",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in crm-enhancer"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: crm_enhancer_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="crm-enhancer"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in crm-enhancer"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: crm-enhancer

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: real-estate-marketing-vault-secrets
+spec:
+  vaultAuthRef: real-estate-marketing-vault-auth
+  mount: secret
+  path: real-estate-marketing
+  destination:
+    create: true
+    name: real-estate-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: real-estate-marketing
+
+target:
+  kind: Deployment
+  name: real-estate-marketing

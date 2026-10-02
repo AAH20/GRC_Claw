@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onboarding-training
+  labels:
+    app.kubernetes.io/name: onboarding-training
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: grc-marketing
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: onboarding-training
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: onboarding-training
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: grc-marketing
+    spec:
+      serviceAccountName: onboarding-training
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          image: ghcr.io/grc/onboarding-training:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              value: production
+            - name: LOG_LEVEL
+              value: INFO
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: onboarding-training
+                  key: openai-api-key
+                  optional: false
+            - name: CANVAS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: onboarding-training
+                  key: canvas-api-token
+                  optional: true
+            - name: MOODLE_WS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: onboarding-training
+                  key: moodle-ws-token
+                  optional: true
+            - name: SCORM_PUBLISHER
+              valueFrom:
+                configMapKeyRef:
+                  name: onboarding-training
+                  key: scorm-publisher
+                  optional: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+              cpu: "1"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            failureThreshold: 12
+            periodSeconds: 5
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: onboarding-training

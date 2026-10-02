@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: marketing-attribution-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: marketing-attribution.rules
+      rules:
+        - alert: marketing_attribution_high_error_rate
+          expr: rate(http_requests_total{job="marketing-attribution",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in marketing-attribution"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: marketing_attribution_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="marketing-attribution"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in marketing-attribution"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: marketing-attribution

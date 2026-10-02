@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: finance-marketing-intercept
+  namespace: default
+  labels:
+    app: finance-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Financial services marketing platform with compliance-aware campaigns
+      for banking, insurance, and investment products.
+    telepresence.io/service: finance-marketing
+    telepresence.io/deployment: finance-marketing
+spec:
+  service:
+    name: finance-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8119
+      targetPort: 8119
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /finance
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: finance-marketing
+    namespace: default
+    containerPort: 8119
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: COMPLIANCE
+      value: sox,pci-dss
+    volumes:
+    - name: finance-data
+      mountPath: /data
+      hostPath: /tmp/finance-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8119
+  preview:
+    enabled: true
+    path: /finance
+    headers: *id001
+    port: 8119
+    targetPort: 8119
+    protocol: http

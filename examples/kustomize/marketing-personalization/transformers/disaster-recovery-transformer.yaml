@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: disaster-recovery-patch
+patch: |-
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: marketing-personalization-restore
+spec:
+  backupName: marketing-personalization-backup
+  includedNamespaces:
+    - marketing-personalization-prod
+  restorePVs: true
+
+target:
+  kind: Deployment
+  name: marketing-personalization

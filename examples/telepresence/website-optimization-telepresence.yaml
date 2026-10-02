@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: website-optimization-intercept
+  namespace: default
+  labels:
+    app: website-optimization
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Website optimization platform for A/B testing, conversion rate optimization,
+      and personalization of web experiences.
+    telepresence.io/service: website-optimization
+    telepresence.io/deployment: website-optimization
+spec:
+  service:
+    name: website-optimization
+    namespace: default
+    ports:
+    - name: http
+      port: 8110
+      targetPort: 8110
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /optimize
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: website-optimization
+    namespace: default
+    containerPort: 8110
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: TESTING_FRAMEWORK
+      value: optimizely
+    volumes:
+    - name: website-tests
+      mountPath: /tests
+      hostPath: /tmp/website-tests
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8110
+  preview:
+    enabled: true
+    path: /optimize
+    headers: *id001
+    port: 8110
+    targetPort: 8110
+    protocol: http

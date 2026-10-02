@@ -1,0 +1,79 @@
+app:
+  name: sales-forecaster
+  version: "0.1.0"
+  environment: development
+  log_level: INFO
+  debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  timeout_keep_alive: 30
+
+redis:
+  url: redis://localhost:6379/0
+  max_connections: 20
+  socket_timeout: 5
+
+agents:
+  data_collection:
+    timeout_seconds: 120
+    retry_attempts: 3
+    batch_size: 500
+    sources:
+      - salesforce
+      - hubspot
+      - sap
+
+  analysis:
+    seasonality_mode: multiplicative
+    changepoint_prior_scale: 0.05
+    interval_width: 0.95
+    anomaly_threshold: 2.5
+
+  prediction:
+    forecast_horizon_days: 90
+    confidence_level: 0.95
+    models:
+      - prophet
+      - arima
+      - ensemble
+    retrain_threshold_days: 30
+
+  action:
+    max_recommendations: 10
+    priority_threshold: 0.7
+    auto_approve: false
+
+  performance_analytics:
+    kpi_window_days: 30
+    drift_threshold: 0.15
+    alert_channels:
+      - email
+      - slack
+
+integrations:
+  salesforce:
+    api_version: v59.0
+    sandbox: false
+    timeout_seconds: 30
+
+  hubspot:
+    api_version: v3
+    timeout_seconds: 30
+
+  sap:
+    base_url: 
+    timeout_seconds: 60
+
+pipeline:
+  max_concurrent_runs: 5
+  run_timeout_seconds: 600
+  checkpoint_interval_seconds: 60
+
+observability:
+  metrics_enabled: true
+  tracing_enabled: true
+  profiling_enabled: false
+  jaeger_endpoint: http://localhost:14268/api/traces

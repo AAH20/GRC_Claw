@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# SaaS Marketing Service - Production Kustomize Example
+# SaaS product marketing, trial management, and feature adoption campaigns
+
+namespace: saas-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: saas-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: saas-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: saas-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: saas-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: saas-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - TRIAL_PERIOD_DAYS=14
+      - FEATURE_FLAGS=enabled
+      - PRODUCT_ANALYTICS=amplitude
+      - ONBOARDING_FLOW=interactive
+      - CHURN_PREDICTION_MODEL=propensity
+      - EXPANSION_REVENUE_TRACKING=true
+      - USAGE_BASED_PRICING=true
+
+secretGenerator:
+  - name: saas-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/saas-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: saas-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: saas-marketing
+    newName: registry.grc-claw.io/marketing/saas-marketing
+    newTag: v2.1.3
+
+replicas:
+  - name: saas-marketing
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -saas

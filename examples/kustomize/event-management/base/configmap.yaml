@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-management-config
+  labels:
+    app.kubernetes.io/name: event-management
+data:
+  LOG_LEVEL: "info"
+  PORT: "8080"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"

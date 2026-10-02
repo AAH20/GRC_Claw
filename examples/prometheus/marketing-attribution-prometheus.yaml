@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for Marketing Attribution
+# Description: Multi-touch attribution modeling
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the marketing-attribution service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: marketing-attribution-monitor
+  namespace: monitoring
+  labels:
+    app: marketing-attribution
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: marketing-attribution
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: marketing_attribution_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for marketing-attribution
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: marketing-attribution-rules
+  namespace: monitoring
+  labels:
+    app: marketing-attribution
+    release: prometheus
+spec:
+  groups:
+  - name: marketing-attribution-recording-rules
+    interval: 30s
+    rules:
+    - record: marketing_attribution:api_request_rate:rate5m
+      expr: rate(marketing_attribution_api_requests_total[5m])
+    - record: marketing_attribution:api_error_rate:rate5m
+      expr: rate(marketing_attribution_api_errors_total[5m])
+    - record: marketing_attribution:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(marketing_attribution_api_latency_seconds_bucket[5m]))
+  - name: marketing-attribution-alerts-1
+    rules:
+    - alert: MarketingAttributionHighErrorRate
+      expr: rate(marketing_attribution_api_errors_total[5m]) / rate(marketing_attribution_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: marketing-attribution
+      annotations:
+        summary: '{{ $labels.service }}: MarketingAttributionHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered MarketingAttributionHighErrorRate
+          for more than 5 minutes.'
+    - alert: MarketingAttributionLowAccuracy
+      expr: marketing_attribution_attribution_accuracy < 0.7
+      for: 5m
+      labels:
+        severity: critical
+        service: marketing-attribution
+      annotations:
+        summary: '{{ $labels.service }}: MarketingAttributionLowAccuracy is firing'
+        description: '{{ $labels.service }} has triggered MarketingAttributionLowAccuracy
+          for more than 5 minutes.'
+    - alert: MarketingAttributionLowDataCompleteness
+      expr: marketing_attribution_data_completeness < 0.8
+      for: 5m
+      labels:
+        severity: warning
+        service: marketing-attribution
+      annotations:
+        summary: '{{ $labels.service }}: MarketingAttributionLowDataCompleteness is
+          firing'
+        description: '{{ $labels.service }} has triggered MarketingAttributionLowDataCompleteness
+          for more than 5 minutes.'
+    - alert: MarketingAttributionHighLatency
+      expr: histogram_quantile(0.95, rate(marketing_attribution_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: marketing-attribution
+      annotations:
+        summary: '{{ $labels.service }}: MarketingAttributionHighLatency is firing'
+        description: '{{ $labels.service }} has triggered MarketingAttributionHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for marketing-attribution alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: marketing-attribution
+    receiver: marketing-attribution-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: marketing-attribution-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#marketing-attribution-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

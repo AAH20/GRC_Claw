@@ -1,0 +1,250 @@
+# Garden Example: Email Marketing
+# Manages email campaigns, templates, and deliverability
+# Production-grade Garden configuration for Email Marketing
+
+kind: Module
+type: container
+name: email-marketing
+description: Manages email campaigns, templates, and deliverability
+
+variables:
+  imageTag: latest
+  replicas: 3
+  environment: production
+  logLevel: info
+  resources:
+    cpu: "500m"
+    memory: "512Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  service:
+    type: ClusterIP
+    port: 8080
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: email-marketing.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+  healthCheck:
+    enabled: true
+    path: /health
+    port: 8080
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: ${{ var.logLevel }}
+    - name: DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          name: email-marketing-db-credentials
+          key: url
+    - name: REDIS_URL
+      valueFrom:
+        secretKeyRef:
+          name: email-marketing-redis-credentials
+          key: url
+    - name: API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: email-marketing-api-key
+          key: value
+
+build:
+  method: docker
+  dockerfile: Dockerfile
+  context: .
+  target: production
+  args:
+    NODE_ENV: production
+  cache:
+    enabled: true
+    key: ${{ inputs.commitSha }}
+
+deploy:
+  strategy: rollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+  selector:
+    matchLabels:
+      app: email-marketing
+  template:
+    metadata:
+      labels:
+        app: email-marketing
+        version: ${{ inputs.imageTag }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: email-marketing
+          image: registry.example.com/email-marketing:${{ inputs.imageTag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: ${{ var.resources.cpu }}
+              memory: ${{ var.resources.memory }}
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          env:
+            - name: NODE_ENV
+              value: ${{ var.environment }}
+            - name: LOG_LEVEL
+              value: ${{ var.logLevel }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: email-marketing-db-credentials
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: email-marketing-redis-credentials
+                  key: url
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: email-marketing-api-key
+                  key: value
+          livenessProbe:
+            httpGet:
+              path: ${{ var.healthCheck.path }}
+              port: ${{ var.healthCheck.port }}
+            initialDelaySeconds: ${{ var.livenessProbe.initialDelaySeconds }}
+            periodSeconds: ${{ var.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: ${{ var.healthCheck.path }}
+              port: ${{ var.healthCheck.port }}
+            initialDelaySeconds: ${{ var.readinessProbe.initialDelaySeconds }}
+            periodSeconds: ${{ var.readinessProbe.periodSeconds }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - email-marketing
+                topologyKey: topology.kubernetes.io/zone
+
+test:
+  command: npm test
+  timeout: 300
+  env:
+    - name: NODE_ENV
+      value: test
+    - name: DATABASE_URL
+      value: postgresql://test:test@localhost:5432/email-marketing_test
+    - name: REDIS_URL
+      value: redis://localhost:6379/0
+  coverage:
+    enabled: true
+    threshold: 80
+    reportPath: coverage/lcov.info
+  artifacts:
+    - path: coverage/
+      type: coverage
+    - path: test-results/
+      type: test-results
+
+services:
+  - name: email-marketing
+    ports:
+      - name: http
+        port: 8080
+        protocol: TCP
+    dependencies:
+      - email-marketing-db
+      - email-marketing-redis
+
+  - name: email-marketing-db
+    type: external
+    description: PostgreSQL database for Email Marketing
+
+  - name: email-marketing-redis
+    type: external
+    description: Redis cache for Email Marketing
+
+secrets:
+  - name: email-marketing-db-credentials
+    type: Opaque
+    data:
+      url: ${{ secrets.DATABASE_URL }}
+
+  - name: email-marketing-redis-credentials
+    type: Opaque
+    data:
+      url: ${{ secrets.REDIS_URL }}
+
+  - name: email-marketing-api-key
+    type: Opaque
+    data:
+      value: ${{ secrets.API_KEY }}
+
+tasks:
+  - name: email-marketing-migrate
+    command: npm run migrate
+    dependencies:
+      - email-marketing-db
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: email-marketing-db-credentials
+            key: url
+
+  - name: email-marketing-seed
+    command: npm run seed
+    dependencies:
+      - email-marketing-migrate
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: email-marketing-db-credentials
+            key: url
+
+  - name: email-marketing-smoke-test
+    command: npm run test:smoke
+    dependencies:
+      - email-marketing-seed
+    env:
+      - name: NODE_ENV
+        value: test
+      - name: DATABASE_URL
+        value: postgresql://test:test@localhost:5432/email-marketing_test

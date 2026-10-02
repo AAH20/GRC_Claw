@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: campaign-optimizer
+  namespace: campaign-optimizer
+  labels:
+    app: campaign-optimizer
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: campaign-optimizer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: campaign-optimizer
+  namespace: campaign-optimizer
+  labels:
+    app: campaign-optimizer

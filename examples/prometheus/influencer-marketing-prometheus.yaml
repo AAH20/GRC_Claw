@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Influencer Marketing
+# Description: Influencer marketing management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the influencer-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: influencer-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: influencer-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: influencer-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: influencer_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for influencer-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: influencer-marketing-rules
+  namespace: monitoring
+  labels:
+    app: influencer-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: influencer-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: influencer_marketing:api_request_rate:rate5m
+      expr: rate(influencer_marketing_api_requests_total[5m])
+    - record: influencer_marketing:api_error_rate:rate5m
+      expr: rate(influencer_marketing_api_errors_total[5m])
+    - record: influencer_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(influencer_marketing_api_latency_seconds_bucket[5m]))
+  - name: influencer-marketing-alerts-1
+    rules:
+    - alert: InfluencerMarketingHighErrorRate
+      expr: rate(influencer_marketing_api_errors_total[5m]) / rate(influencer_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: influencer-marketing
+      annotations:
+        summary: '{{ $labels.service }}: InfluencerMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered InfluencerMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: InfluencerMarketingLowROI
+      expr: influencer_marketing_roi < 1.0
+      for: 5m
+      labels:
+        severity: warning
+        service: influencer-marketing
+      annotations:
+        summary: '{{ $labels.service }}: InfluencerMarketingLowROI is firing'
+        description: '{{ $labels.service }} has triggered InfluencerMarketingLowROI
+          for more than 5 minutes.'
+    - alert: InfluencerMarketingLowAuthenticity
+      expr: influencer_marketing_authenticity_score < 0.6
+      for: 5m
+      labels:
+        severity: warning
+        service: influencer-marketing
+      annotations:
+        summary: '{{ $labels.service }}: InfluencerMarketingLowAuthenticity is firing'
+        description: '{{ $labels.service }} has triggered InfluencerMarketingLowAuthenticity
+          for more than 5 minutes.'
+    - alert: InfluencerMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(influencer_marketing_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: influencer-marketing
+      annotations:
+        summary: '{{ $labels.service }}: InfluencerMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered InfluencerMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for influencer-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: influencer-marketing
+    receiver: influencer-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: influencer-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#influencer-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

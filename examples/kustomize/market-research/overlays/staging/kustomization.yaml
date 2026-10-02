@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: market-research-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: market-research
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: market-research
+
+configMapGenerator:
+  - name: market-research-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/market-research
+    newTag: staging

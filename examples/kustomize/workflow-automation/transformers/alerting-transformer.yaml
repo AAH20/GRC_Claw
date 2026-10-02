@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: workflow-automation-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: workflow-automation.rules
+      rules:
+        - alert: workflow_automation_high_error_rate
+          expr: rate(http_requests_total{job="workflow-automation",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in workflow-automation"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: workflow_automation_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="workflow-automation"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in workflow-automation"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: workflow-automation

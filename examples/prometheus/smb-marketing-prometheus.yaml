@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for SMB Marketing
+# Description: Small and medium business marketing
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the smb-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: smb-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: smb-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: smb-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: smb_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for smb-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: smb-marketing-rules
+  namespace: monitoring
+  labels:
+    app: smb-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: smb-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: smb_marketing:api_request_rate:rate5m
+      expr: rate(smb_marketing_api_requests_total[5m])
+    - record: smb_marketing:api_error_rate:rate5m
+      expr: rate(smb_marketing_api_errors_total[5m])
+    - record: smb_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(smb_marketing_api_latency_seconds_bucket[5m]))
+  - name: smb-marketing-alerts-1
+    rules:
+    - alert: SMBMarketingHighErrorRate
+      expr: rate(smb_marketing_api_errors_total[5m]) / rate(smb_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: smb-marketing
+      annotations:
+        summary: '{{ $labels.service }}: SMBMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered SMBMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: SMBMarketingLowROAS
+      expr: smb_marketing_roas < 1.5
+      for: 5m
+      labels:
+        severity: warning
+        service: smb-marketing
+      annotations:
+        summary: '{{ $labels.service }}: SMBMarketingLowROAS is firing'
+        description: '{{ $labels.service }} has triggered SMBMarketingLowROAS for
+          more than 5 minutes.'
+    - alert: SMBMarketingLowConversionRate
+      expr: smb_marketing_conversion_rate < 0.02
+      for: 5m
+      labels:
+        severity: warning
+        service: smb-marketing
+      annotations:
+        summary: '{{ $labels.service }}: SMBMarketingLowConversionRate is firing'
+        description: '{{ $labels.service }} has triggered SMBMarketingLowConversionRate
+          for more than 5 minutes.'
+    - alert: SMBMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(smb_marketing_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: smb-marketing
+      annotations:
+        summary: '{{ $labels.service }}: SMBMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered SMBMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for smb-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: smb-marketing
+    receiver: smb-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: smb-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#smb-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

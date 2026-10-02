@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-configmaps-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-management
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-configmaps: "event-management-*"
+
+target:
+  kind: Deployment
+  name: event-management

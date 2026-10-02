@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: weave-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agency-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        weave.works/enable: "true"
+
+target:
+  kind: Deployment
+  name: agency-marketing

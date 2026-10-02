@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for sales-forecaster
+# Sales forecasting and pipeline prediction
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: sales-forecaster-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: sales-forecaster
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sales-forecaster-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find forecasts with accuracy below 70%
+      - name: "Find forecasts with accuracy below 70%"
+        type: search
+        query:
+          service.name: "sales-forecaster"
+          span.name: "forecast.generate"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show prediction vs actual by period
+      - name: "Show prediction vs actual by period"
+        type: search
+        query:
+          service.name: "sales-forecaster"
+          span.name: "forecast.validate"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify high-confidence forecasts
+      - name: "Identify high-confidence forecasts"
+        type: search
+        query:
+          service.name: "sales-forecaster"
+          span.name: "forecast.adjust"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "sales-forecaster"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "sales-forecaster"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "sales-forecaster"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "forecast.period"
+        description: "Span attribute for forecast.period"
+        type: string
+      - key: "forecast.predicted_value"
+        description: "Span attribute for forecast.predicted_value"
+        type: string
+      - key: "forecast.actual_value"
+        description: "Span attribute for forecast.actual_value"
+        type: string
+      - key: "forecast.accuracy"
+        description: "Span attribute for forecast.accuracy"
+        type: string
+      - key: "forecast.confidence"
+        description: "Span attribute for forecast.confidence"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sales-forecaster-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: sales-forecaster.tracing.alerts
+      rules:
+        - alert: low-accuracy
+          expr: |
+            forecast_accuracy < 0.7
+          for: 5m
+          labels:
+            severity: warning
+            service: sales-forecaster
+            team: marketing-engineering
+          annotations:
+            summary: "Forecast accuracy below 70%"
+            description: "Alert for sales-forecaster: Forecast accuracy below 70%"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/sales-forecaster/low-accuracy"
+            dashboard_url: "https://grafana.grc-claw.com/d/sales-forecaster-tracing"
+
+        - alert: prediction-divergence
+          expr: |
+            abs(predicted - actual) / actual > 0.3
+          for: 5m
+          labels:
+            severity: critical
+            service: sales-forecaster
+            team: marketing-engineering
+          annotations:
+            summary: "Forecast diverged significantly from actual"
+            description: "Alert for sales-forecaster: Forecast diverged significantly from actual"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/sales-forecaster/prediction-divergence"
+            dashboard_url: "https://grafana.grc-claw.com/d/sales-forecaster-tracing"
+
+        - alert: high-confidence
+          expr: |
+            confidence > 0.9
+          for: 5m
+          labels:
+            severity: info
+            service: sales-forecaster
+            team: marketing-engineering
+          annotations:
+            summary: "High confidence forecast available"
+            description: "Alert for sales-forecaster: High confidence forecast available"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/sales-forecaster/high-confidence"
+            dashboard_url: "https://grafana.grc-claw.com/d/sales-forecaster-tracing"
+
+
+    - name: sales-forecaster.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="sales-forecaster",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="sales-forecaster"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: sales-forecaster
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for sales-forecaster"
+            description: "Error rate exceeds 5% for sales-forecaster"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="sales-forecaster"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: sales-forecaster
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for sales-forecaster"
+            description: "P95 latency exceeds 2 seconds for sales-forecaster"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="sales-forecaster"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="sales-forecaster"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: sales-forecaster
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for sales-forecaster"
+            description: "Trace volume is 2x above 1-hour average for sales-forecaster"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: sales-forecaster-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "sales-forecaster - Tempo Tracing Dashboard",
+      "uid": "sales-forecaster-tracing",
+      "tags": ["tempo", "tracing", "sales-forecaster", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"sales-forecaster\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"sales-forecaster\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"sales-forecaster\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"sales-forecaster\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"sales-forecaster\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"sales-forecaster\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"sales-forecaster\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sales-forecaster-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: sales-forecaster
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: sales-forecaster-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: sales-forecaster
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sales-forecaster-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: sales-forecaster
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sales-forecaster-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sales-forecaster
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sales-forecaster-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: sales-forecaster
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sales-forecaster-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

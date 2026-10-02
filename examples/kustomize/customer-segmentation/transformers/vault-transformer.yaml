@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: customer-segmentation-vault-secrets
+spec:
+  vaultAuthRef: customer-segmentation-vault-auth
+  mount: secret
+  path: customer-segmentation
+  destination:
+    create: true
+    name: customer-segmentation-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: customer-segmentation
+
+target:
+  kind: Deployment
+  name: customer-segmentation

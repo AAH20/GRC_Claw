@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-issuer-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-issuer: "https://auth.example.com"
+
+target:
+  kind: Deployment
+  name: analytics

@@ -1,0 +1,53 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Customer Retention Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: customer-retention-config
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - RETENTION_THRESHOLD_DAYS=90
+
+commonLabels:
+  app.kubernetes.io/part-of: customer-retention
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: retention-team@example.com
+
+namespace: customer-engagement
+
+images:
+  - name: customer-retention
+    newName: registry.example.com/retention/customer-retention
+    newTag: v2.3.1
+
+replicas:
+  - name: customer-retention
+    count: 3

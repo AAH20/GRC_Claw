@@ -1,0 +1,154 @@
+# Prometheus Monitoring Configuration for CRM Enhancer
+# Description: CRM data enhancement and enrichment
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the crm-enhancer service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: crm-enhancer-monitor
+  namespace: monitoring
+  labels:
+    app: crm-enhancer
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: crm-enhancer
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: crm_enhancer_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for crm-enhancer
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: crm-enhancer-rules
+  namespace: monitoring
+  labels:
+    app: crm-enhancer
+    release: prometheus
+spec:
+  groups:
+  - name: crm-enhancer-recording-rules
+    interval: 30s
+    rules:
+    - record: crm_enhancer:api_request_rate:rate5m
+      expr: rate(crm_enhancer_api_requests_total[5m])
+    - record: crm_enhancer:api_error_rate:rate5m
+      expr: rate(crm_enhancer_api_errors_total[5m])
+    - record: crm_enhancer:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(crm_enhancer_api_latency_seconds_bucket[5m]))
+  - name: crm-enhancer-alerts-1
+    rules:
+    - alert: CRMEnhancerHighErrorRate
+      expr: rate(crm_enhancer_api_errors_total[5m]) / rate(crm_enhancer_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: crm-enhancer
+      annotations:
+        summary: '{{ $labels.service }}: CRMEnhancerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered CRMEnhancerHighErrorRate
+          for more than 5 minutes.'
+    - alert: CRMEnhancerHighSyncLag
+      expr: crm_enhancer_sync_lag_seconds > 300
+      for: 5m
+      labels:
+        severity: warning
+        service: crm-enhancer
+      annotations:
+        summary: '{{ $labels.service }}: CRMEnhancerHighSyncLag is firing'
+        description: '{{ $labels.service }} has triggered CRMEnhancerHighSyncLag for
+          more than 5 minutes.'
+    - alert: CRMEnhancerLowMatchRate
+      expr: crm_enhancer_match_rate < 0.7
+      for: 5m
+      labels:
+        severity: warning
+        service: crm-enhancer
+      annotations:
+        summary: '{{ $labels.service }}: CRMEnhancerLowMatchRate is firing'
+        description: '{{ $labels.service }} has triggered CRMEnhancerLowMatchRate
+          for more than 5 minutes.'
+    - alert: CRMEnhancerLowDataCompleteness
+      expr: crm_enhancer_data_completeness < 0.8
+      for: 5m
+      labels:
+        severity: warning
+        service: crm-enhancer
+      annotations:
+        summary: '{{ $labels.service }}: CRMEnhancerLowDataCompleteness is firing'
+        description: '{{ $labels.service }} has triggered CRMEnhancerLowDataCompleteness
+          for more than 5 minutes.'
+    - alert: CRMEnhancerHighLatency
+      expr: histogram_quantile(0.95, rate(crm_enhancer_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: crm-enhancer
+      annotations:
+        summary: '{{ $labels.service }}: CRMEnhancerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered CRMEnhancerHighLatency for
+          more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for crm-enhancer alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: crm-enhancer
+    receiver: crm-enhancer-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: crm-enhancer-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#crm-enhancer-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

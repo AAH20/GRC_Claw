@@ -1,0 +1,25 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: backup-patch
+patch: |-
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: website-optimization-backup
+spec:
+  schedule: "0 2 * * *"
+  template:
+    includedNamespaces:
+      - website-optimization-prod
+    includedResources:
+      - deployments
+      - services
+      - configmaps
+      - secrets
+    storageLocation: default
+    ttl: 720h
+
+target:
+  kind: Deployment
+  name: website-optimization

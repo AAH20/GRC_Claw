@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: lead-scorer-vault-secrets
+spec:
+  vaultAuthRef: lead-scorer-vault-auth
+  mount: secret
+  path: lead-scorer
+  destination:
+    create: true
+    name: lead-scorer-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: lead-scorer
+
+target:
+  kind: Deployment
+  name: lead-scorer

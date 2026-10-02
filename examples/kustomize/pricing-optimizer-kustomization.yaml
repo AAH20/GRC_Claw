@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Pricing Optimizer Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: pricing-optimizer
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: pricing-optimizer
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: pricing-optimizer-config
+    literals:
+      - LOG_LEVEL=info
+      - OPTIMIZATION_INTERVAL=300
+      - PRICE_ELASTICITY_MODEL=v3
+      - CACHE_TTL=600
+
+commonLabels:
+  app.kubernetes.io/part-of: pricing-optimizer
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: pricing-team@example.com
+
+namespace: pricing
+
+images:
+  - name: pricing-optimizer
+    newName: registry.example.com/pricing/pricing-optimizer
+    newTag: v1.8.0
+
+replicas:
+  - name: pricing-optimizer
+    count: 2

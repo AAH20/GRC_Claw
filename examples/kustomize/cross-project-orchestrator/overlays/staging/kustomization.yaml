@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cross-project-orchestrator-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: cross-project-orchestrator
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: cross-project-orchestrator
+
+configMapGenerator:
+  - name: cross-project-orchestrator-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/cross-project-orchestrator
+    newTag: staging

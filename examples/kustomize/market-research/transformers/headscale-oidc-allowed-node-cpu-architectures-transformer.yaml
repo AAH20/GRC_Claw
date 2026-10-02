@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-cpu-architectures-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-research
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-cpu-architectures: "x86_64"
+
+target:
+  kind: Deployment
+  name: market-research

@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: calico-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-retention
+spec:
+  template:
+    metadata:
+      annotations:
+        calico.org/enable: "true"
+
+target:
+  kind: Deployment
+  name: customer-retention

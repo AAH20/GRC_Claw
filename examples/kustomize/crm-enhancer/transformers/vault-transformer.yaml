@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: crm-enhancer-vault-secrets
+spec:
+  vaultAuthRef: crm-enhancer-vault-auth
+  mount: secret
+  path: crm-enhancer
+  destination:
+    create: true
+    name: crm-enhancer-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: crm-enhancer
+
+target:
+  kind: Deployment
+  name: crm-enhancer

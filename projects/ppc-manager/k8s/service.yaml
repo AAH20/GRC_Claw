@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ppc-manager
+  labels:
+    app: ppc-manager
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: ppc-manager
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ppc-manager-config
+data:
+  LOG_LEVEL: "info"
+  PORT: "8000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ppc-manager-secrets
+type: Opaque
+stringData:
+  OPENAI_API_KEY: ""
+  GOOGLE_ADS_DEVELOPER_TOKEN: ""
+  GOOGLE_ADS_CLIENT_ID: ""
+  GOOGLE_ADS_CLIENT_SECRET: ""
+  GOOGLE_ADS_REFRESH_TOKEN: ""
+  META_ACCESS_TOKEN: ""
+  LINKEDIN_ACCESS_TOKEN: ""
+  TIKTOK_ACCESS_TOKEN: ""

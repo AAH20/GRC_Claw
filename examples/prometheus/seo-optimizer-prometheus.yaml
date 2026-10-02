@@ -1,0 +1,166 @@
+# Prometheus Monitoring Configuration for SEO Optimizer
+# Description: Search engine optimization management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the seo-optimizer service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: seo-optimizer-monitor
+  namespace: monitoring
+  labels:
+    app: seo-optimizer
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: seo-optimizer
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: seo_optimizer_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for seo-optimizer
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: seo-optimizer-rules
+  namespace: monitoring
+  labels:
+    app: seo-optimizer
+    release: prometheus
+spec:
+  groups:
+  - name: seo-optimizer-recording-rules
+    interval: 30s
+    rules:
+    - record: seo_optimizer:api_request_rate:rate5m
+      expr: rate(seo_optimizer_api_requests_total[5m])
+    - record: seo_optimizer:api_error_rate:rate5m
+      expr: rate(seo_optimizer_api_errors_total[5m])
+    - record: seo_optimizer:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(seo_optimizer_api_latency_seconds_bucket[5m]))
+  - name: seo-optimizer-alerts-1
+    rules:
+    - alert: SEOOptimizerHighErrorRate
+      expr: rate(seo_optimizer_api_errors_total[5m]) / rate(seo_optimizer_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: seo-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: SEOOptimizerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered SEOOptimizerHighErrorRate
+          for more than 5 minutes.'
+    - alert: SEOOptimizerHighCrawlErrors
+      expr: rate(seo_optimizer_crawl_errors_total[1h]) > 10
+      for: 5m
+      labels:
+        severity: critical
+        service: seo-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: SEOOptimizerHighCrawlErrors is firing'
+        description: '{{ $labels.service }} has triggered SEOOptimizerHighCrawlErrors
+          for more than 5 minutes.'
+    - alert: SEOOptimizerLowPageSpeed
+      expr: seo_optimizer_page_speed_score < 50
+      for: 5m
+      labels:
+        severity: warning
+        service: seo-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: SEOOptimizerLowPageSpeed is firing'
+        description: '{{ $labels.service }} has triggered SEOOptimizerLowPageSpeed
+          for more than 5 minutes.'
+    - alert: SEOOptimizerLowCoreWebVitals
+      expr: seo_optimizer_core_web_vitals_score < 50
+      for: 5m
+      labels:
+        severity: warning
+        service: seo-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: SEOOptimizerLowCoreWebVitals is firing'
+        description: '{{ $labels.service }} has triggered SEOOptimizerLowCoreWebVitals
+          for more than 5 minutes.'
+    - alert: SEOOptimizerHighLatency
+      expr: histogram_quantile(0.95, rate(seo_optimizer_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: seo-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: SEOOptimizerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered SEOOptimizerHighLatency
+          for more than 5 minutes.'
+  - name: seo-optimizer-alerts-2
+    rules:
+    - alert: SEOOptimizerLowDomainAuthority
+      expr: seo_optimizer_domain_authority < 20
+      for: 5m
+      labels:
+        severity: info
+        service: seo-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: SEOOptimizerLowDomainAuthority is firing'
+        description: '{{ $labels.service }} has triggered SEOOptimizerLowDomainAuthority
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for seo-optimizer alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: seo-optimizer
+    receiver: seo-optimizer-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: seo-optimizer-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#seo-optimizer-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

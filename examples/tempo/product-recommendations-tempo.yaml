@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for product-recommendations
+# Product recommendation engine and personalization
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: product-recommendations-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: product-recommendations
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: product-recommendations-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find recommendation sets with low relevance scores
+      - name: "Find recommendation sets with low relevance scores"
+        type: search
+        query:
+          service.name: "product-recommendations"
+          span.name: "rec.generate"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show conversion rates by algorithm
+      - name: "Show conversion rates by algorithm"
+        type: search
+        query:
+          service.name: "product-recommendations"
+          span.name: "rec.rank"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify algorithm failures in the last 24 hours
+      - name: "Identify algorithm failures in the last 24 hours"
+        type: search
+        query:
+          service.name: "product-recommendations"
+          span.name: "rec.filter"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "product-recommendations"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "product-recommendations"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "product-recommendations"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "rec.user_id"
+        description: "Span attribute for rec.user_id"
+        type: string
+      - key: "rec.product_id"
+        description: "Span attribute for rec.product_id"
+        type: string
+      - key: "rec.score"
+        description: "Span attribute for rec.score"
+        type: string
+      - key: "rec.algorithm"
+        description: "Span attribute for rec.algorithm"
+        type: string
+      - key: "rec.position"
+        description: "Span attribute for rec.position"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: product-recommendations-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: product-recommendations.tracing.alerts
+      rules:
+        - alert: low-relevance
+          expr: |
+            avg_relevance < 0.3
+          for: 5m
+          labels:
+            severity: warning
+            service: product-recommendations
+            team: marketing-engineering
+          annotations:
+            summary: "Low recommendation relevance"
+            description: "Alert for product-recommendations: Low recommendation relevance"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/product-recommendations/low-relevance"
+            dashboard_url: "https://grafana.grc-claw.com/d/product-recommendations-tracing"
+
+        - alert: algorithm-failure
+          expr: |
+            algorithm_status == 'failed'
+          for: 5m
+          labels:
+            severity: critical
+            service: product-recommendations
+            team: marketing-engineering
+          annotations:
+            summary: "Recommendation algorithm failure"
+            description: "Alert for product-recommendations: Recommendation algorithm failure"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/product-recommendations/algorithm-failure"
+            dashboard_url: "https://grafana.grc-claw.com/d/product-recommendations-tracing"
+
+        - alert: high-conversion
+          expr: |
+            conversion_rate > 0.15
+          for: 5m
+          labels:
+            severity: info
+            service: product-recommendations
+            team: marketing-engineering
+          annotations:
+            summary: "High conversion recommendation set"
+            description: "Alert for product-recommendations: High conversion recommendation set"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/product-recommendations/high-conversion"
+            dashboard_url: "https://grafana.grc-claw.com/d/product-recommendations-tracing"
+
+
+    - name: product-recommendations.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="product-recommendations",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="product-recommendations"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: product-recommendations
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for product-recommendations"
+            description: "Error rate exceeds 5% for product-recommendations"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="product-recommendations"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: product-recommendations
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for product-recommendations"
+            description: "P95 latency exceeds 2 seconds for product-recommendations"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="product-recommendations"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="product-recommendations"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: product-recommendations
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for product-recommendations"
+            description: "Trace volume is 2x above 1-hour average for product-recommendations"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: product-recommendations-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "product-recommendations - Tempo Tracing Dashboard",
+      "uid": "product-recommendations-tracing",
+      "tags": ["tempo", "tracing", "product-recommendations", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"product-recommendations\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"product-recommendations\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"product-recommendations\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"product-recommendations\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"product-recommendations\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"product-recommendations\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"product-recommendations\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: product-recommendations-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: product-recommendations
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: product-recommendations-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: product-recommendations
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: product-recommendations-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: product-recommendations
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: product-recommendations-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: product-recommendations
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: product-recommendations-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: product-recommendations
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: product-recommendations-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

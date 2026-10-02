@@ -1,0 +1,27 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: opa-patch
+patch: |-
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: conversational-marketing-required-labels
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Deployment"]
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: conversational-marketing
+  parameters:
+    labels:
+      - key: "app.kubernetes.io/part-of"
+        allowedValues: ["grc-claw"]
+      - key: "environment"
+        allowedValues: ["development", "staging", "production"]
+
+target:
+  kind: Deployment
+  name: conversational-marketing

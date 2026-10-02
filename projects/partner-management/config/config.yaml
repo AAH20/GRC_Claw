@@ -1,0 +1,66 @@
+app:
+  name: partner-management
+  version: "0.1.0"
+  environment: development
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+
+agents:
+  onboarding:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 300
+  deal_management:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 300
+  communication:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 120
+  analytics:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 180
+  enablement:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 300
+  compliance:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 120
+
+integrations:
+  salesforce:
+    enabled: false
+    api_version: "v58.0"
+    timeout_seconds: 30
+    sandbox: false
+  hubspot:
+    enabled: false
+    timeout_seconds: 30
+  impartner:
+    enabled: false
+    timeout_seconds: 30
+
+database:
+  url: sqlite:///./partner_management.db
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+cache:
+  backend: memory
+  ttl_seconds: 300
+
+security:
+  secret_key: change-me-in-production
+  algorithm: HS256
+  access_token_expire_minutes: 30
+
+observability:
+  metrics_enabled: true
+  tracing_enabled: false
+  health_check_interval_seconds: 30

@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for ecommerce-marketing
+# E-commerce marketing and conversion optimization
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: ecommerce-marketing-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: ecommerce-marketing
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-marketing-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find stores with cart abandonment rates above 70%
+      - name: "Find stores with cart abandonment rates above 70%"
+        type: search
+        query:
+          service.name: "ecommerce-marketing"
+          span.name: "ecom.campaign"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show conversion rates by product category
+      - name: "Show conversion rates by product category"
+        type: search
+        query:
+          service.name: "ecommerce-marketing"
+          span.name: "ecom.cart"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify high-value cart sessions
+      - name: "Identify high-value cart sessions"
+        type: search
+        query:
+          service.name: "ecommerce-marketing"
+          span.name: "ecom.checkout"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "ecommerce-marketing"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "ecommerce-marketing"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "ecommerce-marketing"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "ecom.store_id"
+        description: "Span attribute for ecom.store_id"
+        type: string
+      - key: "ecom.product_id"
+        description: "Span attribute for ecom.product_id"
+        type: string
+      - key: "ecom.cart_value"
+        description: "Span attribute for ecom.cart_value"
+        type: string
+      - key: "ecom.conversion_rate"
+        description: "Span attribute for ecom.conversion_rate"
+        type: string
+      - key: "ecom.abandon_rate"
+        description: "Span attribute for ecom.abandon_rate"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ecommerce-marketing-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: ecommerce-marketing.tracing.alerts
+      rules:
+        - alert: high-abandonment
+          expr: |
+            abandon_rate > 0.7
+          for: 5m
+          labels:
+            severity: critical
+            service: ecommerce-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High cart abandonment rate"
+            description: "Alert for ecommerce-marketing: High cart abandonment rate"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/ecommerce-marketing/high-abandonment"
+            dashboard_url: "https://grafana.grc-claw.com/d/ecommerce-marketing-tracing"
+
+        - alert: low-conversion
+          expr: |
+            conversion_rate < 0.02
+          for: 5m
+          labels:
+            severity: warning
+            service: ecommerce-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Low e-commerce conversion rate"
+            description: "Alert for ecommerce-marketing: Low e-commerce conversion rate"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/ecommerce-marketing/low-conversion"
+            dashboard_url: "https://grafana.grc-claw.com/d/ecommerce-marketing-tracing"
+
+        - alert: high-cart-value
+          expr: |
+            cart_value > 500
+          for: 5m
+          labels:
+            severity: info
+            service: ecommerce-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High-value cart detected"
+            description: "Alert for ecommerce-marketing: High-value cart detected"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/ecommerce-marketing/high-cart-value"
+            dashboard_url: "https://grafana.grc-claw.com/d/ecommerce-marketing-tracing"
+
+
+    - name: ecommerce-marketing.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="ecommerce-marketing",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="ecommerce-marketing"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: ecommerce-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for ecommerce-marketing"
+            description: "Error rate exceeds 5% for ecommerce-marketing"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="ecommerce-marketing"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: ecommerce-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for ecommerce-marketing"
+            description: "P95 latency exceeds 2 seconds for ecommerce-marketing"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="ecommerce-marketing"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="ecommerce-marketing"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: ecommerce-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for ecommerce-marketing"
+            description: "Trace volume is 2x above 1-hour average for ecommerce-marketing"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: ecommerce-marketing-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "ecommerce-marketing - Tempo Tracing Dashboard",
+      "uid": "ecommerce-marketing-tracing",
+      "tags": ["tempo", "tracing", "ecommerce-marketing", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ecommerce-marketing\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ecommerce-marketing\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"ecommerce-marketing\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"ecommerce-marketing\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ecommerce-marketing\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"ecommerce-marketing\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"ecommerce-marketing\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ecommerce-marketing-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: ecommerce-marketing
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: ecommerce-marketing-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: ecommerce-marketing
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ecommerce-marketing-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: ecommerce-marketing
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ecommerce-marketing-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ecommerce-marketing
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ecommerce-marketing-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: ecommerce-marketing
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ecommerce-marketing-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

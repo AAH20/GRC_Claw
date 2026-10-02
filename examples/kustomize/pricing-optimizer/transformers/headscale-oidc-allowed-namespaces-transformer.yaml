@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-namespaces-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing-optimizer
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-namespaces: "default"
+
+target:
+  kind: Deployment
+  name: pricing-optimizer

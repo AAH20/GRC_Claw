@@ -1,0 +1,21 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: toleration-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-management
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "event-management"
+          effect: "NoSchedule"
+
+target:
+  kind: Deployment
+  name: event-management

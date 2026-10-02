@@ -1,0 +1,354 @@
+---
+# Flux GitOps Configuration for CRM Enhancer
+# Description: Enhances CRM data with AI-driven insights and automation
+# Generated for production-grade deployment
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: crm-enhancer-repo
+  namespace: crm-enhancer-system
+  labels:
+    app.kubernetes.io/name: crm-enhancer
+    app.kubernetes.io/part-of: grc-claw
+    app.kubernetes.io/component: source
+    fluxcd.io/owned-by: grc-claw-admin
+  annotations:
+    description: "Enhances CRM data with AI-driven insights and automation"
+spec:
+  interval: 1m
+  url: https://github.com/grc-claw/crm-enhancer.git
+  ref:
+    branch: main
+  secretRef:
+    name: github-credentials
+  timeout: 60s
+  ignore: |
+    # Exclude non-essential files
+    /.github/
+    /docs/
+    /tests/
+    *.md
+    .gitignore
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: crm-enhancer-kustomization
+  namespace: crm-enhancer-system
+  labels:
+    app.kubernetes.io/name: crm-enhancer
+    app.kubernetes.io/part-of: grc-claw
+    app.kubernetes.io/component: kustomization
+    fluxcd.io/owned-by: grc-claw-admin
+spec:
+  interval: 10m
+  path: ./kubernetes/overlays/production
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: crm-enhancer-repo
+  targetNamespace: crm-enhancer-system
+  timeout: 5m
+  wait: true
+  retryInterval: 2m
+  patches:
+    - target:
+        kind: Deployment
+        name: crm-enhancer
+      patch: |-
+        - op: replace
+          path: /spec/replicas
+          value: 3
+        - op: add
+          path: /spec/template/spec/containers/0/resources
+          value:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: crm-enhancer
+      namespace: crm-enhancer-system
+    - apiVersion: v1
+      kind: Service
+      name: crm-enhancer
+      namespace: crm-enhancer-system
+  images:
+    - name: grc-claw/crm-enhancer
+      newTag: v1.0.0
+  postBuild:
+    substitute:
+      NAMESPACE: crm-enhancer-system
+      ENVIRONMENT: production
+      LOG_LEVEL: info
+      METRICS_ENABLED: "true"
+      TRACING_ENABLED: "true"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: crm-enhancer
+  namespace: crm-enhancer-system
+  labels:
+    app.kubernetes.io/name: crm-enhancer
+    app.kubernetes.io/part-of: grc-claw
+    app.kubernetes.io/component: helm-release
+    fluxcd.io/owned-by: grc-claw-admin
+  annotations:
+    description: "Helm release for CRM Enhancer"
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: crm-enhancer
+      version: ">=1.0.0 <2.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: grc-claw-charts
+        namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+    timeout: 10m
+    force: false
+    preserveValues: false
+  rollback:
+    timeout: 5m
+    disableHooks: false
+    force: false
+    recreate: false
+    cleanupOnFail: true
+  test:
+    enable: true
+    ignoreFailures: false
+    timeout: 5m
+  driftDetection:
+    enabled: true
+    mode: warn
+  values:
+    replicaCount: 3
+    image:
+      repository: grc-claw/crm-enhancer
+      tag: "v1.0.0"
+      pullPolicy: IfNotPresent
+    imagePullSecrets:
+      - name: regcred
+    nameOverride: crm-enhancer
+    fullnameOverride: crm-enhancer
+    serviceAccount:
+      create: true
+      annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/crm-enhancer-role
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+      prometheus.io/path: "/metrics"
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    service:
+      type: ClusterIP
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/rate-limit: "100"
+      hosts:
+        - host: crm-enhancer.grc-claw.io
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: crm-enhancer-tls
+          hosts:
+            - crm-enhancer.grc-claw.io
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 10
+              periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+            - type: Pods
+              value: 4
+              periodSeconds: 15
+          selectPolicy: Max
+    nodeSelector:
+      node-type: workload
+    tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "workload"
+        effect: "NoSchedule"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - crm-enhancer
+              topologyKey: kubernetes.io/hostname
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: http
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: http
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: /health
+        port: http
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 30
+    env:
+      - name: LOG_LEVEL
+        value: "info"
+      - name: METRICS_ENABLED
+        value: "true"
+      - name: TRACING_ENABLED
+        value: "true"
+      - name: ENVIRONMENT
+        value: "production"
+      - name: NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+    envFrom:
+      - configMapRef:
+          name: crm-enhancer-config
+          optional: true
+      - secretRef:
+          name: crm-enhancer-secrets
+          optional: true
+    volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+      - name: cache
+        mountPath: /cache
+    persistence:
+      enabled: false
+    configMap:
+      enabled: true
+      data:
+        LOG_LEVEL: "info"
+        METRICS_ENABLED: "true"
+        TRACING_ENABLED: "true"
+        ENVIRONMENT: "production"
+    secrets:
+      enabled: false
+    monitoring:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        interval: 30s
+        scrapeTimeout: 10s
+        labels:
+          release: prometheus
+    tracing:
+      enabled: true
+      jaeger:
+        agent:
+          host: jaeger-agent.monitoring.svc.cluster.local
+          port: 6831
+    backup:
+      enabled: false
+    networkPolicy:
+      enabled: true
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  name: crm-enhancer-system
+          ports:
+            - protocol: TCP
+              port: 8080
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  name: kube-system
+          ports:
+            - protocol: TCP
+              port: 53
+            - protocol: UDP
+              port: 53
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  name: monitoring
+          ports:
+            - protocol: TCP
+              port: 6831
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 2
+    priorityClassName: high-priority
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: crm-enhancer

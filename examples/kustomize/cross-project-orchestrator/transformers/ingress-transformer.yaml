@@ -1,0 +1,34 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: ingress-patch
+patch: |-
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cross-project-orchestrator-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  tls:
+    - hosts:
+        - cross-project-orchestrator.grc-claw.example.com
+      secretName: cross-project-orchestrator-tls
+  rules:
+    - host: cross-project-orchestrator.grc-claw.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cross-project-orchestrator
+                port:
+                  number: 80
+
+target:
+  kind: Deployment
+  name: cross-project-orchestrator

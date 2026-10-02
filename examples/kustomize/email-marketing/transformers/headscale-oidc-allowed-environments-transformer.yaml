@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-environments-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-environments: "production"
+
+target:
+  kind: Deployment
+  name: email-marketing

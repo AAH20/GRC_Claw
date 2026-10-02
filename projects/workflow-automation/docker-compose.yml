@@ -1,0 +1,54 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - N8N_BASE_URL=http://n8n:5678
+    depends_on:
+      n8n:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - workflow-net
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_PROTOCOL=http
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_USER_MANAGEMENT_DISABLED=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - workflow-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - workflow-net
+
+volumes:
+  n8n_data:
+
+networks:
+  workflow-net:
+    driver: bridge

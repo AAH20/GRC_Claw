@@ -1,0 +1,250 @@
+# Garden Example: Sales Forecaster
+# AI-powered sales forecasting and pipeline prediction
+# Production-grade Garden configuration for Sales Forecaster
+
+kind: Module
+type: container
+name: sales-forecaster
+description: AI-powered sales forecasting and pipeline prediction
+
+variables:
+  imageTag: latest
+  replicas: 3
+  environment: production
+  logLevel: info
+  resources:
+    cpu: "500m"
+    memory: "512Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  service:
+    type: ClusterIP
+    port: 8080
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: sales-forecaster.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+  healthCheck:
+    enabled: true
+    path: /health
+    port: 8080
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: ${{ var.logLevel }}
+    - name: DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          name: sales-forecaster-db-credentials
+          key: url
+    - name: REDIS_URL
+      valueFrom:
+        secretKeyRef:
+          name: sales-forecaster-redis-credentials
+          key: url
+    - name: API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: sales-forecaster-api-key
+          key: value
+
+build:
+  method: docker
+  dockerfile: Dockerfile
+  context: .
+  target: production
+  args:
+    NODE_ENV: production
+  cache:
+    enabled: true
+    key: ${{ inputs.commitSha }}
+
+deploy:
+  strategy: rollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+  selector:
+    matchLabels:
+      app: sales-forecaster
+  template:
+    metadata:
+      labels:
+        app: sales-forecaster
+        version: ${{ inputs.imageTag }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: sales-forecaster
+          image: registry.example.com/sales-forecaster:${{ inputs.imageTag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: ${{ var.resources.cpu }}
+              memory: ${{ var.resources.memory }}
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          env:
+            - name: NODE_ENV
+              value: ${{ var.environment }}
+            - name: LOG_LEVEL
+              value: ${{ var.logLevel }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sales-forecaster-db-credentials
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sales-forecaster-redis-credentials
+                  key: url
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sales-forecaster-api-key
+                  key: value
+          livenessProbe:
+            httpGet:
+              path: ${{ var.healthCheck.path }}
+              port: ${{ var.healthCheck.port }}
+            initialDelaySeconds: ${{ var.livenessProbe.initialDelaySeconds }}
+            periodSeconds: ${{ var.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: ${{ var.healthCheck.path }}
+              port: ${{ var.healthCheck.port }}
+            initialDelaySeconds: ${{ var.readinessProbe.initialDelaySeconds }}
+            periodSeconds: ${{ var.readinessProbe.periodSeconds }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - sales-forecaster
+                topologyKey: topology.kubernetes.io/zone
+
+test:
+  command: npm test
+  timeout: 300
+  env:
+    - name: NODE_ENV
+      value: test
+    - name: DATABASE_URL
+      value: postgresql://test:test@localhost:5432/sales-forecaster_test
+    - name: REDIS_URL
+      value: redis://localhost:6379/0
+  coverage:
+    enabled: true
+    threshold: 80
+    reportPath: coverage/lcov.info
+  artifacts:
+    - path: coverage/
+      type: coverage
+    - path: test-results/
+      type: test-results
+
+services:
+  - name: sales-forecaster
+    ports:
+      - name: http
+        port: 8080
+        protocol: TCP
+    dependencies:
+      - sales-forecaster-db
+      - sales-forecaster-redis
+
+  - name: sales-forecaster-db
+    type: external
+    description: PostgreSQL database for Sales Forecaster
+
+  - name: sales-forecaster-redis
+    type: external
+    description: Redis cache for Sales Forecaster
+
+secrets:
+  - name: sales-forecaster-db-credentials
+    type: Opaque
+    data:
+      url: ${{ secrets.DATABASE_URL }}
+
+  - name: sales-forecaster-redis-credentials
+    type: Opaque
+    data:
+      url: ${{ secrets.REDIS_URL }}
+
+  - name: sales-forecaster-api-key
+    type: Opaque
+    data:
+      value: ${{ secrets.API_KEY }}
+
+tasks:
+  - name: sales-forecaster-migrate
+    command: npm run migrate
+    dependencies:
+      - sales-forecaster-db
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: sales-forecaster-db-credentials
+            key: url
+
+  - name: sales-forecaster-seed
+    command: npm run seed
+    dependencies:
+      - sales-forecaster-migrate
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: sales-forecaster-db-credentials
+            key: url
+
+  - name: sales-forecaster-smoke-test
+    command: npm run test:smoke
+    dependencies:
+      - sales-forecaster-seed
+    env:
+      - name: NODE_ENV
+        value: test
+      - name: DATABASE_URL
+        value: postgresql://test:test@localhost:5432/sales-forecaster_test

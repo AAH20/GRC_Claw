@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: content-generator-vault-secrets
+spec:
+  vaultAuthRef: content-generator-vault-auth
+  mount: secret
+  path: content-generator
+  destination:
+    create: true
+    name: content-generator-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: content-generator
+
+target:
+  kind: Deployment
+  name: content-generator

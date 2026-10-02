@@ -1,0 +1,20 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: podsecurity-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-research
+spec:
+  template:
+    metadata:
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/warn: restricted
+
+target:
+  kind: Deployment
+  name: market-research

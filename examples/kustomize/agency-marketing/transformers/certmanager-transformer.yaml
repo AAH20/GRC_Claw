@@ -1,0 +1,20 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: certmanager-patch
+patch: |-
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: agency-marketing-cert
+spec:
+  secretName: agency-marketing-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - agency-marketing.grc-claw.example.com
+
+target:
+  kind: Deployment
+  name: agency-marketing

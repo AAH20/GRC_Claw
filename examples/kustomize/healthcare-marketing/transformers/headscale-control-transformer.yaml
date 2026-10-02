@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-control-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healthcare-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/control: "true"
+
+target:
+  kind: Deployment
+  name: healthcare-marketing

@@ -1,0 +1,19 @@
+apiVersion: builtin
+kind: VarTransformer
+metadata:
+  name: var-config
+vars:
+  - name: SERVICE_NAME
+    objref:
+      kind: Service
+      name: brand-monitoring
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name
+  - name: NAMESPACE
+    objref:
+      kind: Namespace
+      name: brand-monitoring-prod
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name

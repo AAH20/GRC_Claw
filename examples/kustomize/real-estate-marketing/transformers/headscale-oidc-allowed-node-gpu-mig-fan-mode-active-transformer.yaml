@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-mig-fan-mode-active-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-mig-fan-mode-active: "true"
+
+target:
+  kind: Deployment
+  name: real-estate-marketing

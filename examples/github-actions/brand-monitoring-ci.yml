@@ -1,0 +1,432 @@
+name: Brand Monitoring CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.12"
+  POETRY_VERSION: "1.8"
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: brand-monitoring-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${PYTHON_VERSION}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${PYTHON_VERSION}
+          cache: "pip"
+
+      - name: Set up Node.js ${NODE_VERSION}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${NODE_VERSION}
+          cache: "npm"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${POETRY_VERSION}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root --with dev
+          npm ci
+
+      - name: Compile check
+        run: |
+          poetry run python -m compileall -q .
+          npx tsc --noEmit
+
+      - name: Build application
+        run: |
+          poetry run python -m build
+          npm run build
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag ${DOCKER_REGISTRY}/${{ github.repository }}:${{ github.sha }} \
+            --tag ${DOCKER_REGISTRY}/${{ github.repository }}:latest \
+            --build-arg BUILD_DATE=${{ github.event.head_commit.timestamp }} \
+            --build-arg VCS_REF=${{ github.sha }} \
+            --file Dockerfile .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ github.run_id }}
+          path: |
+            dist/
+            build/
+            coverage/
+          retention-days: 7
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: build
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        node-version: ["18", "20"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${POETRY_VERSION}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root --with dev
+          npm ci
+
+      - name: Run linting
+        run: |
+          poetry run ruff check .
+          poetry run ruff format --check .
+          npx eslint . --ext .ts,.tsx,.js,.jsx
+          npx prettier --check .
+
+      - name: Run type checking
+        run: |
+          poetry run mypy .
+          npx tsc --noEmit
+
+      - name: Run unit tests
+        run: |
+          poetry run pytest tests/unit -v --cov=src --cov-report=xml --cov-report=term-missing
+          npm run test:unit -- --coverage
+
+      - name: Run integration tests
+        run: |
+          poetry run pytest tests/integration -v --cov=src --cov-append --cov-report=xml
+          npm run test:integration
+
+      - name: Run contract tests
+        run: |
+          poetry run pytest tests/contract -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml,./coverage/lcov.info
+          flags: unittests
+          name: codecov-${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.node-version }}
+          path: |
+            coverage/
+            test-results/
+            playwright-report/
+          retention-days: 14
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${PYTHON_VERSION}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${PYTHON_VERSION}
+          cache: "pip"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${POETRY_VERSION}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root --with dev
+
+      - name: Run Bandit security linter
+        run: |
+          poetry run bandit -r src/ -f json -o bandit-report.json || true
+          poetry run bandit -r src/ -ll
+
+      - name: Run Safety dependency check
+        run: |
+          poetry run safety check --json --output safety-report.json || true
+          poetry run safety check
+
+      - name: Run pip-audit
+        run: |
+          poetry run pip-audit --format=json --output=pip-audit-report.json || true
+          poetry run pip-audit
+
+      - name: Run npm audit
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          npm audit --audit-level=high
+
+      - name: Run Trivy vulnerability scanner (repo)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-fs-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+
+      - name: Run Trivy vulnerability scanner (Docker image)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "image"
+          image-ref: "${DOCKER_REGISTRY}/${{ github.repository }}:${{ github.sha }}"
+          format: "sarif"
+          output: "trivy-image-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+
+      - name: Run Semgrep static analysis
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/owasp-top-ten
+            p/cwe-top-25
+            p/python
+            p/typescript
+            p/react
+          generateSarif: "1"
+
+      - name: Run GitLeaks secret detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, javascript-typescript
+          queries: security-extended, security-and-quality
+
+      - name: Autobuild for CodeQL
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results-${{ github.run_id }}
+          path: |
+            bandit-report.json
+            safety-report.json
+            pip-audit-report.json
+            npm-audit-report.json
+            trivy-fs-results.sarif
+            trivy-image-results.sarif
+            semgrep.sarif
+          retention-days: 30
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs-results.sarif
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [test, security-scan]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      url: ${{ steps.deploy.outputs.deployment_url }}
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${PYTHON_VERSION}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${PYTHON_VERSION}
+          cache: "pip"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${POETRY_VERSION}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ github.run_id }}
+          path: dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: brand-monitoring
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag ${DOCKER_REGISTRY}/${{ github.repository }}:${{ github.sha }} \
+            ${{ steps.login-ecr.outputs.registry }}/brand-monitoring:${{ github.sha }}
+          docker tag ${DOCKER_REGISTRY}/${{ github.repository }}:${{ github.sha }} \
+            ${{ steps.login-ecr.outputs.registry }}/brand-monitoring:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/brand-monitoring:${{ github.sha }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/brand-monitoring:latest
+
+      - name: Deploy to ECS
+        id: deploy
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE_BRAND_MONITORING }} \
+            --force-new-deployment \
+            --task-definition ${{ secrets.ECS_TASK_DEFINITION_BRAND_MONITORING }}
+          echo "deployment_url=https://brand-monitoring.example.com" >> "$GITHUB_OUTPUT"
+
+      - name: Run smoke tests
+        run: |
+          poetry run pytest tests/smoke -v --tb=short || true
+          curl -sf https://brand-monitoring.example.com/health || exit 1
+
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Brand Monitoring deployed to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Brand Monitoring* deployed successfully to *${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}*"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Commit:*\n${{ github.sha }}" },
+                    { "type": "mrkdwn", "text": "*Triggered by:*\n${{ github.actor }}" }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Brand Monitoring deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Brand Monitoring* deployment failed!"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Commit:*\n${{ github.sha }}" },
+                    { "type": "mrkdwn", "text": "*Triggered by:*\n${{ github.actor }}" }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

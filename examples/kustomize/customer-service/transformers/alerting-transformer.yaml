@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: customer-service-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: customer-service.rules
+      rules:
+        - alert: customer_service_high_error_rate
+          expr: rate(http_requests_total{job="customer-service",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in customer-service"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: customer_service_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="customer-service"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in customer-service"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: customer-service

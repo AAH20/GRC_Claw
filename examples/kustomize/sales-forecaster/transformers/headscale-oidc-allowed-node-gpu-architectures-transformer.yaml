@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-architectures-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-forecaster
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-architectures: "nvidia"
+
+target:
+  kind: Deployment
+  name: sales-forecaster

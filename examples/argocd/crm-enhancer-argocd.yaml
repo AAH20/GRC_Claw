@@ -1,0 +1,312 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crm-enhancer
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: crm-enhancer
+    app.kubernetes.io/part-of: grc-claw
+    app.kubernetes.io/managed-by: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedhassan/GRC_Claw.git
+    targetRevision: HEAD
+    path: projects/crm-enhancer/k8s
+    helm:
+      valueFiles:
+      - values-production.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crm-enhancer
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: crm-enhancer-appset
+  namespace: argocd
+spec:
+  generators:
+  - git:
+      repoURL: https://github.com/ahmedhassan/GRC_Claw.git
+      revision: HEAD
+      directories:
+      - path: projects/crm-enhancer/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      labels:
+        app.kubernetes.io/name: crm-enhancer
+        app.kubernetes.io/part-of: grc-claw
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/ahmedhassan/GRC_Claw.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: crm-enhancer
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crm-enhancer-gitops-config
+  namespace: crm-enhancer
+  labels:
+    app.kubernetes.io/name: crm-enhancer
+    app.kubernetes.io/part-of: grc-claw
+    argocd.argoproj.io/instance: crm-enhancer
+data:
+  gitops.enabled: 'true'
+  gitops.repo: https://github.com/ahmedhassan/GRC_Claw.git
+  gitops.branch: main
+  gitops.path: projects/crm-enhancer
+  gitops.autoSync: 'true'
+  gitops.prune: 'true'
+  gitops.selfHeal: 'true'
+  gitops.retryLimit: '5'
+  gitops.timeout: 300s
+  gitops.revisionHistoryLimit: '10'
+  gitops.valuesFile: values-production.yaml
+  gitops.environment: production
+  gitops.namespace: crm-enhancer
+  gitops.healthCheck.enabled: 'true'
+  gitops.healthCheck.interval: 30s
+  gitops.healthCheck.timeout: 5s
+  gitops.notifications.enabled: 'true'
+  gitops.notifications.slackChannel: '#grc-claw-deployments'
+  gitops.notifications.email: devops@example.com
+  gitops.backup.enabled: 'true'
+  gitops.backup.schedule: 0 2 * * *
+  gitops.monitoring.enabled: 'true'
+  gitops.monitoring.prometheusEnabled: 'true'
+  gitops.monitoring.grafanaDashboard: crm-enhancer-dashboard
+  gitops.security.runAsNonRoot: 'true'
+  gitops.security.readOnlyRootFilesystem: 'true'
+  gitops.security.dropCapabilities: ALL
+  gitops.resources.requests.cpu: 100m
+  gitops.resources.requests.memory: 128Mi
+  gitops.resources.limits.cpu: 500m
+  gitops.resources.limits.memory: 512Mi
+  gitops.hpa.enabled: 'true'
+  gitops.hpa.minReplicas: '2'
+  gitops.hpa.maxReplicas: '10'
+  gitops.hpa.targetCPUUtilizationPercentage: '70'
+  gitops.hpa.targetMemoryUtilizationPercentage: '80'
+  gitops.ingress.enabled: 'true'
+  gitops.ingress.className: nginx
+  gitops.ingress.tls: 'true'
+  gitops.ingress.host: crm-enhancer.example.com
+  gitops.service.type: ClusterIP
+  gitops.service.port: '8080'
+  gitops.service.targetPort: '8080'
+  gitops.configMap.enabled: 'true'
+  gitops.secret.enabled: 'true'
+  gitops.pdb.enabled: 'true'
+  gitops.pdb.minAvailable: '1'
+  gitops.networkPolicy.enabled: 'true'
+  gitops.podDisruptionBudget.enabled: 'true'
+  gitops.podAntiAffinity.enabled: 'true'
+  gitops.topologySpreadConstraints.enabled: 'true'
+  gitops.initContainers.enabled: 'true'
+  gitops.sidecars.enabled: 'true'
+  gitops.volumes.enabled: 'true'
+  gitops.persistence.enabled: 'false'
+  gitops.persistence.storageClass: standard
+  gitops.persistence.size: 1Gi
+  gitops.envFrom.configMapRef: crm-enhancer-config
+  gitops.envFrom.secretRef: crm-enhancer-secrets
+  gitops.probes.liveness.enabled: 'true'
+  gitops.probes.liveness.path: /healthz
+  gitops.probes.liveness.port: '8080'
+  gitops.probes.readiness.enabled: 'true'
+  gitops.probes.readiness.path: /readyz
+  gitops.probes.readiness.port: '8080'
+  gitops.probes.startup.enabled: 'true'
+  gitops.probes.startup.path: /healthz
+  gitops.probes.startup.port: '8080'
+  gitops.lifecycle.preStop.enabled: 'true'
+  gitops.lifecycle.preStop.command: /bin/sh,-c,sleep 10
+  gitops.lifecycle.postStart.enabled: 'true'
+  gitops.lifecycle.postStart.command: /bin/sh,-c,echo Container started
+  gitops.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution: 'true'
+  gitops.tolerations.enabled: 'true'
+  gitops.nodeSelector.enabled: 'true'
+  gitops.priorityClassName: high-priority
+  gitops.serviceAccount.create: 'true'
+  gitops.serviceAccount.automountServiceAccountToken: 'false'
+  gitops.rbac.create: 'true'
+  gitops.rbac.rules: read-only
+  gitops.autoscaling.vertical.enabled: 'false'
+  gitops.autoscaling.horizontal.enabled: 'true'
+  gitops.deploymentStrategy.type: RollingUpdate
+  gitops.deploymentStrategy.rollingUpdate.maxSurge: '1'
+  gitops.deploymentStrategy.rollingUpdate.maxUnavailable: '0'
+  gitops.rollout.enabled: 'false'
+  gitops.rollout.strategy.canary.enabled: 'false'
+  gitops.rollout.strategy.blueGreen.enabled: 'false'
+  gitops.istio.enabled: 'false'
+  gitops.istio.sidecar.enabled: 'false'
+  gitops.istio.gateway.enabled: 'false'
+  gitops.certManager.enabled: 'true'
+  gitops.externalSecrets.enabled: 'false'
+  gitops.keda.enabled: 'false'
+  gitops.flagger.enabled: 'false'
+  gitops.argoRollouts.enabled: 'false'
+  gitops.argoWorkflows.enabled: 'false'
+  gitops.argoEvents.enabled: 'false'
+  gitops.tekton.enabled: 'false'
+  gitops.jenkins.enabled: 'false'
+  gitops.githubActions.enabled: 'false'
+  gitops.gitlabCI.enabled: 'false'
+  gitops.circleCI.enabled: 'false'
+  gitops.travisCI.enabled: 'false'
+  gitops.spinnaker.enabled: 'false'
+  gitops.harbor.enabled: 'false'
+  gitops.nexus.enabled: 'false'
+  gitops.artifactory.enabled: 'false'
+  gitops.sonarqube.enabled: 'false'
+  gitops.jaeger.enabled: 'false'
+  gitops.zipkin.enabled: 'false'
+  gitops.prometheus.enabled: 'true'
+  gitops.grafana.enabled: 'true'
+  gitops.alertmanager.enabled: 'true'
+  gitops.loki.enabled: 'false'
+  gitops.fluentd.enabled: 'false'
+  gitops.fluentBit.enabled: 'false'
+  gitops.elasticSearch.enabled: 'false'
+  gitops.kibana.enabled: 'false'
+  gitops.datadog.enabled: 'false'
+  gitops.newRelic.enabled: 'false'
+  gitops.splunk.enabled: 'false'
+  gitops.pagerDuty.enabled: 'false'
+  gitops.victoriaMetrics.enabled: 'false'
+  gitops.thanos.enabled: 'false'
+  gitops.cortex.enabled: 'false'
+  gitops.mimir.enabled: 'false'
+  gitops.tempo.enabled: 'false'
+  gitops.pyroscope.enabled: 'false'
+  gitops.parca.enabled: 'false'
+  gitops.otelCollector.enabled: 'false'
+  gitops.jaegerOperator.enabled: 'false'
+  gitops.kiali.enabled: 'false'
+  gitops.serviceMesh.enabled: 'false'
+  gitops.consul.enabled: 'false'
+  gitops.vault.enabled: 'false'
+  gitops.certManagerClusterIssuer.enabled: 'true'
+  gitops.externalDNS.enabled: 'false'
+  gitops.nginxIngress.enabled: 'true'
+  gitops.traefikIngress.enabled: 'false'
+  gitops.albIngress.enabled: 'false'
+  gitops.gceIngress.enabled: 'false'
+  gitops.azureIngress.enabled: 'false'
+  gitops.awsLoadBalancerController.enabled: 'false'
+  gitops.gcpLoadBalancerController.enabled: 'false'
+  gitops.metallb.enabled: 'false'
+  gitops.cilium.enabled: 'false'
+  gitops.calico.enabled: 'false'
+  gitops.flannel.enabled: 'false'
+  gitops.weave.enabled: 'false'
+  gitops.antrea.enabled: 'false'
+  gitops.ovnKubernetes.enabled: 'false'
+  gitops.kubeRouter.enabled: 'false'
+  gitops.kubeVip.enabled: 'false'
+  gitops.kubeOvn.enabled: 'false'
+  gitops.multus.enabled: 'false'
+  gitops.sriov.enabled: 'false'
+  gitops.macvlan.enabled: 'false'
+  gitops.ipvlan.enabled: 'false'
+  gitops.bond.enabled: 'false'
+  gitops.vlan.enabled: 'false'
+  gitops.vxlan.enabled: 'false'
+  gitops.geneve.enabled: 'false'
+  gitops.stt.enabled: 'false'
+  gitops.tap.enabled: 'false'
+  gitops.tun.enabled: 'false'
+  gitops.gretap.enabled: 'false'
+  gitops.gre.enabled: 'false'
+  gitops.ipip.enabled: 'false'
+  gitops.sit.enabled: 'false'
+  gitops.vti.enabled: 'false'
+  gitops.fou.enabled: 'false'
+  gitops.gue.enabled: 'false'
+  gitops.bareudp.enabled: 'false'
+  gitops.l2tp.enabled: 'false'
+  gitops.pptp.enabled: 'false'
+  gitops.sstp.enabled: 'false'
+  gitops.wireguard.enabled: 'false'
+  gitops.openvpn.enabled: 'false'
+  gitops.ipsec.enabled: 'false'
+  gitops.l2tpv3.enabled: 'false'
+  gitops.mpls.enabled: 'false'
+  gitops.segmentRouting.enabled: 'false'
+  gitops.srv6.enabled: 'false'
+  gitops.bgp.enabled: 'false'
+  gitops.ospf.enabled: 'false'
+  gitops.isis.enabled: 'false'
+  gitops.rip.enabled: 'false'
+  gitops.eigrp.enabled: 'false'
+  gitops.ldp.enabled: 'false'
+  gitops.rsvp.enabled: 'false'
+  gitops.pim.enabled: 'false'
+  gitops.igmp.enabled: 'false'
+  gitops.mld.enabled: 'false'
+  gitops.dvmrp.enabled: 'false'
+  gitops.mospf.enabled: 'false'
+  gitops.nhrp.enabled: 'false'
+  gitops.greTunnel.enabled: 'false'
+  gitops.ipGreTunnel.enabled: 'false'
+  gitops.ipipTunnel.enabled: 'false'
+  gitops.sitTunnel.enabled: 'false'
+  gitops.isatapTunnel.enabled: 'false'
+  gitops.6to4Tunnel.enabled: 'false'
+  gitops.teredoTunnel.enabled: 'false'
+  gitops.gre6Tunnel.enabled: 'false'
+  gitops.ip6GreTunnel.enabled: 'false'
+  gitops.vti6Tunnel.enabled: 'false'
+  gitops.ipip6Tunnel.enabled: 'false'
+  gitops.sit6Tunnel.enabled: 'false'
+  gitops.isatap6Tunnel.enabled: 'false'
+  gitops.6to46Tunnel.enabled: 'false'
+  gitops.teredo6Tunnel.enabled: 'false'
+  gitops.gre6to4Tunnel.enabled: 'false'
+  gitops.ipGre6to4Tunnel.enabled: 'false'
+  gitops.vti6to4Tunnel.enabled: 'false'
+  gitops.ipip6to4Tunnel.enabled: 'false'
+  gitops.sit6to4Tunnel.enabled: 'false'
+  gitops.isatap6to4Tunnel.enabled: 'false'
+  gitops.6to46to4Tunnel.enabled: 'false'
+  gitops.teredo6to4Tunnel.enabled: 'false'
+  gitops.gre6to46Tunnel.enabled: 'false'
+  gitops.ipGre6to46Tunnel.enabled: 'false'
+  gitops.vti6to46Tunnel.enabled: 'false'
+  gitops.ipip6to46Tunnel.enabled: 'false'
+  gitops.sit6to46Tunnel.enabled: 'false'
+  gitops.isatap6to46Tunnel.enabled: 'false'
+  gitops.6to46to46Tunnel.enabled: 'false'
+  gitops.teredo6to46Tunnel.enabled: 'false'

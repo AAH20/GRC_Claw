@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: product-recommendations-intercept
+  namespace: default
+  labels:
+    app: product-recommendations
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Product recommendation engine using collaborative filtering and deep
+      learning to suggest relevant products to customers.
+    telepresence.io/service: product-recommendations
+    telepresence.io/deployment: product-recommendations
+spec:
+  service:
+    name: product-recommendations
+    namespace: default
+    ports:
+    - name: http
+      port: 8093
+      targetPort: 8093
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /recommend
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: product-recommendations
+    namespace: default
+    containerPort: 8093
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: RECOMMENDER_MODEL
+      value: collaborative-filtering
+    volumes:
+    - name: product-models
+      mountPath: /models
+      hostPath: /tmp/product-models
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8093
+  preview:
+    enabled: true
+    path: /recommend
+    headers: *id001
+    port: 8093
+    targetPort: 8093
+    protocol: http

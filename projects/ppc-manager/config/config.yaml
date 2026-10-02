@@ -1,0 +1,83 @@
+app:
+  name: ppc-manager
+  version: 0.1.0
+  log_level: INFO
+  env: development
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1
+agents:
+  keyword_research:
+    model: gpt-4o
+    max_tokens: 2048
+    temperature: 0.3
+    max_keywords: 100
+  bid_management:
+    model: gpt-4o
+    max_tokens: 1024
+    temperature: 0.2
+    min_bid: 0.01
+    max_bid: 100.0
+  ad_creative:
+    model: gpt-4o
+    max_tokens: 2048
+    temperature: 0.7
+    max_variants: 5
+  landing_page_optimization:
+    model: gpt-4o
+    max_tokens: 2048
+    temperature: 0.3
+  budget_allocation:
+    model: gpt-4o
+    max_tokens: 1024
+    temperature: 0.2
+    min_budget: 1.0
+  performance_analytics:
+    model: gpt-4o
+    max_tokens: 4096
+    temperature: 0.1
+integrations:
+  google_ads:
+    developer_token: ${GOOGLE_ADS_DEVELOPER_TOKEN}
+    client_id: ${GOOGLE_ADS_CLIENT_ID}
+    client_secret: ${GOOGLE_ADS_CLIENT_SECRET}
+    refresh_token: ${GOOGLE_ADS_REFRESH_TOKEN}
+    login_customer_id: ${GOOGLE_ADS_LOGIN_CUSTOMER_ID}
+  meta_ads:
+    access_token: ${META_ACCESS_TOKEN}
+    app_id: ${META_APP_ID}
+    app_secret: ${META_APP_SECRET}
+    ad_account_id: ${META_AD_ACCOUNT_ID}
+  linkedin_ads:
+    access_token: ${LINKEDIN_ACCESS_TOKEN}
+    ad_account_id: ${LINKEDIN_AD_ACCOUNT_ID}
+  tiktok_ads:
+    access_token: ${TIKTOK_ACCESS_TOKEN}
+    advertiser_id: ${TIKTOK_ADVERTISER_ID}
+retry:
+  max_attempts: 3
+  backoff_factor: 2.0
+  max_wait: 60
+rate_limiting:
+  requests_per_minute: 60
+cache:
+  enabled: true
+  ttl_seconds: 300
+  max_entries: 10000
+  backend: memory
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30
+  log_level: INFO
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false

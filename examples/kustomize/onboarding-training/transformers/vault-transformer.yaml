@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: onboarding-training-vault-secrets
+spec:
+  vaultAuthRef: onboarding-training-vault-auth
+  mount: secret
+  path: onboarding-training
+  destination:
+    create: true
+    name: onboarding-training-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: onboarding-training
+
+target:
+  kind: Deployment
+  name: onboarding-training

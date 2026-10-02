@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: influencer-marketing-intercept
+  namespace: default
+  labels:
+    app: influencer-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Influencer marketing platform for discovering, managing, and measuring
+      influencer partnerships and campaigns.
+    telepresence.io/service: influencer-marketing
+    telepresence.io/deployment: influencer-marketing
+spec:
+  service:
+    name: influencer-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8102
+      targetPort: 8102
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /influencers
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: influencer-marketing
+    namespace: default
+    containerPort: 8102
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: INFLUENCER_TIERS
+      value: nano,micro,macro,celebrity
+    volumes:
+    - name: influencer-db
+      mountPath: /db
+      hostPath: /tmp/influencer-db
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8102
+  preview:
+    enabled: true
+    path: /influencers
+    headers: *id001
+    port: 8102
+    targetPort: 8102
+    protocol: http

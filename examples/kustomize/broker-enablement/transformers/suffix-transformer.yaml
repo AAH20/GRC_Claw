@@ -1,0 +1,12 @@
+apiVersion: builtin
+kind: SuffixTransformer
+metadata:
+  name: name-suffix
+suffix: -grc
+fieldSpecs:
+  - path: metadata/name
+    create: true
+  - path: spec/template/metadata/labels/app\.kubernetes\.io/name
+    create: true
+  - path: spec/selector/matchLabels/app\.kubernetes\.io/name
+    create: true

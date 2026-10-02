@@ -1,0 +1,60 @@
+app:
+  name: "business-intelligence"
+  version: "0.1.0"
+  environment: "development"
+  log_level: "debug"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+agents:
+  data_collection:
+    timeout_seconds: 300
+    max_retries: 3
+    batch_size: 1000
+  analysis:
+    timeout_seconds: 600
+    confidence_threshold: 0.95
+  visualization:
+    timeout_seconds: 120
+    default_format: "png"
+    dpi: 150
+  reporting:
+    timeout_seconds: 300
+    formats:
+      - "pdf"
+      - "html"
+      - "markdown"
+  predictive_analytics:
+    timeout_seconds: 900
+    model_cache_ttl: 3600
+
+integrations:
+  tableau:
+    server_url: "https://tableau.example.com"
+    site_id: ""
+    api_version: "3.19"
+    token_name: ""
+    token_secret: ""
+  powerbi:
+    tenant_id: ""
+    client_id: ""
+    client_secret: ""
+    workspace_id: ""
+    api_base: "https://api.powerbi.com/v1.0/myorg"
+  looker:
+    base_url: "https://looker.example.com"
+    client_id: ""
+    client_secret: ""
+    api_version: "4.0"
+
+database:
+  url: "sqlite:///./bi.db"
+  echo: false
+
+cache:
+  backend: "redis"
+  url: "redis://localhost:6379/0"
+  ttl: 3600

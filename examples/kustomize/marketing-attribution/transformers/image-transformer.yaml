@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: ImageTransformer
+metadata:
+  name: image-config
+image:
+  name: grcclaw/marketing-attribution
+  newTag: stable
+fieldSpecs:
+  - path: spec/template/spec/containers/image
+    create: true

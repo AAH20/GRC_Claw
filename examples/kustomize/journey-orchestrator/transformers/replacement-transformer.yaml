@@ -1,0 +1,17 @@
+apiVersion: builtin
+kind: ReplacementTransformer
+metadata:
+  name: replacement-config
+replacements:
+  - source:
+      kind: ConfigMap
+      name: journey-orchestrator-config
+      fieldPath: data.LOG_LEVEL
+    targets:
+      - select:
+          kind: Deployment
+          name: journey-orchestrator
+        fieldPaths:
+          - spec.template.spec.containers.[name=journey-orchestrator].env.[name=LOG_LEVEL].value
+        options:
+          create: true

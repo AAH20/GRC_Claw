@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: video-marketing-intercept
+  namespace: default
+  labels:
+    app: video-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Video marketing platform for creating, hosting, and analyzing video
+      content with interactive elements and CTAs.
+    telepresence.io/service: video-marketing
+    telepresence.io/deployment: video-marketing
+spec:
+  service:
+    name: video-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8112
+      targetPort: 8112
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /videos
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: video-marketing
+    namespace: default
+    containerPort: 8112
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: VIDEO_HOSTING
+      value: self-hosted
+    volumes:
+    - name: video-assets
+      mountPath: /assets
+      hostPath: /tmp/video-assets
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8112
+  preview:
+    enabled: true
+    path: /videos
+    headers: *id001
+    port: 8112
+    targetPort: 8112
+    protocol: http

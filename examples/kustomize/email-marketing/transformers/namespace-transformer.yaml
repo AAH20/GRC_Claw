@@ -1,0 +1,14 @@
+apiVersion: builtin
+kind: NamespaceTransformer
+metadata:
+  name: namespace-config
+namespace: email-marketing-prod
+fieldSpecs:
+  - path: metadata/namespace
+    create: true
+  - path: subjects/namespace
+    group: rbac.authorization.k8s.io
+    kind: RoleBinding
+  - path: subjects/namespace
+    group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding

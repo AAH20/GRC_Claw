@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRC_Claw — Custom Quote Request</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1a1a2e;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 2.5rem;
+            text-align: center;
+        }
+        .header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        .header p { opacity: 0.8; font-size: 1.1rem; }
+        .form-content { padding: 2.5rem; }
+        .section { margin-bottom: 2rem; }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-title .icon { font-size: 1.3rem; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.35rem;
+        }
+        label .required { color: #dc3545; }
+        input, select, textarea {
+            padding: 0.65rem 0.85rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .help-text {
+            font-size: 0.78rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .checkbox-item:hover { border-color: #0066cc; }
+        .checkbox-item input { width: auto; }
+        .checkbox-item.checked { background: #e7f3ff; border-color: #0066cc; }
+        .slider-container { display: flex; align-items: center; gap: 1rem; }
+        .slider-container input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #dee2e6;
+            border: none;
+            padding: 0;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0066cc;
+            cursor: pointer;
+        }
+        .slider-value {
+            min-width: 3rem;
+            text-align: center;
+            font-weight: 700;
+            color: #0066cc;
+            font-size: 1.1rem;
+        }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 102, 204, 0.4);
+        }
+        .btn-submit:active { transform: translateY(0); }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .info-box strong { color: #004499; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 600px) {
+            .two-col { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GRC_Claw</h1>
+            <p>Request a Custom Quote — Tailored to Your Organization's Scale</p>
+        </div>
+        <div class="form-content">
+            <div class="info-box">
+                <strong>How it works:</strong> Fill out the form below and our team will generate a custom quote based on your organization's specific needs, scale, and risk profile. No fixed pricing — every quote is tailored.
+            </div>
+
+            <form id="quoteRequestForm" action="/api/quote-request" method="POST">
+                <!-- Organization Info -->
+                <div class="section">
+                    <div class="section-title"><span class="icon">🏢</span> Organization Information</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="orgName">Organization Name <span class="required">*</span></label>
+                            <input type="text" id="orgName" name="orgName" required placeholder="Acme Corp">
+                        </div>
+                        <div class="form-group">
+                            <label for="industry">Industry <span class="required">*</span></label>
+                            <select id="industry" name="industry" required>
+                                <option value="">Select industry...</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="finance">Finance</option>
+                                <option value="banking">Banking</option>
+                                <option value="insurance">Insurance</option>
+                                <option value="government">Government</option>
+                                <option value="defense">Defense</option>
+                                <option value="energy">Energy</option>
+                                <option value="technology">Technology</option>
+                                <option value="retail">Retail</option>
+                                <option value="manufacturing">Manufacturing</option>
+                                <option value="education">Education</option>
+                                <option value="nonprofit">Non-Profit</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="annualRevenue">Annual Revenue (USD millions)</label>
+                            <input type="number" id="annualRevenue" name="annualRevenue" min="0" step="0.1" placeholder="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="contactEmail">Contact Email <span class="required">*</span></label>
+                            <input type="email" id="contactEmail" name="contactEmail" required placeholder="john@acme.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scale -->
+                <div class="section">
+                    <div class="section-title"><span class="icon">📊</span> Deployment Scale</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="agents">Number of GRC Agents <span class="required">*</span></label>
+                            <input type="number" id="agents" name="agents" min="1" required value="10" placeholder="10">
+                            <span class="help-text">AI agents deployed across your organization</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="models">Number of AI Models <span class="required">*</span></label>
+                            <input type="number" id="models" name="models" min="1" required value="1" placeholder="1">
+                            <span class="help-text">Different AI models in use</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="policies">Number of Policies <span class="required">*</span></label>
+                            <input type="number" id="policies" name="policies" min="1" required value="25" placeholder="25">
+                            <span class="help-text">Governance policies to manage</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="evidenceVolume">Evidence Volume (GB) <span class="required">*</span></label>
+                            <input type="number" id="evidenceVolume" name="evidenceVolume" min="0" required value="500" placeholder="500">
+                            <span class="help-text">Annual evidence/audit data storage</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frameworks -->
+                <div class="section">
+                    <div class="section-title"><span class="icon">📋</span> Compliance Frameworks</div>
+                    <div class="checkbox-group" id="frameworkCheckboxes">
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="SOC2"> SOC 2</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="ISO27001"> ISO 27001</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="GDPR"> GDPR</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="HIPAA"> HIPAA</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="PCI-DSS"> PCI-DSS</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="NIST"> NIST CSF</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="COBIT"> COBIT</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="FedRAMP"> FedRAMP</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="CCPA"> CCPA</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="SOX"> SOX</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="CMMC"> CMMC</label>
+                        <label class="checkbox-item"><input type="checkbox" name="frameworks" value="DORA"> DORA</label>
+                    </div>
+                </div>
+
+                <!-- Deployment & Support -->
+                <div class="section">
+                    <div class="section-title"><span class="icon">⚙️</span> Deployment & Support</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="deploymentModel">Deployment Model <span class="required">*</span></label>
+                            <select id="deploymentModel" name="deploymentModel" required>
+                                <option value="cloud_saas" selected>Cloud SaaS</option>
+                                <option value="private_cloud">Private Cloud</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="on_premises">On-Premises</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="supportLevel">Support Level <span class="required">*</span></label>
+                            <select id="supportLevel" name="supportLevel" required>
+                                <option value="standard" selected>Standard (Business hours)</option>
+                                <option value="premium">Premium (24/5)</option>
+                                <option value="enterprise">Enterprise (24/7 + dedicated CSM)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pricingTier">Pricing Tier</label>
+                            <select id="pricingTier" name="pricingTier">
+                                <option value="startup">Startup (10% discount)</option>
+                                <option value="growth" selected>Growth (Standard)</option>
+                                <option value="enterprise">Enterprise (15% premium for advanced features)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Profile -->
+                <div class="section">
+                    <div class="section-title"><span class="icon">⚠️</span> Risk Profile</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="riskExposure">Risk Exposure Score</label>
+                            <div class="slider-container">
+                                <input type="range" id="riskExposure" name="riskExposure" min="1" max="10" value="5">
+                                <span class="slider-value" id="riskExposureValue">5</span>
+                            </div>
+                            <span class="help-text">1 = Low risk, 10 = Critical risk</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="complianceMaturity">Compliance Maturity</label>
+                            <div class="slider-container">
+                                <input type="range" id="complianceMaturity" name="complianceMaturity" min="1" max="10" value="5">
+                                <span class="slider-value" id="complianceMaturityValue">5</span>
+                            </div>
+                            <span class="help-text">1 = Ad-hoc, 10 = Fully optimized</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="incidentHistory">Annual Security Incidents</label>
+                            <input type="number" id="incidentHistory" name="incidentHistory" min="0" value="3" placeholder="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="avgIncidentCost">Avg Incident Cost (USD)</label>
+                            <input type="number" id="avgIncidentCost" name="avgIncidentCost" min="0" value="150000" placeholder="150000">
+                        </div>
+                        <div class="form-group">
+                            <label for="auditFindings">Annual Audit Findings</label>
+                            <input type="number" id="auditFindings" name="auditFindings" min="0" value="10" placeholder="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="avgAuditCost">Avg Remediation Cost (USD)</label>
+                            <input type="number" id="avgAuditCost" name="avgAuditCost" min="0" value="25000" placeholder="25000">
+                        </div>
+                        <div class="form-group">
+                            <label for="existingToolingCost">Existing GRC Tooling Cost (annual USD)</label>
+                            <input type="number" id="existingToolingCost" name="existingToolingCost" min="0" value="200000" placeholder="200000">
+                        </div>
+                        <div class="form-group">
+                            <label for="fineExposure">Regulatory Fine Exposure (annual USD)</label>
+                            <input type="number" id="fineExposure" name="fineExposure" min="0" value="0" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Requirements -->
+                <div class="section">
+                    <div class="section-title"><span class="icon">💬</span> Custom Requirements</div>
+                    <div class="form-group full-width">
+                        <label for="customRequirements">Additional Requirements or Notes</label>
+                        <textarea id="customRequirements" name="customRequirements" placeholder="Tell us about any specific needs, integrations, custom frameworks, or questions..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Request Custom Quote →</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Slider value displays
+        document.getElementById('riskExposure').addEventListener('input', function() {
+            document.getElementById('riskExposureValue').textContent = this.value;
+        });
+        document.getElementById('complianceMaturity').addEventListener('input', function() {
+            document.getElementById('complianceMaturityValue').textContent = this.value;
+        });
+
+        // Checkbox styling
+        document.querySelectorAll('.checkbox-item input').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                this.closest('.checkbox-item').classList.toggle('checked', this.checked);
+            });
+        });
+
+        // Form submission
+        document.getElementById('quoteRequestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            data.frameworks = formData.getAll('frameworks');
+            console.log('Quote request:', data);
+            alert('Thank you! Your quote request has been submitted. Our team will review your requirements and provide a custom quote within 1 business day.');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+app:
+  name: saas-marketing
+  version: "0.1.0"
+  env: development
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+
+agents:
+  content:
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 2000
+    retry_attempts: 3
+  pql_scoring:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 1000
+    scoring_threshold: 70
+    weights:
+      feature_usage: 0.35
+      engagement: 0.25
+      profile_fit: 0.20
+      intent_signals: 0.20
+  churn_prevention:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 1500
+    risk_thresholds:
+      low: 0.3
+      medium: 0.6
+      high: 0.8
+  analytics:
+    model: gpt-4
+    temperature: 0.2
+    max_tokens: 1500
+    default_lookback_days: 30
+  reporting:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 3000
+    default_format: markdown
+
+integrations:
+  salesforce:
+    api_version: v58.0
+    timeout_seconds: 30
+    retry_attempts: 3
+  hubspot:
+    api_version: v3
+    timeout_seconds: 30
+    retry_attempts: 3
+  stripe:
+    api_version: "2024-06-20"
+    timeout_seconds: 30
+    retry_attempts: 3
+
+database:
+  url: sqlite:///./saas_marketing.db
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+cache:
+  backend: memory
+  ttl_seconds: 300
+
+rate_limiting:
+  enabled: true
+  requests_per_minute: 100

@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: social-media-manager-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: social-media-manager
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: social-media-manager
+
+configMapGenerator:
+  - name: social-media-manager-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/social-media-manager
+    newTag: staging

@@ -1,0 +1,21 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: kube-bench-patch
+patch: |-
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: conversational-marketing-kube-bench
+spec:
+  template:
+    spec:
+      containers:
+        - name: kube-bench
+          image: aquasec/kube-bench:latest
+          command: ["kube-bench", "run", "--targets", "node"]
+      restartPolicy: Never
+
+target:
+  kind: Deployment
+  name: conversational-marketing

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: sales-automator-vault-secrets
+spec:
+  vaultAuthRef: sales-automator-vault-auth
+  mount: secret
+  path: sales-automator
+  destination:
+    create: true
+    name: sales-automator-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: sales-automator
+
+target:
+  kind: Deployment
+  name: sales-automator

@@ -1,0 +1,97 @@
+# Marketing Compliance Platform Configuration
+
+environment: "production"
+log_level: "INFO"
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false
+
+# Agent configuration
+agents:
+  monitor:
+    scan_interval_seconds: 300
+    batch_size: 50
+    max_retries: 3
+    timeout_seconds: 60
+  detect:
+    confidence_threshold: 0.75
+    model: "gpt-4"
+    max_tokens: 2048
+    temperature: 0.1
+  respond:
+    auto_respond: false
+    escalation_threshold: "high"
+    response_templates_dir: "config/templates"
+  report:
+    default_format: "pdf"
+    retention_days: 90
+    schedule: "0 9 * * 1" # Weekly on Monday at 9 AM
+  analytics:
+    metrics_retention_days: 365
+    dashboard_refresh_seconds: 300
+  orchestrator:
+    max_concurrent_tasks: 10
+    task_timeout_seconds: 300
+    retry_policy:
+      max_attempts: 3
+      backoff_factor: 2
+
+# Integration configuration
+integrations:
+  salesforce:
+    enabled: false
+    api_version: "v58.0"
+    sandbox: false
+    timeout_seconds: 30
+  hubspot:
+    enabled: false
+    api_version: "v3"
+    timeout_seconds: 30
+  mailchimp:
+    enabled: false
+    api_version: 3.0
+    timeout_seconds: 30
+
+# Compliance rules
+compliance:
+  policies:
+    - name: gdpr_consent
+      description: "Verify GDPR consent for EU customers"
+      severity: "critical"
+      enabled: true
+    - name: CAN-SPAM
+      description: "Ensure CAN-SPAM compliance for email campaigns"
+      severity: "high"
+      enabled: true
+    - name: FTC_endorsement
+      description: "Check FTC endorsement guidelines compliance"
+      severity: "medium"
+      enabled: true
+    - name: ADA_accessibility
+      description: "Verify ADA accessibility standards"
+      severity: "medium"
+      enabled: true
+
+# Monitoring and alerting
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  alerting:
+    enabled: true
+    channels:
+      - type: slack
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+      - type: email
+        recipients:
+          - compliance@example.com
+
+# Storage
+storage:
+  type: "local"
+  data_dir: "./data"
+  backup_enabled: true
+  backup_schedule: "0 2 * * *" # Daily at 2 AM

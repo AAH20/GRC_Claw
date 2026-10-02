@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: ReplicaTransformer
+metadata:
+  name: replica-config
+replica:
+  name: analytics
+  count: 3
+fieldSpecs:
+  - path: spec/replicas
+    create: true

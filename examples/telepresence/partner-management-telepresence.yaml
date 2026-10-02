@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: partner-management-intercept
+  namespace: default
+  labels:
+    app: partner-management
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Partner relationship management platform for onboarding, enabling,
+      and tracking marketing and technology partners.
+    telepresence.io/service: partner-management
+    telepresence.io/deployment: partner-management
+spec:
+  service:
+    name: partner-management
+    namespace: default
+    ports:
+    - name: http
+      port: 8114
+      targetPort: 8114
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /partners
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: partner-management
+    namespace: default
+    containerPort: 8114
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: PARTNER_TYPES
+      value: technology,marketing,reseller
+    volumes:
+    - name: partner-data
+      mountPath: /data
+      hostPath: /tmp/partner-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8114
+  preview:
+    enabled: true
+    path: /partners
+    headers: *id001
+    port: 8114
+    targetPort: 8114
+    protocol: http

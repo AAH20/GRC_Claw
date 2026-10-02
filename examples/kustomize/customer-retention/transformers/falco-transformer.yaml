@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: customer-retention-rules
+spec:
+  rules: |
+    - rule: customer_retention_unexpected_process
+      desc: Detect unexpected processes in customer-retention container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/customer-retention" and
+        not proc.name in ("customer-retention", "sh", "bash")
+      output: >
+        Unexpected process in customer-retention container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: customer-retention

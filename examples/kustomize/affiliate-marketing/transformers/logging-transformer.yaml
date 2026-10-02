@@ -1,0 +1,21 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: logging-patch
+patch: |-
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: Flow
+metadata:
+  name: affiliate-marketing-logging
+spec:
+  filters:
+    - parser:
+        parse:
+          type: json
+        remove_keys: []
+  outputRefs:
+    - loki-output
+
+target:
+  kind: Deployment
+  name: affiliate-marketing

@@ -1,0 +1,22 @@
+# =============================================================================
+# GRC Claw — Redis Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: grc-claw
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  sessionAffinity: None

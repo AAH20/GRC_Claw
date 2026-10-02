@@ -1,0 +1,99 @@
+# Tempo configuration for GRC Claw monitoring stack
+# Distributed tracing backend for all agentic AI marketing services.
+
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+  log_level: info
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+  ring:
+    kvstore:
+      store: memberlist
+
+ingester:
+  trace_idle_period: 10s
+  max_block_duration: 5m
+  max_block_bytes: 100_000_000
+  complete_block_timeout: 5m
+
+compactor:
+  compaction:
+    block_retention: 720h  # 30 days
+    compacted_block_retention: 1h
+    max_compaction_objects: 1000000
+    max_block_bytes: 100_000_000
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/lib/tempo/traces
+    wal:
+      path: /var/lib/tempo/wal
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+memberlist:
+  abort_if_cluster_join_fails: false
+  bind_port: 7946
+  join_members:
+    - tempo:7946
+
+overrides:
+  metrics_generator:
+    processor:
+      service_graphs:
+        dimensions:
+          - service
+          - span_name
+      span_metrics:
+        dimensions:
+          - service
+          - span_name
+          - status_code
+    storage:
+      path: /var/lib/tempo/generator/wal
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    traces_storage:
+      path: /var/lib/tempo/generator/traces
+  defaults:
+    global:
+      max_bytes_per_trace: 10000000
+    per_tenant_override: /etc/tempo/overrides.yaml
+
+metrics_generator:
+  registry:
+    external_labels:
+      cluster: grc-claw
+      environment: production
+  storage:
+    path: /var/lib/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+  traces_storage:
+    path: /var/lib/tempo/generator/traces
+
+querier:
+  search:
+    max_duration: 0s
+    query_timeout: 30s
+
+query_frontend:
+  search:
+    max_duration: 0s
+    query_timeout: 30s
+    concurrent_jobs: 1000
+  trace_by_id:
+    query_timeout: 30s

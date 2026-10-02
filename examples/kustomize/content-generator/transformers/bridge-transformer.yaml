@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: bridge-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-generator
+spec:
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: bridge-conf
+
+target:
+  kind: Deployment
+  name: content-generator

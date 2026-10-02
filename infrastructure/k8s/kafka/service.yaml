@@ -1,0 +1,26 @@
+# =============================================================================
+# GRC Claw — Kafka Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/component: event-streaming
+    app.kubernetes.io/part-of: grc-claw
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: kafka
+  ports:
+    - name: broker
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  sessionAffinity: None

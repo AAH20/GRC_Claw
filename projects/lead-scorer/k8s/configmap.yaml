@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lead-scorer-config
+  namespace: lead-scorer
+data:
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "production"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  API_WORKERS: "4"
+  SCORING_MODEL: "gpt-4o"
+  ENABLE_GOVERNANCE: "true"
+  PROMETHEUS_ENABLED: "true"
+  OTEL_ENABLED: "true"
+  OTEL_ENDPOINT: "http://otel-collector:4318"

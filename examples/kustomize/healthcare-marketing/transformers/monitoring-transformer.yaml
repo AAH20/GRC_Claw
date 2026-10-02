@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: monitoring-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: healthcare-marketing-metrics
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: healthcare-marketing
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics
+
+target:
+  kind: Deployment
+  name: healthcare-marketing

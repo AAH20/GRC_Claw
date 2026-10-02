@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: finance-marketing-vault-secrets
+spec:
+  vaultAuthRef: finance-marketing-vault-auth
+  mount: secret
+  path: finance-marketing
+  destination:
+    create: true
+    name: finance-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: finance-marketing
+
+target:
+  kind: Deployment
+  name: finance-marketing

@@ -1,0 +1,79 @@
+app:
+  name: content-generator
+  version: 0.1.0
+  description: Multi-agent AI content generation pipeline
+  log_level: INFO
+  workers: 4
+models:
+  openai:
+    default: gpt-4-turbo-preview
+    fallback: gpt-3.5-turbo
+    max_tokens: 4096
+    temperature: 0.7
+  anthropic:
+    default: claude-sonnet-4-20250514
+    fallback: claude-haiku-4-20250514
+    max_tokens: 4096
+    temperature: 0.7
+agents:
+  researcher:
+    model: claude-sonnet-4-20250514
+    max_results: 10
+    search_depth: deep
+  strategist:
+    model: claude-sonnet-4-20250514
+    max_tokens: 2048
+  writer:
+    model: gpt-4-turbo-preview
+    max_tokens: 4096
+    temperature: 0.7
+  seo_editor:
+    model: gpt-4-turbo-preview
+    max_tokens: 2048
+    temperature: 0.3
+  atomizer:
+    model: claude-sonnet-4-20250514
+    max_tokens: 2048
+languages:
+  supported:
+  - code: en
+    name: English
+    direction: ltr
+  - code: ar
+    name: Arabic (MSA)
+    direction: rtl
+  - code: ar-EG
+    name: Arabic (Egyptian)
+    direction: rtl
+  - code: ar-SA
+    name: Arabic (Gulf)
+    direction: rtl
+  - code: ar-LB
+    name: Arabic (Levantine)
+    direction: rtl
+rate_limiting:
+  requests_per_minute: 60
+  burst_size: 10
+caching:
+  enabled: true
+  ttl_seconds: 3600
+  backend: redis
+monitoring:
+  metrics_enabled: true
+  tracing_enabled: false
+  health_check_interval: 30
+cache:
+  enabled: true
+  ttl_seconds: 300
+  max_entries: 10000
+  backend: memory
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false

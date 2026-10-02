@@ -1,0 +1,30 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: ci-cd-patch
+patch: |-
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: affiliate-marketing-pipeline
+spec:
+  tasks:
+    - name: build
+      taskRef:
+        name: kaniko
+      params:
+        - name: IMAGE
+          value: grcclaw/affiliate-marketing:$(tasks.git-clone.results.commit)
+    - name: test
+      taskRef:
+        name: golang-test
+    - name: deploy
+      taskRef:
+        name: kubectl-apply
+      params:
+        - name: path
+          value: overlays/production
+
+target:
+  kind: Deployment
+  name: affiliate-marketing

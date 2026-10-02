@@ -1,0 +1,280 @@
+# =============================================================================
+# GRC Claw — Prometheus Alert Rules
+# =============================================================================
+
+groups:
+  # ===========================================================================
+  # Infrastructure Alerts
+  # ===========================================================================
+  - name: infrastructure
+    interval: 30s
+    rules:
+      # -------------------------------------------------------------------------
+      # Node / Pod Health
+      # -------------------------------------------------------------------------
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Node {{ $labels.instance }} is down"
+          description: "Node {{ $labels.instance }} has been unreachable for more than 5 minutes."
+
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is restarting frequently."
+
+      - alert: PodNotReady
+        expr: kube_pod_status_ready{condition="true"} == 0
+        for: 15m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Pod {{ $labels.pod }} not ready"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has not been ready for 15 minutes."
+
+      # -------------------------------------------------------------------------
+      # Resource Utilization
+      # -------------------------------------------------------------------------
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage on {{ $labels.instance }} is above 85% for 10 minutes."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage on {{ $labels.instance }} is above 85% for 10 minutes."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 15
+        for: 10m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space on {{ $labels.instance }} is below 15%."
+
+  # ===========================================================================
+  # Kafka Alerts
+  # ===========================================================================
+  - name: kafka
+    interval: 30s
+    rules:
+      - alert: KafkaBrokerDown
+        expr: up{job="kafka-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: data-engineering
+        annotations:
+          summary: "Kafka broker {{ $labels.instance }} is down"
+          description: "Kafka broker {{ $labels.instance }} is unreachable."
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "Kafka has under-replicated partitions"
+          description: "{{ $value }} partitions are under-replicated."
+
+      - alert: KafkaOfflinePartitions
+        expr: kafka_controller_kafkacontroller_offlinepartitionscount > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: data-engineering
+        annotations:
+          summary: "Kafka has offline partitions"
+          description: "{{ $value }} partitions are offline."
+
+      - alert: KafkaHighRequestLatency
+        expr: kafka_network_requestmetrics_requests_totaltimems{request="Produce"} > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "Kafka high request latency"
+          description: "Produce request latency is above 500ms."
+
+      - alert: KafkaConsumerLag
+        expr: kafka_consumergroup_lag > 10000
+        for: 10m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "High consumer lag for {{ $labels.consumergroup }}"
+          description: "Consumer group {{ $labels.consumergroup }} has lag of {{ $value }} messages."
+
+  # ===========================================================================
+  # PostgreSQL Alerts
+  # ===========================================================================
+  - name: postgresql
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: data-engineering
+        annotations:
+          summary: "PostgreSQL {{ $labels.instance }} is down"
+          description: "PostgreSQL instance {{ $labels.instance }} is unreachable."
+
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "PostgreSQL high connection count"
+          description: "PostgreSQL {{ $labels.instance }} is using {{ $value }}% of max connections."
+
+      - alert: PostgreSQLReplicationLag
+        expr: pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "PostgreSQL replication lag"
+          description: "Replication lag on {{ $labels.instance }} is {{ $value }} seconds."
+
+      - alert: PostgreSQLDeadlocks
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "PostgreSQL deadlocks detected"
+          description: "Deadlocks detected on {{ $labels.instance }}."
+
+      - alert: PostgreSQLSlowQueries
+        expr: pg_slow_queries_duration_seconds > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "Slow queries on PostgreSQL"
+          description: "Queries taking longer than 5 seconds on {{ $labels.instance }}."
+
+  # ===========================================================================
+  # Redis Alerts
+  # ===========================================================================
+  - name: redis
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: data-engineering
+        annotations:
+          summary: "Redis {{ $labels.instance }} is down"
+          description: "Redis instance {{ $labels.instance }} is unreachable."
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis {{ $labels.instance }} is using {{ $value }}% of max memory."
+
+      - alert: RedisHighConnections
+        expr: redis_connected_clients / redis_config_maxclients * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: data-engineering
+        annotations:
+          summary: "Redis high connection count"
+          description: "Redis {{ $labels.instance }} is using {{ $value }}% of max clients."
+
+      - alert: RedisReplicationBroken
+        expr: redis_connected_slaves < 1
+        for: 5m
+        labels:
+          severity: critical
+          team: data-engineering
+        annotations:
+          summary: "Redis replication broken"
+          description: "Redis {{ $labels.instance }} has no connected replicas."
+
+  # ===========================================================================
+  # Application Alerts
+  # ===========================================================================
+  - name: application
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Service {{ $labels.service }} has {{ $value }}% error rate."
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "Service {{ $labels.service }} p95 latency is {{ $value }}s."
+
+      - alert: AgentNotReporting
+        expr: time() - grc_agent_last_heartbeat_timestamp > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "Agent {{ $labels.agent_id }} not reporting"
+          description: "Agent {{ $labels.agent_id }} has not reported in over 5 minutes."
+
+      - alert: CampaignBudgetExceeded
+        expr: grc_campaign_spent / grc_campaign_budget > 1
+        for: 1m
+        labels:
+          severity: warning
+          team: marketing
+        annotations:
+          summary: "Campaign {{ $labels.campaign_id }} budget exceeded"
+          description: "Campaign {{ $labels.campaign_id }} has exceeded its budget."

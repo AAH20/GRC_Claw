@@ -1,0 +1,69 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: content-generator-intercept
+  namespace: default
+  labels:
+    app: content-generator
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: AI content generation service that creates marketing copy, blog posts,
+      social media content, and ad creatives using large language models.
+    telepresence.io/service: content-generator
+    telepresence.io/deployment: content-generator
+spec:
+  service:
+    name: content-generator
+    namespace: default
+    ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /generate
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: content-generator
+    namespace: default
+    containerPort: 8083
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: LLM_PROVIDER
+      value: openai
+    - name: LLM_MODEL
+      value: gpt-4
+    volumes:
+    - name: content-cache
+      mountPath: /cache
+      hostPath: /tmp/content-cache
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8083
+  preview:
+    enabled: true
+    path: /generate
+    headers: *id001
+    port: 8083
+    targetPort: 8083
+    protocol: http

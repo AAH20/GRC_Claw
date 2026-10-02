@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: lead-scorer-intercept
+  namespace: default
+  labels:
+    app: lead-scorer
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Machine learning lead scoring service that evaluates and ranks leads
+      based on behavioral data, demographics, and engagement patterns.
+    telepresence.io/service: lead-scorer
+    telepresence.io/deployment: lead-scorer
+spec:
+  service:
+    name: lead-scorer
+    namespace: default
+    ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /leads/score
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: lead-scorer
+    namespace: default
+    containerPort: 8081
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: MODEL_PATH
+      value: /models/lead-scorer
+    volumes:
+    - name: model-storage
+      mountPath: /models
+      hostPath: /tmp/lead-scorer-models
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8081
+  preview:
+    enabled: true
+    path: /leads/score
+    headers: *id001
+    port: 8081
+    targetPort: 8081
+    protocol: http

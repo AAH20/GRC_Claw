@@ -1,0 +1,96 @@
+# Marketing Attribution Configuration
+# All sensitive values should be set via environment variables (see .env.example)
+
+app:
+  name: "marketing-attribution"
+  version: "0.1.0"
+  environment: "development" # development | staging | production
+  log_level: "INFO"
+  host: "0.0.0.0"
+  port: 8000
+
+agents:
+  data_collection:
+    enabled: true
+    schedule: "0 */6 * * *" # Every 6 hours
+    batch_size: 1000
+    timeout_seconds: 300
+    retry_attempts: 3
+    sources:
+      - google_ads
+      - meta_ads
+      - google_analytics
+
+  attribution_engine:
+    enabled: true
+    default_model: "data_driven"
+    available_models:
+      - first_touch
+      - last_touch
+      - linear
+      - time_decay
+      - data_driven
+    time_decay_half_life_days: 7
+    min_touchpoints: 1
+
+  predictive_analytics:
+    enabled: true
+    forecast_horizon_days: 30
+    confidence_level: 0.95
+    model_retrain_interval_hours: 24
+    features:
+      - spend
+      - impressions
+      - clicks
+      - conversions
+      - day_of_week
+      - hour_of_day
+
+  reporting:
+    enabled: true
+    default_format: "pdf"
+    available_formats:
+      - pdf
+      - csv
+      - json
+    schedule: "0 8 * * *" # Daily at 8 AM
+    retention_days: 90
+
+  realtime_dashboards:
+    enabled: true
+    websocket_path: "/api/v1/dashboards/stream"
+    update_interval_seconds: 30
+    max_connections: 100
+
+integrations:
+  google_ads:
+    enabled: true
+    api_version: "v14"
+    developer_token: "${GOOGLE_ADS_DEVELOPER_TOKEN}"
+    client_id: "${GOOGLE_ADS_CLIENT_ID}"
+    client_secret: "${GOOGLE_ADS_CLIENT_SECRET}"
+    refresh_token: "${GOOGLE_ADS_REFRESH_TOKEN}"
+    login_customer_id: "${GOOGLE_ADS_LOGIN_CUSTOMER_ID}"
+
+  meta_ads:
+    enabled: true
+    api_version: "v18.0"
+    access_token: "${META_ACCESS_TOKEN}"
+    app_id: "${META_APP_ID}"
+    app_secret: "${META_APP_SECRET}"
+    ad_account_id: "${META_AD_ACCOUNT_ID}"
+
+  google_analytics:
+    enabled: true
+    api_version: "v1beta"
+    property_id: "${GA_PROPERTY_ID}"
+    credentials_path: "${GOOGLE_APPLICATION_CREDENTIALS}"
+
+cache:
+  redis_url: "${REDIS_URL}"
+  ttl_seconds: 3600
+
+database:
+  url: "${DATABASE_URL}"
+  pool_size: 10
+  max_overflow: 20

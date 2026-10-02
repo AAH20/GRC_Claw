@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: tailscale-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-media-manager
+spec:
+  template:
+    metadata:
+      annotations:
+        tailscale.com/enable: "true"
+
+target:
+  kind: Deployment
+  name: social-media-manager

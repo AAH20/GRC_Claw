@@ -1,0 +1,84 @@
+app:
+  name: SEO Optimizer
+  version: 0.1.0
+  description: AI-powered SEO optimization platform
+  log_level: INFO
+  env: development
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  reload: false
+agents:
+  max_concurrent: 3
+  timeout_seconds: 300
+  retry_attempts: 3
+  retry_delay_seconds: 5
+  keyword_research:
+    max_keywords: 50
+    min_search_volume: 100
+    max_difficulty: 70
+    default_country: us
+  content_optimization:
+    max_content_length: 50000
+    readability_target: grade_8
+    keyword_density_min: 0.5
+    keyword_density_max: 2.5
+  technical_seo:
+    max_pages_per_crawl: 1000
+    crawl_timeout_seconds: 300
+    check_core_web_vitals: true
+  link_building:
+    max_backlinks_per_domain: 100
+    min_domain_authority: 20
+    outreach_email_template: default
+  seo_monitoring:
+    check_interval_hours: 24
+    ranking_alert_threshold: 5
+    competitor_tracking: true
+  performance_analytics:
+    metrics_retention_days: 365
+    dashboard_refresh_minutes: 60
+integrations:
+  google_search_console:
+    enabled: false
+    credentials_path: null
+    site_url: null
+    api_version: v1
+  semrush:
+    enabled: false
+    api_key: null
+    base_url: https://api.semrush.com
+    rate_limit_per_second: 1
+  ahrefs:
+    enabled: false
+    api_key: null
+    base_url: https://apiv2.ahrefs.com
+    rate_limit_per_second: 1
+  screaming_frog:
+    enabled: false
+    spider_path: null
+    max_crawl_pages: 500
+cache:
+  backend: memory
+  ttl_seconds: 3600
+  max_size: 1000
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60
+  burst_size: 10
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30
+  log_level: INFO
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false

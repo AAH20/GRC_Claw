@@ -1,0 +1,14 @@
+# =============================================================================
+# GRC Claw — Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grc-claw
+  labels:
+    app.kubernetes.io/name: grc-claw
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/managed-by: helm
+    istio-injection: enabled
+  annotations:
+    description: "GRC Claw shared infrastructure namespace"

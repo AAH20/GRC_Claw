@@ -1,0 +1,116 @@
+# Sales Automator - Kustomize Example
+# Production-grade Kustomize configuration for the Sales Automator service.
+
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sales-automator
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: sales-automator
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: sales-automator
+    newTag: v1.6.0
+
+configMapGenerator:
+  - name: sales-automator-config
+    literals:
+      - LOG_LEVEL=info
+      - WORKFLOW_ENGINE=airflow
+      - LEAD_ROUTING_STRATEGy=round-robin
+      - FOLLOW_UP_SEQUENCE_DAYS=1,3,7,14
+      - MAX_ACTIVE_WORKFLOWS=200
+      - NOTIFICATION_CHANNELS=slack,email
+
+secretGenerator:
+  - name: sales-automator-secrets
+    literals:
+      - SLACK_BOT_TOKEN=changeme
+      - AIRFLOW_API_KEY=changeme
+      - DB_PASSWORD=changeme
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: sales-automator
+
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: sales-automator
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OVERLAYS
+# ─────────────────────────────────────────────────────────────────────────────
+# overlays/dev/kustomization.yaml
+# overlays/staging/kustomization.yaml
+# overlays/prod/kustomization.yaml
+#
+# Example overlay (prod):
+# ---
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+#
+# resources:
+#   - ../../base
+#
+# namePrefix: prod-
+#
+# replicas:
+#   - name: sales-automator
+#     count: 5
+#
+# patches:
+#   - path: patches/prod-resources.yaml
+#   - path: patches/prod-autoscaling.yaml
+#
+# configMapGenerator:
+#   - name: sales-automator-config
+#     behavior: merge
+#     literals:
+#       - LOG_LEVEL=warn
+#       - MAX_ACTIVE_WORKFLOWS=1000
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# TRANSFORMERS
+# ─────────────────────────────────────────────────────────────────────────────
+# transformers/labels-transformer.yaml
+# transformers/namespace-transformer.yaml
+# transformers/image-transformer.yaml
+#
+# Example transformer (common annotations):
+# ---
+# apiVersion: builtin
+# kind: AnnotationsTransformer
+# metadata:
+#   name: common-annotations
+# annotations:
+#   monitoring.io/scrape: "true"
+#   monitoring.io/port: "8080"
+# fieldSpecs:
+#   - path: metadata/annotations
+#     create: true
+#
+# Example transformer (image transformer):
+# ---
+# apiVersion: builtin
+# kind: ImageTagTransformer
+# metadata:
+#   name: sales-automator-image
+# imageTag:
+#   name: sales-automator
+#   newTag: v1.6.0
+# fieldSpecs:
+#   - path: spec/template/spec/containers/0/image
+#     create: true

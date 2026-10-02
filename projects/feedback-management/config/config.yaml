@@ -1,0 +1,79 @@
+app:
+  name: "feedback-management"
+  version: "0.1.0"
+  env: "development"
+  log_level: "INFO"
+  host: "0.0.0.0"
+  port: 8000
+
+agents:
+  collection:
+    enabled: true
+    platforms:
+      - surveymonkey
+      - typeform
+      - google_forms
+    poll_interval_minutes: 15
+    max_feedback_per_batch: 100
+
+  analysis:
+    enabled: true
+    sentiment_model: "distilbert-base-uncased-finetuned-sst-2-english"
+    topic_model: "all-MiniLM-L6-v2"
+    batch_size: 32
+    confidence_threshold: 0.7
+
+  response:
+    enabled: true
+    model: "gpt-4"
+    max_tokens: 500
+    temperature: 0.7
+    tone: "professional"
+    language: "en"
+
+  action:
+    enabled: true
+    auto_escalate_threshold: -0.5
+    auto_respond_threshold: 0.8
+    webhook_url: null
+
+  performance_analytics:
+    enabled: true
+    metrics:
+      - response_time
+      - satisfaction_score
+      - resolution_rate
+    report_interval_hours: 24
+
+integrations:
+  surveymonkey:
+    enabled: true
+    api_version: "v3"
+    base_url: "https://api.surveymonkey.com"
+    rate_limit_per_minute: 120
+
+  typeform:
+    enabled: true
+    base_url: "https://api.typeform.com"
+    rate_limit_per_minute: 60
+
+  google_forms:
+    enabled: true
+    base_url: "https://forms.googleapis.com/v1"
+    rate_limit_per_minute: 100
+
+database:
+  url: "sqlite:///./feedback.db"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+cache:
+  backend: "redis"
+  url: "redis://localhost:6379/0"
+  ttl_seconds: 3600
+
+logging:
+  format: "json"
+  timestamp_format: "ISO8601"
+  include_trace_id: true

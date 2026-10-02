@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: social-media-manager-config
+  labels:
+    app.kubernetes.io/name: social-media-manager
+data:
+  LOG_LEVEL: "info"
+  PORT: "8080"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"

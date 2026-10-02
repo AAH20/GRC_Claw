@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Real Estate Marketing Service - Production Kustomize Example
+# Property marketing, lead generation, and virtual tour management
+
+namespace: real-estate-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: real-estate-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: real-estate-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: real-estate-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: real-estate-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: real-estate-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - MLS_SYNC_INTERVAL_MIN=30
+      - VIRTUAL_TOUR_PROVIDER=matterport
+      - LEAD_ROUTING=round-robin
+      - PROPERTY_ALERT_TYPES=price-drop,new-listing,open-house
+      - CRM_INTEGRATION=enabled
+      - MAP_SEARCH_PROVIDER=mapbox
+      - IMAGE_OPTIMIZATION=webp,responsive
+
+secretGenerator:
+  - name: real-estate-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/real-estate-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: real-estate-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: real-estate-marketing
+    newName: registry.grc-claw.io/marketing/real-estate-marketing
+    newTag: v1.3.7
+
+replicas:
+  - name: real-estate-marketing
+    count: 2
+
+namePrefix: prod-
+nameSuffix: -re

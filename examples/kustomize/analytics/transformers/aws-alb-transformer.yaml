@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: aws-alb-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics
+spec:
+  template:
+    metadata:
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+
+target:
+  kind: Deployment
+  name: analytics

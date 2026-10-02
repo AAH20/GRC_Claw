@@ -1,0 +1,113 @@
+# SMB Marketing Application Configuration
+# Copy this file and adjust values for your environment.
+# Sensitive values should be set via environment variables (see .env.example).
+
+app:
+  name: "SMB Marketing"
+  version: "0.1.0"
+  description: "Standalone modularized agentic AI marketing platform for small businesses"
+  environment: "development"  # development | staging | production
+  log_level: "INFO"           # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+# LLM Configuration
+llm:
+  provider: "openai"          # openai | anthropic | azure
+  model: "gpt-4o"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 60
+  max_retries: 3
+
+# Agent Configuration
+agents:
+  content:
+    enabled: true
+    default_tone: "professional"  # professional | casual | friendly | authoritative
+    max_length: 2000
+    supported_formats:
+      - blog_post
+      - ad_copy
+      - product_description
+      - social_caption
+      - email_body
+
+  campaigns:
+    enabled: true
+    default_duration_days: 30
+    max_budget: 10000
+    channels:
+      - meta
+      - google_ads
+      - mailchimp
+
+  social:
+    enabled: true
+    platforms:
+      - facebook
+      - instagram
+    max_posts_per_day: 5
+    best_time_window:
+      start: "09:00"
+      end: "17:00"
+
+  email:
+    enabled: true
+    max_recipients: 5000
+    ab_test_enabled: true
+    default_from_name: "SMB Marketing"
+    default_from_email: "marketing@example.com"
+
+  analytics:
+    enabled: true
+    metrics:
+      - impressions
+      - clicks
+      - conversions
+      - ctr
+      - roas
+      - engagement_rate
+    report_frequency: "weekly"  # daily | weekly | monthly
+    data_retention_days: 365
+
+# Integration Configuration
+integrations:
+  meta:
+    enabled: true
+    api_version: "v18.0"
+    base_url: "https://graph.facebook.com"
+    timeout: 30
+    rate_limit_per_hour: 200
+
+  google_ads:
+    enabled: true
+    api_version: "v14"
+    base_url: "https://googleads.googleapis.com"
+    timeout: 30
+    rate_limit_per_hour: 1000
+
+  mailchimp:
+    enabled: true
+    api_version: "3.0"
+    base_url: "https://{server_prefix}.api.mailchimp.com"
+    timeout: 30
+    rate_limit_per_hour: 500
+
+# API Configuration
+api:
+  prefix: "/api/v1"
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limit: "100/minute"
+  max_request_size: "10MB"
+
+# Monitoring & Observability
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/health"
+  tracing_enabled: true
+  sentry_dsn: null  # Set via SENTRY_DSN env var

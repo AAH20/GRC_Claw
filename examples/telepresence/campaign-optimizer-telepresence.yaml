@@ -1,0 +1,68 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: campaign-optimizer-intercept
+  namespace: default
+  labels:
+    app: campaign-optimizer
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: AI-powered campaign optimization engine that analyzes performance
+      data and automatically adjusts bidding, targeting, and creative elements across
+      ad platforms.
+    telepresence.io/service: campaign-optimizer
+    telepresence.io/deployment: campaign-optimizer
+spec:
+  service:
+    name: campaign-optimizer
+    namespace: default
+    ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /campaigns
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: campaign-optimizer
+    namespace: default
+    containerPort: 8080
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: LOG_LEVEL
+      value: debug
+    volumes:
+    - name: campaign-data
+      mountPath: /data
+      hostPath: /tmp/campaign-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8080
+  preview:
+    enabled: true
+    path: /campaigns
+    headers: *id001
+    port: 8080
+    targetPort: 8080
+    protocol: http

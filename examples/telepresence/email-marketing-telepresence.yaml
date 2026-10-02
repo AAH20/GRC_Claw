@@ -1,0 +1,69 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: email-marketing-intercept
+  namespace: default
+  labels:
+    app: email-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Email marketing automation service for creating, sending, and tracking
+      email campaigns with A/B testing and deliverability optimization.
+    telepresence.io/service: email-marketing
+    telepresence.io/deployment: email-marketing
+spec:
+  service:
+    name: email-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8085
+      targetPort: 8085
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /campaigns
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: email-marketing
+    namespace: default
+    containerPort: 8085
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: SMTP_HOST
+      value: localhost
+    - name: SMTP_PORT
+      value: '1025'
+    volumes:
+    - name: email-templates
+      mountPath: /templates
+      hostPath: /tmp/email-templates
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8085
+  preview:
+    enabled: true
+    path: /campaigns
+    headers: *id001
+    port: 8085
+    targetPort: 8085
+    protocol: http

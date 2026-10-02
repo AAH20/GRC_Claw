@@ -1,0 +1,17 @@
+apiVersion: builtin
+kind: ReplacementTransformer
+metadata:
+  name: replacement-config
+replacements:
+  - source:
+      kind: ConfigMap
+      name: market-research-config
+      fieldPath: data.LOG_LEVEL
+    targets:
+      - select:
+          kind: Deployment
+          name: market-research
+        fieldPaths:
+          - spec.template.spec.containers.[name=market-research].env.[name=LOG_LEVEL].value
+        options:
+          create: true

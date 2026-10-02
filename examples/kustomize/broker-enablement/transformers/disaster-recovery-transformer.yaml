@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: disaster-recovery-patch
+patch: |-
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: broker-enablement-restore
+spec:
+  backupName: broker-enablement-backup
+  includedNamespaces:
+    - broker-enablement-prod
+  restorePVs: true
+
+target:
+  kind: Deployment
+  name: broker-enablement

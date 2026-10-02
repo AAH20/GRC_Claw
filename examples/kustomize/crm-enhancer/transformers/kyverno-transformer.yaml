@@ -1,0 +1,38 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: kyverno-patch
+patch: |-
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: crm-enhancer-policy
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: validate-resources
+      match:
+        resources:
+          kinds:
+            - Deployment
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: crm-enhancer
+      validate:
+        message: "Resource requests and limits are required"
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - resources:
+                      requests:
+                        memory: "?*"
+                        cpu: "?*"
+                      limits:
+                        memory: "?*"
+                        cpu: "?*"
+
+target:
+  kind: Deployment
+  name: crm-enhancer

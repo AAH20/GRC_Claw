@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: ImageTagTransformer
+metadata:
+  name: image-tag-config
+imageTag:
+  name: grcclaw/marketing-compliance
+  newTag: stable
+fieldSpecs:
+  - path: spec/template/spec/containers/image
+    create: true

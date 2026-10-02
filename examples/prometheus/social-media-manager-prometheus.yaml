@@ -1,0 +1,154 @@
+# Prometheus Monitoring Configuration for Social Media Manager
+# Description: Social media management and scheduling
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the social-media-manager service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: social-media-manager-monitor
+  namespace: monitoring
+  labels:
+    app: social-media-manager
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: social-media-manager
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: social_media_manager_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for social-media-manager
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: social-media-manager-rules
+  namespace: monitoring
+  labels:
+    app: social-media-manager
+    release: prometheus
+spec:
+  groups:
+  - name: social-media-manager-recording-rules
+    interval: 30s
+    rules:
+    - record: social_media_manager:api_request_rate:rate5m
+      expr: rate(social_media_manager_api_requests_total[5m])
+    - record: social_media_manager:api_error_rate:rate5m
+      expr: rate(social_media_manager_api_errors_total[5m])
+    - record: social_media_manager:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(social_media_manager_api_latency_seconds_bucket[5m]))
+  - name: social-media-manager-alerts-1
+    rules:
+    - alert: SocialMediaManagerHighErrorRate
+      expr: rate(social_media_manager_api_errors_total[5m]) / rate(social_media_manager_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: social-media-manager
+      annotations:
+        summary: '{{ $labels.service }}: SocialMediaManagerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered SocialMediaManagerHighErrorRate
+          for more than 5 minutes.'
+    - alert: SocialMediaManagerHighLatency
+      expr: histogram_quantile(0.95, rate(social_media_manager_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: social-media-manager
+      annotations:
+        summary: '{{ $labels.service }}: SocialMediaManagerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered SocialMediaManagerHighLatency
+          for more than 5 minutes.'
+    - alert: SocialMediaManagerLowEngagementRate
+      expr: social_media_manager_engagement_rate < 0.02
+      for: 5m
+      labels:
+        severity: warning
+        service: social-media-manager
+      annotations:
+        summary: '{{ $labels.service }}: SocialMediaManagerLowEngagementRate is firing'
+        description: '{{ $labels.service }} has triggered SocialMediaManagerLowEngagementRate
+          for more than 5 minutes.'
+    - alert: SocialMediaManagerNegativeSentiment
+      expr: social_media_manager_sentiment_score < -0.3
+      for: 5m
+      labels:
+        severity: critical
+        service: social-media-manager
+      annotations:
+        summary: '{{ $labels.service }}: SocialMediaManagerNegativeSentiment is firing'
+        description: '{{ $labels.service }} has triggered SocialMediaManagerNegativeSentiment
+          for more than 5 minutes.'
+    - alert: SocialMediaManagerSlowResponse
+      expr: social_media_manager_response_time_seconds > 3600
+      for: 5m
+      labels:
+        severity: warning
+        service: social-media-manager
+      annotations:
+        summary: '{{ $labels.service }}: SocialMediaManagerSlowResponse is firing'
+        description: '{{ $labels.service }} has triggered SocialMediaManagerSlowResponse
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for social-media-manager alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: social-media-manager
+    receiver: social-media-manager-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: social-media-manager-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#social-media-manager-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

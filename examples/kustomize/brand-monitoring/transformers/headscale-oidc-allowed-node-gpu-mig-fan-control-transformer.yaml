@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-mig-fan-control-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brand-monitoring
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-mig-fan-control: "automatic"
+
+target:
+  kind: Deployment
+  name: brand-monitoring

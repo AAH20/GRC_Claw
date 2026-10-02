@@ -1,0 +1,20 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: resourcequota-patch
+patch: |-
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: business-intelligence-quota
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    pods: "20"
+
+target:
+  kind: Deployment
+  name: business-intelligence

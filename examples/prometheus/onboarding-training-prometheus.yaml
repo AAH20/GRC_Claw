@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Onboarding Training
+# Description: Customer onboarding and training
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the onboarding-training service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: onboarding-training-monitor
+  namespace: monitoring
+  labels:
+    app: onboarding-training
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: onboarding-training
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: onboarding_training_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for onboarding-training
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: onboarding-training-rules
+  namespace: monitoring
+  labels:
+    app: onboarding-training
+    release: prometheus
+spec:
+  groups:
+  - name: onboarding-training-recording-rules
+    interval: 30s
+    rules:
+    - record: onboarding_training:api_request_rate:rate5m
+      expr: rate(onboarding_training_api_requests_total[5m])
+    - record: onboarding_training:api_error_rate:rate5m
+      expr: rate(onboarding_training_api_errors_total[5m])
+    - record: onboarding_training:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(onboarding_training_api_latency_seconds_bucket[5m]))
+  - name: onboarding-training-alerts-1
+    rules:
+    - alert: OnboardingTrainingHighErrorRate
+      expr: rate(onboarding_training_api_errors_total[5m]) / rate(onboarding_training_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: onboarding-training
+      annotations:
+        summary: '{{ $labels.service }}: OnboardingTrainingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered OnboardingTrainingHighErrorRate
+          for more than 5 minutes.'
+    - alert: OnboardingTrainingLowCompletionRate
+      expr: onboarding_training_completion_rate < 0.6
+      for: 5m
+      labels:
+        severity: warning
+        service: onboarding-training
+      annotations:
+        summary: '{{ $labels.service }}: OnboardingTrainingLowCompletionRate is firing'
+        description: '{{ $labels.service }} has triggered OnboardingTrainingLowCompletionRate
+          for more than 5 minutes.'
+    - alert: OnboardingTrainingLowSatisfaction
+      expr: onboarding_training_satisfaction_score < 3.5
+      for: 5m
+      labels:
+        severity: warning
+        service: onboarding-training
+      annotations:
+        summary: '{{ $labels.service }}: OnboardingTrainingLowSatisfaction is firing'
+        description: '{{ $labels.service }} has triggered OnboardingTrainingLowSatisfaction
+          for more than 5 minutes.'
+    - alert: OnboardingTrainingHighLatency
+      expr: histogram_quantile(0.95, rate(onboarding_training_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: onboarding-training
+      annotations:
+        summary: '{{ $labels.service }}: OnboardingTrainingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered OnboardingTrainingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for onboarding-training alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: onboarding-training
+    receiver: onboarding-training-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: onboarding-training-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#onboarding-training-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

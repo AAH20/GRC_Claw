@@ -1,0 +1,98 @@
+app:
+  name: conversational-marketing
+  version: 0.1.0
+  env: dev
+  log_level: INFO
+  debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1
+  reload: false
+
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  temperature: 0.7
+  max_tokens: 1024
+  timeout: 30
+
+agents:
+  intent_detection:
+    confidence_threshold: 0.7
+    fallback_intent: general_inquiry
+    supported_intents:
+      - purchase_intent
+      - product_inquiry
+      - support_request
+      - complaint
+      - pricing_question
+      - demo_request
+      - general_inquiry
+      - greeting
+      - farewell
+
+  response_generation:
+    max_response_length: 500
+    tone: professional_friendly
+    include_cta: true
+    language: en
+
+  handoff:
+    enabled: true
+    confidence_threshold: 0.6
+    max_agent_turns: 10
+    human_handoff_timeout: 300
+    escalation_rules:
+      - intent: complaint
+        priority: high
+        auto_handoff: true
+      - intent: purchase_intent
+        priority: medium
+        auto_handoff: false
+
+  optimization:
+    enabled: true
+    analysis_interval: 3600
+    min_conversations_for_analysis: 10
+    suggestion_threshold: 0.8
+
+  analytics:
+    enabled: true
+    retention_days: 90
+    realtime_metrics: true
+    export_format: json
+
+integrations:
+  whatsapp:
+    enabled: false
+    verify_token: ""
+    phone_number_id: ""
+    webhook_path: /webhooks/whatsapp
+
+  facebook_messenger:
+    enabled: false
+    page_id: ""
+    app_secret: ""
+    webhook_path: /webhooks/facebook
+
+  slack:
+    enabled: false
+    signing_secret: ""
+    webhook_path: /webhooks/slack
+
+conversation:
+  max_history: 20
+  session_timeout: 1800
+  context_window: 4000
+
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60
+  burst_size: 10
+
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  health_check_interval: 30

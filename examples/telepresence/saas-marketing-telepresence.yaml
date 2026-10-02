@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: saas-marketing-intercept
+  namespace: default
+  labels:
+    app: saas-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: SaaS marketing platform for product-led growth, trial conversions,
+      onboarding optimization, and expansion revenue.
+    telepresence.io/service: saas-marketing
+    telepresence.io/deployment: saas-marketing
+spec:
+  service:
+    name: saas-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8121
+      targetPort: 8121
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /saas
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: saas-marketing
+    namespace: default
+    containerPort: 8121
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: GROWTH_MODEL
+      value: plg
+    volumes:
+    - name: saas-data
+      mountPath: /data
+      hostPath: /tmp/saas-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8121
+  preview:
+    enabled: true
+    path: /saas
+    headers: *id001
+    port: 8121
+    targetPort: 8121
+    protocol: http

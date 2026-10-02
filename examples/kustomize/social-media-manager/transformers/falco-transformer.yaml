@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: social-media-manager-rules
+spec:
+  rules: |
+    - rule: social_media_manager_unexpected_process
+      desc: Detect unexpected processes in social-media-manager container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/social-media-manager" and
+        not proc.name in ("social-media-manager", "sh", "bash")
+      output: >
+        Unexpected process in social-media-manager container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: social-media-manager

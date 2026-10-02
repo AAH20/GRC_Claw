@@ -1,0 +1,41 @@
+# Kubernetes Service for Journey Orchestrator
+apiVersion: v1
+kind: Service
+metadata:
+  name: journey-orchestrator
+  namespace: journey-orchestrator
+  labels:
+    app: journey-orchestrator
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: journey-orchestrator
+    component: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: journey-orchestrator-headless
+  namespace: journey-orchestrator
+  labels:
+    app: journey-orchestrator
+    component: api
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+  selector:
+    app: journey-orchestrator
+    component: api

@@ -1,0 +1,144 @@
+# Pre-commit hooks configuration
+# https://pre-commit.com/
+
+# ── Default Settings ────────────────────────────────────────────────────────
+default_language_version:
+  python: python3.11
+
+default_stages:
+  - pre-commit
+
+# ── Repositories & Hooks ────────────────────────────────────────────────────
+repos:
+  # ── General File Checks ──────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML files
+        args: ["--unsafe"]
+      - id: check-toml
+        name: Check TOML files
+      - id: check-json
+        name: Check JSON files
+      - id: check-added-large-files
+        name: Check for large files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+        name: Check for merge conflict markers
+      - id: check-case-conflict
+        name: Check for case conflicts
+      - id: check-symlinks
+        name: Check for broken symlinks
+      - id: detect-private-key
+        name: Detect private keys
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        args: ["--fix=lf"]
+      - id: debug-statements
+        name: Check for debugger imports and py37+ breakpoints
+
+  # ── Shell Script Linting ─────────────────────────────────────────────────
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Lint shell scripts
+        args: ["--severity=warning"]
+
+  # ── Shell Script Formatting ──────────────────────────────────────────────
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.7.0
+    hooks:
+      - id: shfmt
+        name: Format shell scripts
+        args: ["-w", "-i", "2", "-ci"]
+
+  # ── Python Import Sorting ────────────────────────────────────────────────
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Sort Python imports
+        args: ["--profile", "black", "--filter-files"]
+
+  # ── Python Code Formatting ───────────────────────────────────────────────
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        name: Format Python code with Black
+        language_version: python3.11
+
+  # ── Python Linting ──────────────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        name: Lint Python code with Ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format
+        name: Format Python code with Ruff
+
+  # ── Python Type Checking ─────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        name: Type-check Python code with mypy
+        additional_dependencies:
+          - types-requests
+          - types-PyYAML
+          - types-setuptools
+        args: ["--ignore-missing-imports", "--show-error-codes"]
+
+  # ── Python Security ──────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        name: Security lint with Bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  # ── Commit Message Linting ───────────────────────────────────────────────
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        name: Check commit message format
+        stages: [commit-msg]
+
+  # ── Gitleaks (Secret Detection) ──────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.1
+    hooks:
+      - id: gitleaks
+        name: Detect secrets with Gitleaks
+
+  # ── Dockerfile Linting ───────────────────────────────────────────────────
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+        name: Lint Dockerfiles
+        args: ["--failure-threshold", "warning"]
+
+  # ── Markdown Linting ─────────────────────────────────────────────────────
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        name: Lint Markdown files
+        args: ["--fix"]
+
+  # ── GitHub Actions Linting ───────────────────────────────────────────────
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.27
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflows

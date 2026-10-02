@@ -1,0 +1,84 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Website Optimization Service - Production Kustomize Example
+# A/B testing, performance monitoring, and conversion rate optimization
+
+namespace: website-optimization
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: website-optimization
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: website-optimization
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: website-optimization-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: website-optimization-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - AB_TEST_ENGINE=optimizely
+      - PERFORMANCE_BUDGET_MS=2000
+      - CRO_ENABLED=true
+      - HEATMAP_TRACKING=true
+      - FUNNEL_ANALYSIS=true
+
+secretGenerator:
+  - name: website-optimization-secrets
+    behavior: merge
+    envs:
+      - secrets/website-optimization.env
+
+commonLabels:
+  app.kubernetes.io/name: website-optimization
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: website-optimization
+    newName: registry.grc-claw.io/marketing/website-optimization
+    newTag: v3.1.0
+
+replicas:
+  - name: website-optimization
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -wo

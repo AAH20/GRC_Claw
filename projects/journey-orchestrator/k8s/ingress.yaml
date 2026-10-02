@@ -1,0 +1,34 @@
+# Kubernetes Ingress for Journey Orchestrator
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: journey-orchestrator
+  namespace: journey-orchestrator
+  labels:
+    app: journey-orchestrator
+    component: api
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+    - hosts:
+        - journey-orchestrator.grc-claw.ai
+      secretName: journey-orchestrator-tls
+  rules:
+    - host: journey-orchestrator.grc-claw.ai
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: journey-orchestrator
+                port:
+                  number: 80

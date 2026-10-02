@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-marketing
+  labels:
+    app: ecommerce-marketing
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ecommerce-marketing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ecommerce-marketing
+        version: v1
+    spec:
+      containers:
+        - name: ecommerce-marketing
+          image: ghcr.io/ahmedhassan/ecommerce-marketing:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-marketing-secrets
+                  key: openai-api-key
+            - name: SHOPIFY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-marketing-secrets
+                  key: shopify-api-key
+            - name: SHOPIFY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-marketing-secrets
+                  key: shopify-api-secret
+            - name: WOOCOMMERCE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-marketing-secrets
+                  key: woocommerce-api-key
+            - name: WOOCOMMERCE_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-marketing-secrets
+                  key: woocommerce-api-secret
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-marketing-secrets
+                  key: stripe-secret-key
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

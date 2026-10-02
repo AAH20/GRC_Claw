@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Real Estate Marketing
+# Description: Real estate marketing automation
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the real-estate-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: real-estate-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: real-estate-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: real-estate-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: real_estate_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for real-estate-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: real-estate-marketing-rules
+  namespace: monitoring
+  labels:
+    app: real-estate-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: real-estate-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: real_estate_marketing:api_request_rate:rate5m
+      expr: rate(real_estate_marketing_api_requests_total[5m])
+    - record: real_estate_marketing:api_error_rate:rate5m
+      expr: rate(real_estate_marketing_api_errors_total[5m])
+    - record: real_estate_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(real_estate_marketing_api_latency_seconds_bucket[5m]))
+  - name: real-estate-marketing-alerts-1
+    rules:
+    - alert: RealEstateMarketingHighErrorRate
+      expr: rate(real_estate_marketing_api_errors_total[5m]) / rate(real_estate_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: real-estate-marketing
+      annotations:
+        summary: '{{ $labels.service }}: RealEstateMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered RealEstateMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: RealEstateMarketingLowConversionRate
+      expr: real_estate_marketing_conversion_rate < 0.02
+      for: 5m
+      labels:
+        severity: warning
+        service: real-estate-marketing
+      annotations:
+        summary: '{{ $labels.service }}: RealEstateMarketingLowConversionRate is firing'
+        description: '{{ $labels.service }} has triggered RealEstateMarketingLowConversionRate
+          for more than 5 minutes.'
+    - alert: RealEstateMarketingHighTimeOnMarket
+      expr: real_estate_marketing_time_on_market > 60
+      for: 5m
+      labels:
+        severity: warning
+        service: real-estate-marketing
+      annotations:
+        summary: '{{ $labels.service }}: RealEstateMarketingHighTimeOnMarket is firing'
+        description: '{{ $labels.service }} has triggered RealEstateMarketingHighTimeOnMarket
+          for more than 5 minutes.'
+    - alert: RealEstateMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(real_estate_marketing_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: real-estate-marketing
+      annotations:
+        summary: '{{ $labels.service }}: RealEstateMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered RealEstateMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for real-estate-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: real-estate-marketing
+    receiver: real-estate-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: real-estate-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#real-estate-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: monitoring-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sales-automator-metrics
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sales-automator
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics
+
+target:
+  kind: Deployment
+  name: sales-automator

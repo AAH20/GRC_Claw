@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: marketing-compliance-vault-secrets
+spec:
+  vaultAuthRef: marketing-compliance-vault-auth
+  mount: secret
+  path: marketing-compliance
+  destination:
+    create: true
+    name: marketing-compliance-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: marketing-compliance
+
+target:
+  kind: Deployment
+  name: marketing-compliance

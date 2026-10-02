@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Workflow Automation Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: workflow-automation
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: workflow-automation
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: workflow-automation-config
+    literals:
+      - LOG_LEVEL=info
+      - MAX_CONCURRENT_WORKFLOWS=100
+      - WORKFLOW_TIMEOUT_SECONDS=3600
+      - RETRY_POLICY=max-attempts=3
+      - EVENT_DRIVEN_ARCHITECTURE=true
+
+commonLabels:
+  app.kubernetes.io/part-of: workflow-automation
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: workflow-team@example.com
+
+namespace: automation
+
+images:
+  - name: workflow-automation
+    newName: registry.example.com/automation/workflow-automation
+    newTag: v3.0.4
+
+replicas:
+  - name: workflow-automation
+    count: 3

@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Partner Management Service - Production Kustomize Example
+# Partner onboarding, lifecycle management, and relationship tracking
+
+namespace: partner-management
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: partner-management
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: partner-management
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: partner-management
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: partner-management-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: partner-management-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - PARTNER_TIERS=bronze,silver,gold,platinum
+      - ONBOARDING_WORKFLOW=automated
+      - CONTRACT_TEMPLATE_VERSION=v3
+      - REVENUE_SHARE_ENABLED=true
+      - PARTNER_PORTAL_URL=https://partners.grc-claw.io
+      - CRM_SYNC_INTERVAL_MIN=15
+
+secretGenerator:
+  - name: partner-management-secrets
+    behavior: merge
+    envs:
+      - secrets/partner-management.env
+
+commonLabels:
+  app.kubernetes.io/name: partner-management
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: partner-management
+    newName: registry.grc-claw.io/marketing/partner-management
+    newTag: v1.9.1
+
+replicas:
+  - name: partner-management
+    count: 2
+
+namePrefix: prod-
+nameSuffix: -pm

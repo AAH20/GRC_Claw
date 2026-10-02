@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: business-intelligence-config
+  labels:
+    app.kubernetes.io/name: business-intelligence
+data:
+  LOG_LEVEL: "info"
+  PORT: "8080"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"

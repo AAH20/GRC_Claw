@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: analytics-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: analytics
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: analytics
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: analytics
+
+configMapGenerator:
+  - name: analytics-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/analytics
+    newTag: stable
+
+replicas:
+  - name: analytics
+    count: 3

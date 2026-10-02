@@ -1,0 +1,107 @@
+# AI-Powered Lead Scoring & Qualification — Configuration
+
+app:
+  name: "lead-scorer"
+  version: "0.1.0"
+  description: "AI-Powered Lead Scoring & Qualification"
+  debug: false
+  environment: "development"  # development | staging | production
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limit: "100/minute"
+
+database:
+  url: "postgresql+asyncpg://leadscorer:leadscorer@localhost:5432/leadscorer"
+  pool_size: 20
+  max_overflow: 10
+  pool_timeout: 30
+  echo: false
+
+redis:
+  url: "redis://localhost:6379/0"
+  ttl: 3600  # Cache TTL in seconds
+
+scoring:
+  model: "gpt-4o"
+  temperature: 0.1
+  max_tokens: 4096
+  # Scoring weights (must sum to 1.0)
+  weights:
+    fit: 0.35
+    intent: 0.30
+    engagement: 0.20
+    timing: 0.15
+  # Score thresholds
+  thresholds:
+    hot: 80
+    warm: 50
+    cold: 0
+
+qualification:
+  framework: "BANT"  # BANT | MEDDIC | CHAMP
+  required_fields:
+    - "budget"
+    - "authority"
+    - "need"
+    - "timeline"
+
+churn_prediction:
+  model: "gpt-4o"
+  lookback_days: 90
+  risk_thresholds:
+    high: 0.7
+    medium: 0.4
+    low: 0.0
+
+agents:
+  research:
+    enabled: true
+    max_sources: 10
+    timeout_seconds: 60
+  evidence:
+    enabled: true
+    min_evidence_items: 3
+    timeout_seconds: 30
+  scoring:
+    enabled: true
+    timeout_seconds: 30
+  qualification:
+    enabled: true
+    timeout_seconds: 30
+  churn_prediction:
+    enabled: true
+    timeout_seconds: 30
+  next_best_action:
+    enabled: true
+    max_recommendations: 5
+    timeout_seconds: 30
+  insight_synthesis:
+    enabled: true
+    timeout_seconds: 60
+
+governance:
+  enabled: true
+  audit_log: true
+  pii_redaction: true
+  rate_limiting: true
+  data_retention_days: 365
+
+observability:
+  log_level: "INFO"
+  log_format: "json"
+  prometheus_enabled: true
+  otel_enabled: true
+  otel_endpoint: "http://localhost:4318"
+  tracing_sample_rate: 0.1
+
+security:
+  api_key_header: "X-API-Key"
+  jwt_secret: "change-me-in-production"
+  jwt_algorithm: "HS256"
+  jwt_expiration_hours: 24

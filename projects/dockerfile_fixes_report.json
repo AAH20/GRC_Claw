@@ -1,0 +1,91 @@
+{
+  "total_projects": 43,
+  "projects_with_issues": 13,
+  "files_fixed": 13,
+  "fixes": [
+    {
+      "project": "analytics",
+      "issues": [
+        "redundant_copy"
+      ]
+    },
+    {
+      "project": "broker-enablement",
+      "issues": [
+        "editable_install"
+      ]
+    },
+    {
+      "project": "crm-enhancer",
+      "issues": [
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "customer-retention",
+      "issues": [
+        "missing_config_copy",
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "customer-service",
+      "issues": [
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "email-marketing",
+      "issues": [
+        "missing_config_copy",
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "event-management",
+      "issues": [
+        "missing_config_copy",
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "journey-orchestrator",
+      "issues": [
+        "path_to_nonexistent_venv"
+      ]
+    },
+    {
+      "project": "onboarding-training",
+      "issues": [
+        "path_to_nonexistent_venv"
+      ]
+    },
+    {
+      "project": "pricing-optimizer",
+      "issues": [
+        "missing_config_copy"
+      ]
+    },
+    {
+      "project": "product-recommendations",
+      "issues": [
+        "missing_config_copy",
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "sales-automator",
+      "issues": [
+        "missing_config_copy",
+        "missing_curl_in_production"
+      ]
+    },
+    {
+      "project": "social-media-manager",
+      "issues": [
+        "missing_config_copy",
+        "missing_curl_in_production"
+      ]
+    }
+  ]
+}

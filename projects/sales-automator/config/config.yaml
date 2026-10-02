@@ -1,0 +1,78 @@
+app:
+  name: sales-automator
+  version: 0.1.0
+  environment: development
+  log_level: INFO
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1
+
+agents:
+  prospecting:
+    enabled: true
+    max_concurrent: 5
+    scoring_threshold: 0.6
+    sources:
+      - linkedin
+      - web
+  outreach:
+    enabled: true
+    max_concurrent: 3
+    channels:
+      - email
+      - linkedin
+      - call
+    templates:
+      initial_contact: "initial_contact"
+      follow_up: "follow_up"
+      break_up: "break_up"
+  qualification:
+    enabled: true
+    max_concurrent: 3
+    framework: bant
+    min_score: 0.5
+  demo_scheduling:
+    enabled: true
+    max_concurrent: 2
+    calendar_provider: google_calendar
+    default_duration_minutes: 30
+    buffer_minutes: 15
+  followup:
+    enabled: true
+    max_concurrent: 3
+    cadence_days: 3
+    max_touches: 5
+  sales_forecasting:
+    enabled: true
+    max_concurrent: 1
+    forecast_horizon_days: 90
+    confidence_interval: 0.95
+
+integrations:
+  salesforce:
+    enabled: true
+    api_version: v59.0
+    sandbox: false
+  hubspot:
+    enabled: true
+    api_version: v3
+  linkedin:
+    enabled: true
+    api_version: v2
+  google_calendar:
+    enabled: true
+    timezone: UTC
+
+llm:
+  provider: openai
+  model: gpt-4o
+  temperature: 0.7
+  max_tokens: 2048
+  timeout_seconds: 60
+
+monitoring:
+  metrics_enabled: true
+  metrics_port: 9090
+  tracing_enabled: false

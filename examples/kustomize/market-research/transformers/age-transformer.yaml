@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: age-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-research
+spec:
+  template:
+    metadata:
+      annotations:
+        age.k8s.io/enable: "true"
+
+target:
+  kind: Deployment
+  name: market-research

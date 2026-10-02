@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Affiliate Marketing Service - Production Kustomize Example
+# Affiliate tracking, commission management, and partner payouts
+
+namespace: affiliate-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: affiliate-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: affiliate-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: affiliate-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: affiliate-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: affiliate-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - COMMISSION_MODEL=cps,cpc,cpa
+      - COOKIE_DURATION_DAYS=30
+      - ATTRIBUTION_MODEL=last-click
+      - PAYOUT_THRESHOLD=50
+      - PAYOUT_CURRENCY=USD
+      - FRAUD_DETECTION=true
+
+secretGenerator:
+  - name: affiliate-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/affiliate-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: affiliate-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: affiliate-marketing
+    newName: registry.grc-claw.io/marketing/affiliate-marketing
+    newTag: v2.2.0
+
+replicas:
+  - name: affiliate-marketing
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -am

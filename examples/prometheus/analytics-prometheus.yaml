@@ -1,0 +1,155 @@
+# Prometheus Monitoring Configuration for Analytics
+# Description: Marketing analytics and reporting
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the analytics service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: analytics-monitor
+  namespace: monitoring
+  labels:
+    app: analytics
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: analytics
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: analytics_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for analytics
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: analytics-rules
+  namespace: monitoring
+  labels:
+    app: analytics
+    release: prometheus
+spec:
+  groups:
+  - name: analytics-recording-rules
+    interval: 30s
+    rules:
+    - record: analytics:api_request_rate:rate5m
+      expr: rate(analytics_api_requests_total[5m])
+    - record: analytics:api_error_rate:rate5m
+      expr: rate(analytics_api_errors_total[5m])
+    - record: analytics:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(analytics_api_latency_seconds_bucket[5m]))
+  - name: analytics-alerts-1
+    rules:
+    - alert: AnalyticsHighErrorRate
+      expr: rate(analytics_api_errors_total[5m]) / rate(analytics_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: analytics
+      annotations:
+        summary: '{{ $labels.service }}: AnalyticsHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered AnalyticsHighErrorRate for
+          more than 5 minutes.'
+    - alert: AnalyticsDataStale
+      expr: analytics_data_freshness_seconds > 3600
+      for: 5m
+      labels:
+        severity: warning
+        service: analytics
+      annotations:
+        summary: '{{ $labels.service }}: AnalyticsDataStale is firing'
+        description: '{{ $labels.service }} has triggered AnalyticsDataStale for more
+          than 5 minutes.'
+    - alert: AnalyticsHighQueryLatency
+      expr: histogram_quantile(0.95, rate(analytics_query_latency_seconds_bucket[5m]))
+        > 10.0
+      for: 5m
+      labels:
+        severity: warning
+        service: analytics
+      annotations:
+        summary: '{{ $labels.service }}: AnalyticsHighQueryLatency is firing'
+        description: '{{ $labels.service }} has triggered AnalyticsHighQueryLatency
+          for more than 5 minutes.'
+    - alert: AnalyticsLowAttributionAccuracy
+      expr: analytics_attribution_accuracy < 0.7
+      for: 5m
+      labels:
+        severity: warning
+        service: analytics
+      annotations:
+        summary: '{{ $labels.service }}: AnalyticsLowAttributionAccuracy is firing'
+        description: '{{ $labels.service }} has triggered AnalyticsLowAttributionAccuracy
+          for more than 5 minutes.'
+    - alert: AnalyticsHighLatency
+      expr: histogram_quantile(0.95, rate(analytics_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: analytics
+      annotations:
+        summary: '{{ $labels.service }}: AnalyticsHighLatency is firing'
+        description: '{{ $labels.service }} has triggered AnalyticsHighLatency for
+          more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for analytics alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: analytics
+    receiver: analytics-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: analytics-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#analytics-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

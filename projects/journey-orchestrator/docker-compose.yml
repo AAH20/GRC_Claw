@@ -1,0 +1,117 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://journey:journey@postgres:5432/journey_orchestrator
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=development
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - journey-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    command: ["python", "-m", "core.worker"]
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://journey:journey@postgres:5432/journey_orchestrator
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=development
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - journey-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=journey
+      - POSTGRES_PASSWORD=journey
+      - POSTGRES_DB=journey_orchestrator
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U journey -d journey_orchestrator"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - journey-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - journey-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - journey-network
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - journey-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  grafana_data:
+
+networks:
+  journey-network:
+    driver: bridge

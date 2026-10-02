@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: campaign-optimizer-vault-secrets
+spec:
+  vaultAuthRef: campaign-optimizer-vault-auth
+  mount: secret
+  path: campaign-optimizer
+  destination:
+    create: true
+    name: campaign-optimizer-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: campaign-optimizer
+
+target:
+  kind: Deployment
+  name: campaign-optimizer

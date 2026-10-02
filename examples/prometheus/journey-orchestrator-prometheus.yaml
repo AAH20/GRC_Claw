@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for Journey Orchestrator
+# Description: Customer journey orchestration and automation
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the journey-orchestrator service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: journey-orchestrator-monitor
+  namespace: monitoring
+  labels:
+    app: journey-orchestrator
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: journey-orchestrator
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: journey_orchestrator_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for journey-orchestrator
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: journey-orchestrator-rules
+  namespace: monitoring
+  labels:
+    app: journey-orchestrator
+    release: prometheus
+spec:
+  groups:
+  - name: journey-orchestrator-recording-rules
+    interval: 30s
+    rules:
+    - record: journey_orchestrator:api_request_rate:rate5m
+      expr: rate(journey_orchestrator_api_requests_total[5m])
+    - record: journey_orchestrator:api_error_rate:rate5m
+      expr: rate(journey_orchestrator_api_errors_total[5m])
+    - record: journey_orchestrator:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(journey_orchestrator_api_latency_seconds_bucket[5m]))
+  - name: journey-orchestrator-alerts-1
+    rules:
+    - alert: JourneyOrchestratorHighErrorRate
+      expr: rate(journey_orchestrator_api_errors_total[5m]) / rate(journey_orchestrator_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: journey-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: JourneyOrchestratorHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered JourneyOrchestratorHighErrorRate
+          for more than 5 minutes.'
+    - alert: JourneyOrchestratorHighAbandonmentRate
+      expr: journey_orchestrator_abandonment_rate > 0.6
+      for: 5m
+      labels:
+        severity: warning
+        service: journey-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: JourneyOrchestratorHighAbandonmentRate is
+          firing'
+        description: '{{ $labels.service }} has triggered JourneyOrchestratorHighAbandonmentRate
+          for more than 5 minutes.'
+    - alert: JourneyOrchestratorLowCompletionRate
+      expr: journey_orchestrator_completion_rate < 0.3
+      for: 5m
+      labels:
+        severity: warning
+        service: journey-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: JourneyOrchestratorLowCompletionRate is firing'
+        description: '{{ $labels.service }} has triggered JourneyOrchestratorLowCompletionRate
+          for more than 5 minutes.'
+    - alert: JourneyOrchestratorHighLatency
+      expr: histogram_quantile(0.95, rate(journey_orchestrator_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: journey-orchestrator
+      annotations:
+        summary: '{{ $labels.service }}: JourneyOrchestratorHighLatency is firing'
+        description: '{{ $labels.service }} has triggered JourneyOrchestratorHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for journey-orchestrator alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: journey-orchestrator
+    receiver: journey-orchestrator-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: journey-orchestrator-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#journey-orchestrator-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

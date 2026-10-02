@@ -1,0 +1,74 @@
+app:
+  name: journey-orchestrator
+  version: 0.1.0
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+  env: development
+agents:
+  journey_designer:
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 4096
+  personalization:
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 2048
+  timing_optimizer:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 1024
+  experimentation:
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 2048
+  critic:
+    model: gpt-4
+    temperature: 0.2
+    max_tokens: 2048
+  cross_channel:
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 2048
+integrations:
+  salesforce:
+    api_version: v58.0
+    timeout_seconds: 30
+    retry_attempts: 3
+  segment:
+    api_version: v1
+    timeout_seconds: 10
+    retry_attempts: 3
+  amplitude:
+    api_version: v2
+    timeout_seconds: 10
+    retry_attempts: 3
+orchestration:
+  max_concurrent_journeys: 100
+  event_batch_size: 50
+  event_flush_interval_seconds: 30
+  journey_timeout_seconds: 3600
+features:
+  enable_experimentation: true
+  enable_critic_review: true
+  enable_cross_channel: true
+cache:
+  enabled: true
+  ttl_seconds: 300
+  max_entries: 10000
+  backend: memory
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30
+  log_level: INFO
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false

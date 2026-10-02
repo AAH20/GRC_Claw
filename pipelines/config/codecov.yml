@@ -1,0 +1,130 @@
+# Codecov configuration file
+# https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  # Require CI to pass before marking coverage as successful
+  require_ci_to_pass: true
+
+  # Wait for all CI reports before processing
+  wait_for_ci: true
+
+coverage:
+  # Precision of the coverage percentage
+  precision: 2
+
+  # Round coverage percentage (down, up, nearest)
+  round: down
+
+  # Coverage percentage range for color coding
+  range: "70...100"
+
+  # Status checks for coverage
+  status:
+    # Overall project coverage
+    project:
+      default:
+        # Target coverage percentage
+        target: 80%
+        # Allowable coverage drop from base commit
+        threshold: 1%
+        # Base commit for comparison
+        base: auto
+        # Only compare against the base commit
+        only_pulls: false
+        # Paths to include in coverage calculation
+        paths:
+          - "src"
+        # If true, only run on PRs
+        if_ci_failed: error
+        # Informational mode — never fails
+        informational: false
+        # Only flag if coverage drops
+        only_for_pr: false
+
+    # Patch coverage (changed lines only)
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+        base: auto
+        if_ci_failed: error
+        informational: false
+        only_for_pr: false
+
+    # Changes coverage (files changed in PR)
+    changes:
+      default:
+        if_ci_failed: error
+        informational: false
+        only_for_pr: false
+
+  # Ignore specific files/paths from coverage
+  ignore:
+    - "tests/.*"
+    - "test/.*"
+    - ".*_test\\.py"
+    - "test_.*\\.py"
+    - "setup\\.py"
+    - "conftest\\.py"
+    - "migrations/.*"
+    - "alembic/.*"
+
+# Pull request comment configuration
+comment:
+  # Layout of the PR comment
+  layout: "reach,diff,flags,tree,files"
+  # Behavior when coverage changes
+  behavior: default
+  # Require changes to show comment
+  require_changes: false
+  # Require base report
+  require_base: false
+  # Require head report
+  require_head: true
+  # Hide project coverage status
+  hide_project_coverage: false
+
+# GitHub Checks configuration
+github_checks:
+  # Annotate code with coverage information
+  annotations: true
+
+# Profiling configuration
+profiling:
+  # Fix path names in coverage reports
+  fix:
+    - "src/.*::src/"
+
+# Flags for different test suites
+flags:
+  unit:
+    paths:
+      - "src"
+    carryforward: true
+  integration:
+    paths:
+      - "src"
+    carryforward: true
+
+# Component-based coverage (monorepo support)
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: 80%
+        threshold: 1%
+  individual_components:
+    - component_id: core
+      name: Core Module
+      paths:
+        - "src/core/"
+      statuses:
+        - type: project
+          target: 85%
+    - component_id: api
+      name: API Module
+      paths:
+        - "src/api/"
+      statuses:
+        - type: project
+          target: 80%

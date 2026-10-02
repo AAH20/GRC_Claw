@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: cross-project-orchestrator-intercept
+  namespace: default
+  labels:
+    app: cross-project-orchestrator
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Cross-project orchestration service that coordinates workflows, data
+      flow, and dependencies across all GRC Claw marketing projects.
+    telepresence.io/service: cross-project-orchestrator
+    telepresence.io/deployment: cross-project-orchestrator
+spec:
+  service:
+    name: cross-project-orchestrator
+    namespace: default
+    ports:
+    - name: http
+      port: 8122
+      targetPort: 8122
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /orchestrate
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: cross-project-orchestrator
+    namespace: default
+    containerPort: 8122
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: ORCHESTRATION_MODE
+      value: event-driven
+    volumes:
+    - name: orchestrator-state
+      mountPath: /state
+      hostPath: /tmp/orchestrator-state
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8122
+  preview:
+    enabled: true
+    path: /orchestrate
+    headers: *id001
+    port: 8122
+    targetPort: 8122
+    protocol: http

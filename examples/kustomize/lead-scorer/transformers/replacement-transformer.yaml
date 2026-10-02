@@ -1,0 +1,17 @@
+apiVersion: builtin
+kind: ReplacementTransformer
+metadata:
+  name: replacement-config
+replacements:
+  - source:
+      kind: ConfigMap
+      name: lead-scorer-config
+      fieldPath: data.LOG_LEVEL
+    targets:
+      - select:
+          kind: Deployment
+          name: lead-scorer
+        fieldPaths:
+          - spec.template.spec.containers.[name=lead-scorer].env.[name=LOG_LEVEL].value
+        options:
+          create: true

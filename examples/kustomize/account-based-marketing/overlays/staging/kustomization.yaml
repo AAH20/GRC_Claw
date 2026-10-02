@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: account-based-marketing-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: account-based-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: account-based-marketing
+
+configMapGenerator:
+  - name: account-based-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/account-based-marketing
+    newTag: staging

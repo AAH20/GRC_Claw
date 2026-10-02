@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: video-marketing-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: video-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: video-marketing
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: video-marketing
+
+configMapGenerator:
+  - name: video-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/video-marketing
+    newTag: stable
+
+replicas:
+  - name: video-marketing
+    count: 3

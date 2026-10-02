@@ -1,0 +1,21 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: kube-hunter-patch
+patch: |-
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: influencer-marketing-kube-hunter
+spec:
+  template:
+    spec:
+      containers:
+        - name: kube-hunter
+          image: aquasec/kube-hunter:latest
+          command: ["kube-hunter", "--pod"]
+      restartPolicy: Never
+
+target:
+  kind: Deployment
+  name: influencer-marketing

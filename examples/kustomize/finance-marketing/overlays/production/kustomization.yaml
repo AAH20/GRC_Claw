@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: finance-marketing-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+
+configMapGenerator:
+  - name: finance-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/finance-marketing
+    newTag: stable
+
+replicas:
+  - name: finance-marketing
+    count: 3

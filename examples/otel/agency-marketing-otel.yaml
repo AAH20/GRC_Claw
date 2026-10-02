@@ -1,0 +1,584 @@
+# OpenTelemetry Configuration for Agency Marketing
+# Description: manages agency marketing operations
+# Generated: 2026-10-02
+# Version: 1.0.0
+
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: agency-marketing-otel-collector
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: observability
+    environment: production
+    team: marketing-ops
+spec:
+  mode: deployment
+  replicas: 2
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'agency-marketing-metrics'
+              scrape_interval: 15s
+              static_configs:
+                - targets: ['agency-marketing:8080']
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: 'go_.*'
+                  action: drop
+                - source_labels: [__name__]
+                  regex: 'process_.*'
+                  action: drop
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 512
+        spike_limit_mib: 128
+      resource:
+        attributes:
+          - key: service.name
+            value: agency-marketing
+            action: upsert
+          - key: service.version
+            value: "1.0.0"
+            action: upsert
+          - key: deployment.environment
+            value: production
+            action: upsert
+          - key: project.category
+            value: agency
+            action: upsert
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 100000
+        expected_new_traces_per_sec: 1000
+        policies:
+          - name: errors-policy
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: latency-policy
+            type: latency
+            latency:
+              threshold_ms: 500
+          - name: probabilistic-policy
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
+      metricstransform:
+        transforms:
+          - include: http_request_duration_seconds
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: service_tier
+                new_value: marketing
+          - include: grpc_server_handling_seconds
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: service_tier
+                new_value: marketing
+
+    exporters:
+      otlp/jaeger:
+        endpoint: jaeger-collector.monitoring:4317
+        tls:
+          insecure: false
+          ca_file: /etc/otel/certs/ca.crt
+          cert_file: /etc/otel/certs/tls.crt
+          key_file: /etc/otel/certs/tls.key
+      otlp/tempo:
+        endpoint: tempo-distributor.monitoring:4317
+        tls:
+          insecure: false
+      prometheusremotewrite:
+        endpoint: http://prometheus-remote-write.monitoring:9090/api/v1/write
+        tls:
+          insecure: false
+      loki:
+        endpoint: http://loki.monitoring:3100/loki/api/v1/push
+        labels:
+          attributes:
+            service.name: "service.name"
+            service.version: "service.version"
+            deployment.environment: "deployment.environment"
+            project.category: "project.category"
+      logging:
+        loglevel: info
+        sampling_initial: 5
+        sampling_thereafter: 200
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, tail_sampling, resource, batch]
+          exporters: [otlp/jaeger, otlp/tempo]
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [memory_limiter, metricstransform, resource, batch]
+          exporters: [prometheusremotewrite]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [loki, logging]
+      telemetry:
+        metrics:
+          address: 0.0.0.0:8888
+        logs:
+          level: info
+          encoding: json
+
+---
+# Trace Queries for Agency Marketing
+# These queries can be used in Jaeger, Tempo, or Grafana
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agency-marketing-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: observability
+data:
+  queries.yaml: |
+    trace_queries:
+      # Service-level queries
+      - name: "Agency Marketing - Slow Traces"
+        description: "Find traces with duration > 500ms"
+        query: |
+          service.name = "agency-marketing"
+          AND duration > 500ms
+        datasource: tempo
+        type: search
+
+      - name: "Agency Marketing - Error Traces"
+        description: "Find all error traces"
+        query: |
+          service.name = "agency-marketing"
+          AND status.code = STATUS_CODE_ERROR
+        datasource: tempo
+        type: search
+
+      - name: "Agency Marketing - High Latency p99"
+        description: "p99 latency by endpoint"
+        query: |
+          histogram_quantile(0.99,
+            sum(rate(traces_spanmetrics_latency_bucket{service_name="agency-marketing"}[5m])) by (le, span_name)
+          )
+        datasource: prometheus
+        type: query
+
+      - name: "Agency Marketing - Request Rate"
+        description: "Requests per second by span name"
+        query: |
+          sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m])) by (span_name)
+        datasource: prometheus
+        type: query
+
+      - name: "Agency Marketing - Error Rate"
+        description: "Error percentage by span name"
+        query: |
+          sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing",status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m])) * 100
+        datasource: prometheus
+        type: query
+
+      # Domain-specific queries
+      - name: "Agency Marketing - Top Operations by Latency"
+        description: "Top 10 slowest operations"
+        query: |
+          topk(10,
+            avg by (span_name) (
+              rate(traces_spanmetrics_latency_bucket{service_name="agency-marketing"}[5m])
+            )
+          )
+        datasource: prometheus
+        type: query
+
+      - name: "Agency Marketing - Trace by Attribute"
+        description: "Find traces by business attributes"
+        query: |
+          service.name = "agency-marketing"
+          client_id
+          campaign_count
+          retainer
+          utilization
+          satisfaction
+          growth_rate
+        datasource: tempo
+        type: search
+
+      - name: "Agency Marketing - Dependency Graph"
+        description: "Service dependency map"
+        query: |
+          service.name = "agency-marketing"
+        datasource: tempo
+        type: dependencies
+
+      - name: "Agency Marketing - Performance Regression"
+        description: "Compare current vs baseline latency"
+        query: |
+          (
+            avg(rate(traces_spanmetrics_latency_sum{service_name="agency-marketing"}[5m]))
+            /
+            avg(rate(traces_spanmetrics_latency_count{service_name="agency-marketing"}[5m]))
+          )
+          >
+          (
+            avg(rate(traces_spanmetrics_latency_sum{service_name="agency-marketing"}[1h] offset 1h))
+            /
+            avg(rate(traces_spanmetrics_latency_count{service_name="agency-marketing"}[1h] offset 1h))
+          ) * 1.5
+        datasource: prometheus
+        type: alert
+
+---
+# Alerting Rules for Agency Marketing
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: agency-marketing-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: observability
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+    - name: agency-marketing.availability
+      rules:
+        - alert: AgencyMarketingHighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing",status_code="STATUS_CODE_ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "High error rate in Agency Marketing"
+            description: "Error rate is {{ $value | humanizePercentage }} for agency-marketing (threshold: 5%)"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/high-error-rate"
+            dashboard: "https://graf.internal/d/agency-marketing"
+
+        - alert: AgencyMarketingHighLatency
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(traces_spanmetrics_latency_bucket{service_name="agency-marketing"}[5m])) by (le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "High p99 latency in Agency Marketing"
+            description: "p99 latency is {{ $value }}s for agency-marketing (threshold: 1s)"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/high-latency"
+            dashboard: "https://graf.internal/d/agency-marketing"
+
+        - alert: AgencyMarketingHighLatencyCritical
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(traces_spanmetrics_latency_bucket{service_name="agency-marketing"}[5m])) by (le)
+            ) > 3
+          for: 3m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Critical p99 latency in Agency Marketing"
+            description: "p99 latency is {{ $value }}s for agency-marketing (threshold: 3s)"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/critical-latency"
+            dashboard: "https://graf.internal/d/agency-marketing"
+
+    - name: agency-marketing.saturation
+      rules:
+        - alert: AgencyMarketingHighCPUUsage
+          expr: |
+            avg(rate(container_cpu_usage_seconds_total{pod=~"agency-marketing-.*"}[5m])) by (pod) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "High CPU usage in Agency Marketing"
+            description: "CPU usage is above 80% for pod {{ $labels.pod }}"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/high-cpu"
+
+        - alert: AgencyMarketingHighMemoryUsage
+          expr: |
+            avg(container_memory_working_set_bytes{pod=~"agency-marketing-.*"} / container_spec_memory_limit_bytes{pod=~"agency-marketing-.*"}) by (pod) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "High memory usage in Agency Marketing"
+            description: "Memory usage is above 85% for pod {{ $labels.pod }}"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/high-memory"
+
+        - alert: AgencyMarketingPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{pod=~"agency-marketing-.*"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Pod crash looping in Agency Marketing"
+            description: "Pod {{ $labels.pod }} is crash looping"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/crash-looping"
+
+    - name: agency-marketing.traffic
+      rules:
+        - alert: AgencyMarketingTrafficSpike
+          expr: |
+            (
+              sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m]))
+              /
+              sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m] offset 1h))
+            ) > 3
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Traffic spike in Agency Marketing"
+            description: "Request rate is {{ $value }}x higher than 1h ago"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/traffic-spike"
+
+        - alert: AgencyMarketingTrafficDrop
+          expr: |
+            (
+              sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m]))
+              /
+              sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m] offset 1h]))
+            ) < 0.3
+          for: 10m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Traffic drop in Agency Marketing"
+            description: "Request rate dropped to {{ $value }}x of 1h ago baseline"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/traffic-drop"
+
+        - alert: AgencyMarketingNoTraffic
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing"}[5m])) == 0
+          for: 15m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "No traffic in Agency Marketing"
+            description: "No requests received for agency-marketing in the last 15 minutes"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/no-traffic"
+
+    - name: agency-marketing.business
+      rules:
+        - alert: AgencyMarketingLowConversionRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing",span_kind="SPAN_KIND_SERVER",span_name=~".*conversion.*"}[30m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service_name="agency-marketing",span_kind="SPAN_KIND_SERVER"}[30m])) < 0.02
+          for: 30m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Low conversion rate in Agency Marketing"
+            description: "Conversion rate is {{ $value | humanizePercentage }} (threshold: 2%)"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/low-conversion"
+
+        - alert: AgencyMarketingProcessingBacklog
+          expr: |
+            agency-marketing_queue_depth > 1000
+          for: 10m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Processing backlog in Agency Marketing"
+            description: "Queue depth is {{ $value }} (threshold: 1000)"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/processing-backlog"
+
+        - alert: AgencyMarketingDataFreshness
+          expr: |
+            time() - agency-marketing_last_successful_processing_timestamp > 3600
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: agency-marketing
+          annotations:
+            summary: "Stale data in Agency Marketing"
+            description: "Last successful processing was {{ $value }}s ago (threshold: 3600s)"
+            runbook: "https://wiki.internal/runbooks/agency-marketing/stale-data"
+
+---
+# Grafana Dashboard ConfigMap for Agency Marketing
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agency-marketing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: observability
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Agency Marketing - OpenTelemetry Dashboard",
+        "tags": ["agency-marketing", "opentelemetry", "marketing"],
+        "timezone": "utc",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"agency-marketing\"}[5m])) by (span_name)",
+                "legendFormat": "{span_name}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"agency-marketing\",status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_spanmetrics_calls_total{service_name=\"agency-marketing\"}[5m])) * 100",
+                "legendFormat": "Error %",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "p50/p95/p99 Latency",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"agency-marketing\"}[5m])) by (le))",
+                "legendFormat": "p50",
+                "refId": "A"
+              },
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"agency-marketing\"}[5m])) by (le))",
+                "legendFormat": "p95",
+                "refId": "B"
+              },
+              {
+                "expr": "histogram_quantile(0.99, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"agency-marketing\"}[5m])) by (le))",
+                "legendFormat": "p99",
+                "refId": "C"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Service Map",
+            "type": "nodeGraph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "traces_service_graph_request_total",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Log Volume",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(rate(logs_log_lines_total{service_name=\"agency-marketing\"}[5m])) by (level)",
+                "legendFormat": "{level}",
+                "refId": "A"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+---
+# ServiceMonitor for Agency Marketing
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: agency-marketing-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: observability
+spec:
+  selector:
+    matchLabels:
+      app: agency-marketing
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          target_label: namespace

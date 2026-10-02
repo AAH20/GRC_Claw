@@ -1,0 +1,589 @@
+# Tempo Tracing Configuration for onboarding-training
+# Customer onboarding and training management
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: onboarding-training-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: onboarding-training
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: onboarding-training-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find customers stuck in onboarding for over 7 days
+      - name: "Find customers stuck in onboarding for over 7 days"
+        type: search
+        query:
+          service.name: "onboarding-training"
+          span.name: "onboarding.start"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show training completion rates by stage
+      - name: "Show training completion rates by stage"
+        type: search
+        query:
+          service.name: "onboarding-training"
+          span.name: "onboarding.progress"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify fast onboarding completions
+      - name: "Identify fast onboarding completions"
+        type: search
+        query:
+          service.name: "onboarding-training"
+          span.name: "onboarding.complete"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "onboarding-training"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "onboarding-training"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "onboarding-training"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "onboarding.customer_id"
+        description: "Span attribute for onboarding.customer_id"
+        type: string
+      - key: "onboarding.stage"
+        description: "Span attribute for onboarding.stage"
+        type: string
+      - key: "onboarding.progress_pct"
+        description: "Span attribute for onboarding.progress_pct"
+        type: string
+      - key: "onboarding.training_status"
+        description: "Span attribute for onboarding.training_status"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: onboarding-training-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: onboarding-training.tracing.alerts
+      rules:
+        - alert: onboarding-stuck
+          expr: |
+            days_in_stage > 7
+          for: 5m
+          labels:
+            severity: warning
+            service: onboarding-training
+            team: marketing-engineering
+          annotations:
+            summary: "Customer onboarding stuck"
+            description: "Alert for onboarding-training: Customer onboarding stuck"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/onboarding-training/onboarding-stuck"
+            dashboard_url: "https://grafana.grc-claw.com/d/onboarding-training-tracing"
+
+        - alert: training-incomplete
+          expr: |
+            training_status == 'incomplete'
+          for: 5m
+          labels:
+            severity: warning
+            service: onboarding-training
+            team: marketing-engineering
+          annotations:
+            summary: "Training incomplete"
+            description: "Alert for onboarding-training: Training incomplete"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/onboarding-training/training-incomplete"
+            dashboard_url: "https://grafana.grc-claw.com/d/onboarding-training-tracing"
+
+        - alert: fast-onboarding
+          expr: |
+            completion_days < 3
+          for: 5m
+          labels:
+            severity: info
+            service: onboarding-training
+            team: marketing-engineering
+          annotations:
+            summary: "Fast onboarding completion"
+            description: "Alert for onboarding-training: Fast onboarding completion"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/onboarding-training/fast-onboarding"
+            dashboard_url: "https://grafana.grc-claw.com/d/onboarding-training-tracing"
+
+
+    - name: onboarding-training.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="onboarding-training",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="onboarding-training"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: onboarding-training
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for onboarding-training"
+            description: "Error rate exceeds 5% for onboarding-training"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="onboarding-training"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: onboarding-training
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for onboarding-training"
+            description: "P95 latency exceeds 2 seconds for onboarding-training"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="onboarding-training"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="onboarding-training"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: onboarding-training
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for onboarding-training"
+            description: "Trace volume is 2x above 1-hour average for onboarding-training"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: onboarding-training-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "onboarding-training - Tempo Tracing Dashboard",
+      "uid": "onboarding-training-tracing",
+      "tags": ["tempo", "tracing", "onboarding-training", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"onboarding-training\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"onboarding-training\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"onboarding-training\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"onboarding-training\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"onboarding-training\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"onboarding-training\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"onboarding-training\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: onboarding-training-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: onboarding-training
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: onboarding-training-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: onboarding-training
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: onboarding-training-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: onboarding-training
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: onboarding-training-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: onboarding-training
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: onboarding-training-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: onboarding-training
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: onboarding-training-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

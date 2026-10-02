@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cross-project-orchestrator
+spec:
+  template:
+    spec:
+      containers:
+        - name: cross-project-orchestrator
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi

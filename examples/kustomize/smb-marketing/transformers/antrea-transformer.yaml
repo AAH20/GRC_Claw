@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: antrea-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smb-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        antrea.io/enable: "true"
+
+target:
+  kind: Deployment
+  name: smb-marketing

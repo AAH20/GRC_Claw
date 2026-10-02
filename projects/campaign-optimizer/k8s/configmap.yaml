@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: campaign-optimizer-config
+  namespace: campaign-optimizer
+  labels:
+    app: campaign-optimizer
+data:
+  grc-claw-enabled: "true"
+  log-level: "INFO"
+  max-agents: "6"
+  optimization-interval: "300"
+  default-model: "gpt-4o"
+  default-temperature: "0.7"
+  max-retries: "3"
+  request-timeout: "30"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: campaign-optimizer
+  labels:
+    app: campaign-optimizer

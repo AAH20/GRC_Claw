@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Partner Management
+# Description: Partner relationship management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the partner-management service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: partner-management-monitor
+  namespace: monitoring
+  labels:
+    app: partner-management
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: partner-management
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: partner_management_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for partner-management
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: partner-management-rules
+  namespace: monitoring
+  labels:
+    app: partner-management
+    release: prometheus
+spec:
+  groups:
+  - name: partner-management-recording-rules
+    interval: 30s
+    rules:
+    - record: partner_management:api_request_rate:rate5m
+      expr: rate(partner_management_api_requests_total[5m])
+    - record: partner_management:api_error_rate:rate5m
+      expr: rate(partner_management_api_errors_total[5m])
+    - record: partner_management:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(partner_management_api_latency_seconds_bucket[5m]))
+  - name: partner-management-alerts-1
+    rules:
+    - alert: PartnerManagementHighErrorRate
+      expr: rate(partner_management_api_errors_total[5m]) / rate(partner_management_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: partner-management
+      annotations:
+        summary: '{{ $labels.service }}: PartnerManagementHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered PartnerManagementHighErrorRate
+          for more than 5 minutes.'
+    - alert: PartnerManagementLowSatisfaction
+      expr: partner_management_satisfaction_score < 3.5
+      for: 5m
+      labels:
+        severity: warning
+        service: partner-management
+      annotations:
+        summary: '{{ $labels.service }}: PartnerManagementLowSatisfaction is firing'
+        description: '{{ $labels.service }} has triggered PartnerManagementLowSatisfaction
+          for more than 5 minutes.'
+    - alert: PartnerManagementLowEnablement
+      expr: partner_management_enablement_rate < 0.5
+      for: 5m
+      labels:
+        severity: warning
+        service: partner-management
+      annotations:
+        summary: '{{ $labels.service }}: PartnerManagementLowEnablement is firing'
+        description: '{{ $labels.service }} has triggered PartnerManagementLowEnablement
+          for more than 5 minutes.'
+    - alert: PartnerManagementHighLatency
+      expr: histogram_quantile(0.95, rate(partner_management_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: partner-management
+      annotations:
+        summary: '{{ $labels.service }}: PartnerManagementHighLatency is firing'
+        description: '{{ $labels.service }} has triggered PartnerManagementHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for partner-management alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: partner-management
+    receiver: partner-management-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: partner-management-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#partner-management-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

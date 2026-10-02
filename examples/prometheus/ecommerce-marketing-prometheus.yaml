@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for E-commerce Marketing
+# Description: E-commerce marketing optimization
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the ecommerce-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ecommerce-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: ecommerce-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ecommerce-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: ecommerce_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for ecommerce-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ecommerce-marketing-rules
+  namespace: monitoring
+  labels:
+    app: ecommerce-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: ecommerce-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: ecommerce_marketing:api_request_rate:rate5m
+      expr: rate(ecommerce_marketing_api_requests_total[5m])
+    - record: ecommerce_marketing:api_error_rate:rate5m
+      expr: rate(ecommerce_marketing_api_errors_total[5m])
+    - record: ecommerce_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(ecommerce_marketing_api_latency_seconds_bucket[5m]))
+  - name: ecommerce-marketing-alerts-1
+    rules:
+    - alert: EcommerceMarketingHighErrorRate
+      expr: rate(ecommerce_marketing_api_errors_total[5m]) / rate(ecommerce_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: ecommerce-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EcommerceMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered EcommerceMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: EcommerceMarketingLowConversionRate
+      expr: ecommerce_marketing_conversion_rate < 0.02
+      for: 5m
+      labels:
+        severity: warning
+        service: ecommerce-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EcommerceMarketingLowConversionRate is firing'
+        description: '{{ $labels.service }} has triggered EcommerceMarketingLowConversionRate
+          for more than 5 minutes.'
+    - alert: EcommerceMarketingHighCartAbandonment
+      expr: ecommerce_marketing_cart_abandonment_rate > 0.7
+      for: 5m
+      labels:
+        severity: warning
+        service: ecommerce-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EcommerceMarketingHighCartAbandonment is
+          firing'
+        description: '{{ $labels.service }} has triggered EcommerceMarketingHighCartAbandonment
+          for more than 5 minutes.'
+    - alert: EcommerceMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(ecommerce_marketing_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: ecommerce-marketing
+      annotations:
+        summary: '{{ $labels.service }}: EcommerceMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered EcommerceMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for ecommerce-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: ecommerce-marketing
+    receiver: ecommerce-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: ecommerce-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#ecommerce-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: customer-retention-intercept
+  namespace: default
+  labels:
+    app: customer-retention
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Customer retention platform that predicts churn risk, triggers win-back
+      campaigns, and manages loyalty programs.
+    telepresence.io/service: customer-retention
+    telepresence.io/deployment: customer-retention
+spec:
+  service:
+    name: customer-retention
+    namespace: default
+    ports:
+    - name: http
+      port: 8094
+      targetPort: 8094
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /retention
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: customer-retention
+    namespace: default
+    containerPort: 8094
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: CHURN_THRESHOLD
+      value: '0.7'
+    volumes:
+    - name: retention-data
+      mountPath: /data
+      hostPath: /tmp/retention-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8094
+  preview:
+    enabled: true
+    path: /retention
+    headers: *id001
+    port: 8094
+    targetPort: 8094
+    protocol: http

@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: market-research-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: market-research
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: market-research
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: market-research
+
+configMapGenerator:
+  - name: market-research-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/market-research
+    newTag: stable
+
+replicas:
+  - name: market-research
+    count: 3

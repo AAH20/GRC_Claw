@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: email-marketing-rules
+spec:
+  rules: |
+    - rule: email_marketing_unexpected_process
+      desc: Detect unexpected processes in email-marketing container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/email-marketing" and
+        not proc.name in ("email-marketing", "sh", "bash")
+      output: >
+        Unexpected process in email-marketing container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: email-marketing

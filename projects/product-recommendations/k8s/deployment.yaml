@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-recommendations
+  labels:
+    app: product-recommendations
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: product-recommendations
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: product-recommendations
+        version: v1
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/ahmedhassan/product-recommendations:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: SHOPIFY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: product-recommendations-secrets
+                  key: shopify-api-key
+            - name: SHOPIFY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: product-recommendations-secrets
+                  key: shopify-api-secret
+            - name: WOOCOMMERCE_CONSUMER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: product-recommendations-secrets
+                  key: woocommerce-consumer-key
+            - name: WOOCOMMERCE_CONSUMER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: product-recommendations-secrets
+                  key: woocommerce-consumer-secret
+            - name: MAGENTO_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: product-recommendations-secrets
+                  key: magento-access-token
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: affiliate-marketing
+  labels:
+    app: affiliate-marketing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: affiliate-marketing
+  template:
+    metadata:
+      labels:
+        app: affiliate-marketing
+    spec:
+      containers:
+        - name: affiliate-marketing
+          image: affiliate-marketing:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affiliate-marketing-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affiliate-marketing-secrets
+                  key: redis-url
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: affiliate-marketing-secrets
+                  key: sentry-dsn
+                  optional: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

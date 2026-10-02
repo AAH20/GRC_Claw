@@ -1,0 +1,19 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: trivy-patch
+patch: |-
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ClusterComplianceReport
+metadata:
+  name: pricing-optimizer-compliance
+spec:
+  cron: "0 0 * * *"
+  controls:
+    - id: 1.1.1
+      name: "Ensure that the --anonymous-auth argument is set to false"
+      severity: HIGH
+
+target:
+  kind: Deployment
+  name: pricing-optimizer

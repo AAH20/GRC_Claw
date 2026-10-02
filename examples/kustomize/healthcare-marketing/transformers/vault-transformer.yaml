@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: healthcare-marketing-vault-secrets
+spec:
+  vaultAuthRef: healthcare-marketing-vault-auth
+  mount: secret
+  path: healthcare-marketing
+  destination:
+    create: true
+    name: healthcare-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: healthcare-marketing
+
+target:
+  kind: Deployment
+  name: healthcare-marketing

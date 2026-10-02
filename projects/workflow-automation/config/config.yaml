@@ -1,0 +1,77 @@
+app:
+  name: "workflow-automation"
+  version: "0.1.0"
+  env: "dev"
+  log_level: "INFO"
+  host: "0.0.0.0"
+  port: 8000
+
+agents:
+  workflow_discovery:
+    enabled: true
+    max_concurrent_discoveries: 5
+    timeout_seconds: 300
+    cache_ttl_seconds: 3600
+
+  workflow_optimization:
+    enabled: true
+    max_concurrent_optimizations: 3
+    timeout_seconds: 600
+    suggestion_limit: 10
+
+  process_automation:
+    enabled: true
+    max_concurrent_executions: 10
+    timeout_seconds: 1800
+    retry_attempts: 3
+    retry_delay_seconds: 5
+
+  integration_automation:
+    enabled: true
+    sync_interval_seconds: 300
+    timeout_seconds: 120
+    max_retries: 3
+
+  performance_analytics:
+    enabled: true
+    metrics_retention_days: 90
+    report_interval_seconds: 3600
+    dashboard_refresh_seconds: 60
+
+integrations:
+  n8n:
+    enabled: true
+    base_url: "http://localhost:5678"
+    api_key: ""
+    webhook_path: "/webhook"
+    timeout_seconds: 30
+
+  zapier:
+    enabled: true
+    webhook_url: ""
+    timeout_seconds: 30
+
+  make:
+    enabled: true
+    base_url: "https://www.make.com"
+    api_key: ""
+    team_id: ""
+    timeout_seconds: 30
+
+langchain:
+  api_key: ""
+  project: "workflow-automation"
+  tracing: false
+  model: "gpt-4"
+  temperature: 0.1
+  max_tokens: 4096
+
+grc_marketing_core:
+  enabled: true
+  api_endpoint: ""
+  api_key: ""
+
+prometheus:
+  enabled: true
+  port: 9090
+  path: "/metrics"

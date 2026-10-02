@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: checkov-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-forecaster
+spec:
+  template:
+    metadata:
+      annotations:
+        checkov.io/skip: "false"
+
+target:
+  kind: Deployment
+  name: sales-forecaster

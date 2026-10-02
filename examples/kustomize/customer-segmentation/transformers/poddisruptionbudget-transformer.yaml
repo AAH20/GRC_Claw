@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: pdb-patch
+patch: |-
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: customer-segmentation-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-segmentation
+
+target:
+  kind: Deployment
+  name: customer-segmentation

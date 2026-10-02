@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: content-generator-config
+  labels:
+    app.kubernetes.io/name: content-generator
+data:
+  LOG_LEVEL: "info"
+  PORT: "8080"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"

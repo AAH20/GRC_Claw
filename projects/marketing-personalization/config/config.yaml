@@ -1,0 +1,58 @@
+app:
+  name: "marketing-personalization"
+  version: "1.0.0"
+  env: "development"
+  log_level: "INFO"
+  debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  timeout: 30
+
+redis:
+  url: "redis://localhost:6379/0"
+  max_connections: 10
+  socket_timeout: 5
+
+agents:
+  data_collection:
+    timeout: 60
+    max_retries: 3
+    batch_size: 100
+  analysis:
+    timeout: 120
+    max_retries: 2
+  personalization:
+    timeout: 90
+    max_retries: 2
+  optimization:
+    timeout: 120
+    max_retries: 2
+  governance:
+    timeout: 30
+    max_retries: 1
+  performance_analytics:
+    timeout: 60
+    max_retries: 2
+  orchestrator:
+    timeout: 300
+    max_retries: 1
+
+integrations:
+  salesforce:
+    api_version: "v58.0"
+    timeout: 30
+    sandbox: false
+  hubspot:
+    timeout: 30
+    max_results: 100
+  mailchimp:
+    timeout: 30
+    max_results: 1000
+
+prometheus:
+  enabled: true
+  port: 9090
+  path: "/metrics"

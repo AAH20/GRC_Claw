@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: cross-project-orchestrator-vault-secrets
+spec:
+  vaultAuthRef: cross-project-orchestrator-vault-auth
+  mount: secret
+  path: cross-project-orchestrator
+  destination:
+    create: true
+    name: cross-project-orchestrator-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: cross-project-orchestrator
+
+target:
+  kind: Deployment
+  name: cross-project-orchestrator

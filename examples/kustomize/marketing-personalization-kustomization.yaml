@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Marketing Personalization Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-personalization
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-personalization
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: marketing-personalization-config
+    literals:
+      - LOG_LEVEL=info
+      - PERSONALIZATION_ENGINE=ml-v3
+      - REAL_TIME_SCORING=true
+      - PROFILE_CACHE_TTL=300
+      - A_B_TEST_ENABLED=true
+
+commonLabels:
+  app.kubernetes.io/part-of: marketing-personalization
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: personalization-team@example.com
+
+namespace: marketing
+
+images:
+  - name: marketing-personalization
+    newName: registry.example.com/marketing/marketing-personalization
+    newTag: v2.7.1
+
+replicas:
+  - name: marketing-personalization
+    count: 4

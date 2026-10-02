@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-media-manager
+  labels:
+    app: social-media-manager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: social-media-manager
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: social-media-manager
+    spec:
+      containers:
+        - name: app
+          image: social-media-manager:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: smm-config
+            - secretRef:
+                name: smm-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smm-config
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smm-secrets
+type: Opaque
+stringData:
+  TWITTER_API_KEY: ""
+  TWITTER_API_SECRET: ""
+  INSTAGRAM_ACCESS_TOKEN: ""
+  FACEBOOK_ACCESS_TOKEN: ""
+  LINKEDIN_ACCESS_TOKEN: ""
+  TIKTOK_ACCESS_TOKEN: ""

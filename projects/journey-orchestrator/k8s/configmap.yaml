@@ -1,0 +1,59 @@
+# Kubernetes ConfigMap for Journey Orchestrator
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: journey-orchestrator-config
+  namespace: journey-orchestrator
+  labels:
+    app: journey-orchestrator
+    component: config
+data:
+  JOURNEY_ENVIRONMENT: "production"
+  JOURNEY_LOG_LEVEL: "INFO"
+  JOURNEY_LOG_FORMAT: "json"
+  JOURNEY_API_WORKERS: "4"
+  JOURNEY_ORCH_MAX_CONCURRENT_JOURNEYS: "100"
+  JOURNEY_ORCH_MAX_STEPS_PER_JOURNEY: "50"
+  JOURNEY_ORCH_ENABLE_CRITIC: "true"
+  JOURNEY_ORCH_CRITIC_THRESHOLD: "0.7"
+  JOURNEY_OBS_METRICS_ENABLED: "true"
+  JOURNEY_OBS_METRICS_PORT: "9090"
+  JOURNEY_OBS_TRACING_ENABLED: "true"
+  config.yaml: |
+    app:
+      name: "journey-orchestrator"
+      version: "0.1.0"
+      environment: "production"
+      debug: false
+      log_level: "INFO"
+      log_format: "json"
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 4
+      cors_origins:
+        - "https://app.grc-claw.ai"
+      rate_limit: "100/minute"
+      request_timeout: 30
+    orchestration:
+      max_concurrent_journeys: 100
+      max_steps_per_journey: 50
+      default_step_timeout: 300
+      checkpoint_interval: 60
+      enable_critic: true
+      critic_threshold: 0.7
+    channels:
+      email:
+        enabled: true
+        provider: "sendgrid"
+      sms:
+        enabled: true
+        provider: "twilio"
+      push:
+        enabled: true
+        provider: "firebase"
+      web:
+        enabled: true
+      ads:
+        enabled: true
+        provider: "meta"

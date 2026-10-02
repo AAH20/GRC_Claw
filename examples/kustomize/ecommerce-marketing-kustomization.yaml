@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Ecommerce Marketing Service - Production Kustomize Example
+# Product recommendations, cart recovery, and promotional campaigns
+
+namespace: ecommerce-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: ecommerce-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: ecommerce-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: ecommerce-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: ecommerce-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: ecommerce-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - RECOMMENDATION_ENGINE=collaborative-filtering
+      - CART_RECOVERY_FLOW=email,sms,push
+      - PROMOTION_TYPES=discount,bundle,flash-sale
+      - PERSONALIZATION_MODEL=real-time
+      - AB_TESTING_ENABLED=true
+      - INVENTORY_SYNC_INTERVAL_SEC=60
+
+secretGenerator:
+  - name: ecommerce-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/ecommerce-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: ecommerce-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: ecommerce-marketing
+    newName: registry.grc-claw.io/marketing/ecommerce-marketing
+    newTag: v2.6.0
+
+replicas:
+  - name: ecommerce-marketing
+    count: 4
+
+namePrefix: prod-
+nameSuffix: -ec

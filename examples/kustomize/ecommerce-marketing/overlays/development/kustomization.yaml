@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ecommerce-marketing-dev
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: ecommerce-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: ecommerce-marketing
+
+configMapGenerator:
+  - name: ecommerce-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - DEBUG=true
+
+commonLabels:
+  environment: development
+
+images:
+  - name: grcclaw/ecommerce-marketing
+    newTag: dev

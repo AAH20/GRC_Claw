@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: nginx-ingress-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-marketing
+spec:
+  template:
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: nginx
+
+target:
+  kind: Deployment
+  name: real-estate-marketing

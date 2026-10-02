@@ -1,0 +1,17 @@
+apiVersion: builtin
+kind: ReplacementTransformer
+metadata:
+  name: replacement-config
+replacements:
+  - source:
+      kind: ConfigMap
+      name: cross-project-orchestrator-config
+      fieldPath: data.LOG_LEVEL
+    targets:
+      - select:
+          kind: Deployment
+          name: cross-project-orchestrator
+        fieldPaths:
+          - spec.template.spec.containers.[name=cross-project-orchestrator].env.[name=LOG_LEVEL].value
+        options:
+          create: true

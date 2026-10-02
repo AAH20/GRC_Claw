@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: marketing-attribution-vault-secrets
+spec:
+  vaultAuthRef: marketing-attribution-vault-auth
+  mount: secret
+  path: marketing-attribution
+  destination:
+    create: true
+    name: marketing-attribution-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: marketing-attribution
+
+target:
+  kind: Deployment
+  name: marketing-attribution

@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: customer-retention-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: customer-retention.rules
+      rules:
+        - alert: customer_retention_high_error_rate
+          expr: rate(http_requests_total{job="customer-retention",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in customer-retention"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: customer_retention_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="customer-retention"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in customer-retention"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: customer-retention

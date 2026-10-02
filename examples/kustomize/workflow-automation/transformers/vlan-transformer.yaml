@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vlan-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-automation
+spec:
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: vlan-conf
+
+target:
+  kind: Deployment
+  name: workflow-automation

@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: ppc-manager-intercept
+  namespace: default
+  labels:
+    app: ppc-manager
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Pay-per-click campaign management tool for Google Ads, Bing Ads,
+      and social platforms with automated bidding and budget optimization.
+    telepresence.io/service: ppc-manager
+    telepresence.io/deployment: ppc-manager
+spec:
+  service:
+    name: ppc-manager
+    namespace: default
+    ports:
+    - name: http
+      port: 8086
+      targetPort: 8086
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /campaigns
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: ppc-manager
+    namespace: default
+    containerPort: 8086
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: AD_PLATFORMS
+      value: google,bing
+    volumes:
+    - name: ppc-data
+      mountPath: /data
+      hostPath: /tmp/ppc-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8086
+  preview:
+    enabled: true
+    path: /campaigns
+    headers: *id001
+    port: 8086
+    targetPort: 8086
+    protocol: http

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: ecommerce-marketing-vault-secrets
+spec:
+  vaultAuthRef: ecommerce-marketing-vault-auth
+  mount: secret
+  path: ecommerce-marketing
+  destination:
+    create: true
+    name: ecommerce-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: ecommerce-marketing
+
+target:
+  kind: Deployment
+  name: ecommerce-marketing

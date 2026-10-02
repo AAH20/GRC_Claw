@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Market Research
+# Description: AI market research and analysis
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the market-research service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: market-research-monitor
+  namespace: monitoring
+  labels:
+    app: market-research
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: market-research
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: market_research_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for market-research
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: market-research-rules
+  namespace: monitoring
+  labels:
+    app: market-research
+    release: prometheus
+spec:
+  groups:
+  - name: market-research-recording-rules
+    interval: 30s
+    rules:
+    - record: market_research:api_request_rate:rate5m
+      expr: rate(market_research_api_requests_total[5m])
+    - record: market_research:api_error_rate:rate5m
+      expr: rate(market_research_api_errors_total[5m])
+    - record: market_research:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(market_research_api_latency_seconds_bucket[5m]))
+  - name: market-research-alerts-1
+    rules:
+    - alert: MarketResearchHighErrorRate
+      expr: rate(market_research_api_errors_total[5m]) / rate(market_research_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: market-research
+      annotations:
+        summary: '{{ $labels.service }}: MarketResearchHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered MarketResearchHighErrorRate
+          for more than 5 minutes.'
+    - alert: MarketResearchLowCoverage
+      expr: market_research_coverage_score < 0.6
+      for: 5m
+      labels:
+        severity: warning
+        service: market-research
+      annotations:
+        summary: '{{ $labels.service }}: MarketResearchLowCoverage is firing'
+        description: '{{ $labels.service }} has triggered MarketResearchLowCoverage
+          for more than 5 minutes.'
+    - alert: MarketResearchLowAccuracy
+      expr: market_research_accuracy_score < 0.7
+      for: 5m
+      labels:
+        severity: warning
+        service: market-research
+      annotations:
+        summary: '{{ $labels.service }}: MarketResearchLowAccuracy is firing'
+        description: '{{ $labels.service }} has triggered MarketResearchLowAccuracy
+          for more than 5 minutes.'
+    - alert: MarketResearchHighLatency
+      expr: histogram_quantile(0.95, rate(market_research_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: market-research
+      annotations:
+        summary: '{{ $labels.service }}: MarketResearchHighLatency is firing'
+        description: '{{ $labels.service }} has triggered MarketResearchHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for market-research alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: market-research
+    receiver: market-research-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: market-research-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#market-research-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Account-Based Marketing
+# Description: Account-based marketing orchestration
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the account-based-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: account-based-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: account-based-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: account-based-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: account_based_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for account-based-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: account-based-marketing-rules
+  namespace: monitoring
+  labels:
+    app: account-based-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: account-based-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: account_based_marketing:api_request_rate:rate5m
+      expr: rate(account_based_marketing_api_requests_total[5m])
+    - record: account_based_marketing:api_error_rate:rate5m
+      expr: rate(account_based_marketing_api_errors_total[5m])
+    - record: account_based_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(account_based_marketing_api_latency_seconds_bucket[5m]))
+  - name: account-based-marketing-alerts-1
+    rules:
+    - alert: ABMHighErrorRate
+      expr: rate(account_based_marketing_api_errors_total[5m]) / rate(account_based_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: account-based-marketing
+      annotations:
+        summary: '{{ $labels.service }}: ABMHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered ABMHighErrorRate for more
+          than 5 minutes.'
+    - alert: ABMLowEngagementRate
+      expr: account_based_marketing_engagement_rate < 0.1
+      for: 5m
+      labels:
+        severity: warning
+        service: account-based-marketing
+      annotations:
+        summary: '{{ $labels.service }}: ABMLowEngagementRate is firing'
+        description: '{{ $labels.service }} has triggered ABMLowEngagementRate for
+          more than 5 minutes.'
+    - alert: ABMHighLatency
+      expr: histogram_quantile(0.95, rate(account_based_marketing_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: account-based-marketing
+      annotations:
+        summary: '{{ $labels.service }}: ABMHighLatency is firing'
+        description: '{{ $labels.service }} has triggered ABMHighLatency for more
+          than 5 minutes.'
+    - alert: ABMLowAccountCoverage
+      expr: account_based_marketing_account_coverage < 0.6
+      for: 5m
+      labels:
+        severity: info
+        service: account-based-marketing
+      annotations:
+        summary: '{{ $labels.service }}: ABMLowAccountCoverage is firing'
+        description: '{{ $labels.service }} has triggered ABMLowAccountCoverage for
+          more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for account-based-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: account-based-marketing
+    receiver: account-based-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: account-based-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#account-based-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

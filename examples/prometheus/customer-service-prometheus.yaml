@@ -1,0 +1,154 @@
+# Prometheus Monitoring Configuration for Customer Service
+# Description: Customer service and support automation
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the customer-service service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: customer-service-monitor
+  namespace: monitoring
+  labels:
+    app: customer-service
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: customer-service
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: customer_service_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for customer-service
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: customer-service-rules
+  namespace: monitoring
+  labels:
+    app: customer-service
+    release: prometheus
+spec:
+  groups:
+  - name: customer-service-recording-rules
+    interval: 30s
+    rules:
+    - record: customer_service:api_request_rate:rate5m
+      expr: rate(customer_service_api_requests_total[5m])
+    - record: customer_service:api_error_rate:rate5m
+      expr: rate(customer_service_api_errors_total[5m])
+    - record: customer_service:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(customer_service_api_latency_seconds_bucket[5m]))
+  - name: customer-service-alerts-1
+    rules:
+    - alert: CustomerServiceHighErrorRate
+      expr: rate(customer_service_api_errors_total[5m]) / rate(customer_service_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: customer-service
+      annotations:
+        summary: '{{ $labels.service }}: CustomerServiceHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered CustomerServiceHighErrorRate
+          for more than 5 minutes.'
+    - alert: CustomerServiceLowCSAT
+      expr: customer_service_csat_score < 3.5
+      for: 5m
+      labels:
+        severity: critical
+        service: customer-service
+      annotations:
+        summary: '{{ $labels.service }}: CustomerServiceLowCSAT is firing'
+        description: '{{ $labels.service }} has triggered CustomerServiceLowCSAT for
+          more than 5 minutes.'
+    - alert: CustomerServiceHighEscalationRate
+      expr: customer_service_escalation_rate > 0.3
+      for: 5m
+      labels:
+        severity: warning
+        service: customer-service
+      annotations:
+        summary: '{{ $labels.service }}: CustomerServiceHighEscalationRate is firing'
+        description: '{{ $labels.service }} has triggered CustomerServiceHighEscalationRate
+          for more than 5 minutes.'
+    - alert: CustomerServiceSlowFirstResponse
+      expr: customer_service_first_response_time_seconds > 300
+      for: 5m
+      labels:
+        severity: warning
+        service: customer-service
+      annotations:
+        summary: '{{ $labels.service }}: CustomerServiceSlowFirstResponse is firing'
+        description: '{{ $labels.service }} has triggered CustomerServiceSlowFirstResponse
+          for more than 5 minutes.'
+    - alert: CustomerServiceHighLatency
+      expr: histogram_quantile(0.95, rate(customer_service_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: customer-service
+      annotations:
+        summary: '{{ $labels.service }}: CustomerServiceHighLatency is firing'
+        description: '{{ $labels.service }} has triggered CustomerServiceHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for customer-service alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: customer-service
+    receiver: customer-service-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: customer-service-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#customer-service-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: business-intelligence-vault-secrets
+spec:
+  vaultAuthRef: business-intelligence-vault-auth
+  mount: secret
+  path: business-intelligence
+  destination:
+    create: true
+    name: business-intelligence-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: business-intelligence
+
+target:
+  kind: Deployment
+  name: business-intelligence

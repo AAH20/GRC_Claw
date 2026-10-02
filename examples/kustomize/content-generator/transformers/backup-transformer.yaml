@@ -1,0 +1,25 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: backup-patch
+patch: |-
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: content-generator-backup
+spec:
+  schedule: "0 2 * * *"
+  template:
+    includedNamespaces:
+      - content-generator-prod
+    includedResources:
+      - deployments
+      - services
+      - configmaps
+      - secrets
+    storageLocation: default
+    ttl: 720h
+
+target:
+  kind: Deployment
+  name: content-generator

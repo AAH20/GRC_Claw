@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: crm-enhancer-intercept
+  namespace: default
+  labels:
+    app: crm-enhancer
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: CRM enhancement layer that enriches customer records with AI-driven
+      insights, sentiment analysis, and next-best-action recommendations.
+    telepresence.io/service: crm-enhancer
+    telepresence.io/deployment: crm-enhancer
+spec:
+  service:
+    name: crm-enhancer
+    namespace: default
+    ports:
+    - name: http
+      port: 8088
+      targetPort: 8088
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /enhance
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: crm-enhancer
+    namespace: default
+    containerPort: 8088
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: CRM_PROVIDER
+      value: salesforce
+    volumes:
+    - name: crm-cache
+      mountPath: /cache
+      hostPath: /tmp/crm-cache
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8088
+  preview:
+    enabled: true
+    path: /enhance
+    headers: *id001
+    port: 8088
+    targetPort: 8088
+    protocol: http

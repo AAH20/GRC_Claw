@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  compliance-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - COMPLIANCE_ENVIRONMENT=${COMPLIANCE_ENVIRONMENT:-production}
+      - COMPLIANCE_LOG_LEVEL=${COMPLIANCE_LOG_LEVEL:-INFO}
+      - COMPLIANCE_SECRET_KEY=${COMPLIANCE_SECRET_KEY:-change-me-in-production}
+      - SALESFORCE_CLIENT_ID=${SALESFORCE_CLIENT_ID:-}
+      - SALESFORCE_CLIENT_SECRET=${SALESFORCE_CLIENT_SECRET:-}
+      - SALESFORCE_USERNAME=${SALESFORCE_USERNAME:-}
+      - SALESFORCE_PASSWORD=${SALESFORCE_PASSWORD:-}
+      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY:-}
+      - MAILCHIMP_API_KEY=${MAILCHIMP_API_KEY:-}
+      - MAILCHIMP_SERVER_PREFIX=${MAILCHIMP_SERVER_PREFIX:-}
+    volumes:
+      - compliance-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  compliance-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "compliance.worker"]
+    environment:
+      - COMPLIANCE_ENVIRONMENT=${COMPLIANCE_ENVIRONMENT:-production}
+      - COMPLIANCE_LOG_LEVEL=${COMPLIANCE_LOG_LEVEL:-INFO}
+      - COMPLIANCE_SECRET_KEY=${COMPLIANCE_SECRET_KEY:-change-me-in-production}
+      - SALESFORCE_CLIENT_ID=${SALESFORCE_CLIENT_ID:-}
+      - SALESFORCE_CLIENT_SECRET=${SALESFORCE_CLIENT_SECRET:-}
+      - SALESFORCE_USERNAME=${SALESFORCE_USERNAME:-}
+      - SALESFORCE_PASSWORD=${SALESFORCE_PASSWORD:-}
+      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY:-}
+      - MAILCHIMP_API_KEY=${MAILCHIMP_API_KEY:-}
+      - MAILCHIMP_SERVER_PREFIX=${MAILCHIMP_SERVER_PREFIX:-}
+    volumes:
+      - compliance-data:/app/data
+    restart: unless-stopped
+    depends_on:
+      compliance-api:
+        condition: service_healthy
+
+volumes:
+  compliance-data:

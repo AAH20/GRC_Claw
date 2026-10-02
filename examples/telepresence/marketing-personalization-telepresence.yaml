@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: marketing-personalization-intercept
+  namespace: default
+  labels:
+    app: marketing-personalization
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Real-time personalization engine that tailors marketing messages,
+      offers, and content to individual customer profiles.
+    telepresence.io/service: marketing-personalization
+    telepresence.io/deployment: marketing-personalization
+spec:
+  service:
+    name: marketing-personalization
+    namespace: default
+    ports:
+    - name: http
+      port: 8101
+      targetPort: 8101
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /personalize
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: marketing-personalization
+    namespace: default
+    containerPort: 8101
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: PERSONALIZATION_LEVEL
+      value: individual
+    volumes:
+    - name: personalization-profiles
+      mountPath: /profiles
+      hostPath: /tmp/personalization-profiles
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8101
+  preview:
+    enabled: true
+    path: /personalize
+    headers: *id001
+    port: 8101
+    targetPort: 8101
+    protocol: http

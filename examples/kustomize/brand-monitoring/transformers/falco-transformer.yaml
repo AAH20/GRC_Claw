@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: brand-monitoring-rules
+spec:
+  rules: |
+    - rule: brand_monitoring_unexpected_process
+      desc: Detect unexpected processes in brand-monitoring container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/brand-monitoring" and
+        not proc.name in ("brand-monitoring", "sh", "bash")
+      output: >
+        Unexpected process in brand-monitoring container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: brand-monitoring

@@ -1,0 +1,90 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Cross-Project Orchestrator Service - Production Kustomize Example
+# Orchestrates workflows across all 43 GRC Claw projects with unified control plane
+
+namespace: cross-project-orchestrator
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: cross-project-orchestrator
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: cross-project-orchestrator
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: cross-project-orchestrator
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: cross-project-orchestrator-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: cross-project-orchestrator-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - ORCHESTRATION_ENGINE=temporal
+      - MAX_CONCURRENT_WORKFLOWS=500
+      - WORKFLOW_TIMEOUT_HOURS=24
+      - RETRY_POLICY=max-attempts=3,backoff=exponential
+      - CIRCUIT_BREAKER_THRESHOLD=0.5
+      - DISTRIBUTED_TRACING=jaeger
+      - EVENT_SOURCING_ENABLED=true
+      - SAGA_PATTERN_ENABLED=true
+      - PROJECT_DISCOVERY_INTERVAL_SEC=60
+      - HEALTH_CHECK_INTERVAL_SEC=30
+      - DEAD_LETTER_QUEUE_ENABLED=true
+
+secretGenerator:
+  - name: cross-project-orchestrator-secrets
+    behavior: merge
+    envs:
+      - secrets/cross-project-orchestrator.env
+
+commonLabels:
+  app.kubernetes.io/name: cross-project-orchestrator
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: platform-ops
+  environment: production
+
+images:
+  - name: cross-project-orchestrator
+    newName: registry.grc-claw.io/platform/cross-project-orchestrator
+    newTag: v3.0.0
+
+replicas:
+  - name: cross-project-orchestrator
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -orchestrator

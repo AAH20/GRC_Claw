@@ -1,0 +1,79 @@
+app:
+  name: email-marketing
+  version: 0.1.0
+  env: dev
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+agents:
+  segmentation:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 2048
+    cache_ttl: 3600
+  content_personalization:
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 4096
+    cache_ttl: 1800
+  send_time_optimization:
+    model: gpt-4
+    temperature: 0.2
+    max_tokens: 1024
+    cache_ttl: 7200
+  subject_line_optimization:
+    model: gpt-4
+    temperature: 0.8
+    max_tokens: 512
+    cache_ttl: 900
+  list_hygiene:
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 2048
+    cache_ttl: 86400
+  performance_analytics:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 4096
+    cache_ttl: 3600
+integrations:
+  sendgrid:
+    retry_delay: 1.0
+    timeout_seconds: 30
+    retry_attempts: 3
+  mailchimp:
+    retry_delay: 1.0
+    timeout_seconds: 30
+    retry_attempts: 3
+  klaviyo:
+    retry_delay: 1.0
+    timeout_seconds: 30
+    retry_attempts: 3
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60
+  burst_size: 10
+caching:
+  backend: redis
+  ttl: 3600
+  max_size: 10000
+cache:
+  enabled: true
+  ttl_seconds: 300
+  max_entries: 10000
+  backend: memory
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30
+  log_level: INFO
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false

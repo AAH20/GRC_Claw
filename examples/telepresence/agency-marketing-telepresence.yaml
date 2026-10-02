@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: agency-marketing-intercept
+  namespace: default
+  labels:
+    app: agency-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Marketing agency management platform for client reporting, campaign
+      management, and white-label marketing services.
+    telepresence.io/service: agency-marketing
+    telepresence.io/deployment: agency-marketing
+spec:
+  service:
+    name: agency-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8116
+      targetPort: 8116
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /agency
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: agency-marketing
+    namespace: default
+    containerPort: 8116
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: AGENCY_MODE
+      value: white-label
+    volumes:
+    - name: agency-data
+      mountPath: /data
+      hostPath: /tmp/agency-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8116
+  preview:
+    enabled: true
+    path: /agency
+    headers: *id001
+    port: 8116
+    targetPort: 8116
+    protocol: http

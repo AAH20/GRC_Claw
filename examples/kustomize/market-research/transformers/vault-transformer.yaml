@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: market-research-vault-secrets
+spec:
+  vaultAuthRef: market-research-vault-auth
+  mount: secret
+  path: market-research
+  destination:
+    create: true
+    name: market-research-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: market-research
+
+target:
+  kind: Deployment
+  name: market-research

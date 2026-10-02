@@ -1,0 +1,584 @@
+# OpenTelemetry Configuration for Marketing Attribution
+# Description: attributes conversions to marketing touchpoints
+# Generated: 2026-10-02
+# Version: 1.0.0
+
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: marketing-attribution-otel-collector
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-attribution
+    component: observability
+    environment: production
+    team: marketing-ops
+spec:
+  mode: deployment
+  replicas: 2
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'marketing-attribution-metrics'
+              scrape_interval: 15s
+              static_configs:
+                - targets: ['marketing-attribution:8080']
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: 'go_.*'
+                  action: drop
+                - source_labels: [__name__]
+                  regex: 'process_.*'
+                  action: drop
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 512
+        spike_limit_mib: 128
+      resource:
+        attributes:
+          - key: service.name
+            value: marketing-attribution
+            action: upsert
+          - key: service.version
+            value: "1.0.0"
+            action: upsert
+          - key: deployment.environment
+            value: production
+            action: upsert
+          - key: project.category
+            value: attribution
+            action: upsert
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 100000
+        expected_new_traces_per_sec: 1000
+        policies:
+          - name: errors-policy
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: latency-policy
+            type: latency
+            latency:
+              threshold_ms: 500
+          - name: probabilistic-policy
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
+      metricstransform:
+        transforms:
+          - include: http_request_duration_seconds
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: service_tier
+                new_value: marketing
+          - include: grpc_server_handling_seconds
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: service_tier
+                new_value: marketing
+
+    exporters:
+      otlp/jaeger:
+        endpoint: jaeger-collector.monitoring:4317
+        tls:
+          insecure: false
+          ca_file: /etc/otel/certs/ca.crt
+          cert_file: /etc/otel/certs/tls.crt
+          key_file: /etc/otel/certs/tls.key
+      otlp/tempo:
+        endpoint: tempo-distributor.monitoring:4317
+        tls:
+          insecure: false
+      prometheusremotewrite:
+        endpoint: http://prometheus-remote-write.monitoring:9090/api/v1/write
+        tls:
+          insecure: false
+      loki:
+        endpoint: http://loki.monitoring:3100/loki/api/v1/push
+        labels:
+          attributes:
+            service.name: "service.name"
+            service.version: "service.version"
+            deployment.environment: "deployment.environment"
+            project.category: "project.category"
+      logging:
+        loglevel: info
+        sampling_initial: 5
+        sampling_thereafter: 200
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, tail_sampling, resource, batch]
+          exporters: [otlp/jaeger, otlp/tempo]
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [memory_limiter, metricstransform, resource, batch]
+          exporters: [prometheusremotewrite]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [loki, logging]
+      telemetry:
+        metrics:
+          address: 0.0.0.0:8888
+        logs:
+          level: info
+          encoding: json
+
+---
+# Trace Queries for Marketing Attribution
+# These queries can be used in Jaeger, Tempo, or Grafana
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketing-attribution-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-attribution
+    component: observability
+data:
+  queries.yaml: |
+    trace_queries:
+      # Service-level queries
+      - name: "Marketing Attribution - Slow Traces"
+        description: "Find traces with duration > 500ms"
+        query: |
+          service.name = "marketing-attribution"
+          AND duration > 500ms
+        datasource: tempo
+        type: search
+
+      - name: "Marketing Attribution - Error Traces"
+        description: "Find all error traces"
+        query: |
+          service.name = "marketing-attribution"
+          AND status.code = STATUS_CODE_ERROR
+        datasource: tempo
+        type: search
+
+      - name: "Marketing Attribution - High Latency p99"
+        description: "p99 latency by endpoint"
+        query: |
+          histogram_quantile(0.99,
+            sum(rate(traces_spanmetrics_latency_bucket{service_name="marketing-attribution"}[5m])) by (le, span_name)
+          )
+        datasource: prometheus
+        type: query
+
+      - name: "Marketing Attribution - Request Rate"
+        description: "Requests per second by span name"
+        query: |
+          sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m])) by (span_name)
+        datasource: prometheus
+        type: query
+
+      - name: "Marketing Attribution - Error Rate"
+        description: "Error percentage by span name"
+        query: |
+          sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution",status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m])) * 100
+        datasource: prometheus
+        type: query
+
+      # Domain-specific queries
+      - name: "Marketing Attribution - Top Operations by Latency"
+        description: "Top 10 slowest operations"
+        query: |
+          topk(10,
+            avg by (span_name) (
+              rate(traces_spanmetrics_latency_bucket{service_name="marketing-attribution"}[5m])
+            )
+          )
+        datasource: prometheus
+        type: query
+
+      - name: "Marketing Attribution - Trace by Attribute"
+        description: "Find traces by business attributes"
+        query: |
+          service.name = "marketing-attribution"
+          touchpoint
+          channel
+          conversion_value
+          attribution_model
+          path_length
+          time_to_convert
+        datasource: tempo
+        type: search
+
+      - name: "Marketing Attribution - Dependency Graph"
+        description: "Service dependency map"
+        query: |
+          service.name = "marketing-attribution"
+        datasource: tempo
+        type: dependencies
+
+      - name: "Marketing Attribution - Performance Regression"
+        description: "Compare current vs baseline latency"
+        query: |
+          (
+            avg(rate(traces_spanmetrics_latency_sum{service_name="marketing-attribution"}[5m]))
+            /
+            avg(rate(traces_spanmetrics_latency_count{service_name="marketing-attribution"}[5m]))
+          )
+          >
+          (
+            avg(rate(traces_spanmetrics_latency_sum{service_name="marketing-attribution"}[1h] offset 1h))
+            /
+            avg(rate(traces_spanmetrics_latency_count{service_name="marketing-attribution"}[1h] offset 1h))
+          ) * 1.5
+        datasource: prometheus
+        type: alert
+
+---
+# Alerting Rules for Marketing Attribution
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: marketing-attribution-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-attribution
+    component: observability
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+    - name: marketing-attribution.availability
+      rules:
+        - alert: MarketingAttributionHighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution",status_code="STATUS_CODE_ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "High error rate in Marketing Attribution"
+            description: "Error rate is {{ $value | humanizePercentage }} for marketing-attribution (threshold: 5%)"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/high-error-rate"
+            dashboard: "https://graf.internal/d/marketing-attribution"
+
+        - alert: MarketingAttributionHighLatency
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(traces_spanmetrics_latency_bucket{service_name="marketing-attribution"}[5m])) by (le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "High p99 latency in Marketing Attribution"
+            description: "p99 latency is {{ $value }}s for marketing-attribution (threshold: 1s)"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/high-latency"
+            dashboard: "https://graf.internal/d/marketing-attribution"
+
+        - alert: MarketingAttributionHighLatencyCritical
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(traces_spanmetrics_latency_bucket{service_name="marketing-attribution"}[5m])) by (le)
+            ) > 3
+          for: 3m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Critical p99 latency in Marketing Attribution"
+            description: "p99 latency is {{ $value }}s for marketing-attribution (threshold: 3s)"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/critical-latency"
+            dashboard: "https://graf.internal/d/marketing-attribution"
+
+    - name: marketing-attribution.saturation
+      rules:
+        - alert: MarketingAttributionHighCPUUsage
+          expr: |
+            avg(rate(container_cpu_usage_seconds_total{pod=~"marketing-attribution-.*"}[5m])) by (pod) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "High CPU usage in Marketing Attribution"
+            description: "CPU usage is above 80% for pod {{ $labels.pod }}"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/high-cpu"
+
+        - alert: MarketingAttributionHighMemoryUsage
+          expr: |
+            avg(container_memory_working_set_bytes{pod=~"marketing-attribution-.*"} / container_spec_memory_limit_bytes{pod=~"marketing-attribution-.*"}) by (pod) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "High memory usage in Marketing Attribution"
+            description: "Memory usage is above 85% for pod {{ $labels.pod }}"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/high-memory"
+
+        - alert: MarketingAttributionPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{pod=~"marketing-attribution-.*"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Pod crash looping in Marketing Attribution"
+            description: "Pod {{ $labels.pod }} is crash looping"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/crash-looping"
+
+    - name: marketing-attribution.traffic
+      rules:
+        - alert: MarketingAttributionTrafficSpike
+          expr: |
+            (
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m]))
+              /
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m] offset 1h))
+            ) > 3
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Traffic spike in Marketing Attribution"
+            description: "Request rate is {{ $value }}x higher than 1h ago"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/traffic-spike"
+
+        - alert: MarketingAttributionTrafficDrop
+          expr: |
+            (
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m]))
+              /
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m] offset 1h]))
+            ) < 0.3
+          for: 10m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Traffic drop in Marketing Attribution"
+            description: "Request rate dropped to {{ $value }}x of 1h ago baseline"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/traffic-drop"
+
+        - alert: MarketingAttributionNoTraffic
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution"}[5m])) == 0
+          for: 15m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "No traffic in Marketing Attribution"
+            description: "No requests received for marketing-attribution in the last 15 minutes"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/no-traffic"
+
+    - name: marketing-attribution.business
+      rules:
+        - alert: MarketingAttributionLowConversionRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution",span_kind="SPAN_KIND_SERVER",span_name=~".*conversion.*"}[30m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-attribution",span_kind="SPAN_KIND_SERVER"}[30m])) < 0.02
+          for: 30m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Low conversion rate in Marketing Attribution"
+            description: "Conversion rate is {{ $value | humanizePercentage }} (threshold: 2%)"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/low-conversion"
+
+        - alert: MarketingAttributionProcessingBacklog
+          expr: |
+            marketing-attribution_queue_depth > 1000
+          for: 10m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Processing backlog in Marketing Attribution"
+            description: "Queue depth is {{ $value }} (threshold: 1000)"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/processing-backlog"
+
+        - alert: MarketingAttributionDataFreshness
+          expr: |
+            time() - marketing-attribution_last_successful_processing_timestamp > 3600
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-attribution
+          annotations:
+            summary: "Stale data in Marketing Attribution"
+            description: "Last successful processing was {{ $value }}s ago (threshold: 3600s)"
+            runbook: "https://wiki.internal/runbooks/marketing-attribution/stale-data"
+
+---
+# Grafana Dashboard ConfigMap for Marketing Attribution
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketing-attribution-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-attribution
+    component: observability
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Marketing Attribution - OpenTelemetry Dashboard",
+        "tags": ["marketing-attribution", "opentelemetry", "marketing"],
+        "timezone": "utc",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"marketing-attribution\"}[5m])) by (span_name)",
+                "legendFormat": "{span_name}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"marketing-attribution\",status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_spanmetrics_calls_total{service_name=\"marketing-attribution\"}[5m])) * 100",
+                "legendFormat": "Error %",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "p50/p95/p99 Latency",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"marketing-attribution\"}[5m])) by (le))",
+                "legendFormat": "p50",
+                "refId": "A"
+              },
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"marketing-attribution\"}[5m])) by (le))",
+                "legendFormat": "p95",
+                "refId": "B"
+              },
+              {
+                "expr": "histogram_quantile(0.99, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"marketing-attribution\"}[5m])) by (le))",
+                "legendFormat": "p99",
+                "refId": "C"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Service Map",
+            "type": "nodeGraph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "traces_service_graph_request_total",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Log Volume",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(rate(logs_log_lines_total{service_name=\"marketing-attribution\"}[5m])) by (level)",
+                "legendFormat": "{level}",
+                "refId": "A"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+---
+# ServiceMonitor for Marketing Attribution
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: marketing-attribution-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-attribution
+    component: observability
+spec:
+  selector:
+    matchLabels:
+      app: marketing-attribution
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          target_label: namespace

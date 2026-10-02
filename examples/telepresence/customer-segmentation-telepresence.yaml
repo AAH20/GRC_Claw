@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: customer-segmentation-intercept
+  namespace: default
+  labels:
+    app: customer-segmentation
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Customer segmentation engine that clusters customers based on behavior,
+      demographics, and value for targeted marketing.
+    telepresence.io/service: customer-segmentation
+    telepresence.io/deployment: customer-segmentation
+spec:
+  service:
+    name: customer-segmentation
+    namespace: default
+    ports:
+    - name: http
+      port: 8097
+      targetPort: 8097
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /segments
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: customer-segmentation
+    namespace: default
+    containerPort: 8097
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: SEGMENTATION_ALGORITHM
+      value: kmeans
+    volumes:
+    - name: segment-models
+      mountPath: /models
+      hostPath: /tmp/segment-models
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8097
+  preview:
+    enabled: true
+    path: /segments
+    headers: *id001
+    port: 8097
+    targetPort: 8097
+    protocol: http

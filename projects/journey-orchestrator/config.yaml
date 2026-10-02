@@ -1,0 +1,138 @@
+# Journey Orchestrator Configuration
+# All values can be overridden via environment variables (prefixed with JOURNEY_)
+
+app:
+  name: "journey-orchestrator"
+  version: "0.1.0"
+  environment: "development"  # development | staging | production
+  debug: false
+  log_level: "INFO"
+  log_format: "json"  # json | console
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limit: "100/minute"
+  request_timeout: 30
+
+database:
+  url: "postgresql+asyncpg://journey:journey@localhost:5432/journey_orchestrator"
+  pool_size: 20
+  max_overflow: 10
+  pool_timeout: 30
+  echo: false
+
+redis:
+  url: "redis://localhost:6379/0"
+  max_connections: 50
+  socket_timeout: 5
+  socket_connect_timeout: 5
+
+agents:
+  journey_designer:
+    model: "gpt-4o"
+    temperature: 0.7
+    max_tokens: 4096
+    timeout: 60
+    retry_attempts: 3
+    retry_delay: 1.0
+
+  personalization_engine:
+    model: "gpt-4o"
+    temperature: 0.8
+    max_tokens: 2048
+    timeout: 45
+    retry_attempts: 3
+    retry_delay: 1.0
+
+  timing_optimizer:
+    model: "gpt-4o"
+    temperature: 0.3
+    max_tokens: 1024
+    timeout: 30
+    retry_attempts: 2
+    retry_delay: 0.5
+
+  experimentation:
+    model: "gpt-4o"
+    temperature: 0.5
+    max_tokens: 2048
+    timeout: 45
+    retry_attempts: 3
+    retry_delay: 1.0
+
+  critic:
+    model: "gpt-4o"
+    temperature: 0.2
+    max_tokens: 4096
+    timeout: 60
+    retry_attempts: 3
+    retry_delay: 1.0
+
+  cross_channel_coordinator:
+    model: "gpt-4o"
+    temperature: 0.5
+    max_tokens: 2048
+    timeout: 45
+    retry_attempts: 3
+    retry_delay: 1.0
+
+orchestration:
+  max_concurrent_journeys: 100
+  max_steps_per_journey: 50
+  default_step_timeout: 300
+  checkpoint_interval: 60
+  enable_critic: true
+  critic_threshold: 0.7
+
+channels:
+  email:
+    enabled: true
+    provider: "sendgrid"  # sendgrid | ses | mailgun
+    rate_limit: "1000/hour"
+    templates_dir: "templates/email"
+
+  sms:
+    enabled: true
+    provider: "twilio"
+    rate_limit: "100/hour"
+
+  push:
+    enabled: true
+    provider: "firebase"
+    rate_limit: "5000/hour"
+
+  web:
+    enabled: true
+    provider: "custom"
+
+  ads:
+    enabled: true
+    provider: "meta"  # meta | google | tiktok
+
+experiments:
+  default_sample_size: 1000
+  min_sample_size: 100
+  confidence_level: 0.95
+  max_experiments_per_journey: 10
+  auto_promote_winner: false
+
+observability:
+  metrics_enabled: true
+  metrics_port: 9090
+  tracing_enabled: true
+  tracing_endpoint: "http://localhost:4318"
+  profiling_enabled: false
+
+security:
+  secret_key: "change-me-in-production"
+  jwt_algorithm: "HS256"
+  jwt_expiration: 3600
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+  enable_https_redirect: false

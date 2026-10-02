@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-mig-fan-rpm-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-retention
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-mig-fan-rpm: "1200"
+
+target:
+  kind: Deployment
+  name: customer-retention

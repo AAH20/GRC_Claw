@@ -1,0 +1,94 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "conversational-marketing"
+version = "0.1.0"
+description = "Standalone modularized agentic AI conversational marketing platform"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Ahmed Hassan", email = "ahmed@example.com" },
+]
+keywords = ["conversational-ai", "marketing", "chatbot", "agents", "langchain"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+    "langchain-community>=0.0.10",
+    "langgraph>=0.0.20",
+    "httpx>=0.25.0",
+    "PyYAML>=6.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.2.0",
+    "tenacity>=8.2.0",
+    "prometheus-client>=0.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.25.0",
+    "respx>=0.20.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "types-PyYAML>=6.0.0",
+]
+
+[project.scripts]
+conversational-marketing = "conversational_marketing.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/conversational_marketing"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "TCH"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["conversational_marketing"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/conversational_marketing"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

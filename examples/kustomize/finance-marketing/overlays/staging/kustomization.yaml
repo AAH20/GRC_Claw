@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: finance-marketing-staging
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+
+configMapGenerator:
+  - name: finance-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: grcclaw/finance-marketing
+    newTag: staging

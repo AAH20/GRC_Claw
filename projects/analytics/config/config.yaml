@@ -1,0 +1,84 @@
+app:
+  name: "analytics-attribution"
+  version: "0.1.0"
+  environment: "development"
+  log_level: "INFO"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+redis:
+  url: "redis://localhost:6379/0"
+  ttl: 3600
+
+agents:
+  data_collection:
+    batch_size: 1000
+    lookback_days: 30
+    timeout_seconds: 60
+    retry_attempts: 3
+    sources:
+      - google_analytics
+      - mixpanel
+      - amplitude
+
+  attribution_engine:
+    models:
+      - first_touch
+      - last_touch
+      - linear
+      - time_decay
+      - data_driven
+    default_model: "data_driven"
+    time_decay_half_life_days: 7
+    min_touchpoints: 1
+
+  predictive_analytics:
+    forecast_horizon_days: 30
+    confidence_level: 0.95
+    model_types:
+      - linear_regression
+      - random_forest
+      - gradient_boosting
+    retrain_interval_hours: 24
+    feature_window_days: 90
+
+  reporting:
+    formats:
+      - json
+      - csv
+      - pdf
+    schedule: "0 6 * * *"
+    retention_days: 90
+    max_reports: 100
+
+  realtime_dashboards:
+    websocket_ping_interval: 30
+    max_connections: 100
+    metrics_refresh_seconds: 5
+    buffer_size: 1000
+
+integrations:
+  google_analytics:
+    property_id: ${GA_PROPERTY_ID}
+    credentials_path: ${GA_CREDENTIALS_PATH}
+    api_version: "v1beta"
+    batch_size: 10000
+
+  mixpanel:
+    project_id: ${MIXPANEL_PROJECT_ID}
+    api_secret: ${MIXPANEL_API_SECRET}
+    api_host: "https://api.mixpanel.com"
+    batch_size: 5000
+
+  amplitude:
+    api_key: 
+    api_host: "https://api2.amplitude.com"
+    batch_size: 1000
+
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  health_check_interval: 30

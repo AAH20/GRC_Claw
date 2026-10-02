@@ -1,0 +1,84 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Market Research Service - Production Kustomize Example
+# Conducts market analysis, competitor tracking, and consumer insights
+
+namespace: market-research
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: market-research
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: market-research
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: market-research
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: market-research-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: market-research-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - RESEARCH_API_ENDPOINT=https://api.market-research.grc-claw.io
+      - DATA_RETENTION_DAYS=365
+      - MAX_QUERY_COMPLEXITY=high
+      - CACHE_TTL=3600
+      - REPORT_FORMAT=pdf,csv
+
+secretGenerator:
+  - name: market-research-secrets
+    behavior: merge
+    envs:
+      - secrets/market-research.env
+
+commonLabels:
+  app.kubernetes.io/name: market-research
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: market-research
+    newName: registry.grc-claw.io/marketing/market-research
+    newTag: v1.8.3
+
+replicas:
+  - name: market-research
+    count: 2
+
+namePrefix: prod-
+nameSuffix: -mr

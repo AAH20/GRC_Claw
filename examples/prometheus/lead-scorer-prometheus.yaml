@@ -1,0 +1,152 @@
+# Prometheus Monitoring Configuration for Lead Scorer
+# Description: AI lead scoring and qualification
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the lead-scorer service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lead-scorer-monitor
+  namespace: monitoring
+  labels:
+    app: lead-scorer
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: lead-scorer
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: lead_scorer_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for lead-scorer
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: lead-scorer-rules
+  namespace: monitoring
+  labels:
+    app: lead-scorer
+    release: prometheus
+spec:
+  groups:
+  - name: lead-scorer-recording-rules
+    interval: 30s
+    rules:
+    - record: lead_scorer:api_request_rate:rate5m
+      expr: rate(lead_scorer_api_requests_total[5m])
+    - record: lead_scorer:api_error_rate:rate5m
+      expr: rate(lead_scorer_api_errors_total[5m])
+  - name: lead-scorer-alerts-1
+    rules:
+    - alert: LeadScorerHighErrorRate
+      expr: rate(lead_scorer_api_errors_total[5m]) / rate(lead_scorer_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: lead-scorer
+      annotations:
+        summary: '{{ $labels.service }}: LeadScorerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered LeadScorerHighErrorRate
+          for more than 5 minutes.'
+    - alert: LeadScorerModelAccuracyDrop
+      expr: lead_scorer_model_accuracy < 0.75
+      for: 5m
+      labels:
+        severity: critical
+        service: lead-scorer
+      annotations:
+        summary: '{{ $labels.service }}: LeadScorerModelAccuracyDrop is firing'
+        description: '{{ $labels.service }} has triggered LeadScorerModelAccuracyDrop
+          for more than 5 minutes.'
+    - alert: LeadScorerHighLatency
+      expr: histogram_quantile(0.95, rate(lead_scorer_scoring_latency_seconds_bucket[5m]))
+        > 1.0
+      for: 5m
+      labels:
+        severity: warning
+        service: lead-scorer
+      annotations:
+        summary: '{{ $labels.service }}: LeadScorerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered LeadScorerHighLatency for
+          more than 5 minutes.'
+    - alert: LeadScorerDataStale
+      expr: lead_scorer_data_freshness_seconds > 3600
+      for: 5m
+      labels:
+        severity: warning
+        service: lead-scorer
+      annotations:
+        summary: '{{ $labels.service }}: LeadScorerDataStale is firing'
+        description: '{{ $labels.service }} has triggered LeadScorerDataStale for
+          more than 5 minutes.'
+    - alert: LeadScorerHighFalsePositiveRate
+      expr: lead_scorer_false_positive_rate > 0.3
+      for: 5m
+      labels:
+        severity: warning
+        service: lead-scorer
+      annotations:
+        summary: '{{ $labels.service }}: LeadScorerHighFalsePositiveRate is firing'
+        description: '{{ $labels.service }} has triggered LeadScorerHighFalsePositiveRate
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for lead-scorer alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: lead-scorer
+    receiver: lead-scorer-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: lead-scorer-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#lead-scorer-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

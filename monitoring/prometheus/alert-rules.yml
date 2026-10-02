@@ -1,0 +1,395 @@
+# Prometheus alert rules for GRC Claw agentic AI marketing stack
+# 25 alert rules covering infrastructure, services, business metrics, and SLOs.
+
+groups:
+  # ──────────────────────────────────────────────
+  # Infrastructure & Node Alerts
+  # ──────────────────────────────────────────────
+  - name: infrastructure
+    interval: 30s
+    rules:
+      - alert: NodeHighCPU
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 85% for more than 5 minutes on {{ $labels.instance }}."
+
+      - alert: NodeHighMemory
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% for more than 5 minutes on {{ $labels.instance }}."
+
+      - alert: NodeDiskAlmostFull
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 10
+        for: 10m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Disk almost full on {{ $labels.instance }}"
+          description: "Disk {{ $labels.device }} on {{ $labels.instance }} has less than 10% free space."
+
+      - alert: NodeDiskWillFillIn4Hours
+        expr: predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"}[6h], 4 * 3600) < 0
+        for: 1h
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Disk will fill in 4 hours on {{ $labels.instance }}"
+          description: "Disk {{ $labels.device }} on {{ $labels.instance }} is predicted to fill within 4 hours."
+
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Node exporter down on {{ $labels.instance }}"
+          description: "Node exporter has been unreachable for more than 2 minutes."
+
+  # ──────────────────────────────────────────────
+  # Service Availability Alerts
+  # ──────────────────────────────────────────────
+  - name: service-availability
+    interval: 15s
+    rules:
+      - alert: ServiceDown
+        expr: up{job!~"node-exporter|prometheus|alertmanager|grafana|loki|tempo|otel-collector|blackbox-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: ServiceHighErrorRate
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum by (job) (rate(http_requests_total[5m])) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Service {{ $labels.job }} has an error rate above 5% for more than 3 minutes."
+
+      - alert: ServiceHighLatency
+        expr: |
+          histogram_quantile(0.95, sum by (le, job) (rate(http_request_duration_seconds_bucket[5m]))) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "High P95 latency on {{ $labels.job }}"
+          description: "Service {{ $labels.job }} has P95 latency above 2 seconds for more than 5 minutes."
+
+      - alert: ServiceHighLatencyP99
+        expr: |
+          histogram_quantile(0.99, sum by (le, job) (rate(http_request_duration_seconds_bucket[5m]))) > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "High P99 latency on {{ $labels.job }}"
+          description: "Service {{ $labels.job }} has P99 latency above 5 seconds for more than 5 minutes."
+
+  # ──────────────────────────────────────────────
+  # Agent Health Alerts
+  # ──────────────────────────────────────────────
+  - name: agent-health
+    interval: 15s
+    rules:
+      - alert: AgentHealthDegraded
+        expr: agent_health_status != 1
+        for: 2m
+        labels:
+          severity: warning
+          team: ai-ops
+        annotations:
+          summary: "Agent health degraded for {{ $labels.agent_id }}"
+          description: "Agent {{ $labels.agent_id }} health status is not OK for more than 2 minutes."
+
+      - alert: AgentTaskFailureRateHigh
+        expr: |
+          rate(agent_tasks_failed_total[10m])
+          /
+          rate(agent_tasks_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: ai-ops
+        annotations:
+          summary: "High task failure rate for {{ $labels.agent_id }}"
+          description: "Agent {{ $labels.agent_id }} has a task failure rate above 10% over the last 10 minutes."
+
+      - alert: AgentStuckInLoop
+        expr: agent_loop_iterations > 50
+        for: 5m
+        labels:
+          severity: warning
+          team: ai-ops
+        annotations:
+          summary: "Agent {{ $labels.agent_id }} may be stuck in a loop"
+          description: "Agent {{ $labels.agent_id }} has exceeded 50 loop iterations, possible infinite loop."
+
+      - alert: AgentResponseTimeHigh
+        expr: histogram_quantile(0.95, sum by (le, agent_id) (rate(agent_response_duration_seconds_bucket[5m]))) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: ai-ops
+        annotations:
+          summary: "Agent {{ $labels.agent_id }} response time is high"
+          description: "Agent {{ $labels.agent_id }} P95 response time exceeds 30 seconds."
+
+  # ──────────────────────────────────────────────
+  # Campaign Performance Alerts
+  # ──────────────────────────────────────────────
+  - name: campaign-performance
+    interval: 30s
+    rules:
+      - alert: CampaignCTRDrop
+        expr: |
+          (
+            sum by (campaign_id) (rate(clicks_total[1h]))
+            /
+            sum by (campaign_id) (rate(impressions_total[1h]))
+          )
+          <
+          (
+            sum by (campaign_id) (rate(clicks_total[1h] offset 24h))
+            /
+            sum by (campaign_id) (rate(impressions_total[1h] offset 24h))
+          ) * 0.5
+        for: 15m
+        labels:
+          severity: warning
+          team: marketing
+        annotations:
+          summary: "CTR dropped significantly for campaign {{ $labels.campaign_id }}"
+          description: "Campaign {{ $labels.campaign_id }} CTR has dropped by more than 50% compared to yesterday."
+
+      - alert: CampaignBudgetExhausted
+        expr: campaign_budget_spent / campaign_budget_total > 0.95
+        for: 5m
+        labels:
+          severity: warning
+          team: marketing
+        annotations:
+          summary: "Campaign {{ $labels.campaign_id }} budget nearly exhausted"
+          description: "Campaign {{ $labels.campaign_id }} has spent over 95% of its budget."
+
+      - alert: CampaignConversionRateDrop
+        expr: |
+          (
+            sum by (campaign_id) (rate(conversions_total[1h]))
+            /
+            sum by (campaign_id) (rate(clicks_total[1h]))
+          )
+          <
+          (
+            sum by (campaign_id) (rate(conversions_total[1h] offset 24h]))
+            /
+            sum by (campaign_id) (rate(clicks_total[1h] offset 24h))
+          ) * 0.6
+        for: 30m
+        labels:
+          severity: critical
+          team: marketing
+        annotations:
+          summary: "Conversion rate dropped for campaign {{ $labels.campaign_id }}"
+          description: "Campaign {{ $labels.campaign_id }} conversion rate has dropped by more than 40% compared to yesterday."
+
+  # ──────────────────────────────────────────────
+  # Cost & Budget Alerts
+  # ──────────────────────────────────────────────
+  - name: cost
+    interval: 60s
+    rules:
+      - alert: DailyCostSpike
+        expr: |
+          (
+            sum(increase(llm_api_cost_dollars[1h]))
+            /
+            sum(increase(llm_api_cost_dollars[1h] offset 24h))
+          ) > 2
+        for: 15m
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "LLM API cost spike detected"
+          description: "LLM API cost in the last hour is more than 2x the same hour yesterday."
+
+      - alert: MonthlyBudgetForecastExceeded
+        expr: |
+          (
+            sum(llm_api_cost_dollars)
+            +
+            (
+              sum(rate(llm_api_cost_dollars[1h])) * 24 * day_of_month() - day_of_month()
+            )
+          ) > monthly_budget_limit
+        for: 1h
+        labels:
+          severity: critical
+          team: finance
+        annotations:
+          summary: "Monthly budget forecast exceeds limit"
+          description: "Projected monthly cost exceeds the budget limit of ${{ $labels.monthly_budget_limit }}."
+
+      - alert: CostPerLeadHigh
+        expr: |
+          sum by (campaign_id) (llm_api_cost_dollars)
+          /
+          sum by (campaign_id) (leads_generated_total) > 5
+        for: 1h
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "Cost per lead is high for {{ $labels.campaign_id }}"
+          description: "Campaign {{ $labels.campaign_id }} has a cost per lead above $5."
+
+  # ──────────────────────────────────────────────
+  # Lead Scoring Alerts
+  # ──────────────────────────────────────────────
+  - name: lead-scoring
+    interval: 30s
+    rules:
+      - alert: LeadScoringModelDrift
+        expr: |
+          stddev_over_time(lead_score_distribution_stddev[1h])
+          /
+          avg_over_time(lead_score_distribution_mean[1h]) > 0.5
+        for: 30m
+        labels:
+          severity: warning
+          team: data-science
+        annotations:
+          summary: "Lead scoring model drift detected"
+          description: "Lead score distribution has shifted significantly, possible model drift."
+
+      - alert: LeadScoringLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(lead_scoring_duration_seconds_bucket[5m]))) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: data-science
+        annotations:
+          summary: "Lead scoring P95 latency is high"
+          description: "Lead scoring P95 latency exceeds 5 seconds."
+
+  # ──────────────────────────────────────────────
+  # Journey Orchestration Alerts
+  # ──────────────────────────────────────────────
+  - name: journey-orchestration
+    interval: 30s
+    rules:
+      - alert: JourneyDropoffRateHigh
+        expr: |
+          (
+            sum by (journey_id) (rate(journey_step_completions_total{step="final"}[1h]))
+            /
+            sum by (journey_id) (rate(journey_step_completions_total{step="first"}[1h]))
+          ) < 0.3
+        for: 30m
+        labels:
+          severity: warning
+          team: marketing
+        annotations:
+          summary: "High dropoff rate in journey {{ $labels.journey_id }}"
+          description: "Journey {{ $labels.journey_id }} has a completion rate below 30%."
+
+      - alert: JourneyOrchestrationErrorRate
+        expr: |
+          sum by (journey_id) (rate(journey_orchestration_errors_total[5m]))
+          /
+          sum by (journey_id) (rate(journey_orchestration_total[5m])) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "Journey orchestration error rate high for {{ $labels.journey_id }}"
+          description: "Journey {{ $labels.journey_id }} has an orchestration error rate above 2%."
+
+  # ──────────────────────────────────────────────
+  # OpenTelemetry Collector Alerts
+  # ──────────────────────────────────────────────
+  - name: otel-collector
+    interval: 30s
+    rules:
+      - alert: OTelCollectorQueueFull
+        expr: otelcol_exporter_queue_size / otelcol_exporter_queue_capacity > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "OTel collector queue is filling up"
+          description: "OTel collector export queue is above 80% capacity."
+
+      - alert: OTelCollectorDroppedSpans
+        expr: rate(otelcol_receiver_accepted_spans[5m]) - rate(otelcol_exporter_sent_spans[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "OTel collector is dropping spans"
+          description: "OTel collector accepted more spans than it exported in the last 5 minutes."
+
+  # ──────────────────────────────────────────────
+  # SLO / Burn Rate Alerts
+  # ──────────────────────────────────────────────
+  - name: slo-burn-rate
+    interval: 30s
+    rules:
+      - alert: SLOErrorBudgetBurnRateFast
+        expr: |
+          (
+            sum by (job) (rate(http_requests_total{status=~"5.."}[1h]))
+            /
+            sum by (job) (rate(http_requests_total[1h]))
+          )
+          > (1 - 0.99) * 14.4
+        for: 5m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "Fast SLO error budget burn for {{ $labels.job }}"
+          description: "Service {{ $labels.job }} is burning error budget at a fast rate (14.4x)."
+
+      - alert: SLOErrorBudgetBurnRateSlow
+        expr: |
+          (
+            sum by (job) (rate(http_requests_total{status=~"5.."}[6h]))
+            /
+            sum by (job) (rate(http_requests_total[6h]))
+          )
+          > (1 - 0.99) * 6
+        for: 30m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "Slow SLO error budget burn for {{ $labels.job }}"
+          description: "Service {{ $labels.job }} is burning error budget at 6x rate over 6 hours."

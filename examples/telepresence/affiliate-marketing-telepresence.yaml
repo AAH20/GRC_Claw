@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: affiliate-marketing-intercept
+  namespace: default
+  labels:
+    app: affiliate-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Affiliate marketing management platform for tracking affiliates,
+      managing commissions, and optimizing partner performance.
+    telepresence.io/service: affiliate-marketing
+    telepresence.io/deployment: affiliate-marketing
+spec:
+  service:
+    name: affiliate-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8113
+      targetPort: 8113
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /affiliates
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: affiliate-marketing
+    namespace: default
+    containerPort: 8113
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: COMMISSION_MODEL
+      value: cpa,cps,cpc
+    volumes:
+    - name: affiliate-data
+      mountPath: /data
+      hostPath: /tmp/affiliate-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8113
+  preview:
+    enabled: true
+    path: /affiliates
+    headers: *id001
+    port: 8113
+    targetPort: 8113
+    protocol: http

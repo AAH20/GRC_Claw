@@ -1,0 +1,83 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Brand Monitoring Service - Production Kustomize Example
+# Monitors brand mentions, sentiment, and reputation across channels
+
+namespace: brand-monitoring
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: brand-monitoring
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: brand-monitoring
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: brand-monitoring
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: brand-monitoring-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: brand-monitoring-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - SENTIMENT_MODEL=bert-base-uncased
+      - ALERT_THRESHOLD=0.75
+      - SCRAPE_INTERVAL=300
+      - MAX_CONCURRENT_SCRAPES=50
+
+secretGenerator:
+  - name: brand-monitoring-secrets
+    behavior: merge
+    envs:
+      - secrets/brand-monitoring.env
+
+commonLabels:
+  app.kubernetes.io/name: brand-monitoring
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: brand-monitoring
+    newName: registry.grc-claw.io/marketing/brand-monitoring
+    newTag: v2.4.1
+
+replicas:
+  - name: brand-monitoring
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -bm

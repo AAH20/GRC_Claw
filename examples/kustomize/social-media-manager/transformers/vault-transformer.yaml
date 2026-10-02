@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: social-media-manager-vault-secrets
+spec:
+  vaultAuthRef: social-media-manager-vault-auth
+  mount: secret
+  path: social-media-manager
+  destination:
+    create: true
+    name: social-media-manager-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: social-media-manager
+
+target:
+  kind: Deployment
+  name: social-media-manager

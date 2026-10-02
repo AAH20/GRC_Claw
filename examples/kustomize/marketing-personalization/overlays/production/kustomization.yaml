@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: marketing-personalization-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-personalization
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-personalization
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-personalization
+
+configMapGenerator:
+  - name: marketing-personalization-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/marketing-personalization
+    newTag: stable
+
+replicas:
+  - name: marketing-personalization
+    count: 3

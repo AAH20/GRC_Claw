@@ -1,0 +1,119 @@
+# Finance Marketing Platform Configuration
+# All sensitive values should be set via environment variables (see .env.example)
+
+app:
+  name: "Finance Marketing"
+  version: "0.1.0"
+  env: "dev"  # dev, staging, production
+  log_level: "INFO"
+  debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  timeout: 30
+
+database:
+  url: "postgresql://localhost:5432/finance_marketing"
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false
+
+redis:
+  url: "redis://localhost:6379"
+  db: 0
+  max_connections: 50
+
+security:
+  secret_key: "change-me-in-production"
+  algorithm: "HS256"
+  access_token_expire_minutes: 30
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+
+compliance:
+  # FINRA Rule 2210 - Communications with the Public
+  finra:
+    enabled: true
+    require_pre_approval: true
+    prohibited_terms:
+      - "guaranteed returns"
+      - "risk-free"
+      - "can't lose"
+      - "no risk"
+      - "sure thing"
+    required_disclosures:
+      - "Investing involves risk including possible loss of principal."
+  # SEC Marketing Rule
+  sec:
+    enabled: true
+    require_substantiation: true
+    prohibited_claims:
+      - "past performance guarantees future results"
+  audit:
+    enabled: true
+    retention_days: 2555  # 7 years per SEC requirements
+    log_all_content: true
+
+agents:
+  content:
+    model: "gpt-4"
+    temperature: 0.7
+    max_tokens: 2000
+    timeout: 60
+  compliance:
+    model: "gpt-4"
+    temperature: 0.1
+    max_tokens: 4000
+    timeout: 30
+  campaigns:
+    model: "gpt-4"
+    temperature: 0.5
+    max_tokens: 2000
+    timeout: 60
+  analytics:
+    model: "gpt-4"
+    temperature: 0.3
+    max_tokens: 2000
+    timeout: 60
+  reporting:
+    model: "gpt-4"
+    temperature: 0.2
+    max_tokens: 4000
+    timeout: 60
+
+integrations:
+  salesforce:
+    enabled: false
+    api_version: "v58.0"
+    timeout: 30
+    max_retries: 3
+  hubspot:
+    enabled: false
+    api_version: "v3"
+    timeout: 30
+    max_retries: 3
+  mailchimp:
+    enabled: false
+    api_version: "3.0"
+    timeout: 30
+    max_retries: 3
+
+logging:
+  format: "json"
+  include_timestamp: true
+  include_correlation_id: true
+  redact_fields:
+    - "password"
+    - "token"
+    - "api_key"
+    - "secret"
+    - "authorization"
+
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"

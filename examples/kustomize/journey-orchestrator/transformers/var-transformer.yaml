@@ -1,0 +1,19 @@
+apiVersion: builtin
+kind: VarTransformer
+metadata:
+  name: var-config
+vars:
+  - name: SERVICE_NAME
+    objref:
+      kind: Service
+      name: journey-orchestrator
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name
+  - name: NAMESPACE
+    objref:
+      kind: Namespace
+      name: journey-orchestrator-prod
+      apiVersion: v1
+    fieldref:
+      fieldpath: metadata.name

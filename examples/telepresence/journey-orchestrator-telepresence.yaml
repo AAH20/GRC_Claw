@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: journey-orchestrator-intercept
+  namespace: default
+  labels:
+    app: journey-orchestrator
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Customer journey orchestration platform that designs, executes, and
+      optimizes multi-channel customer journeys and lifecycle campaigns.
+    telepresence.io/service: journey-orchestrator
+    telepresence.io/deployment: journey-orchestrator
+spec:
+  service:
+    name: journey-orchestrator
+    namespace: default
+    ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /journeys
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: journey-orchestrator
+    namespace: default
+    containerPort: 8082
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: JOURNEY_ENGINE
+      value: v2
+    volumes:
+    - name: journey-templates
+      mountPath: /templates
+      hostPath: /tmp/journey-templates
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8082
+  preview:
+    enabled: true
+    path: /journeys
+    headers: *id001
+    port: 8082
+    targetPort: 8082
+    protocol: http

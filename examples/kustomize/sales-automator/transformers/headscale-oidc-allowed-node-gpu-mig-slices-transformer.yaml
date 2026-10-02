@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-mig-slices-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-automator
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-mig-slices: "1"
+
+target:
+  kind: Deployment
+  name: sales-automator

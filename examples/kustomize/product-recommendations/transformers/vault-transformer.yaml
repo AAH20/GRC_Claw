@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: product-recommendations-vault-secrets
+spec:
+  vaultAuthRef: product-recommendations-vault-auth
+  mount: secret
+  path: product-recommendations
+  destination:
+    create: true
+    name: product-recommendations-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: product-recommendations
+
+target:
+  kind: Deployment
+  name: product-recommendations

@@ -1,0 +1,127 @@
+# Campaign Optimizer Configuration
+# Environment variables override these values (see .env.example)
+
+app:
+  name: "campaign-optimizer"
+  version: "0.1.0"
+  environment: "development"  # development | staging | production
+  log_level: "INFO"
+  debug: false
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limit: 100  # requests per minute
+  request_timeout: 30  # seconds
+
+database:
+  url: "postgresql://campaign:campaign@localhost:5432/campaign_optimizer"
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false
+
+redis:
+  url: "redis://localhost:6379/0"
+  max_connections: 50
+  socket_timeout: 5
+
+llm:
+  default_model: "gpt-4o"
+  fallback_model: "gpt-4o-mini"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 60
+  max_retries: 3
+  retry_delay: 1.0
+
+agents:
+  strategy:
+    name: "Strategy Agent"
+    description: "High-level campaign planning and goal decomposition"
+    timeout: 120
+    max_iterations: 5
+    tools:
+      - "web_search"
+      - "calculator"
+      - "data_analysis"
+
+  research:
+    name: "Research Agent"
+    description: "Market research and competitor analysis"
+    timeout: 180
+    max_iterations: 3
+    tools:
+      - "web_search"
+      - "web_scrape"
+      - "data_analysis"
+
+  creative:
+    name: "Creative Agent"
+    description: "Ad copy generation and creative recommendations"
+    timeout: 90
+    max_iterations: 4
+    tools:
+      - "text_generation"
+      - "image_analysis"
+
+  bidding:
+    name: "Bidding Agent"
+    description: "Real-time bid optimization and budget pacing"
+    timeout: 60
+    max_iterations: 10
+    tools:
+      - "calculator"
+      - "data_analysis"
+      - "api_call"
+
+  audience:
+    name: "Audience Agent"
+    description: "Audience segmentation and targeting"
+    timeout: 120
+    max_iterations: 3
+    tools:
+      - "data_analysis"
+      - "web_search"
+
+  critic:
+    name: "Critic Agent"
+    description: "Quality assurance and governance enforcement"
+    timeout: 60
+    max_iterations: 2
+    tools:
+      - "data_analysis"
+      - "web_search"
+
+governance:
+  enabled: true
+  grc_claw:
+    policy_engine: "default"
+    approval_threshold: 0.8
+    audit_log: true
+    max_budget_change_pct: 20
+    require_approval_above: 1000  # USD
+    compliance_checks:
+      - "budget_limits"
+      - "audience_restrictions"
+      - "creative_compliance"
+      - "data_privacy"
+
+optimization:
+  interval: 300  # seconds between optimization cycles
+  min_improvement_threshold: 0.05  # 5% improvement required
+  max_budget_adjustment: 0.15  # 15% max change per cycle
+  lookback_window: 7  # days of historical data
+  ab_test_duration: 3  # days
+  confidence_level: 0.95
+
+monitoring:
+  prometheus_enabled: true
+  prometheus_port: 9090
+  grafana_enabled: true
+  sentry_dsn: ""
+  health_check_interval: 30

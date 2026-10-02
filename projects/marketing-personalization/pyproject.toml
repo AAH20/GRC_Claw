@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marketing-personalization"
+version = "1.0.0"
+description = "AI-powered marketing personalization platform with multi-agent orchestration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    {name = "Ahmed Hassan", email = "ahmed@example.com"}
+]
+keywords = ["marketing", "personalization", "ai", "agents", "langchain"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: FastAPI",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langgraph>=0.2.0",
+    "httpx>=0.27.0",
+    "PyYAML>=6.0.1",
+    "python-dotenv>=1.0.1",
+    "structlog>=24.1.0",
+    "tenacity>=8.3.0",
+    "prometheus-client>=0.20.0",
+    "redis>=5.0.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.27.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+    "types-PyYAML>=6.0.12",
+    "types-redis>=4.6.0",
+]
+salesforce = [
+    "simple-salesforce>=1.12.6",
+]
+hubspot = [
+    "hubspot-api-client>=10.0.0",
+]
+mailchimp = [
+    "mailchimp-marketing>=3.0.80",
+]
+
+[project.scripts]
+personalization-server = "personalization.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "TCH"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/personalization"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

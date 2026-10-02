@@ -1,0 +1,584 @@
+# OpenTelemetry Configuration for Marketing Personalization
+# Description: personalizes marketing experiences
+# Generated: 2026-10-02
+# Version: 1.0.0
+
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: marketing-personalization-otel-collector
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-personalization
+    component: observability
+    environment: production
+    team: marketing-ops
+spec:
+  mode: deployment
+  replicas: 2
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'marketing-personalization-metrics'
+              scrape_interval: 15s
+              static_configs:
+                - targets: ['marketing-personalization:8080']
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: 'go_.*'
+                  action: drop
+                - source_labels: [__name__]
+                  regex: 'process_.*'
+                  action: drop
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 512
+        spike_limit_mib: 128
+      resource:
+        attributes:
+          - key: service.name
+            value: marketing-personalization
+            action: upsert
+          - key: service.version
+            value: "1.0.0"
+            action: upsert
+          - key: deployment.environment
+            value: production
+            action: upsert
+          - key: project.category
+            value: personalization
+            action: upsert
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 100000
+        expected_new_traces_per_sec: 1000
+        policies:
+          - name: errors-policy
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: latency-policy
+            type: latency
+            latency:
+              threshold_ms: 500
+          - name: probabilistic-policy
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
+      metricstransform:
+        transforms:
+          - include: http_request_duration_seconds
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: service_tier
+                new_value: marketing
+          - include: grpc_server_handling_seconds
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: service_tier
+                new_value: marketing
+
+    exporters:
+      otlp/jaeger:
+        endpoint: jaeger-collector.monitoring:4317
+        tls:
+          insecure: false
+          ca_file: /etc/otel/certs/ca.crt
+          cert_file: /etc/otel/certs/tls.crt
+          key_file: /etc/otel/certs/tls.key
+      otlp/tempo:
+        endpoint: tempo-distributor.monitoring:4317
+        tls:
+          insecure: false
+      prometheusremotewrite:
+        endpoint: http://prometheus-remote-write.monitoring:9090/api/v1/write
+        tls:
+          insecure: false
+      loki:
+        endpoint: http://loki.monitoring:3100/loki/api/v1/push
+        labels:
+          attributes:
+            service.name: "service.name"
+            service.version: "service.version"
+            deployment.environment: "deployment.environment"
+            project.category: "project.category"
+      logging:
+        loglevel: info
+        sampling_initial: 5
+        sampling_thereafter: 200
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, tail_sampling, resource, batch]
+          exporters: [otlp/jaeger, otlp/tempo]
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [memory_limiter, metricstransform, resource, batch]
+          exporters: [prometheusremotewrite]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [loki, logging]
+      telemetry:
+        metrics:
+          address: 0.0.0.0:8888
+        logs:
+          level: info
+          encoding: json
+
+---
+# Trace Queries for Marketing Personalization
+# These queries can be used in Jaeger, Tempo, or Grafana
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketing-personalization-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-personalization
+    component: observability
+data:
+  queries.yaml: |
+    trace_queries:
+      # Service-level queries
+      - name: "Marketing Personalization - Slow Traces"
+        description: "Find traces with duration > 500ms"
+        query: |
+          service.name = "marketing-personalization"
+          AND duration > 500ms
+        datasource: tempo
+        type: search
+
+      - name: "Marketing Personalization - Error Traces"
+        description: "Find all error traces"
+        query: |
+          service.name = "marketing-personalization"
+          AND status.code = STATUS_CODE_ERROR
+        datasource: tempo
+        type: search
+
+      - name: "Marketing Personalization - High Latency p99"
+        description: "p99 latency by endpoint"
+        query: |
+          histogram_quantile(0.99,
+            sum(rate(traces_spanmetrics_latency_bucket{service_name="marketing-personalization"}[5m])) by (le, span_name)
+          )
+        datasource: prometheus
+        type: query
+
+      - name: "Marketing Personalization - Request Rate"
+        description: "Requests per second by span name"
+        query: |
+          sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m])) by (span_name)
+        datasource: prometheus
+        type: query
+
+      - name: "Marketing Personalization - Error Rate"
+        description: "Error percentage by span name"
+        query: |
+          sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization",status_code="STATUS_CODE_ERROR"}[5m]))
+          /
+          sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m])) * 100
+        datasource: prometheus
+        type: query
+
+      # Domain-specific queries
+      - name: "Marketing Personalization - Top Operations by Latency"
+        description: "Top 10 slowest operations"
+        query: |
+          topk(10,
+            avg by (span_name) (
+              rate(traces_spanmetrics_latency_bucket{service_name="marketing-personalization"}[5m])
+            )
+          )
+        datasource: prometheus
+        type: query
+
+      - name: "Marketing Personalization - Trace by Attribute"
+        description: "Find traces by business attributes"
+        query: |
+          service.name = "marketing-personalization"
+          user_id
+          variant
+          personalization_type
+          engagement_lift
+          conversion_lift
+          relevance_score
+        datasource: tempo
+        type: search
+
+      - name: "Marketing Personalization - Dependency Graph"
+        description: "Service dependency map"
+        query: |
+          service.name = "marketing-personalization"
+        datasource: tempo
+        type: dependencies
+
+      - name: "Marketing Personalization - Performance Regression"
+        description: "Compare current vs baseline latency"
+        query: |
+          (
+            avg(rate(traces_spanmetrics_latency_sum{service_name="marketing-personalization"}[5m]))
+            /
+            avg(rate(traces_spanmetrics_latency_count{service_name="marketing-personalization"}[5m]))
+          )
+          >
+          (
+            avg(rate(traces_spanmetrics_latency_sum{service_name="marketing-personalization"}[1h] offset 1h))
+            /
+            avg(rate(traces_spanmetrics_latency_count{service_name="marketing-personalization"}[1h] offset 1h))
+          ) * 1.5
+        datasource: prometheus
+        type: alert
+
+---
+# Alerting Rules for Marketing Personalization
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: marketing-personalization-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-personalization
+    component: observability
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+    - name: marketing-personalization.availability
+      rules:
+        - alert: MarketingPersonalizationHighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization",status_code="STATUS_CODE_ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "High error rate in Marketing Personalization"
+            description: "Error rate is {{ $value | humanizePercentage }} for marketing-personalization (threshold: 5%)"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/high-error-rate"
+            dashboard: "https://graf.internal/d/marketing-personalization"
+
+        - alert: MarketingPersonalizationHighLatency
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(traces_spanmetrics_latency_bucket{service_name="marketing-personalization"}[5m])) by (le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "High p99 latency in Marketing Personalization"
+            description: "p99 latency is {{ $value }}s for marketing-personalization (threshold: 1s)"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/high-latency"
+            dashboard: "https://graf.internal/d/marketing-personalization"
+
+        - alert: MarketingPersonalizationHighLatencyCritical
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(traces_spanmetrics_latency_bucket{service_name="marketing-personalization"}[5m])) by (le)
+            ) > 3
+          for: 3m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Critical p99 latency in Marketing Personalization"
+            description: "p99 latency is {{ $value }}s for marketing-personalization (threshold: 3s)"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/critical-latency"
+            dashboard: "https://graf.internal/d/marketing-personalization"
+
+    - name: marketing-personalization.saturation
+      rules:
+        - alert: MarketingPersonalizationHighCPUUsage
+          expr: |
+            avg(rate(container_cpu_usage_seconds_total{pod=~"marketing-personalization-.*"}[5m])) by (pod) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "High CPU usage in Marketing Personalization"
+            description: "CPU usage is above 80% for pod {{ $labels.pod }}"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/high-cpu"
+
+        - alert: MarketingPersonalizationHighMemoryUsage
+          expr: |
+            avg(container_memory_working_set_bytes{pod=~"marketing-personalization-.*"} / container_spec_memory_limit_bytes{pod=~"marketing-personalization-.*"}) by (pod) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "High memory usage in Marketing Personalization"
+            description: "Memory usage is above 85% for pod {{ $labels.pod }}"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/high-memory"
+
+        - alert: MarketingPersonalizationPodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{pod=~"marketing-personalization-.*"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Pod crash looping in Marketing Personalization"
+            description: "Pod {{ $labels.pod }} is crash looping"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/crash-looping"
+
+    - name: marketing-personalization.traffic
+      rules:
+        - alert: MarketingPersonalizationTrafficSpike
+          expr: |
+            (
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m]))
+              /
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m] offset 1h))
+            ) > 3
+          for: 5m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Traffic spike in Marketing Personalization"
+            description: "Request rate is {{ $value }}x higher than 1h ago"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/traffic-spike"
+
+        - alert: MarketingPersonalizationTrafficDrop
+          expr: |
+            (
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m]))
+              /
+              sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m] offset 1h]))
+            ) < 0.3
+          for: 10m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Traffic drop in Marketing Personalization"
+            description: "Request rate dropped to {{ $value }}x of 1h ago baseline"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/traffic-drop"
+
+        - alert: MarketingPersonalizationNoTraffic
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization"}[5m])) == 0
+          for: 15m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "No traffic in Marketing Personalization"
+            description: "No requests received for marketing-personalization in the last 15 minutes"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/no-traffic"
+
+    - name: marketing-personalization.business
+      rules:
+        - alert: MarketingPersonalizationLowConversionRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization",span_kind="SPAN_KIND_SERVER",span_name=~".*conversion.*"}[30m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service_name="marketing-personalization",span_kind="SPAN_KIND_SERVER"}[30m])) < 0.02
+          for: 30m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Low conversion rate in Marketing Personalization"
+            description: "Conversion rate is {{ $value | humanizePercentage }} (threshold: 2%)"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/low-conversion"
+
+        - alert: MarketingPersonalizationProcessingBacklog
+          expr: |
+            marketing-personalization_queue_depth > 1000
+          for: 10m
+          labels:
+            severity: warning
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Processing backlog in Marketing Personalization"
+            description: "Queue depth is {{ $value }} (threshold: 1000)"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/processing-backlog"
+
+        - alert: MarketingPersonalizationDataFreshness
+          expr: |
+            time() - marketing-personalization_last_successful_processing_timestamp > 3600
+          for: 5m
+          labels:
+            severity: critical
+            team: marketing-ops
+            service: marketing-personalization
+          annotations:
+            summary: "Stale data in Marketing Personalization"
+            description: "Last successful processing was {{ $value }}s ago (threshold: 3600s)"
+            runbook: "https://wiki.internal/runbooks/marketing-personalization/stale-data"
+
+---
+# Grafana Dashboard ConfigMap for Marketing Personalization
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketing-personalization-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-personalization
+    component: observability
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Marketing Personalization - OpenTelemetry Dashboard",
+        "tags": ["marketing-personalization", "opentelemetry", "marketing"],
+        "timezone": "utc",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"marketing-personalization\"}[5m])) by (span_name)",
+                "legendFormat": "{span_name}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(traces_spanmetrics_calls_total{service_name=\"marketing-personalization\",status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum(rate(traces_spanmetrics_calls_total{service_name=\"marketing-personalization\"}[5m])) * 100",
+                "legendFormat": "Error %",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "p50/p95/p99 Latency",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"marketing-personalization\"}[5m])) by (le))",
+                "legendFormat": "p50",
+                "refId": "A"
+              },
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"marketing-personalization\"}[5m])) by (le))",
+                "legendFormat": "p95",
+                "refId": "B"
+              },
+              {
+                "expr": "histogram_quantile(0.99, sum(rate(traces_spanmetrics_latency_bucket{service_name=\"marketing-personalization\"}[5m])) by (le))",
+                "legendFormat": "p99",
+                "refId": "C"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Service Map",
+            "type": "nodeGraph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "traces_service_graph_request_total",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Log Volume",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(rate(logs_log_lines_total{service_name=\"marketing-personalization\"}[5m])) by (level)",
+                "legendFormat": "{level}",
+                "refId": "A"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+---
+# ServiceMonitor for Marketing Personalization
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: marketing-personalization-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: marketing-personalization
+    component: observability
+spec:
+  selector:
+    matchLabels:
+      app: marketing-personalization
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          target_label: namespace

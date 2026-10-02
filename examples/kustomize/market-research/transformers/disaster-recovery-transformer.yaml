@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: disaster-recovery-patch
+patch: |-
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: market-research-restore
+spec:
+  backupName: market-research-backup
+  includedNamespaces:
+    - market-research-prod
+  restorePVs: true
+
+target:
+  kind: Deployment
+  name: market-research

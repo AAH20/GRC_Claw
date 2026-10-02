@@ -1,0 +1,106 @@
+# Influencer Marketing Platform Configuration
+# This file provides default values. Environment variables take precedence.
+
+app:
+  name: "Influencer Marketing Platform"
+  version: "0.1.0"
+  environment: "development"
+  log_level: "debug"
+  api_prefix: "/api/v1"
+
+llm:
+  provider: "openai"
+  model: "gpt-4o"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout_seconds: 60
+
+agents:
+  discovery:
+    max_results: 50
+    platforms:
+      - instagram
+      - tiktok
+      - youtube
+    filters:
+      min_followers: 1000
+      max_followers: 10000000
+      min_engagement_rate: 0.01
+      languages:
+        - en
+      categories:
+        - fashion
+        - beauty
+        - fitness
+        - food
+        - travel
+        - tech
+        - lifestyle
+
+  vetting:
+    authenticity_threshold: 0.7
+    brand_safety_check: true
+    content_quality_weight: 0.3
+    audience_quality_weight: 0.3
+    engagement_quality_weight: 0.2
+    brand_safety_weight: 0.2
+
+  outreach:
+    max_concurrent_outreach: 10
+    follow_up_interval_days: 7
+    max_follow_ups: 3
+    templates:
+      initial_contact: "Hi {name}, we love your content..."
+      follow_up: "Hi {name}, just following up on our previous message..."
+
+  negotiation:
+    max_negotiation_rounds: 5
+    auto_approve_below: 500
+    currency: "USD"
+
+  content:
+    review_workflow_enabled: true
+    auto_approve_trusted: false
+    max_revision_rounds: 3
+
+  performance:
+    metrics:
+      - impressions
+      - reach
+      - engagement
+      - clicks
+      - conversions
+      - roi
+    reporting_interval_hours: 24
+
+  optimization:
+    auto_optimize: true
+    optimization_interval_hours: 12
+    min_data_points: 100
+
+  relationship_management:
+    check_in_interval_days: 30
+    loyalty_program_enabled: true
+    crm_sync_interval_hours: 24
+
+integrations:
+  instagram:
+    api_version: "v18.0"
+    rate_limit_per_hour: 200
+    webhook_verify_token: ""
+
+  tiktok:
+    api_version: "v2"
+    rate_limit_per_hour: 1000
+
+  youtube:
+    api_version: "v3"
+    rate_limit_per_quota: 10000
+
+api:
+  rate_limit_per_minute: 60
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  pagination_default_limit: 20
+  pagination_max_limit: 100

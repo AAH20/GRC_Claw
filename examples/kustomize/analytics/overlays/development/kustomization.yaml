@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: analytics-dev
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: analytics
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: analytics
+
+configMapGenerator:
+  - name: analytics-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - DEBUG=true
+
+commonLabels:
+  environment: development
+
+images:
+  - name: grcclaw/analytics
+    newTag: dev

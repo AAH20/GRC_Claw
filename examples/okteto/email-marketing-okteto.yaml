@@ -1,0 +1,122 @@
+# Okteto Configuration for email-marketing
+# Email campaign management and delivery
+# Auto-generated production-grade Okteto manifest
+
+build:
+  emailmarketing:
+    context: .
+    dockerfile: Dockerfile
+    target: production
+    args:
+      - NODE_ENV=production
+      - BUILD_DATE={{date}}
+      - VCS_REF={{sha}}
+
+deploy:
+  - name: email-marketing
+    image: okteto.dev/emailmarketing:latest
+    command: ["./start.sh"]
+    replicas: 2
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+    ports:
+      - port: 8080
+        protocol: TCP
+    healthCheck:
+      path: /health
+      port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    env:
+      - name: PORT
+        value: "8080"
+      - name: LOG_LEVEL
+        value: info
+      - name: ENVIRONMENT
+        value: production
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector:4317
+      - name: OTEL_SERVICE_NAME
+        value: email-marketing
+      - name: REDIS_URL
+        valueFrom:
+          secretKeyRef:
+            name: emailmarketing-secrets
+            key: redis-url
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: emailmarketing-secrets
+            key: database-url
+      - name: API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: emailmarketing-secrets
+            key: api-key
+    labels:
+      app: emailmarketing
+      tier: backend
+      part-of: grc-claw
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+      prometheus.io/path: /metrics
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - emailmarketing
+              topologyKey: kubernetes.io/hostname
+
+dev:
+  emailmarketing:
+    image: okteto/dev:latest
+    command: ["./dev-start.sh"]
+    sync:
+      - .:/app
+    forward:
+      - 8080:8080
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=debug
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    persistentVolume:
+      enabled: true
+      size: 1Gi
+    secrets:
+      - .env:/app/.env
+    initContainer:
+      image: busybox:1.36
+      command: ["sh", "-c", "echo 'Initializing email-marketing dev environment...'"]
+    timeout: 120s
+    selector:
+      app: emailmarketing
+    annotations:
+      okteto.com/auto-ingress: "true"
+
+# End of email-marketing Okteto configuration

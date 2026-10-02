@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: customer-service-vault-secrets
+spec:
+  vaultAuthRef: customer-service-vault-auth
+  mount: secret
+  path: customer-service
+  destination:
+    create: true
+    name: customer-service-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: customer-service
+
+target:
+  kind: Deployment
+  name: customer-service

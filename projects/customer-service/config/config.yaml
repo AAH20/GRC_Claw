@@ -1,0 +1,83 @@
+app:
+  name: "customer-service"
+  version: "0.1.0"
+  environment: "development"
+  log_level: "DEBUG"
+  host: "0.0.0.0"
+  port: 8000
+
+agents:
+  triage:
+    model: "gpt-4o"
+    temperature: 0.1
+    max_tokens: 1024
+    timeout_seconds: 30
+    categories:
+      - billing
+      - technical
+      - account
+      - general
+      - complaint
+    priority_levels:
+      - low
+      - medium
+      - high
+      - critical
+
+  resolution:
+    model: "gpt-4o"
+    temperature: 0.3
+    max_tokens: 2048
+    timeout_seconds: 60
+    auto_reply_enabled: false
+    confidence_threshold: 0.85
+
+  escalation:
+    model: "gpt-4o"
+    temperature: 0.1
+    max_tokens: 1024
+    timeout_seconds: 30
+    escalation_threshold: 0.7
+    human_handoff_enabled: true
+
+  sentiment_analysis:
+    model: "gpt-4o"
+    temperature: 0.1
+    max_tokens: 512
+    timeout_seconds: 15
+    sentiment_scale: 5
+
+  customer_success:
+    model: "gpt-4o"
+    temperature: 0.3
+    max_tokens: 1024
+    timeout_seconds: 30
+    churn_risk_threshold: 0.6
+    proactive_outreach_enabled: true
+
+integrations:
+  zendesk:
+    base_url: ${ZENDESK_BASE_URL}
+    api_version: "v2"
+    timeout_seconds: 30
+    retry_attempts: 3
+    rate_limit_per_minute: 100
+
+  intercom:
+    base_url: "https://api.intercom.io"
+    api_version: "2.0"
+    timeout_seconds: 30
+    retry_attempts: 3
+    rate_limit_per_minute: 100
+
+  salesforce:
+    base_url: ${SALESFORCE_BASE_URL}
+    api_version: "v58.0"
+    timeout_seconds: 30
+    retry_attempts: 3
+    rate_limit_per_minute: 100
+
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30

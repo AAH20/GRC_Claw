@@ -1,0 +1,116 @@
+# Broker Enablement - Kustomize Example
+# Production-grade Kustomize configuration for the Broker Enablement service.
+
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: broker-enablement
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: broker-enablement
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: broker-enablement
+    newTag: v1.3.0
+
+configMapGenerator:
+  - name: broker-enablement-config
+    literals:
+      - LOG_LEVEL=info
+      - ONBOARDING_WORKFLOW_STEPS=5
+      - DOCUMENT_VERIFICATION_PROVIDER=onfido
+      - COMPLIANCE_CHECK_INTERVAL=86400
+      - TRAINING_MODULES=compliance,product-sales,objection-handling
+      - CERTIFICATION_VALIDITY_DAYS=365
+
+secretGenerator:
+  - name: broker-enablement-secrets
+    literals:
+      - ONFIDO_API_KEY=changeme
+      - DB_PASSWORD=changeme
+      - JWT_SECRET=changeme
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: broker-enablement
+
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: broker-enablement
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OVERLAYS
+# ─────────────────────────────────────────────────────────────────────────────
+# overlays/dev/kustomization.yaml
+# overlays/staging/kustomization.yaml
+# overlays/prod/kustomization.yaml
+#
+# Example overlay (prod):
+# ---
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+#
+# resources:
+#   - ../../base
+#
+# namePrefix: prod-
+#
+# replicas:
+#   - name: broker-enablement
+#     count: 4
+#
+# patches:
+#   - path: patches/prod-resources.yaml
+#   - path: patches/prod-autoscaling.yaml
+#
+# configMapGenerator:
+#   - name: broker-enablement-config
+#     behavior: merge
+#     literals:
+#       - LOG_LEVEL=warn
+#       - COMPLIANCE_CHECK_INTERVAL=43200
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# TRANSFORMERS
+# ─────────────────────────────────────────────────────────────────────────────
+# transformers/labels-transformer.yaml
+# transformers/namespace-transformer.yaml
+# transformers/image-transformer.yaml
+#
+# Example transformer (common annotations):
+# ---
+# apiVersion: builtin
+# kind: AnnotationsTransformer
+# metadata:
+#   name: common-annotations
+# annotations:
+#   monitoring.io/scrape: "true"
+#   monitoring.io/port: "8080"
+# fieldSpecs:
+#   - path: metadata/annotations
+#     create: true
+#
+# Example transformer (image transformer):
+# ---
+# apiVersion: builtin
+# kind: ImageTagTransformer
+# metadata:
+#   name: broker-enablement-image
+# imageTag:
+#   name: broker-enablement
+#   newTag: v1.3.0
+# fieldSpecs:
+#   - path: spec/template/spec/containers/0/image
+#     create: true

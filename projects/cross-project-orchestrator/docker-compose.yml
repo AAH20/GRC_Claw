@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ORCHESTRATOR_ENV=production
+      - ORCHESTRATOR_PORT=8080
+      - ORCHESTRATOR_LOG_LEVEL=INFO
+      - KUBERNETES_NAMESPACE=default
+      - PROMETHEUS_URL=http://prometheus:9090
+      - TERRAFORM_STATE_PATH=/app/tfstate
+    volumes:
+      - orchestrator-tfstate:/app/tfstate
+    networks:
+      - orchestrator-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - orchestrator-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - orchestrator-net
+    restart: unless-stopped
+
+volumes:
+  orchestrator-tfstate:
+  grafana-data:
+
+networks:
+  orchestrator-net:
+    driver: bridge

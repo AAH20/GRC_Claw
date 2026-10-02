@@ -1,0 +1,155 @@
+# Prometheus Monitoring Configuration for Marketing Compliance
+# Description: Marketing compliance and governance
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the marketing-compliance service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: marketing-compliance-monitor
+  namespace: monitoring
+  labels:
+    app: marketing-compliance
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: marketing-compliance
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: marketing_compliance_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for marketing-compliance
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: marketing-compliance-rules
+  namespace: monitoring
+  labels:
+    app: marketing-compliance
+    release: prometheus
+spec:
+  groups:
+  - name: marketing-compliance-recording-rules
+    interval: 30s
+    rules:
+    - record: marketing_compliance:api_request_rate:rate5m
+      expr: rate(marketing_compliance_api_requests_total[5m])
+    - record: marketing_compliance:api_error_rate:rate5m
+      expr: rate(marketing_compliance_api_errors_total[5m])
+    - record: marketing_compliance:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(marketing_compliance_api_latency_seconds_bucket[5m]))
+  - name: marketing-compliance-alerts-1
+    rules:
+    - alert: MarketingComplianceViolationsDetected
+      expr: rate(marketing_compliance_violations_total[5m]) > 0
+      for: 5m
+      labels:
+        severity: critical
+        service: marketing-compliance
+      annotations:
+        summary: '{{ $labels.service }}: MarketingComplianceViolationsDetected is
+          firing'
+        description: '{{ $labels.service }} has triggered MarketingComplianceViolationsDetected
+          for more than 5 minutes.'
+    - alert: MarketingComplianceHighErrorRate
+      expr: rate(marketing_compliance_api_errors_total[5m]) / rate(marketing_compliance_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: marketing-compliance
+      annotations:
+        summary: '{{ $labels.service }}: MarketingComplianceHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered MarketingComplianceHighErrorRate
+          for more than 5 minutes.'
+    - alert: MarketingComplianceLowScore
+      expr: marketing_compliance_compliance_score < 0.9
+      for: 5m
+      labels:
+        severity: critical
+        service: marketing-compliance
+      annotations:
+        summary: '{{ $labels.service }}: MarketingComplianceLowScore is firing'
+        description: '{{ $labels.service }} has triggered MarketingComplianceLowScore
+          for more than 5 minutes.'
+    - alert: MarketingComplianceAuditFailed
+      expr: rate(marketing_compliance_audits_failed_total[1h]) > 0
+      for: 5m
+      labels:
+        severity: critical
+        service: marketing-compliance
+      annotations:
+        summary: '{{ $labels.service }}: MarketingComplianceAuditFailed is firing'
+        description: '{{ $labels.service }} has triggered MarketingComplianceAuditFailed
+          for more than 5 minutes.'
+    - alert: MarketingComplianceHighLatency
+      expr: histogram_quantile(0.95, rate(marketing_compliance_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: marketing-compliance
+      annotations:
+        summary: '{{ $labels.service }}: MarketingComplianceHighLatency is firing'
+        description: '{{ $labels.service }} has triggered MarketingComplianceHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for marketing-compliance alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: marketing-compliance
+    receiver: marketing-compliance-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: marketing-compliance-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#marketing-compliance-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-pods-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-media-manager
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-pods: "social-media-manager-*"
+
+target:
+  kind: Deployment
+  name: social-media-manager

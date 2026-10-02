@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: customer-service-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-service
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-service
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-service
+
+configMapGenerator:
+  - name: customer-service-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/customer-service
+    newTag: stable
+
+replicas:
+  - name: customer-service
+    count: 3

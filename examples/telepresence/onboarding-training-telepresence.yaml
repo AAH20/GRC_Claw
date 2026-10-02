@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: onboarding-training-intercept
+  namespace: default
+  labels:
+    app: onboarding-training
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Customer onboarding and training platform with interactive tutorials,
+      progress tracking, and certification management.
+    telepresence.io/service: onboarding-training
+    telepresence.io/deployment: onboarding-training
+spec:
+  service:
+    name: onboarding-training
+    namespace: default
+    ports:
+    - name: http
+      port: 8105
+      targetPort: 8105
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /training
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: onboarding-training
+    namespace: default
+    containerPort: 8105
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: TRAINING_MODE
+      value: interactive
+    volumes:
+    - name: training-content
+      mountPath: /content
+      hostPath: /tmp/training-content
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8105
+  preview:
+    enabled: true
+    path: /training
+    headers: *id001
+    port: 8105
+    targetPort: 8105
+    protocol: http

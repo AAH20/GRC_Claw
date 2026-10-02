@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: headscale-oidc-allowed-node-gpu-mig-fan-mode-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lead-scorer
+spec:
+  template:
+    metadata:
+      annotations:
+        headscale.io/oidc-allowed-node-gpu-mig-fan-mode: "auto"
+
+target:
+  kind: Deployment
+  name: lead-scorer

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: ppc-manager-vault-secrets
+spec:
+  vaultAuthRef: ppc-manager-vault-auth
+  mount: secret
+  path: ppc-manager
+  destination:
+    create: true
+    name: ppc-manager-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: ppc-manager
+
+target:
+  kind: Deployment
+  name: ppc-manager

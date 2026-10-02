@@ -1,0 +1,2072 @@
+openapi: 3.1.0
+info:
+  title: Broker Enablement API
+  description: Multi-tenant broker enablement platform for partner onboarding, training,
+    commission tracking, and performance analytics.
+  version: 1.0.0
+  contact:
+    name: GRC Claw API Support
+    email: api@grc-claw.com
+    url: https://grc-claw.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://grc-claw.com/terms
+  externalDocs:
+    description: Find more info here
+    url: https://docs.grc-claw.com
+servers:
+- url: https://api.grc-claw.com/v1
+  description: Production server
+- url: https://staging-api.grc-claw.com/v1
+  description: Staging server
+- url: http://localhost:8000/v1
+  description: Local development server
+tags:
+- name: Health
+  description: Health check and monitoring endpoints
+- name: Auth
+  description: Authentication and authorization endpoints
+- name: Partners
+  description: Partner management
+- name: Training
+  description: Training content and certification
+- name: Commissions
+  description: Commission tracking and payouts
+- name: Resources
+  description: Resource management
+- name: Tenants
+  description: Multi-tenant management
+- name: Analytics
+  description: Broker performance analytics
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      description: Returns the health status of the API and its dependencies.
+      tags:
+      - Health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              example:
+                status: healthy
+                timestamp: '2024-01-15T10:30:00Z'
+                version: 1.0.0
+                uptime: 72h 15m 30s
+                services:
+                  database:
+                    status: up
+                    latency_ms: 12.5
+                  cache:
+                    status: up
+                    latency_ms: 3.2
+                  queue:
+                    status: up
+                    latency_ms: 8.1
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: SERVICE_UNHEALTHY
+                  message: One or more services are unhealthy
+                  details:
+                    database: down
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+  /auth/token:
+    post:
+      operationId: getToken
+      summary: Get access token
+      description: Obtain a JWT access token using client credentials or refresh token.
+      tags:
+      - Auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - client_credentials
+                  - refresh_token
+                  - password
+                  description: OAuth2 grant type
+                client_id:
+                  type: string
+                  description: Client identifier
+                client_secret:
+                  type: string
+                  format: password
+                  description: Client secret
+                refresh_token:
+                  type: string
+                  description: Refresh token for token renewal
+                username:
+                  type: string
+                  description: Username for password grant
+                password:
+                  type: string
+                  format: password
+                  description: Password for password grant
+                scope:
+                  type: string
+                  description: Requested scopes (space-separated)
+            example:
+              grant_type: client_credentials
+              client_id: my-client-id
+              client_secret: my-client-secret
+              scope: read write
+      responses:
+        '200':
+          description: Token obtained successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - access_token
+                - token_type
+                - expires_in
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                    description: Token expiration time in seconds
+                    example: 3600
+                  refresh_token:
+                    type: string
+                    description: Refresh token for obtaining new access tokens
+                  scope:
+                    type: string
+                    example: read write
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                token_type: Bearer
+                expires_in: 3600
+                refresh_token: dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...
+                scope: read write
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Refresh access token
+      description: Obtain a new access token using a refresh token.
+      tags:
+      - Auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid refresh token
+            example:
+              refresh_token: dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - access_token
+                - token_type
+                - expires_in
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                    example: 3600
+                  refresh_token:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /auth/revoke:
+    post:
+      operationId: revokeToken
+      summary: Revoke token
+      description: Revoke an access or refresh token.
+      tags:
+      - Auth
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              properties:
+                token:
+                  type: string
+                  description: Token to revoke
+                token_type_hint:
+                  type: string
+                  enum:
+                  - access_token
+                  - refresh_token
+                  description: Hint about the token type
+      responses:
+        '200':
+          description: Token revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revoked:
+                    type: boolean
+                    example: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /partners:
+    get:
+      operationId: listPartners
+      summary: List partners
+      description: Retrieve a paginated list of partners.
+      tags:
+      - Partners
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of partners
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createPartners
+      summary: Create partners
+      description: Create a new partners.
+      tags:
+      - Partners
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Partners created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /partners/{id}:
+    get:
+      operationId: getPartners
+      summary: Get partners by ID
+      description: Retrieve a specific partners by its unique identifier.
+      tags:
+      - Partners
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Partners found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updatePartners
+      summary: Update partners
+      description: Update an existing partners.
+      tags:
+      - Partners
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Partners updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deletePartners
+      summary: Delete partners
+      description: Delete a partners by its unique identifier.
+      tags:
+      - Partners
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Partners deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /partners/{id}/verify:
+    post:
+      operationId: verifyPartners
+      summary: Verify partners
+      description: Perform verify action on a partners.
+      tags:
+      - Partners
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Verify action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /training:
+    get:
+      operationId: listTraining
+      summary: List training
+      description: Retrieve a paginated list of training.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of training
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createTraining
+      summary: Create training
+      description: Create a new training.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Training created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /training/{id}:
+    get:
+      operationId: getTraining
+      summary: Get training by ID
+      description: Retrieve a specific training by its unique identifier.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Training found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateTraining
+      summary: Update training
+      description: Update an existing training.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Training updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteTraining
+      summary: Delete training
+      description: Delete a training by its unique identifier.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Training deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /training/{id}/assign:
+    post:
+      operationId: assignTraining
+      summary: Assign training
+      description: Perform assign action on a training.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Assign action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /training/{id}/complete:
+    post:
+      operationId: completeTraining
+      summary: Complete training
+      description: Perform complete action on a training.
+      tags:
+      - Training
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Complete action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /commissions:
+    get:
+      operationId: listCommissions
+      summary: List commissions
+      description: Retrieve a paginated list of commissions.
+      tags:
+      - Commissions
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of commissions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /commissions/{id}:
+    get:
+      operationId: getCommissions
+      summary: Get commissions by ID
+      description: Retrieve a specific commissions by its unique identifier.
+      tags:
+      - Commissions
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Commissions found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /commissions/{id}/calculate:
+    post:
+      operationId: calculateCommissions
+      summary: Calculate commissions
+      description: Perform calculate action on a commissions.
+      tags:
+      - Commissions
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Calculate action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /resources:
+    get:
+      operationId: listResources
+      summary: List resources
+      description: Retrieve a paginated list of resources.
+      tags:
+      - Resources
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createResources
+      summary: Create resources
+      description: Create a new resources.
+      tags:
+      - Resources
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Resources created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /resources/{id}:
+    get:
+      operationId: getResources
+      summary: Get resources by ID
+      description: Retrieve a specific resources by its unique identifier.
+      tags:
+      - Resources
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Resources found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateResources
+      summary: Update resources
+      description: Update an existing resources.
+      tags:
+      - Resources
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Resources updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteResources
+      summary: Delete resources
+      description: Delete a resources by its unique identifier.
+      tags:
+      - Resources
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Resources deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /resources/{id}/publish:
+    post:
+      operationId: publishResources
+      summary: Publish resources
+      description: Perform publish action on a resources.
+      tags:
+      - Resources
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Publish action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /tenants:
+    get:
+      operationId: listTenants
+      summary: List tenants
+      description: Retrieve a paginated list of tenants.
+      tags:
+      - Tenants
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortParam'
+      - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Example Item
+                  status: active
+                  created_at: '2024-01-15T10:30:00Z'
+                  updated_at: '2024-01-15T10:30:00Z'
+                meta:
+                  page: 1
+                  limit: 20
+                  total: 100
+                  total_pages: 5
+                  has_next: true
+                  has_prev: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    post:
+      operationId: createTenants
+      summary: Create tenants
+      description: Create a new tenants.
+      tags:
+      - Tenants
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the resource
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Description of the resource
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                  default: draft
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+            example:
+              name: New Item
+              description: A new item description
+              status: draft
+              metadata:
+                key: value
+      responses:
+        '201':
+          description: Tenants created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: New Item
+                description: A new item description
+                status: draft
+                metadata:
+                  key: value
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Conflict - resource already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: CONFLICT
+                  message: Resource already exists
+                  details: null
+                  request_id: 550e8400-e29b-41d4-a716-446655440000
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /tenants/{id}:
+    get:
+      operationId: getTenants
+      summary: Get tenants by ID
+      description: Retrieve a specific tenants by its unique identifier.
+      tags:
+      - Tenants
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Tenants found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    patch:
+      operationId: updateTenants
+      summary: Update tenants
+      description: Update an existing tenants.
+      tags:
+      - Tenants
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                  - active
+                  - inactive
+                  - draft
+                  - archived
+                metadata:
+                  type: object
+                  additionalProperties: true
+            example:
+              name: Updated Item
+              description: Updated description
+              status: active
+      responses:
+        '200':
+          description: Tenants updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Updated Item
+                description: Updated description
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+    delete:
+      operationId: deleteTenants
+      summary: Delete tenants
+      description: Delete a tenants by its unique identifier.
+      tags:
+      - Tenants
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - name: force
+        in: query
+        description: Force delete even if resource has dependencies
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '204':
+          description: Tenants deleted successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics: {}
+  /analytics/{id}:
+    get:
+      operationId: getAnalytics
+      summary: Get analytics by ID
+      description: Retrieve a specific analytics by its unique identifier.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Analytics found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Example Item
+                status: active
+                created_at: '2024-01-15T10:30:00Z'
+                updated_at: '2024-01-15T10:30:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/summary:
+    post:
+      operationId: summaryAnalytics
+      summary: Summary analytics
+      description: Perform summary action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Summary action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/kpi:
+    post:
+      operationId: kpiAnalytics
+      summary: Kpi analytics
+      description: Perform kpi action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Kpi action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/trends:
+    post:
+      operationId: trendsAnalytics
+      summary: Trends analytics
+      description: Perform trends action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Trends action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+  /analytics/{id}/export:
+    post:
+      operationId: exportAnalytics
+      summary: Export analytics
+      description: Perform export action on a analytics.
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for the action
+                metadata:
+                  type: object
+                  description: Additional metadata
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                status: success
+                message: Export action completed
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication. Obtain a token from /auth/token endpoint.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication for service-to-service communication.
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.grc-claw.com/oauth/authorize
+          tokenUrl: https://auth.grc-claw.com/oauth/token
+          scopes:
+            read: Read access to resources
+            write: Write access to resources
+            admin: Administrative access
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              example: NOT_FOUND
+            message:
+              type: string
+              example: Resource not found
+            details:
+              type: object
+              nullable: true
+              example: null
+            request_id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 5
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+    HealthStatus:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: string
+          example: 72h 15m 30s
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - up
+                - down
+                - degraded
+              latency_ms:
+                type: number
+                example: 45.2
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      example: 1
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      example: 20
+    SortParam:
+      name: sort
+      in: query
+      description: Sort field
+      required: false
+      schema:
+        type: string
+        enum:
+        - created_at
+        - updated_at
+        - name
+        - score
+        - status
+      example: created_at
+    OrderParam:
+      name: order
+      in: query
+      description: Sort order
+      required: false
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      example: desc
+    IdParam:
+      name: id
+      in: path
+      description: Resource identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+  responses:
+    UnauthorizedError:
+      description: Authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: Authentication required
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: FORBIDDEN
+              message: Insufficient permissions
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              details:
+                field: name
+                reason: required field missing
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: RATE_LIMIT_EXCEEDED
+              message: Rate limit exceeded. Try again later.
+              details:
+                retry_after: 60
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: An internal error occurred
+              details: null
+              request_id: 550e8400-e29b-41d4-a716-446655440000
+security:
+- BearerAuth: []
+externalDocs:
+  description: Find more info here
+  url: https://docs.grc-claw.com

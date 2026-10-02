@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: seo-optimizer-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: seo-optimizer.rules
+      rules:
+        - alert: seo_optimizer_high_error_rate
+          expr: rate(http_requests_total{job="seo-optimizer",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in seo-optimizer"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: seo_optimizer_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="seo-optimizer"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in seo-optimizer"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: seo-optimizer

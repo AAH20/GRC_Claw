@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: smb-marketing-intercept
+  namespace: default
+  labels:
+    app: smb-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: SMB marketing platform providing affordable, automated marketing
+      tools tailored for small and medium-sized businesses.
+    telepresence.io/service: smb-marketing
+    telepresence.io/deployment: smb-marketing
+spec:
+  service:
+    name: smb-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8115
+      targetPort: 8115
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /smb
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: smb-marketing
+    namespace: default
+    containerPort: 8115
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: SMB_TIERS
+      value: basic,professional,enterprise
+    volumes:
+    - name: smb-templates
+      mountPath: /templates
+      hostPath: /tmp/smb-templates
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8115
+  preview:
+    enabled: true
+    path: /smb
+    headers: *id001
+    port: 8115
+    targetPort: 8115
+    protocol: http

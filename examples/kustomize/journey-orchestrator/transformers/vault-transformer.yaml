@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: journey-orchestrator-vault-secrets
+spec:
+  vaultAuthRef: journey-orchestrator-vault-auth
+  mount: secret
+  path: journey-orchestrator
+  destination:
+    create: true
+    name: journey-orchestrator-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: journey-orchestrator
+
+target:
+  kind: Deployment
+  name: journey-orchestrator

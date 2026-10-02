@@ -1,0 +1,56 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Event Management Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: event-management
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: event-management
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: event-management-config
+    literals:
+      - LOG_LEVEL=info
+      - EVENT_BROKER_URL=kafka://kafka:9092
+      - RSVP_DEADLINE_HOURS=48
+      - VENUE_CAPACITY_CHECK=true
+      - CALENDAR_SYNC_ENABLED=true
+      - REMINDER_SCHEDULE=24h,1h
+
+commonLabels:
+  app.kubernetes.io/part-of: event-management
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: events-team@example.com
+
+namespace: events
+
+images:
+  - name: event-management
+    newName: registry.example.com/events/event-management
+    newTag: v1.6.4
+
+replicas:
+  - name: event-management
+    count: 3

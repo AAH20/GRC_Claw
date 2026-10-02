@@ -1,0 +1,103 @@
+# Application Settings
+app:
+  name: "market-research"
+  version: "0.1.0"
+  environment: "development"  # development | staging | production
+  log_level: "INFO"
+  debug: false
+
+# Server Settings
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  timeout: 300
+  max_request_size: 10485760  # 10MB
+
+# Agent Settings
+agents:
+  max_concurrent: 3
+  timeout_seconds: 600
+  retry_attempts: 3
+  retry_delay_seconds: 5
+  model: "gpt-4o"
+  temperature: 0.1
+  max_tokens: 4096
+
+# Data Collection Agent
+data_collection:
+  sources:
+    - statista
+    - ibisworld
+    - semrush
+  cache_ttl_seconds: 3600
+  rate_limit_per_minute: 60
+  batch_size: 100
+
+# Analysis Agent
+analysis:
+  methods:
+    - swot
+    - porter_five_forces
+    - pestel
+    - competitive_benchmarking
+  confidence_threshold: 0.7
+  min_data_points: 10
+
+# Reporting Agent
+reporting:
+  formats:
+    - json
+    - markdown
+    - pdf
+  template_dir: "templates"
+  output_dir: "outputs"
+  include_visualizations: true
+
+# Action Agent
+action:
+  max_recommendations: 10
+  priority_levels:
+    - critical
+    - high
+    - medium
+    - low
+  validation_required: true
+
+# Performance Analytics Agent
+performance_analytics:
+  metrics:
+    - roi
+    - conversion_rate
+    - customer_acquisition_cost
+    - lifetime_value
+    - market_share
+  aggregation_period: "monthly"
+  comparison_baseline: "previous_period"
+
+# Integration Settings
+integrations:
+  statista:
+    base_url: "https://api.statista.com"
+    timeout_seconds: 30
+    rate_limit_per_minute: 30
+  ibisworld:
+    base_url: "https://api.ibisworld.com"
+    timeout_seconds: 30
+    rate_limit_per_minute: 20
+  semrush:
+    base_url: "https://api.semrush.com"
+    timeout_seconds: 30
+    rate_limit_per_minute: 60
+
+# Cache Settings
+cache:
+  backend: "redis"
+  ttl_seconds: 3600
+  max_entries: 10000
+
+# Monitoring
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30

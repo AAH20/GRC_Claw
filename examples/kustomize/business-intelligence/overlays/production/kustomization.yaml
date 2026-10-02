@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: business-intelligence-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: business-intelligence
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: business-intelligence
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: business-intelligence
+
+configMapGenerator:
+  - name: business-intelligence-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/business-intelligence
+    newTag: stable
+
+replicas:
+  - name: business-intelligence
+    count: 3

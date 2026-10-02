@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for Sales Automator
+# Description: Sales process automation
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the sales-automator service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sales-automator-monitor
+  namespace: monitoring
+  labels:
+    app: sales-automator
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: sales-automator
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: sales_automator_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for sales-automator
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sales-automator-rules
+  namespace: monitoring
+  labels:
+    app: sales-automator
+    release: prometheus
+spec:
+  groups:
+  - name: sales-automator-recording-rules
+    interval: 30s
+    rules:
+    - record: sales_automator:api_request_rate:rate5m
+      expr: rate(sales_automator_api_requests_total[5m])
+    - record: sales_automator:api_error_rate:rate5m
+      expr: rate(sales_automator_api_errors_total[5m])
+    - record: sales_automator:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(sales_automator_api_latency_seconds_bucket[5m]))
+  - name: sales-automator-alerts-1
+    rules:
+    - alert: SalesAutomatorHighErrorRate
+      expr: rate(sales_automator_api_errors_total[5m]) / rate(sales_automator_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: sales-automator
+      annotations:
+        summary: '{{ $labels.service }}: SalesAutomatorHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered SalesAutomatorHighErrorRate
+          for more than 5 minutes.'
+    - alert: SalesAutomatorHighTaskFailureRate
+      expr: rate(sales_automator_tasks_failed_total[5m]) / rate(sales_automator_tasks_completed_total[5m])
+        > 0.1
+      for: 5m
+      labels:
+        severity: critical
+        service: sales-automator
+      annotations:
+        summary: '{{ $labels.service }}: SalesAutomatorHighTaskFailureRate is firing'
+        description: '{{ $labels.service }} has triggered SalesAutomatorHighTaskFailureRate
+          for more than 5 minutes.'
+    - alert: SalesAutomatorLowWinRate
+      expr: sales_automator_win_rate < 0.2
+      for: 5m
+      labels:
+        severity: warning
+        service: sales-automator
+      annotations:
+        summary: '{{ $labels.service }}: SalesAutomatorLowWinRate is firing'
+        description: '{{ $labels.service }} has triggered SalesAutomatorLowWinRate
+          for more than 5 minutes.'
+    - alert: SalesAutomatorHighLatency
+      expr: histogram_quantile(0.95, rate(sales_automator_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: sales-automator
+      annotations:
+        summary: '{{ $labels.service }}: SalesAutomatorHighLatency is firing'
+        description: '{{ $labels.service }} has triggered SalesAutomatorHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for sales-automator alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: sales-automator
+    receiver: sales-automator-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: sales-automator-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#sales-automator-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

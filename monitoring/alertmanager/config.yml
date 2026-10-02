@@ -1,0 +1,161 @@
+# Alertmanager configuration for GRC Claw monitoring stack
+# Routes alerts to appropriate notification channels based on severity and team.
+
+global:
+  smtp_smarthost: localhost:587
+  smtp_from: alerts@grc-claw.local
+  smtp_auth_username: ""
+  smtp_auth_password: ""
+  slack_api_url: "${SLACK_WEBHOOK_URL}"
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+  resolve_timeout: 5m
+
+# Notification templates
+templates:
+  - /etc/alertmanager/templates/*.tmpl
+
+# Route tree
+route:
+  receiver: default
+  group_by: ["alertname", "severity", "team"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # Critical alerts → PagerDuty + Slack
+    - matchers:
+        - severity = "critical"
+      receiver: critical-alerts
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      continue: true
+
+    # Platform team alerts
+    - matchers:
+        - team = "platform"
+      receiver: platform-team
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    # Engineering team alerts
+    - matchers:
+        - team = "engineering"
+      receiver: engineering-team
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    # AI/Ops team alerts
+    - matchers:
+        - team = "ai-ops"
+      receiver: ai-ops-team
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    # Marketing team alerts
+    - matchers:
+        - team = "marketing"
+      receiver: marketing-team
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 8h
+
+    # Finance team alerts
+    - matchers:
+        - team = "finance"
+      receiver: finance-team
+      group_wait: 1m
+      group_interval: 15m
+      repeat_interval: 8h
+
+    # Data science team alerts
+    - matchers:
+        - team = "data-science"
+      receiver: data-science-team
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 8h
+
+# Receivers
+receivers:
+  - name: default
+    slack_configs:
+      - channel: "#monitoring-alerts"
+        send_resolved: true
+        title: "{{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+  - name: critical-alerts
+    pagerduty_configs:
+      - service_key: "${PAGERDUTY_SERVICE_KEY}"
+        severity: critical
+        description: "{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}"
+    slack_configs:
+      - channel: "#critical-alerts"
+        send_resolved: true
+        title: "🚨 CRITICAL: {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  - name: platform-team
+    slack_configs:
+      - channel: "#platform-alerts"
+        send_resolved: true
+        title: "[Platform] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+  - name: engineering-team
+    slack_configs:
+      - channel: "#engineering-alerts"
+        send_resolved: true
+        title: "[Engineering] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+  - name: ai-ops-team
+    slack_configs:
+      - channel: "#ai-ops-alerts"
+        send_resolved: true
+        title: "[AI Ops] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+  - name: marketing-team
+    slack_configs:
+      - channel: "#marketing-alerts"
+        send_resolved: true
+        title: "[Marketing] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+  - name: finance-team
+    slack_configs:
+      - channel: "#finance-alerts"
+        send_resolved: true
+        title: "[Finance] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+  - name: data-science-team
+    slack_configs:
+      - channel: "#data-science-alerts"
+        send_resolved: true
+        title: "[Data Science] {{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.summary }}"
+
+# Inhibition rules
+inhibit_rules:
+  # Inhibit warning if critical is firing for the same alert
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: ["alertname", "instance"]
+
+  # Inhibit platform warning if critical is firing
+  - source_matchers:
+      - severity = "critical"
+      - team = "platform"
+    target_matchers:
+      - severity = "warning"
+      - team = "platform"
+    equal: ["alertname"]

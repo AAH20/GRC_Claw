@@ -1,0 +1,193 @@
+%% { init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#06b6d4', 'primaryTextColor': '#fff', 'primaryBorderColor': '#06b6d4', 'lineColor': '#888', 'secondaryColor': '#a855f7', 'tertiaryColor': '#10b981' } } }%%
+%% Analytics & Attribution - System Architecture Diagram
+%% Agentic AI marketing analytics and attribution platform for multi-touch attribution and predictive analytics
+
+%% ============================================================
+%% 1. SYSTEM CONTEXT VIEW
+%% ============================================================
+flowchart TB
+    subgraph External["External Systems"]
+        E0["Analytics Platforms"]
+    end
+
+    subgraph System["Analytics & Attribution System"]
+        API["FastAPI Gateway"]
+        subgraph Agents["AI Agent Layer"]
+        A0["Data Collection"]
+        A1["Attribution Engine"]
+        A2["Predictive Analytics"]
+        A3["Reporting"]
+        A4["Real-time Dashboards"]
+        end
+        subgraph Data["Data Layer"]
+        D0[("PostgreSQL")]
+        D1[("Redis")]
+        D2[("ClickHouse")]
+        end
+        subgraph Integrations["Integration Layer"]
+        I0["Google Analytics"]
+        I1["Mixpanel"]
+        I2["Amplitude"]
+        end
+    end
+
+    External <-->|data exchange| System
+
+%% ============================================================
+%% 2. COMPONENT VIEW
+%% ============================================================
+flowchart LR
+    subgraph Core["Core Components"]
+        API["FastAPI Gateway"]
+        subgraph AgentLayer["Agent Orchestration"]
+        A0["Data Collection"]
+        A1["Attribution Engine"]
+        A2["Predictive Analytics"]
+        A3["Reporting"]
+        A4["Real-time Dashboards"]
+        end
+        subgraph DataLayer["Data Services"]
+        D0[("PostgreSQL")]
+        D1[("Redis")]
+        D2[("ClickHouse")]
+        end
+        subgraph IntegrationLayer["External Integrations"]
+        I0["Google Analytics"]
+        I1["Mixpanel"]
+        I2["Amplitude"]
+        end
+    end
+
+    API -->|routes| AgentLayer
+    AgentLayer -->|persists| DataLayer
+    AgentLayer -->|calls| IntegrationLayer
+
+%% ============================================================
+%% 3. DATA FLOW VIEW
+%% ============================================================
+flowchart TD
+    subgraph Input["Input Sources"]
+        E0["Analytics Platforms"]
+    end
+
+    subgraph Processing["Processing Layer"]
+        A0["Data Collection"]
+        A1["Attribution Engine"]
+        A2["Predictive Analytics"]
+        A3["Reporting"]
+        A4["Real-time Dashboards"]
+    end
+
+    subgraph Storage["Storage Layer"]
+        D0[("PostgreSQL")]
+        D1[("Redis")]
+        D2[("ClickHouse")]
+    end
+
+    subgraph Output["Output/Integrations"]
+        I0["Google Analytics"]
+        I1["Mixpanel"]
+        I2["Amplitude"]
+    end
+
+    Input -->|raw data| Processing
+    Processing -->|processed data| Storage
+    Processing -->|results| Output
+    Storage <-->|query/update| Processing
+
+%% ============================================================
+%% 4. DEPLOYMENT VIEW
+%% ============================================================
+flowchart TB
+    subgraph Client["Client Layer"]
+        Web["Web Dashboard"]
+        Mobile["Mobile App"]
+        APIClient["API Clients"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        LB["Load Balancer"]
+        CDN["CDN"]
+    end
+
+    subgraph App["Application Layer"]
+        subgraph FastAPI["FastAPI Instances"]
+            API1["API Instance 1"]
+            API2["API Instance 2"]
+            API3["API Instance 3"]
+        end
+        subgraph Worker["Worker Layer"]
+            W1["Celery Worker 1"]
+            W2["Celery Worker 2"]
+        end
+    end
+
+    subgraph DataLayer["Data Layer"]
+        PG[("PostgreSQL")]
+        RD[("Redis")]
+        S3["Object Storage"]
+    end
+
+    subgraph Monitoring["Monitoring"]
+        Prom["Prometheus"]
+        Graf["Grafana"]
+        ELK["ELK Stack"]
+    end
+
+    Client -->|HTTPS| Edge
+    Edge -->|routes| App
+    App -->|reads/writes| DataLayer
+    App -->|metrics| Monitoring
+    Worker -->|processes| DataLayer
+    Worker -->|logs| Monitoring
+
+%% ============================================================
+%% 5. AGENT INTERACTION VIEW
+%% ============================================================
+flowchart LR
+    subgraph Orchestrator["Orchestrator"]
+        O["Agent Orchestrator"]
+    end
+
+    subgraph AgentPool["Agent Pool"]
+        A0["Data Collection"]
+        A1["Attribution Engine"]
+        A2["Predictive Analytics"]
+        A3["Reporting"]
+        A4["Real-time Dashboards"]
+    end
+
+    subgraph Shared["Shared Services"]
+        G["GRC_Claw Governance"]
+        L["LangChain DeepAgents"]
+        C["grc-marketing-core"]
+    end
+
+    O -->|dispatches| AgentPool
+    AgentPool -->|uses| Shared
+    Shared -->|enforces| AgentPool
+
+%% ============================================================
+%% 6. SECURITY VIEW
+%% ============================================================
+flowchart TB
+    subgraph Security["Security Layer"]
+        Auth["Authentication"]
+        AuthZ["Authorization"]
+        Audit["Audit Logging"]
+        Encrypt["Encryption"]
+    end
+
+    subgraph AppLayer["Application"]
+        API["API Gateway"]
+        Agents["Agents"]
+    end
+
+    subgraph DataStore["Data Stores"]
+        DB[("Databases")]
+        Cache[("Cache")]
+    end
+
+    Security -->|protects| AppLayer
+    AppLayer -->|accesses| DataStore
+    Security -->|monitors| DataStore

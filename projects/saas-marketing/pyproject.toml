@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "saas-marketing"
+version = "0.1.0"
+description = "Modularized agentic AI marketing platform for SaaS PLG"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Ahmed Hassan", email = "ahmed@example.com" },
+]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0.1",
+    "structlog>=24.1.0",
+    "tenacity>=8.3.0",
+    "prometheus-client>=0.20.0",
+]
+
+
+keywords = ["saas", "marketing", "ai", "agents", "plg"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+saas-marketing = "saas_marketing.main:main"
+[project.urls]
+Homepage = "https://github.com/ahmedhassan/GRC_Claw"
+Repository = "https://github.com/ahmedhassan/GRC_Claw"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "httpx>=0.27.0",
+    "respx>=0.21.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/saas_marketing"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true

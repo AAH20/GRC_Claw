@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: marketing-attribution-intercept
+  namespace: default
+  labels:
+    app: marketing-attribution
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Multi-touch attribution modeling service that tracks and assigns
+      credit to marketing touchpoints across the customer journey.
+    telepresence.io/service: marketing-attribution
+    telepresence.io/deployment: marketing-attribution
+spec:
+  service:
+    name: marketing-attribution
+    namespace: default
+    ports:
+    - name: http
+      port: 8099
+      targetPort: 8099
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /attribution
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: marketing-attribution
+    namespace: default
+    containerPort: 8099
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: ATTRIBUTION_MODEL
+      value: data-driven
+    volumes:
+    - name: attribution-data
+      mountPath: /data
+      hostPath: /tmp/attribution-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8099
+  preview:
+    enabled: true
+    path: /attribution
+    headers: *id001
+    port: 8099
+    targetPort: 8099
+    protocol: http

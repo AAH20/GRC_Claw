@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: smb-marketing-rules
+spec:
+  rules: |
+    - rule: smb_marketing_unexpected_process
+      desc: Detect unexpected processes in smb-marketing container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/smb-marketing" and
+        not proc.name in ("smb-marketing", "sh", "bash")
+      output: >
+        Unexpected process in smb-marketing container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: smb-marketing

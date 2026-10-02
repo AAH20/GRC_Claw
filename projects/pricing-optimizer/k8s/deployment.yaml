@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing-optimizer
+  labels:
+    app: pricing-optimizer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pricing-optimizer
+  template:
+    metadata:
+      labels:
+        app: pricing-optimizer
+    spec:
+      containers:
+        - name: pricing-optimizer
+          image: ghcr.io/ahmedhassan/pricing-optimizer:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pricing-optimizer-secrets
+                  key: openai-api-key
+            - name: SHOPIFY_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: pricing-optimizer-secrets
+                  key: shopify-access-token
+            - name: WOOCOMMERCE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pricing-optimizer-secrets
+                  key: woocommerce-api-key
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pricing-optimizer-secrets
+                  key: stripe-secret-key
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

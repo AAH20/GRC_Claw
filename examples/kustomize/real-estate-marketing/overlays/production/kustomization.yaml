@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: real-estate-marketing-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: real-estate-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: real-estate-marketing
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: real-estate-marketing
+
+configMapGenerator:
+  - name: real-estate-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/real-estate-marketing
+    newTag: stable
+
+replicas:
+  - name: real-estate-marketing
+    count: 3

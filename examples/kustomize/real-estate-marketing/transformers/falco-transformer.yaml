@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: real-estate-marketing-rules
+spec:
+  rules: |
+    - rule: real_estate_marketing_unexpected_process
+      desc: Detect unexpected processes in real-estate-marketing container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/real-estate-marketing" and
+        not proc.name in ("real-estate-marketing", "sh", "bash")
+      output: >
+        Unexpected process in real-estate-marketing container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: real-estate-marketing

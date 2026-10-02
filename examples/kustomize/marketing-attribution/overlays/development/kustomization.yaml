@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: marketing-attribution-dev
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-attribution
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-attribution
+
+configMapGenerator:
+  - name: marketing-attribution-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - DEBUG=true
+
+commonLabels:
+  environment: development
+
+images:
+  - name: grcclaw/marketing-attribution
+    newTag: dev

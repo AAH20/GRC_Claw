@@ -1,0 +1,119 @@
+# CRM Enhancer - Kustomize Example
+# Production-grade Kustomize configuration for the CRM Enhancer service.
+
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: crm-enhancer
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: crm-enhancer
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: crm-enhancer
+    newTag: v2.0.0
+
+configMapGenerator:
+  - name: crm-enhancer-config
+    literals:
+      - LOG_LEVEL=info
+      - CRM_PROVIDERS=salesforce,hubspot,pipedrive
+      - SYNC_INTERVAL=300
+      - ENRICHMENT_SOURCES=clearbit,hunter
+      - CONTACT_DEDUPE_THRESHOLD=0.85
+      - WEBHOOK_SECRET_HEADER=X-CRM-Signature
+
+secretGenerator:
+  - name: crm-enhancer-secrets
+    literals:
+      - SALESFORCE_CLIENT_ID=changeme
+      - SALESFORCE_CLIENT_SECRET=changeme
+      - HUBSPOT_API_KEY=changeme
+      - PIPEDRIVE_API_KEY=changeme
+      - CLEARBIT_API_KEY=changeme
+      - DB_PASSWORD=changeme
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: crm-enhancer
+
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: crm-enhancer
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OVERLAYS
+# ─────────────────────────────────────────────────────────────────────────────
+# overlays/dev/kustomization.yaml
+# overlays/staging/kustomization.yaml
+# overlays/prod/kustomization.yaml
+#
+# Example overlay (prod):
+# ---
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+#
+# resources:
+#   - ../../base
+#
+# namePrefix: prod-
+#
+# replicas:
+#   - name: crm-enhancer
+#     count: 6
+#
+# patches:
+#   - path: patches/prod-resources.yaml
+#   - path: patches/prod-autoscaling.yaml
+#
+# configMapGenerator:
+#   - name: crm-enhancer-config
+#     behavior: merge
+#     literals:
+#       - LOG_LEVEL=warn
+#       - SYNC_INTERVAL=120
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# TRANSFORMERS
+# ─────────────────────────────────────────────────────────────────────────────
+# transformers/labels-transformer.yaml
+# transformers/namespace-transformer.yaml
+# transformers/image-transformer.yaml
+#
+# Example transformer (common annotations):
+# ---
+# apiVersion: builtin
+# kind: AnnotationsTransformer
+# metadata:
+#   name: common-annotations
+# annotations:
+#   monitoring.io/scrape: "true"
+#   monitoring.io/port: "8080"
+# fieldSpecs:
+#   - path: metadata/annotations
+#     create: true
+#
+# Example transformer (image transformer):
+# ---
+# apiVersion: builtin
+# kind: ImageTagTransformer
+# metadata:
+#   name: crm-enhancer-image
+# imageTag:
+#   name: crm-enhancer
+#   newTag: v2.0.0
+# fieldSpecs:
+#   - path: spec/template/spec/containers/0/image
+#     create: true

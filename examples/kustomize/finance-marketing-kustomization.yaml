@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Finance Marketing Service - Production Kustomize Example
+# Financial product marketing, compliance-aware campaigns, and lead nurturing
+
+namespace: finance-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: finance-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: finance-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: finance-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: finance-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - COMPLIANCE_FRAMEWORK=SOX,PCI-DSS
+      - LEAD_SCORING_MODEL=gradient-boosting
+      - CAMPAIGN_APPROVAL_WORKFLOW=required
+      - DISCLOSURE_TEMPLATES=v2
+      - RISK_PROFILING=true
+      - KYC_INTEGRATION=enabled
+      - AUDIT_TRAIL=immutable
+
+secretGenerator:
+  - name: finance-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/finance-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: finance-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: finance-marketing
+    newName: registry.grc-claw.io/marketing/finance-marketing
+    newTag: v1.6.8
+
+replicas:
+  - name: finance-marketing
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -fin

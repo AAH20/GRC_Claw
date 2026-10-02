@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: account-based-marketing-vault-secrets
+spec:
+  vaultAuthRef: account-based-marketing-vault-auth
+  mount: secret
+  path: account-based-marketing
+  destination:
+    create: true
+    name: account-based-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: account-based-marketing
+
+target:
+  kind: Deployment
+  name: account-based-marketing

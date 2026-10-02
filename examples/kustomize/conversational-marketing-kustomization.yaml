@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Conversational Marketing Service - Production Kustomize Example
+# Chatbots, live chat, and AI-driven conversational engagement
+
+namespace: conversational-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: conversational-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: conversational-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: conversational-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: conversational-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: conversational-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - NLP_ENGINE=spacy-transformers
+      - CHATBOT_MODEL=gpt-4
+      - SESSION_TIMEOUT_MIN=30
+      - MAX_CONCURRENT_CHATS=1000
+      - FALLBACK_MESSAGE="Connecting you to a human agent..."
+      - SENTIMENT_ANALYSIS=true
+
+secretGenerator:
+  - name: conversational-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/conversational-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: conversational-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: conversational-marketing
+    newName: registry.grc-claw.io/marketing/conversational-marketing
+    newTag: v2.0.5
+
+replicas:
+  - name: conversational-marketing
+    count: 4
+
+namePrefix: prod-
+nameSuffix: -cm

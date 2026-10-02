@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-segmentation
+  namespace: customer-segmentation
+  labels:
+    app: customer-segmentation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: customer-segmentation

@@ -1,0 +1,169 @@
+# Skaffold configuration for Customer Service
+# Manages customer support tickets and responses
+# Production-grade Kubernetes deployment with build, deploy, and port-forward
+
+apiVersion: skaffold/v4beta7
+kind: Config
+
+metadata:
+  name: customer-service
+  labels:
+    app: customer-service
+    project: grc-claw
+    tier: backend
+    environment: development
+
+build:
+  artifacts:
+    - image: grc-claw/customer-service
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          APP_NAME: "Customer Service"
+          APP_ENV: "development"
+          LOG_LEVEL: "debug"
+      sync:
+        manual:
+          - src: "src/**/*.py"
+            dest: /app/src
+            strip: "src/"
+          - src: "src/**/*.js"
+            dest: /app/src
+            strip: "src/"
+          - src: "src/**/*.ts"
+            dest: /app/src
+            strip: "src/"
+  local:
+    push: false
+    useDockerCLI: true
+    useBuildkit: true
+
+deploy:
+  kubectl:
+    manifests:
+      - k8s/namespace.yaml
+      - k8s/configmap.yaml
+      - k8s/secret.yaml
+      - k8s/deployment.yaml
+      - k8s/service.yaml
+      - k8s/ingress.yaml
+      - k8s/hpa.yaml
+      - k8s/pdb.yaml
+    flags:
+      global:
+        - --validate=true
+
+portForward:
+  - resourceType: service
+    resourceName: customer-service
+    namespace: grc-claw
+    port: 8090
+    localPort: 8090
+    address: 0.0.0.0
+
+profiles:
+  - name: development
+    build:
+      artifacts:
+        - image: grc-claw/customer-service
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              APP_ENV: "development"
+              LOG_LEVEL: "debug"
+              DEBUG: "true"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+    portForward:
+      - resourceType: service
+        resourceName: customer-service
+        namespace: grc-claw
+        port: 8090
+        localPort: 8090
+
+  - name: staging
+    build:
+      artifacts:
+        - image: grc-claw/customer-service
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              APP_ENV: "staging"
+              LOG_LEVEL: "info"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/secret.yaml
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+          - k8s/ingress.yaml
+          - k8s/hpa.yaml
+    portForward:
+      - resourceType: service
+        resourceName: customer-service
+        namespace: grc-claw-staging
+        port: 8090
+        localPort: 8090
+
+  - name: production
+    build:
+      artifacts:
+        - image: grc-claw/customer-service
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              APP_ENV: "production"
+              LOG_LEVEL: "warn"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/secret.yaml
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+          - k8s/ingress.yaml
+          - k8s/hpa.yaml
+          - k8s/pdb.yaml
+    portForward:
+      - resourceType: service
+        resourceName: customer-service
+        namespace: grc-claw-production
+        port: 8090
+        localPort: 8090
+
+  - name: debug
+    build:
+      artifacts:
+        - image: grc-claw/customer-service
+          docker:
+            dockerfile: Dockerfile.debug
+            buildArgs:
+              APP_ENV: "development"
+              LOG_LEVEL: "debug"
+              DEBUG: "true"
+    deploy:
+      kubectl:
+        manifests:
+          - k8s/namespace.yaml
+          - k8s/configmap.yaml
+          - k8s/deployment-debug.yaml
+          - k8s/service.yaml
+    portForward:
+      - resourceType: service
+        resourceName: customer-service
+        namespace: grc-claw
+        port: 8090
+        localPort: 8090
+      - resourceType: pod
+        resourceName: customer-service-debug
+        namespace: grc-claw
+        port: 5678
+        localPort: 5678

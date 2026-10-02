@@ -1,0 +1,79 @@
+app:
+  name: "ABM Platform"
+  version: "0.1.0"
+  environment: "development"
+  log_level: "DEBUG"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+agents:
+  account_identification:
+    max_accounts: 100
+    min_score_threshold: 0.6
+    data_sources:
+      - salesforce
+      - hubspot
+      - linkedin
+  intent_scoring:
+    model: "gpt-4"
+    scoring_window_days: 30
+    intent_signals:
+      - website_visits
+      - content_downloads
+      - email_engagement
+      - ad_clicks
+      - social_engagement
+  buying_committee_mapper:
+    max_contacts_per_account: 20
+    roles_to_identify:
+      - champion
+      - decision_maker
+      - influencer
+      - blocker
+      - user
+  content_personalization:
+    model: "gpt-4"
+    content_types:
+      - email
+      - landing_page
+      - ad_copy
+      - social_post
+      - direct_mail
+  channel_orchestrator:
+    channels:
+      - email
+      - linkedin_ads
+      - google_ads
+      - direct_mail
+      - web_personalization
+    max_touchpoints_per_week: 5
+  performance_analytics:
+    attribution_model: "multi_touch"
+    metrics:
+      - impressions
+      - clicks
+      - engagement_rate
+      - pipeline_generated
+      - revenue_influenced
+      - roi
+
+integrations:
+  salesforce:
+    api_version: "v58.0"
+    timeout_seconds: 30
+    retry_attempts: 3
+  hubspot:
+    api_version: "v3"
+    timeout_seconds: 30
+    retry_attempts: 3
+  linkedin_ads:
+    api_version: "v2"
+    timeout_seconds: 30
+    retry_attempts: 3
+
+rate_limiting:
+  requests_per_minute: 100
+  burst_size: 20

@@ -1,0 +1,265 @@
+version: v2beta1
+
+name: feedback-management
+
+# ============================================================
+# BUILD CONFIGURATION
+# ============================================================
+images:
+  feedback-management:
+    image: ghcr.io/grc-claw/feedback-management
+    dockerfile: ./Dockerfile
+    context: .
+    rebuildStrategy: ignoreContextChanges
+    buildKit:
+      args:
+        BUILDKIT_INLINE_CACHE: "1"
+    tags:
+      - latest
+      - $(git rev-parse --short HEAD)
+
+# ============================================================
+# DEPLOY CONFIGURATION
+# ============================================================
+deployments:
+  feedback-management:
+    helm:
+      values:
+        replicaCount: 2
+        image:
+          repository: ghcr.io/grc-claw/feedback-management
+          tag: latest
+          pullPolicy: IfNotPresent
+        imagePullSecrets:
+          - name: ghcr-registry-secret
+        serviceAccount:
+          create: true
+          name: feedback-management-sa
+        service:
+          type: ClusterIP
+          port: 8027
+          targetPort: 8027
+          protocol: TCP
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/rate-limit: "100"
+          hosts:
+            - host: feedback-management.grc-claw.local
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: feedback-management-tls
+              hosts:
+                - feedback-management.grc-claw.local
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        autoscaling:
+          enabled: true
+          minReplicas: 2
+          maxReplicas: 5
+          targetCPUUtilizationPercentage: 70
+          targetMemoryUtilizationPercentage: 80
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8027
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8027
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        env:
+          - name: SERVICE_NAME
+            value: "feedback-management"
+          - name: SERVICE_PORT
+            value: "8027"
+          - name: LOG_LEVEL
+            value: "info"
+          - name: ENVIRONMENT
+            value: "development"
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: feedback-management-secrets
+                key: redis-url
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: feedback-management-secrets
+                key: database-url
+          - name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: feedback-management-secrets
+                key: api-key
+        envFrom:
+          - configMapRef:
+              name: feedback-management-config
+        podAnnotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8027"
+          prometheus.io/path: "/metrics"
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 1000
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app: feedback-management
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - feedback-management
+                  topologyKey: kubernetes.io/hostname
+
+# ============================================================
+# DEV CONFIGURATION
+# ============================================================
+dev:
+  feedback-management:
+    imageSelector: ghcr.io/grc-claw/feedback-management:latest
+    terminal:
+      command: /bin/sh -c "echo 'DevSpace terminal for Feedback Management' && sleep infinity"
+    ports:
+      - port: "8027:8027"
+      - port: "9229:9229"
+    sync:
+      - path: ./:/app
+        excludePaths:
+          - .git
+          - node_modules
+          - __pycache__
+          - .venv
+          - venv
+          - .devspace
+          - .idea
+          - .vscode
+          - "*.pyc"
+          - .pytest_cache
+          - .mypy_cache
+          - dist
+          - build
+          - "*.egg-info"
+        uploadExcludePaths:
+          - tests
+          - docs
+          - scripts
+        onUpload:
+          restartContainer: true
+        initialSync: mirrorLocal
+    open:
+      - url: http://localhost:8027
+      - url: http://localhost:8027/docs
+      - url: http://localhost:8027/health
+    proxySubdomains: true
+    replacePods:
+      - imageSelector: ghcr.io/grc-claw/feedback-management:latest
+        paths:
+          - ./src
+          - ./app
+          - ./lib
+          - ./config
+    persistPaths:
+      - path: /app/data
+      - path: /app/logs
+      - path: /app/.cache
+    sshAgentForwarding: true
+    interactive:
+      enabled: true
+      defaultEnabled: false
+    terminalUI:
+      enabled: true
+    logs:
+      enabled: true
+      lastLines: 100
+    pullSecrets:
+      - ghcr-registry-secret
+    hooks:
+      - command: "echo 'Pre-build hook: Installing dependencies...'"
+        events: ["before:build"]
+      - command: "pip install -r requirements.txt"
+        events: ["after:build"]
+      - command: "echo 'Post-deploy hook: Running migrations...'"
+        events: ["after:deploy"]
+      - command: "echo 'Pre-stop hook: Cleaning up...'"
+        events: ["before:stop"]
+
+# ============================================================
+# PIPELINES
+# ============================================================
+pipelines:
+  dev:
+    run: |-
+      run_dependencies --all
+      ensure_pipelines --all
+      run_images --all
+      run_deployments --all
+      start_dev --all
+  deploy:
+    run: |-
+      build_images --all
+      create_deployments --all
+      start_dev --all
+  purge:
+    run: |-
+      stop_dev --all
+      delete_deployments --all
+      purge_images --all
+
+# ============================================================
+# FUNCTIONS
+# ============================================================
+functions:
+  run_images: |-
+    images --all
+  run_deployments: |-
+    deployments --all
+  run_dependencies: |-
+    deployments --all
+  ensure_pipelines: |-
+    ensure_pipelines --all
+  start_dev: |-
+    dev --all
+  stop_dev: |-
+    stop_dev --all
+  delete_deployments: |-
+    delete_deployments --all
+  purge_images: |-
+    purge_images --all
+  build_images: |-
+    build_images --all
+  create_deployments: |-
+    create_deployments --all

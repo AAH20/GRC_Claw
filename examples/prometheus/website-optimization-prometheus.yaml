@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Website Optimization
+# Description: Website optimization and CRO
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the website-optimization service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: website-optimization-monitor
+  namespace: monitoring
+  labels:
+    app: website-optimization
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: website-optimization
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: website_optimization_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for website-optimization
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: website-optimization-rules
+  namespace: monitoring
+  labels:
+    app: website-optimization
+    release: prometheus
+spec:
+  groups:
+  - name: website-optimization-recording-rules
+    interval: 30s
+    rules:
+    - record: website_optimization:api_request_rate:rate5m
+      expr: rate(website_optimization_api_requests_total[5m])
+    - record: website_optimization:api_error_rate:rate5m
+      expr: rate(website_optimization_api_errors_total[5m])
+    - record: website_optimization:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(website_optimization_api_latency_seconds_bucket[5m]))
+  - name: website-optimization-alerts-1
+    rules:
+    - alert: WebsiteOptimizationHighErrorRate
+      expr: rate(website_optimization_api_errors_total[5m]) / rate(website_optimization_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: website-optimization
+      annotations:
+        summary: '{{ $labels.service }}: WebsiteOptimizationHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered WebsiteOptimizationHighErrorRate
+          for more than 5 minutes.'
+    - alert: WebsiteOptimizationLowConversionRate
+      expr: website_optimization_conversion_rate < 0.02
+      for: 5m
+      labels:
+        severity: warning
+        service: website-optimization
+      annotations:
+        summary: '{{ $labels.service }}: WebsiteOptimizationLowConversionRate is firing'
+        description: '{{ $labels.service }} has triggered WebsiteOptimizationLowConversionRate
+          for more than 5 minutes.'
+    - alert: WebsiteOptimizationHighBounceRate
+      expr: website_optimization_bounce_rate > 0.6
+      for: 5m
+      labels:
+        severity: warning
+        service: website-optimization
+      annotations:
+        summary: '{{ $labels.service }}: WebsiteOptimizationHighBounceRate is firing'
+        description: '{{ $labels.service }} has triggered WebsiteOptimizationHighBounceRate
+          for more than 5 minutes.'
+    - alert: WebsiteOptimizationHighLatency
+      expr: histogram_quantile(0.95, rate(website_optimization_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: website-optimization
+      annotations:
+        summary: '{{ $labels.service }}: WebsiteOptimizationHighLatency is firing'
+        description: '{{ $labels.service }} has triggered WebsiteOptimizationHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for website-optimization alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: website-optimization
+    receiver: website-optimization-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: website-optimization-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#website-optimization-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: nebula-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-segmentation
+spec:
+  template:
+    metadata:
+      annotations:
+        nebula.io/enable: "true"
+
+target:
+  kind: Deployment
+  name: customer-segmentation

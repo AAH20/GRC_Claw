@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: conversational-marketing-vault-secrets
+spec:
+  vaultAuthRef: conversational-marketing-vault-auth
+  mount: secret
+  path: conversational-marketing
+  destination:
+    create: true
+    name: conversational-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: conversational-marketing
+
+target:
+  kind: Deployment
+  name: conversational-marketing

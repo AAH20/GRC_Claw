@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lead-scorer
+  labels:
+    app: lead-scorer
+    environment: production

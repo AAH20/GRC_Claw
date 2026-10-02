@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Healthcare Marketing
+# Description: Healthcare marketing compliance and outreach
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the healthcare-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: healthcare-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: healthcare-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: healthcare-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: healthcare_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for healthcare-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: healthcare-marketing-rules
+  namespace: monitoring
+  labels:
+    app: healthcare-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: healthcare-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: healthcare_marketing:api_request_rate:rate5m
+      expr: rate(healthcare_marketing_api_requests_total[5m])
+    - record: healthcare_marketing:api_error_rate:rate5m
+      expr: rate(healthcare_marketing_api_errors_total[5m])
+    - record: healthcare_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(healthcare_marketing_api_latency_seconds_bucket[5m]))
+  - name: healthcare-marketing-alerts-1
+    rules:
+    - alert: HealthcareMarketingHighErrorRate
+      expr: rate(healthcare_marketing_api_errors_total[5m]) / rate(healthcare_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: healthcare-marketing
+      annotations:
+        summary: '{{ $labels.service }}: HealthcareMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered HealthcareMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: HealthcareMarketingLowCompliance
+      expr: healthcare_marketing_compliance_score < 0.95
+      for: 5m
+      labels:
+        severity: critical
+        service: healthcare-marketing
+      annotations:
+        summary: '{{ $labels.service }}: HealthcareMarketingLowCompliance is firing'
+        description: '{{ $labels.service }} has triggered HealthcareMarketingLowCompliance
+          for more than 5 minutes.'
+    - alert: HealthcareMarketingHIPAAViolation
+      expr: healthcare_marketing_hipaa_compliance < 1.0
+      for: 5m
+      labels:
+        severity: critical
+        service: healthcare-marketing
+      annotations:
+        summary: '{{ $labels.service }}: HealthcareMarketingHIPAAViolation is firing'
+        description: '{{ $labels.service }} has triggered HealthcareMarketingHIPAAViolation
+          for more than 5 minutes.'
+    - alert: HealthcareMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(healthcare_marketing_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: healthcare-marketing
+      annotations:
+        summary: '{{ $labels.service }}: HealthcareMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered HealthcareMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for healthcare-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: healthcare-marketing
+    receiver: healthcare-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: healthcare-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#healthcare-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

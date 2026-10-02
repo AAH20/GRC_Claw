@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: workflow-automation-vault-secrets
+spec:
+  vaultAuthRef: workflow-automation-vault-auth
+  mount: secret
+  path: workflow-automation
+  destination:
+    create: true
+    name: workflow-automation-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: workflow-automation
+
+target:
+  kind: Deployment
+  name: workflow-automation

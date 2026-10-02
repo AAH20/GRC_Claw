@@ -1,0 +1,16 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: priorityclass-patch
+patch: |-
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: influencer-marketing-priority
+value: 1000
+globalDefault: false
+description: "Priority class for influencer-marketing service"
+
+target:
+  kind: Deployment
+  name: influencer-marketing

@@ -1,0 +1,61 @@
+app:
+  name: affiliate-marketing
+  version: "0.1.0"
+  debug: false
+  log_level: INFO
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+
+database:
+  url: postgresql://postgres:postgres@localhost:5432/affiliate_marketing
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+redis:
+  url: redis://localhost:6379/0
+  max_connections: 50
+
+agents:
+  recruitment:
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 2048
+  tracking:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 1024
+  optimization:
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 2048
+  payout:
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 1024
+  analytics:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 2048
+
+integrations:
+  rakuten:
+    enabled: true
+    api_endpoint: https://api.rakutenmarketing.com
+    timeout: 30
+  impact:
+    enabled: true
+    api_endpoint: https://api.impact.com
+    timeout: 30
+  shareasale:
+    enabled: true
+    api_endpoint: https://api.shareasale.com
+    timeout: 30
+
+monitoring:
+  prometheus_enabled: true
+  sentry_enabled: false
+  sentry_dsn: ""

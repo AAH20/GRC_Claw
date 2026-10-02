@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: partner-management-vault-secrets
+spec:
+  vaultAuthRef: partner-management-vault-auth
+  mount: secret
+  path: partner-management
+  destination:
+    create: true
+    name: partner-management-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: partner-management
+
+target:
+  kind: Deployment
+  name: partner-management

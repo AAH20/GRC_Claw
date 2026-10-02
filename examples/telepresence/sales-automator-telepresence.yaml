@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: sales-automator-intercept
+  namespace: default
+  labels:
+    app: sales-automator
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Sales automation platform that automates follow-ups, pipeline management,
+      and sales workflows with intelligent task prioritization.
+    telepresence.io/service: sales-automator
+    telepresence.io/deployment: sales-automator
+spec:
+  service:
+    name: sales-automator
+    namespace: default
+    ports:
+    - name: http
+      port: 8089
+      targetPort: 8089
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /automations
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: sales-automator
+    namespace: default
+    containerPort: 8089
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: WORKFLOW_ENGINE
+      value: v3
+    volumes:
+    - name: sales-workflows
+      mountPath: /workflows
+      hostPath: /tmp/sales-workflows
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8089
+  preview:
+    enabled: true
+    path: /automations
+    headers: *id001
+    port: 8089
+    targetPort: 8089
+    protocol: http

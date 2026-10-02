@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: pdb-patch
+patch: |-
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agency-marketing-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agency-marketing
+
+target:
+  kind: Deployment
+  name: agency-marketing

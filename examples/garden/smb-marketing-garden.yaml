@@ -1,0 +1,250 @@
+# Garden Example: SMB Marketing
+# Marketing solutions tailored for small and medium businesses
+# Production-grade Garden configuration for SMB Marketing
+
+kind: Module
+type: container
+name: smb-marketing
+description: Marketing solutions tailored for small and medium businesses
+
+variables:
+  imageTag: latest
+  replicas: 3
+  environment: production
+  logLevel: info
+  resources:
+    cpu: "500m"
+    memory: "512Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  service:
+    type: ClusterIP
+    port: 8080
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: smb-marketing.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+  healthCheck:
+    enabled: true
+    path: /health
+    port: 8080
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: ${{ var.logLevel }}
+    - name: DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          name: smb-marketing-db-credentials
+          key: url
+    - name: REDIS_URL
+      valueFrom:
+        secretKeyRef:
+          name: smb-marketing-redis-credentials
+          key: url
+    - name: API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: smb-marketing-api-key
+          key: value
+
+build:
+  method: docker
+  dockerfile: Dockerfile
+  context: .
+  target: production
+  args:
+    NODE_ENV: production
+  cache:
+    enabled: true
+    key: ${{ inputs.commitSha }}
+
+deploy:
+  strategy: rollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+  selector:
+    matchLabels:
+      app: smb-marketing
+  template:
+    metadata:
+      labels:
+        app: smb-marketing
+        version: ${{ inputs.imageTag }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: smb-marketing
+          image: registry.example.com/smb-marketing:${{ inputs.imageTag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: ${{ var.resources.cpu }}
+              memory: ${{ var.resources.memory }}
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          env:
+            - name: NODE_ENV
+              value: ${{ var.environment }}
+            - name: LOG_LEVEL
+              value: ${{ var.logLevel }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smb-marketing-db-credentials
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smb-marketing-redis-credentials
+                  key: url
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: smb-marketing-api-key
+                  key: value
+          livenessProbe:
+            httpGet:
+              path: ${{ var.healthCheck.path }}
+              port: ${{ var.healthCheck.port }}
+            initialDelaySeconds: ${{ var.livenessProbe.initialDelaySeconds }}
+            periodSeconds: ${{ var.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: ${{ var.healthCheck.path }}
+              port: ${{ var.healthCheck.port }}
+            initialDelaySeconds: ${{ var.readinessProbe.initialDelaySeconds }}
+            periodSeconds: ${{ var.readinessProbe.periodSeconds }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - smb-marketing
+                topologyKey: topology.kubernetes.io/zone
+
+test:
+  command: npm test
+  timeout: 300
+  env:
+    - name: NODE_ENV
+      value: test
+    - name: DATABASE_URL
+      value: postgresql://test:test@localhost:5432/smb-marketing_test
+    - name: REDIS_URL
+      value: redis://localhost:6379/0
+  coverage:
+    enabled: true
+    threshold: 80
+    reportPath: coverage/lcov.info
+  artifacts:
+    - path: coverage/
+      type: coverage
+    - path: test-results/
+      type: test-results
+
+services:
+  - name: smb-marketing
+    ports:
+      - name: http
+        port: 8080
+        protocol: TCP
+    dependencies:
+      - smb-marketing-db
+      - smb-marketing-redis
+
+  - name: smb-marketing-db
+    type: external
+    description: PostgreSQL database for SMB Marketing
+
+  - name: smb-marketing-redis
+    type: external
+    description: Redis cache for SMB Marketing
+
+secrets:
+  - name: smb-marketing-db-credentials
+    type: Opaque
+    data:
+      url: ${{ secrets.DATABASE_URL }}
+
+  - name: smb-marketing-redis-credentials
+    type: Opaque
+    data:
+      url: ${{ secrets.REDIS_URL }}
+
+  - name: smb-marketing-api-key
+    type: Opaque
+    data:
+      value: ${{ secrets.API_KEY }}
+
+tasks:
+  - name: smb-marketing-migrate
+    command: npm run migrate
+    dependencies:
+      - smb-marketing-db
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: smb-marketing-db-credentials
+            key: url
+
+  - name: smb-marketing-seed
+    command: npm run seed
+    dependencies:
+      - smb-marketing-migrate
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: smb-marketing-db-credentials
+            key: url
+
+  - name: smb-marketing-smoke-test
+    command: npm run test:smoke
+    dependencies:
+      - smb-marketing-seed
+    env:
+      - name: NODE_ENV
+        value: test
+      - name: DATABASE_URL
+        value: postgresql://test:test@localhost:5432/smb-marketing_test

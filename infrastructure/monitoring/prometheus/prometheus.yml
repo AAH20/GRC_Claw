@@ -1,0 +1,174 @@
+# =============================================================================
+# GRC Claw — Prometheus Configuration
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: grc-claw
+    environment: production
+
+# =============================================================================
+# Alertmanager Configuration
+# =============================================================================
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+      scheme: http
+      timeout: 10s
+
+# =============================================================================
+# Rule Files
+# =============================================================================
+
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+# =============================================================================
+# Scrape Configs
+# =============================================================================
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus Self-Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes API Server
+  # ---------------------------------------------------------------------------
+  - job_name: kubernetes-apiservers
+    kubernetes_sd_configs:
+      - role: endpoints
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Nodes
+  # ---------------------------------------------------------------------------
+  - job_name: kubernetes-nodes
+    kubernetes_sd_configs:
+      - role: node
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Pods
+  # ---------------------------------------------------------------------------
+  - job_name: kubernetes-pods
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: kubernetes_pod_name
+
+  # ---------------------------------------------------------------------------
+  # Kafka Exporter
+  # ---------------------------------------------------------------------------
+  - job_name: kafka-exporter
+    static_configs:
+      - targets:
+          - kafka-exporter:9308
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Exporter
+  # ---------------------------------------------------------------------------
+  - job_name: postgres-exporter
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Redis Exporter
+  # ---------------------------------------------------------------------------
+  - job_name: redis-exporter
+    static_configs:
+      - targets:
+          - redis-exporter:9121
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter
+  # ---------------------------------------------------------------------------
+  - job_name: node-exporter
+    static_configs:
+      - targets:
+          - node-exporter:9100
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Istio Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: istio-mesh
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+            - istio-system
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: istio-proxy;http-monitoring
+
+  # ---------------------------------------------------------------------------
+  # GRC Claw Application Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: grc-claw-apps
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - grc-claw
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2

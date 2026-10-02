@@ -1,0 +1,95 @@
+app:
+  name: social-media-manager
+  version: 0.1.0
+  env: development
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+agents:
+  content_creation:
+    enabled: true
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 1000
+  scheduling:
+    enabled: true
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 500
+  engagement:
+    enabled: true
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 800
+  social_listening:
+    enabled: true
+    model: gpt-4
+    temperature: 0.2
+    max_tokens: 600
+  influencer_identification:
+    enabled: true
+    model: gpt-4
+    temperature: 0.4
+    max_tokens: 700
+  performance_analytics:
+    enabled: true
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 1200
+platforms:
+  twitter:
+    enabled: true
+    api_version: '2'
+    rate_limit: 300
+  instagram:
+    enabled: true
+    api_version: v18.0
+    rate_limit: 200
+  facebook:
+    enabled: true
+    api_version: v18.0
+    rate_limit: 200
+  linkedin:
+    enabled: true
+    api_version: v2
+    rate_limit: 100
+  tiktok:
+    enabled: true
+    api_version: v1
+    rate_limit: 100
+integrations:
+  twitter:
+    base_url: https://api.twitter.com/2
+    auth_type: oauth2
+  instagram:
+    base_url: https://graph.instagram.com
+    auth_type: oauth2
+  facebook:
+    base_url: https://graph.facebook.com
+    auth_type: oauth2
+  linkedin:
+    base_url: https://api.linkedin.com/v2
+    auth_type: oauth2
+  tiktok:
+    base_url: https://open-api.tiktok.com
+    auth_type: oauth2
+cache:
+  enabled: true
+  ttl_seconds: 300
+  max_entries: 10000
+  backend: memory
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30
+  log_level: INFO
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false

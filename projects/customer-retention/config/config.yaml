@@ -1,0 +1,63 @@
+app:
+  name: customer-retention
+  version: "0.1.0"
+  environment: development
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+
+agents:
+  prediction:
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 2048
+    cache_ttl: 3600
+  intervention:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 4096
+    max_interventions_per_day: 100
+  optimization:
+    model: gpt-4
+    temperature: 0.2
+    max_tokens: 2048
+    ab_test_duration_days: 14
+  performance_analytics:
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 2048
+    metrics_retention_days: 365
+
+integrations:
+  salesforce:
+    api_version: v59.0
+    timeout: 30
+    max_retries: 3
+    sandbox: false
+  hubspot:
+    api_version: v3
+    timeout: 30
+    max_retries: 3
+  stripe:
+    api_version: "2024-06-20"
+    timeout: 30
+    max_retries: 3
+
+crm:
+  default_provider: salesforce
+  sync_interval_minutes: 15
+  batch_size: 100
+
+analytics:
+  default_date_range_days: 30
+  cohort_granularity: weekly
+  retention_windows: [7, 30, 90, 180, 365]
+
+rate_limiting:
+  requests_per_minute: 100
+  burst_size: 20
+
+caching:
+  backend: redis
+  ttl_seconds: 300
+  max_entries: 10000

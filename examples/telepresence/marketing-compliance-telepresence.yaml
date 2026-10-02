@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: marketing-compliance-intercept
+  namespace: default
+  labels:
+    app: marketing-compliance
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Marketing compliance service that ensures campaigns meet regulatory
+      requirements including GDPR, CCPA, and CAN-SPAM.
+    telepresence.io/service: marketing-compliance
+    telepresence.io/deployment: marketing-compliance
+spec:
+  service:
+    name: marketing-compliance
+    namespace: default
+    ports:
+    - name: http
+      port: 8100
+      targetPort: 8100
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /compliance
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: marketing-compliance
+    namespace: default
+    containerPort: 8100
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: REGULATIONS
+      value: gdpr,ccpa,canspam
+    volumes:
+    - name: compliance-rules
+      mountPath: /rules
+      hostPath: /tmp/compliance-rules
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8100
+  preview:
+    enabled: true
+    path: /compliance
+    headers: *id001
+    port: 8100
+    targetPort: 8100
+    protocol: http

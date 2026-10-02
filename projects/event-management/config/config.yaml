@@ -1,0 +1,63 @@
+app:
+  name: "Event Management"
+  version: "0.1.0"
+  environment: "development"
+  log_level: "debug"
+  host: "0.0.0.0"
+  port: 8000
+
+agents:
+  planning:
+    model: "gpt-4"
+    max_tokens: 4096
+    temperature: 0.7
+    timeout_seconds: 120
+  promotion:
+    model: "gpt-4"
+    max_tokens: 4096
+    temperature: 0.8
+    timeout_seconds: 120
+  execution:
+    model: "gpt-4"
+    max_tokens: 4096
+    temperature: 0.5
+    timeout_seconds: 120
+  followup:
+    model: "gpt-4"
+    max_tokens: 4096
+    temperature: 0.6
+    timeout_seconds: 120
+  performance_analytics:
+    model: "gpt-4"
+    max_tokens: 4096
+    temperature: 0.3
+    timeout_seconds: 120
+
+integrations:
+  eventbrite:
+    base_url: "https://www.eventbriteapi.com/v3"
+    timeout_seconds: 30
+    retry_attempts: 3
+  meetup:
+    base_url: "https://api.meetup.com"
+    timeout_seconds: 30
+    retry_attempts: 3
+  luma:
+    base_url: "https://api.lu.ma"
+    timeout_seconds: 30
+    retry_attempts: 3
+
+database:
+  url: "sqlite:///./events.db"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+cache:
+  backend: "redis"
+  url: "redis://localhost:6379/0"
+  ttl_seconds: 3600
+
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60

@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Customer Segmentation Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-segmentation
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-segmentation
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: customer-segmentation-config
+    literals:
+      - LOG_LEVEL=info
+      - SEGMENTATION_ALGORITHM=kmeans
+      - MIN_CLUSTER_SIZE=50
+      - FEATURE_STORE_URL=http://feature-store:8080
+
+commonLabels:
+  app.kubernetes.io/part-of: customer-segmentation
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: segmentation-team@example.com
+
+namespace: customer-engagement
+
+images:
+  - name: customer-segmentation
+    newName: registry.example.com/segmentation/customer-segmentation
+    newTag: v2.0.5
+
+replicas:
+  - name: customer-segmentation
+    count: 2

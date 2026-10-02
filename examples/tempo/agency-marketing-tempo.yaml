@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for agency-marketing
+# Marketing agency campaign and client management
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: agency-marketing-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: agency-marketing
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agency-marketing-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find agency campaigns with low utilization
+      - name: "Find agency campaigns with low utilization"
+        type: search
+        query:
+          service.name: "agency-marketing"
+          span.name: "agency.campaign"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show profit margins by client
+      - name: "Show profit margins by client"
+        type: search
+        query:
+          service.name: "agency-marketing"
+          span.name: "agency.client"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify clients at risk of churn
+      - name: "Identify clients at risk of churn"
+        type: search
+        query:
+          service.name: "agency-marketing"
+          span.name: "agency.report"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "agency-marketing"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "agency-marketing"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "agency-marketing"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "agency.client_id"
+        description: "Span attribute for agency.client_id"
+        type: string
+      - key: "agency.campaign_id"
+        description: "Span attribute for agency.campaign_id"
+        type: string
+      - key: "agency.budget"
+        description: "Span attribute for agency.budget"
+        type: string
+      - key: "agency.utilization"
+        description: "Span attribute for agency.utilization"
+        type: string
+      - key: "agency.profit_margin"
+        description: "Span attribute for agency.profit_margin"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: agency-marketing-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: agency-marketing.tracing.alerts
+      rules:
+        - alert: low-utilization
+          expr: |
+            utilization < 0.6
+          for: 5m
+          labels:
+            severity: warning
+            service: agency-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Low agency utilization"
+            description: "Alert for agency-marketing: Low agency utilization"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/agency-marketing/low-utilization"
+            dashboard_url: "https://grafana.grc-claw.com/d/agency-marketing-tracing"
+
+        - alert: thin-margin
+          expr: |
+            profit_margin < 0.15
+          for: 5m
+          labels:
+            severity: critical
+            service: agency-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Thin profit margin detected"
+            description: "Alert for agency-marketing: Thin profit margin detected"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/agency-marketing/thin-margin"
+            dashboard_url: "https://grafana.grc-claw.com/d/agency-marketing-tracing"
+
+        - alert: client-at-risk
+          expr: |
+            satisfaction < 3.0
+          for: 5m
+          labels:
+            severity: critical
+            service: agency-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Client at risk of churn"
+            description: "Alert for agency-marketing: Client at risk of churn"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/agency-marketing/client-at-risk"
+            dashboard_url: "https://grafana.grc-claw.com/d/agency-marketing-tracing"
+
+
+    - name: agency-marketing.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="agency-marketing",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="agency-marketing"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: agency-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for agency-marketing"
+            description: "Error rate exceeds 5% for agency-marketing"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="agency-marketing"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: agency-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for agency-marketing"
+            description: "P95 latency exceeds 2 seconds for agency-marketing"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="agency-marketing"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="agency-marketing"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: agency-marketing
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for agency-marketing"
+            description: "Trace volume is 2x above 1-hour average for agency-marketing"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: agency-marketing-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "agency-marketing - Tempo Tracing Dashboard",
+      "uid": "agency-marketing-tracing",
+      "tags": ["tempo", "tracing", "agency-marketing", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"agency-marketing\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"agency-marketing\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"agency-marketing\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"agency-marketing\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"agency-marketing\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"agency-marketing\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"agency-marketing\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: agency-marketing-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: agency-marketing
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: agency-marketing-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: agency-marketing
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agency-marketing-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: agency-marketing
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agency-marketing-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: agency-marketing
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agency-marketing-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: agency-marketing
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agency-marketing-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

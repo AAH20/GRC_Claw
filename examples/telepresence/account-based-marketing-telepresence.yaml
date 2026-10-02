@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: account-based-marketing-intercept
+  namespace: default
+  labels:
+    app: account-based-marketing
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Account-based marketing (ABM) platform for identifying, targeting,
+      and engaging high-value accounts with personalized campaigns.
+    telepresence.io/service: account-based-marketing
+    telepresence.io/deployment: account-based-marketing
+spec:
+  service:
+    name: account-based-marketing
+    namespace: default
+    ports:
+    - name: http
+      port: 8098
+      targetPort: 8098
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /accounts
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: account-based-marketing
+    namespace: default
+    containerPort: 8098
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: ABM_STRATEGY
+      value: enterprise
+    volumes:
+    - name: abm-data
+      mountPath: /data
+      hostPath: /tmp/abm-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8098
+  preview:
+    enabled: true
+    path: /accounts
+    headers: *id001
+    port: 8098
+    targetPort: 8098
+    protocol: http

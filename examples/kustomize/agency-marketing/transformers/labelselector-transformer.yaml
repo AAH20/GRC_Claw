@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: LabelSelectorTransformer
+metadata:
+  name: label-selector-config
+labelSelector:
+  matchLabels:
+    app.kubernetes.io/name: agency-marketing
+fieldSpecs:
+  - path: spec/selector/matchLabels
+    create: true

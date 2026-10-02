@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-retention
+  labels:
+    app: customer-retention
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: customer-retention
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: customer-retention
+        version: v1
+    spec:
+      containers:
+        - name: customer-retention
+          image: ghcr.io/ahmedhassan/customer-retention:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: SALESFORCE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: customer-retention-secrets
+                  key: salesforce-client-id
+            - name: SALESFORCE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: customer-retention-secrets
+                  key: salesforce-client-secret
+            - name: HUBSPOT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: customer-retention-secrets
+                  key: hubspot-api-key
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: customer-retention-secrets
+                  key: stripe-secret-key
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: customer-retention-secrets
+                  key: openai-api-key
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        fsGroup: 1000

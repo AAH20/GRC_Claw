@@ -1,0 +1,22 @@
+# =============================================================================
+# GRC Claw — Grafana Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: grc-claw
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: grafana
+  ports:
+    - name: web
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  sessionAffinity: None

@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: video-marketing-vault-secrets
+spec:
+  vaultAuthRef: video-marketing-vault-auth
+  mount: secret
+  path: video-marketing
+  destination:
+    create: true
+    name: video-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: video-marketing
+
+target:
+  kind: Deployment
+  name: video-marketing

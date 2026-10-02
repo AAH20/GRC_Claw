@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: feedback-management-rules
+spec:
+  rules: |
+    - rule: feedback_management_unexpected_process
+      desc: Detect unexpected processes in feedback-management container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/feedback-management" and
+        not proc.name in ("feedback-management", "sh", "bash")
+      output: >
+        Unexpected process in feedback-management container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: feedback-management

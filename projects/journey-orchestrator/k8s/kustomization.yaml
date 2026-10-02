@@ -1,0 +1,30 @@
+# Kustomize base configuration
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: journey-orchestrator
+
+resources:
+  - rbac.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - ingress.yaml
+
+commonLabels:
+  app: journey-orchestrator
+  managed-by: kustomize
+
+images:
+  - name: journey-orchestrator
+    newName: ghcr.io/grc-claw/journey-orchestrator
+    newTag: latest
+
+configMapGenerator:
+  - name: journey-orchestrator-config
+    behavior: merge
+    literals:
+      - JOURNEY_ENVIRONMENT=production

@@ -1,0 +1,592 @@
+# Tempo Tracing Configuration for workflow-automation
+# Marketing workflow automation and orchestration
+# Generated for GRC_Claw project suite
+
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack
+metadata:
+  name: workflow-automation-tempo
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo
+    project: grc-claw
+    environment: production
+spec:
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: grc-claw-tempo-traces
+        endpoint: s3.amazonaws.com
+        region: us-east-1
+      wal:
+        path: /var/tempo/wal
+
+  # Retention configuration
+  retention:
+    global:
+      traces: 168h  # 7 days
+    perTenant:
+      traces: 72h  # 3 days
+
+  # Receiver configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Ingestion configuration
+  ingestion:
+    rate_limit_bytes: 20000000  # 20MB/s per tenant
+    burst_size_bytes: 50000000   # 50MB burst
+    max_traces_per_user: 100000
+    max_bytes_per_trace: 5000000  # 5MB per trace
+
+  # Query configuration
+  query:
+    max_duration: 30s
+    max_bytes: 10000000  # 10MB
+    concurrent_queries: 20
+
+  # Compaction configuration
+  compaction:
+    block_retention: 168h  # 7 days
+    compacted_block_retention: 24h
+    max_compaction_objects: 1000000
+
+  # Multitenancy configuration
+  multitenancy:
+    enabled: true
+    header: X-Scope-OrgID
+    tenant_name: workflow-automation
+
+  # Metrics generator configuration
+  metrics_generator:
+    enabled: true
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+        - url: http://prometheus:9090/api/v1/write
+          send_exemplars: true
+    processor:
+      service_graphs:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+      span_metrics:
+        enabled: true
+        dimensions:
+          - service.name
+          - span.name
+          - span.kind
+          - status.code
+        histogram_buckets:
+          - 0.005
+          - 0.01
+          - 0.025
+          - 0.05
+          - 0.1
+          - 0.25
+          - 0.5
+          - 1.0
+          - 2.5
+          - 5.0
+          - 10.0
+
+---
+# Trace Query Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-automation-trace-queries
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-queries
+data:
+  # Service-specific trace queries
+  trace_queries.yaml: |
+    queries:
+      # Query 1: Find failed workflow executions in the last hour
+      - name: "Find failed workflow executions in the last hour"
+        type: search
+        query:
+          service.name: "workflow-automation"
+          span.name: "workflow.trigger"
+          duration: "> 1s"
+          start: "-24h"
+        limit: 50
+        sort: duration:desc
+
+      # Query 2: Show average execution time by workflow
+      - name: "Show average execution time by workflow"
+        type: search
+        query:
+          service.name: "workflow-automation"
+          span.name: "workflow.execute"
+          duration: "> 500ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Query 3: Identify workflows with high execution volume
+      - name: "Identify workflows with high execution volume"
+        type: search
+        query:
+          service.name: "workflow-automation"
+          span.name: "workflow.branch"
+          duration: "> 100ms"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+      # Service graph query
+      - name: "service-graph"
+        type: service-graph
+        query:
+          service.name: "workflow-automation"
+          start: "-1h"
+        limit: 100
+
+      # Error traces query
+      - name: "error-traces"
+        type: search
+        query:
+          service.name: "workflow-automation"
+          status.code: "STATUS_CODE_ERROR"
+          start: "-1h"
+        limit: 50
+        sort: timestamp:desc
+
+      # Slow traces query
+      - name: "slow-traces"
+        type: search
+        query:
+          service.name: "workflow-automation"
+          duration: "> 5s"
+          start: "-1h"
+        limit: 25
+        sort: duration:desc
+
+  # Span attributes configuration
+  span_attributes.yaml: |
+    attributes:
+      - key: "workflow.id"
+        description: "Span attribute for workflow.id"
+        type: string
+      - key: "workflow.name"
+        description: "Span attribute for workflow.name"
+        type: string
+      - key: "workflow.status"
+        description: "Span attribute for workflow.status"
+        type: string
+      - key: "workflow.step"
+        description: "Span attribute for workflow.step"
+        type: string
+      - key: "workflow.duration"
+        description: "Span attribute for workflow.duration"
+        type: string
+
+---
+# Alerting Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: workflow-automation-tempo-alerts
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-alerts
+    project: grc-claw
+spec:
+  groups:
+    - name: workflow-automation.tracing.alerts
+      rules:
+        - alert: workflow-failure
+          expr: |
+            workflow_status == 'failed'
+          for: 5m
+          labels:
+            severity: critical
+            service: workflow-automation
+            team: marketing-engineering
+          annotations:
+            summary: "Workflow execution failure"
+            description: "Alert for workflow-automation: Workflow execution failure"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/workflow-automation/workflow-failure"
+            dashboard_url: "https://grafana.grc-claw.com/d/workflow-automation-tracing"
+
+        - alert: slow-execution
+          expr: |
+            duration > 300s
+          for: 5m
+          labels:
+            severity: warning
+            service: workflow-automation
+            team: marketing-engineering
+          annotations:
+            summary: "Workflow execution slow"
+            description: "Alert for workflow-automation: Workflow execution slow"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/workflow-automation/slow-execution"
+            dashboard_url: "https://grafana.grc-claw.com/d/workflow-automation-tracing"
+
+        - alert: high-volume
+          expr: |
+            executions_per_minute > 1000
+          for: 5m
+          labels:
+            severity: info
+            service: workflow-automation
+            team: marketing-engineering
+          annotations:
+            summary: "High workflow volume detected"
+            description: "Alert for workflow-automation: High workflow volume detected"
+            runbook_url: "https://wiki.grc-claw.com/runbooks/workflow-automation/high-volume"
+            dashboard_url: "https://grafana.grc-claw.com/d/workflow-automation-tracing"
+
+
+    - name: workflow-automation.tracing.slo
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="workflow-automation",status="ERROR"}[5m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="workflow-automation"}[5m]))
+            > 0.05
+          for: 10m
+          labels:
+            severity: critical
+            service: workflow-automation
+            team: marketing-engineering
+          annotations:
+            summary: "High error rate for workflow-automation"
+            description: "Error rate exceeds 5% for workflow-automation"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(traces_spanmetrics_latency_bucket{service="workflow-automation"}[5m])) by (le)
+            ) > 2.0
+          for: 10m
+          labels:
+            severity: warning
+            service: workflow-automation
+            team: marketing-engineering
+          annotations:
+            summary: "High P95 latency for workflow-automation"
+            description: "P95 latency exceeds 2 seconds for workflow-automation"
+
+        - alert: TraceVolumeSpike
+          expr: |
+            sum(rate(traces_spanmetrics_calls_total{service="workflow-automation"}[5m]))
+            >
+            2 * avg_over_time(
+              sum(rate(traces_spanmetrics_calls_total{service="workflow-automation"}[5m]))[1h:5m]
+            )
+          for: 15m
+          labels:
+            severity: warning
+            service: workflow-automation
+            team: marketing-engineering
+          annotations:
+            summary: "Trace volume spike for workflow-automation"
+            description: "Trace volume is 2x above 1-hour average for workflow-automation"
+
+---
+# Grafana Dashboard Configuration
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: workflow-automation-tracing-dashboard
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-dashboard
+data:
+  dashboard.json: |
+    {
+      "title": "workflow-automation - Tempo Tracing Dashboard",
+      "uid": "workflow-automation-tracing",
+      "tags": ["tempo", "tracing", "workflow-automation", "grc-claw"],
+      "timezone": "utc",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"workflow-automation\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"workflow-automation\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "P95 Latency",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"workflow-automation\"}[5m])) by (le, span_name))",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Service Graph",
+          "type": "nodeGraph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "traces_service_graph_request_total{service=\"workflow-automation\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Trace Volume by Span",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"workflow-automation\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"workflow-automation\",status=\"ERROR\"}[5m])) by (span_name)",
+              "legendFormat": "{span_name}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Latency Heatmap",
+          "type": "heatmap",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_latency_bucket{service=\"workflow-automation\"}[5m])) by (le)",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# Service Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: workflow-automation-tempo-metrics
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-metrics
+spec:
+  selector:
+    matchLabels:
+      app: workflow-automation
+      component: tempo
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "traces_.*"
+          action: keep
+
+---
+# Pod Monitor Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: workflow-automation-tempo-pods
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-pods
+spec:
+  selector:
+    matchLabels:
+      app: workflow-automation
+      component: tempo
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+
+---
+# Network Policy Configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: workflow-automation-tempo-network-policy
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-network
+spec:
+  podSelector:
+    matchLabels:
+      app: workflow-automation
+      component: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 14250
+        - protocol: TCP
+          port: 14268
+        - protocol: TCP
+          port: 9411
+        - protocol: TCP
+          port: 3200
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: grc-claw-monitoring
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9090
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: workflow-automation-tempo-pdb
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: workflow-automation
+      component: tempo
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: workflow-automation-tempo-hpa
+  namespace: grc-claw-monitoring
+  labels:
+    app: workflow-automation
+    component: tempo-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: workflow-automation-tempo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campaign-optimizer
+  namespace: campaign-optimizer
+  labels:
+    app: campaign-optimizer
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: campaign-optimizer
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: campaign-optimizer
+        version: v1
+    spec:
+      serviceAccountName: campaign-optimizer
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+        - name: api
+          image: ghcr.io/ahmedhassan/campaign-optimizer:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: campaign-optimizer-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: campaign-optimizer-secrets
+                  key: redis-url
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: campaign-optimizer-secrets
+                  key: openai-api-key
+            - name: GRC_CLAW_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: campaign-optimizer-config
+                  key: grc-claw-enabled
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: campaign-optimizer-config
+                  key: log-level
+            - name: ENVIRONMENT
+              value: "production"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - campaign-optimizer
+                topologyKey: kubernetes.io/hostname

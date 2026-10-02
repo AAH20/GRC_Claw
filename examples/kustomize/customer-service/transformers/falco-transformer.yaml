@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: customer-service-rules
+spec:
+  rules: |
+    - rule: customer_service_unexpected_process
+      desc: Detect unexpected processes in customer-service container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/customer-service" and
+        not proc.name in ("customer-service", "sh", "bash")
+      output: >
+        Unexpected process in customer-service container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: customer-service

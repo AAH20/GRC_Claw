@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: ReplicasTransformer
+metadata:
+  name: replicas-config
+replicas:
+  - name: product-recommendations
+    count: 3
+fieldSpecs:
+  - path: spec/replicas
+    create: true

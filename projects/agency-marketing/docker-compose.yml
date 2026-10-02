@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - SALESFORCE_CLIENT_ID=${SALESFORCE_CLIENT_ID:-}
+      - SALESFORCE_CLIENT_SECRET=${SALESFORCE_CLIENT_SECRET:-}
+      - SALESFORCE_USERNAME=${SALESFORCE_USERNAME:-}
+      - SALESFORCE_PASSWORD=${SALESFORCE_PASSWORD:-}
+      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY:-}
+      - GOHIGHLEVEL_API_KEY=${GOHIGHLEVEL_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - agency-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - agency-network
+
+  # Optional: PostgreSQL for persistent storage
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-agency}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-agency_secret}
+      - POSTGRES_DB=${POSTGRES_DB:-agency_marketing}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agency"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - agency-network
+
+volumes:
+  redis-data:
+  postgres-data:
+
+networks:
+  agency-network:
+    driver: bridge

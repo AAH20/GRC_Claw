@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: flannel-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-media-manager
+spec:
+  template:
+    metadata:
+      annotations:
+        flannel.alpha.coreos.com/backend: vxlan
+
+target:
+  kind: Deployment
+  name: social-media-manager

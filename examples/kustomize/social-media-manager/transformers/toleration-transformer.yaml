@@ -1,0 +1,21 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: toleration-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-media-manager
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "social-media-manager"
+          effect: "NoSchedule"
+
+target:
+  kind: Deployment
+  name: social-media-manager

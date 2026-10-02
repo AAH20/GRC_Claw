@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: agency-marketing-dev
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: agency-marketing
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: agency-marketing
+
+configMapGenerator:
+  - name: agency-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - DEBUG=true
+
+commonLabels:
+  environment: development
+
+images:
+  - name: grcclaw/agency-marketing
+    newTag: dev

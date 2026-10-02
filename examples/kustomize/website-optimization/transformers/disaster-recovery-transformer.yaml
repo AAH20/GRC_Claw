@@ -1,0 +1,18 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: disaster-recovery-patch
+patch: |-
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: website-optimization-restore
+spec:
+  backupName: website-optimization-backup
+  includedNamespaces:
+    - website-optimization-prod
+  restorePVs: true
+
+target:
+  kind: Deployment
+  name: website-optimization

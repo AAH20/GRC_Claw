@@ -1,0 +1,17 @@
+apiVersion: builtin
+kind: ReplacementTransformer
+metadata:
+  name: replacement-config
+replacements:
+  - source:
+      kind: ConfigMap
+      name: website-optimization-config
+      fieldPath: data.LOG_LEVEL
+    targets:
+      - select:
+          kind: Deployment
+          name: website-optimization
+        fieldPaths:
+          - spec.template.spec.containers.[name=website-optimization].env.[name=LOG_LEVEL].value
+        options:
+          create: true

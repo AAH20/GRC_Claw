@@ -1,0 +1,57 @@
+app:
+  name: website-optimization
+  version: 0.1.0
+  env: ${APP_ENV:-development}
+  log_level: ${LOG_LEVEL:-INFO}
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+
+agents:
+  ab_testing:
+    enabled: true
+    default_confidence_level: 0.95
+    min_sample_size: 100
+    max_experiments_per_page: 5
+  personalization:
+    enabled: true
+    max_recommendations: 10
+    cache_ttl_seconds: 300
+  seo:
+    enabled: true
+    max_audit_depth: 3
+    check_mobile_friendly: true
+  performance:
+    enabled: true
+    metrics_retention_days: 30
+    alert_threshold_ms: 3000
+  analytics:
+    enabled: true
+    batch_size: 100
+    flush_interval_seconds: 60
+
+integrations:
+  google_analytics:
+    enabled: true
+    measurement_id: ${GA_MEASUREMENT_ID:-}
+    api_secret: ${GA_API_SECRET:-}
+    base_url: https://www.google-analytics.com/mp/collect
+  hotjar:
+    enabled: true
+    site_id: ${HOTJAR_SITE_ID:-}
+    base_url: https://script.hotjar.com
+  optimizely:
+    enabled: true
+    sdk_key: ${OPTIMIZELY_SDK_KEY:-}
+    base_url: https://cdn.optimizely.com
+
+cache:
+  backend: redis
+  url: ${REDIS_URL:-redis://localhost:6379/0}
+  ttl_seconds: 300
+
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60

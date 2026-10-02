@@ -1,0 +1,127 @@
+# Customer Segmentation Platform Configuration
+# This file contains default configuration values.
+# Environment variables (see .env.example) override these settings.
+
+app:
+  name: "customer-segmentation"
+  version: "0.1.0"
+  description: "AI-powered customer segmentation platform"
+  environment: "development"  # development | staging | production
+  log_level: "INFO"           # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+agents:
+  # Default LLM provider: openai | anthropic
+  default_provider: "openai"
+  openai:
+    model: "gpt-4-turbo-preview"
+    temperature: 0.1
+    max_tokens: 4096
+    timeout: 60
+  anthropic:
+    model: "claude-3-5-sonnet-20241022"
+    temperature: 0.1
+    max_tokens: 4096
+    timeout: 60
+
+  # Agent-specific settings
+  data_collector:
+    batch_size: 500
+    max_retries: 3
+    retry_delay: 1.0
+    cache_ttl: 3600  # seconds
+
+  analyst:
+    rfm_quantiles: 5
+    min_cluster_size: 10
+    max_clusters: 10
+    outlier_threshold: 3.0  # standard deviations
+
+  segment_builder:
+    algorithm: "kmeans"  # kmeans | dbscan | hierarchical
+    n_clusters: 5
+    random_state: 42
+    feature_scaling: "standard"  # standard | minmax | robust
+
+  strategist:
+    max_recommendations: 5
+    strategy_templates:
+      - "email_campaign"
+      - "retargeting"
+      - "loyalty_program"
+      - "upsell"
+      - "win_back"
+
+  reviewer:
+    min_segment_size: 50
+    max_segment_size: 100000
+    bias_threshold: 0.15
+    quality_threshold: 0.7
+
+  performance_analytics:
+    metrics_window_days: 30
+    attribution_model: "last_touch"  # last_touch | first_touch | linear
+    kpi_thresholds:
+      conversion_rate: 0.05
+      churn_rate: 0.10
+      roi: 2.0
+
+integrations:
+  salesforce:
+    api_version: "v59.0"
+    sandbox: false
+    timeout: 30
+    rate_limit: 100  # requests per minute
+    objects:
+      - "Account"
+      - "Contact"
+      - "Opportunity"
+      - "Lead"
+      - "Campaign"
+      - "CampaignMember"
+
+  hubspot:
+    api_version: "v3"
+    timeout: 30
+    rate_limit: 100
+    objects:
+      - "contacts"
+      - "companies"
+      - "deals"
+      - "engagements"
+
+  google_analytics:
+    api_version: "v1beta"
+    timeout: 30
+    rate_limit: 100
+    dimensions:
+      - "date"
+      - "deviceCategory"
+      - "channelGrouping"
+      - "country"
+    metrics:
+      - "activeUsers"
+      - "newUsers"
+      - "sessions"
+      - "conversions"
+      - "totalRevenue"
+
+cache:
+  backend: "redis"  # redis | memory
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: ""
+    ttl: 3600
+
+monitoring:
+  enabled: true
+  prometheus:
+    port: 9090
+    path: "/metrics"
+  health_check:
+    interval: 30
+    timeout: 10

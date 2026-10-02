@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Marketing Compliance Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-compliance
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: marketing-compliance
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: marketing-compliance-config
+    literals:
+      - LOG_LEVEL=info
+      - GDPR_ENFORCEMENT=true
+      - CCPA_ENFORCEMENT=true
+      - CONSENT_CHECK_INTERVAL=300
+      - AUDIT_LOG_RETENTION_DAYS=2555
+
+commonLabels:
+  app.kubernetes.io/part-of: marketing-compliance
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: compliance-team@example.com
+
+namespace: marketing
+
+images:
+  - name: marketing-compliance
+    newName: registry.example.com/marketing/marketing-compliance
+    newTag: v1.4.2
+
+replicas:
+  - name: marketing-compliance
+    count: 2

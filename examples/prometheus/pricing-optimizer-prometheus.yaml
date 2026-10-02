@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for Pricing Optimizer
+# Description: Dynamic pricing optimization
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the pricing-optimizer service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pricing-optimizer-monitor
+  namespace: monitoring
+  labels:
+    app: pricing-optimizer
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: pricing-optimizer
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: pricing_optimizer_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for pricing-optimizer
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pricing-optimizer-rules
+  namespace: monitoring
+  labels:
+    app: pricing-optimizer
+    release: prometheus
+spec:
+  groups:
+  - name: pricing-optimizer-recording-rules
+    interval: 30s
+    rules:
+    - record: pricing_optimizer:api_request_rate:rate5m
+      expr: rate(pricing_optimizer_api_requests_total[5m])
+    - record: pricing_optimizer:api_error_rate:rate5m
+      expr: rate(pricing_optimizer_api_errors_total[5m])
+    - record: pricing_optimizer:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(pricing_optimizer_api_latency_seconds_bucket[5m]))
+  - name: pricing-optimizer-alerts-1
+    rules:
+    - alert: PricingOptimizerHighErrorRate
+      expr: rate(pricing_optimizer_api_errors_total[5m]) / rate(pricing_optimizer_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: pricing-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: PricingOptimizerHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered PricingOptimizerHighErrorRate
+          for more than 5 minutes.'
+    - alert: PricingOptimizerNegativeRevenueImpact
+      expr: pricing_optimizer_revenue_impact < 0
+      for: 5m
+      labels:
+        severity: critical
+        service: pricing-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: PricingOptimizerNegativeRevenueImpact is
+          firing'
+        description: '{{ $labels.service }} has triggered PricingOptimizerNegativeRevenueImpact
+          for more than 5 minutes.'
+    - alert: PricingOptimizerLowCompetitiveness
+      expr: pricing_optimizer_competitiveness_score < 0.5
+      for: 5m
+      labels:
+        severity: warning
+        service: pricing-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: PricingOptimizerLowCompetitiveness is firing'
+        description: '{{ $labels.service }} has triggered PricingOptimizerLowCompetitiveness
+          for more than 5 minutes.'
+    - alert: PricingOptimizerHighLatency
+      expr: histogram_quantile(0.95, rate(pricing_optimizer_api_latency_seconds_bucket[5m]))
+        > 3.0
+      for: 5m
+      labels:
+        severity: warning
+        service: pricing-optimizer
+      annotations:
+        summary: '{{ $labels.service }}: PricingOptimizerHighLatency is firing'
+        description: '{{ $labels.service }} has triggered PricingOptimizerHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for pricing-optimizer alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: pricing-optimizer
+    receiver: pricing-optimizer-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: pricing-optimizer-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#pricing-optimizer-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

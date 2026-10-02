@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crm-enhancer
+  labels:
+    app: crm-enhancer
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: crm-enhancer
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: crm-enhancer
+        version: v1
+    spec:
+      containers:
+        - name: crm-enhancer
+          image: ghcr.io/ahmedhassan/crm-enhancer:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: SALESFORCE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: crm-enhancer-secrets
+                  key: salesforce-client-id
+            - name: SALESFORCE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: crm-enhancer-secrets
+                  key: salesforce-client-secret
+            - name: HUBSPOT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crm-enhancer-secrets
+                  key: hubspot-api-key
+            - name: PIPEDRIVE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: crm-enhancer-secrets
+                  key: pipedrive-api-token
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        fsGroup: 999

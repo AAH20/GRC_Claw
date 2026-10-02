@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: business-intelligence
+  labels:
+    app: business-intelligence
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: business-intelligence
+  template:
+    metadata:
+      labels:
+        app: business-intelligence
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/ahmedhassan/business-intelligence:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: TABLEAU_SERVER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bi-secrets
+                  key: tableau-server-url
+            - name: POWER_BI_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: bi-secrets
+                  key: powerbi-client-id
+            - name: LOOKER_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: bi-secrets
+                  key: looker-client-id
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -1,0 +1,92 @@
+app:
+  name: campaign-optimizer
+  version: 0.1.0
+  env: development
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+agents:
+  strategy:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 2000
+    timeout_seconds: 60
+  research:
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 3000
+    timeout_seconds: 90
+  creative:
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 2000
+    timeout_seconds: 60
+  bidding:
+    model: gpt-4
+    temperature: 0.2
+    max_tokens: 1500
+    timeout_seconds: 45
+  audience:
+    model: gpt-4
+    temperature: 0.4
+    max_tokens: 2000
+    timeout_seconds: 60
+  critic:
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 2500
+    timeout_seconds: 60
+integrations:
+  meta:
+    api_version: v19.0
+    base_url: https://graph.facebook.com
+    rate_limit_per_hour: 200
+    timeout_seconds: 30
+    retry_attempts: 3
+  google:
+    api_version: v17
+    base_url: https://googleads.googleapis.com
+    rate_limit_per_minute: 100
+    timeout_seconds: 30
+    retry_attempts: 3
+  linkedin:
+    api_version: v2
+    base_url: https://api.linkedin.com
+    rate_limit_per_day: 500
+    timeout_seconds: 30
+    retry_attempts: 3
+optimization:
+  min_budget_usd: 100
+  max_budget_usd: 100000
+  budget_allocation:
+    meta: 0.4
+    google: 0.35
+    linkedin: 0.25
+  performance_thresholds:
+    roas_min: 2.0
+    ctr_min: 0.01
+    cpc_max: 5.0
+  optimization_interval_minutes: 60
+  ab_test:
+    min_sample_size: 1000
+    confidence_level: 0.95
+    max_variants: 5
+cache:
+  ttl_seconds: 300
+  max_entries: 10000
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false
+security:
+  api_key_header: X-API-Key
+  rate_limit_requests_per_minute: 60
+  cors_origins:
+  - http://localhost:3000
+  - https://app.campaign-optimizer.example.com
+monitoring:
+  metrics_port: 9090
+  enable_tracing: true
+  tracing_sample_rate: 0.1

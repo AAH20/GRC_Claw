@@ -1,0 +1,140 @@
+# Video Marketing Application Configuration
+# Copy this file and adjust values for your environment.
+# Sensitive values should be set via environment variables (see .env.example).
+
+app:
+  name: "Video Marketing"
+  version: "0.1.0"
+  description: "Agentic AI video marketing platform with 5 specialized agents"
+  environment: "development"  # development | staging | production
+  log_level: "INFO"           # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+# LLM Configuration
+llm:
+  provider: "openai"          # openai | anthropic | azure
+  model: "gpt-4o"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 60
+  max_retries: 3
+
+# Agent Configuration
+agents:
+  script_generation:
+    enabled: true
+    default_tone: "professional"  # professional | casual | humorous | educational | inspirational | urgent
+    max_retries: 3
+    supported_formats:
+      - talking_head
+      - tutorial
+      - product_demo
+      - social_clip
+      - interview
+      - story
+
+  editing:
+    enabled: true
+    max_retries: 3
+    default_export_format: "mp4_h264"  # mp4_h264 | mp4_h265 | prores | webm | gif
+    default_resolution: "1080p"       # 480p | 720p | 1080p | 1440p | 4k | 8k
+    default_fps: 30.0
+
+  distribution:
+    enabled: true
+    max_retries: 3
+    platforms:
+      - youtube
+      - tiktok
+      - instagram
+    default_visibility: "public"  # public | unlisted | private | scheduled
+
+  analytics:
+    enabled: true
+    metrics:
+      - views
+      - watch_time
+      - likes
+      - comments
+      - shares
+      - subscribers
+      - click_through_rate
+      - average_view_duration
+      - retention
+      - engagement_rate
+      - impressions
+      - revenue
+    report_frequency: "weekly"  # daily | weekly | monthly
+    data_retention_days: 365
+
+  production:
+    enabled: true
+    max_retries: 3
+    budget_alert_threshold: 0.9  # Alert at 90% of budget
+
+# Integration Configuration
+integrations:
+  youtube:
+    enabled: true
+    api_version: "v3"
+    base_url: "https://www.googleapis.com/youtube/v3"
+    timeout: 30
+    rate_limit_per_minute: 10000
+
+  instagram:
+    enabled: true
+    api_version: "v18.0"
+    base_url: "https://graph.instagram.com"
+    timeout: 30
+    rate_limit_per_hour: 200
+
+  tiktok:
+    enabled: true
+    api_version: "v2"
+    base_url: "https://open-api.tiktok.com"
+    timeout: 30
+    rate_limit_per_hour: 500
+
+# Database Configuration
+database:
+  url: "postgresql://postgres:***@localhost:5432/video_marketing"
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+# Cache Configuration
+cache:
+  backend: "redis"
+  url: "redis://localhost:6379/0"
+  ttl_seconds: 3600
+  max_entries: 10000
+
+# API Configuration
+api:
+  prefix: "/api/v1"
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limit: "100/minute"
+  max_request_size: "10MB"
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60
+  burst_size: 10
+
+# Monitoring & Observability
+monitoring:
+  enabled: true
+  prometheus_enabled: true
+  metrics_port: 9090
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/health"
+  health_check_interval_seconds: 30
+  tracing_enabled: false
+  sentry_enabled: false
+  sentry_dsn: ""
+  sentry_traces_sample_rate: 0.1

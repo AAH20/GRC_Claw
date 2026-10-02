@@ -1,0 +1,144 @@
+# Prometheus Monitoring Configuration for Video Marketing
+# Description: Video marketing management
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the video-marketing service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: video-marketing-monitor
+  namespace: monitoring
+  labels:
+    app: video-marketing
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: video-marketing
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: video_marketing_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for video-marketing
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: video-marketing-rules
+  namespace: monitoring
+  labels:
+    app: video-marketing
+    release: prometheus
+spec:
+  groups:
+  - name: video-marketing-recording-rules
+    interval: 30s
+    rules:
+    - record: video_marketing:api_request_rate:rate5m
+      expr: rate(video_marketing_api_requests_total[5m])
+    - record: video_marketing:api_error_rate:rate5m
+      expr: rate(video_marketing_api_errors_total[5m])
+    - record: video_marketing:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(video_marketing_api_latency_seconds_bucket[5m]))
+  - name: video-marketing-alerts-1
+    rules:
+    - alert: VideoMarketingHighErrorRate
+      expr: rate(video_marketing_api_errors_total[5m]) / rate(video_marketing_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: video-marketing
+      annotations:
+        summary: '{{ $labels.service }}: VideoMarketingHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered VideoMarketingHighErrorRate
+          for more than 5 minutes.'
+    - alert: VideoMarketingLowEngagementRate
+      expr: video_marketing_engagement_rate < 0.2
+      for: 5m
+      labels:
+        severity: warning
+        service: video-marketing
+      annotations:
+        summary: '{{ $labels.service }}: VideoMarketingLowEngagementRate is firing'
+        description: '{{ $labels.service }} has triggered VideoMarketingLowEngagementRate
+          for more than 5 minutes.'
+    - alert: VideoMarketingLowCompletionRate
+      expr: video_marketing_completion_rate < 0.3
+      for: 5m
+      labels:
+        severity: warning
+        service: video-marketing
+      annotations:
+        summary: '{{ $labels.service }}: VideoMarketingLowCompletionRate is firing'
+        description: '{{ $labels.service }} has triggered VideoMarketingLowCompletionRate
+          for more than 5 minutes.'
+    - alert: VideoMarketingHighLatency
+      expr: histogram_quantile(0.95, rate(video_marketing_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: video-marketing
+      annotations:
+        summary: '{{ $labels.service }}: VideoMarketingHighLatency is firing'
+        description: '{{ $labels.service }} has triggered VideoMarketingHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for video-marketing alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: video-marketing
+    receiver: video-marketing-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: video-marketing-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#video-marketing-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: account-based-marketing-rules
+spec:
+  rules: |
+    - rule: account_based_marketing_unexpected_process
+      desc: Detect unexpected processes in account-based-marketing container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/account-based-marketing" and
+        not proc.name in ("account-based-marketing", "sh", "bash")
+      output: >
+        Unexpected process in account-based-marketing container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: account-based-marketing

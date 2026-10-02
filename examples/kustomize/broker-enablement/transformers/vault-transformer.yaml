@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: broker-enablement-vault-secrets
+spec:
+  vaultAuthRef: broker-enablement-vault-auth
+  mount: secret
+  path: broker-enablement
+  destination:
+    create: true
+    name: broker-enablement-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: broker-enablement
+
+target:
+  kind: Deployment
+  name: broker-enablement

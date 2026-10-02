@@ -1,0 +1,86 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Healthcare Marketing Service - Production Kustomize Example
+# HIPAA-compliant patient engagement, provider marketing, and health campaigns
+
+namespace: healthcare-marketing
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/secret.yaml
+  - base/serviceaccount.yaml
+  - base/hpa.yaml
+  - base/pdb.yaml
+  - overlays/production/namespace.yaml
+  - overlays/production/resource-quota.yaml
+  - overlays/production/network-policy.yaml
+  - overlays/production/pod-disruption-budget.yaml
+
+patches:
+  - path: patches/deployment-resources.yaml
+    target:
+      kind: Deployment
+      name: healthcare-marketing
+  - path: patches/deployment-env.yaml
+    target:
+      kind: Deployment
+      name: healthcare-marketing
+  - path: patches/service-annotations.yaml
+    target:
+      kind: Service
+      name: healthcare-marketing
+  - path: patches/configmap-data.yaml
+    target:
+      kind: ConfigMap
+      name: healthcare-marketing-config
+
+transformers:
+  - transformers/labels.yaml
+  - transformers/annotations.yaml
+  - transformers/replicas.yaml
+  - transformers/image-tag.yaml
+
+configMapGenerator:
+  - name: healthcare-marketing-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - HIPAA_COMPLIANT=true
+      - PHI_ENCRYPTION=aes-256-gcm
+      - AUDIT_LOGGING=true
+      - CONSENT_MANAGEMENT=opt-in
+      - CAMPAIGN_CHANNELS=email,portal,sms
+      - DATA_RETENTION_YEARS=7
+      - ACCESS_CONTROL=rbac
+
+secretGenerator:
+  - name: healthcare-marketing-secrets
+    behavior: merge
+    envs:
+      - secrets/healthcare-marketing.env
+
+commonLabels:
+  app.kubernetes.io/name: healthcare-marketing
+  app.kubernetes.io/part-of: grc-claw
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: devops@grc-claw.io
+  cost-center: marketing-ops
+  environment: production
+
+images:
+  - name: healthcare-marketing
+    newName: registry.grc-claw.io/marketing/healthcare-marketing
+    newTag: v1.4.2
+
+replicas:
+  - name: healthcare-marketing
+    count: 3
+
+namePrefix: prod-
+nameSuffix: -hc

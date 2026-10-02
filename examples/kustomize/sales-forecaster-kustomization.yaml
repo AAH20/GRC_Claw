@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Sales Forecaster Service - Production Kustomize Example
+# Demonstrates base, overlays, patches, and transformers
+
+resources:
+  - base/deployment.yaml
+  - base/service.yaml
+  - base/configmap.yaml
+  - base/hpa.yaml
+
+patches:
+  - path: patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: sales-forecaster
+  - path: patches/resource-limits-patch.yaml
+    target:
+      kind: Deployment
+      name: sales-forecaster
+
+patchesStrategicMerge:
+  - patches/env-vars-patch.yaml
+
+transformers:
+  - transformers/labels-transformer.yaml
+  - transformers/annotations-transformer.yaml
+
+configMapGenerator:
+  - name: sales-forecaster-config
+    literals:
+      - LOG_LEVEL=info
+      - FORECAST_HORIZON_DAYS=30
+      - MODEL_REFRESH_INTERVAL=3600
+      - SEASONALITY_DETECTION=true
+
+commonLabels:
+  app.kubernetes.io/part-of: sales-forecaster
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  contact: sales-team@example.com
+
+namespace: sales-analytics
+
+images:
+  - name: sales-forecaster
+    newName: registry.example.com/sales/sales-forecaster
+    newTag: v3.1.2
+
+replicas:
+  - name: sales-forecaster
+    count: 3

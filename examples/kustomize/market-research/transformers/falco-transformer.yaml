@@ -1,0 +1,26 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: falco-patch
+patch: |-
+apiVersion: falco.org/v1
+kind: FalcoRule
+metadata:
+  name: market-research-rules
+spec:
+  rules: |
+    - rule: market_research_unexpected_process
+      desc: Detect unexpected processes in market-research container
+      condition: >
+        spawned_process and
+        container and
+        container.image.repository = "grcclaw/market-research" and
+        not proc.name in ("market-research", "sh", "bash")
+      output: >
+        Unexpected process in market-research container
+        (user=%proc.pname command=%proc.cmdline)
+      priority: WARNING
+
+target:
+  kind: Deployment
+  name: market-research

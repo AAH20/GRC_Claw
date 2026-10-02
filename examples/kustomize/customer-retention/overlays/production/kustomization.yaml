@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: customer-retention-prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: ../../patches/replicas-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+  - path: ../../patches/resources-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+  - path: ../../patches/security-patch.yaml
+    target:
+      kind: Deployment
+      name: customer-retention
+
+configMapGenerator:
+  - name: customer-retention-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - DEBUG=false
+
+commonLabels:
+  environment: production
+
+images:
+  - name: grcclaw/customer-retention
+    newTag: stable
+
+replicas:
+  - name: customer-retention
+    count: 3

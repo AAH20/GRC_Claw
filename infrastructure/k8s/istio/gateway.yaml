@@ -1,0 +1,141 @@
+# =============================================================================
+# GRC Claw — Istio Gateway & Virtual Services
+# =============================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: grc-claw-gateway
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: grc-claw-gateway
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: grc-claw
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "grc-claw.local"
+        - "*.grc-claw.local"
+      tls:
+        httpsRedirect: true
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: grc-claw-tls
+      hosts:
+        - "grc-claw.local"
+        - "*.grc-claw.local"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: grafana-vs
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+spec:
+  hosts:
+    - "grafana.grc-claw.local"
+  gateways:
+    - grc-claw-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: grafana
+            port:
+              number: 3000
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: prometheus-vs
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+spec:
+  hosts:
+    - "prometheus.grc-claw.local"
+  gateways:
+    - grc-claw-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: prometheus
+            port:
+              number: 9090
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kafka-vs
+  namespace: grc-claw
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/component: event-streaming
+spec:
+  hosts:
+    - "kafka.grc-claw.local"
+  gateways:
+    - grc-claw-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: kafka
+            port:
+              number: 9092
+      timeout: 30s
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: grc-claw
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-monitoring
+  namespace: grc-claw
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: monitoring
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces: ["grc-claw", "istio-system"]
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["*"]

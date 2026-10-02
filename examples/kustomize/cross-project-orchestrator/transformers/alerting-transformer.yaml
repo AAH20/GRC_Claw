@@ -1,0 +1,35 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: alerting-patch
+patch: |-
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cross-project-orchestrator-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: cross-project-orchestrator.rules
+      rules:
+        - alert: cross_project_orchestrator_high_error_rate
+          expr: rate(http_requests_total{job="cross-project-orchestrator",status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate in cross-project-orchestrator"
+            description: "Error rate is above 10% for more than 5 minutes"
+        - alert: cross_project_orchestrator_high_latency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="cross-project-orchestrator"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency in cross-project-orchestrator"
+            description: "95th percentile latency is above 1 second"
+
+target:
+  kind: Deployment
+  name: cross-project-orchestrator

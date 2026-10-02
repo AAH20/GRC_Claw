@@ -1,0 +1,145 @@
+# Prometheus Monitoring Configuration for Business Intelligence
+# Description: Business intelligence and insights
+# Generated for production monitoring with ServiceMonitor, PrometheusRule, and Alertmanager configuration
+
+---
+# ServiceMonitor: Scrapes metrics from the business-intelligence service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: business-intelligence-monitor
+  namespace: monitoring
+  labels:
+    app: business-intelligence
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: business-intelligence
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: business_intelligence_.*
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - default
+
+
+---
+# PrometheusRule: Alerting and recording rules for business-intelligence
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: business-intelligence-rules
+  namespace: monitoring
+  labels:
+    app: business-intelligence
+    release: prometheus
+spec:
+  groups:
+  - name: business-intelligence-recording-rules
+    interval: 30s
+    rules:
+    - record: business_intelligence:api_request_rate:rate5m
+      expr: rate(business_intelligence_api_requests_total[5m])
+    - record: business_intelligence:api_error_rate:rate5m
+      expr: rate(business_intelligence_api_errors_total[5m])
+    - record: business_intelligence:api_latency_p95:rate5m
+      expr: histogram_quantile(0.95, rate(business_intelligence_api_latency_seconds_bucket[5m]))
+  - name: business-intelligence-alerts-1
+    rules:
+    - alert: BusinessIntelligenceHighErrorRate
+      expr: rate(business_intelligence_api_errors_total[5m]) / rate(business_intelligence_api_requests_total[5m])
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: business-intelligence
+      annotations:
+        summary: '{{ $labels.service }}: BusinessIntelligenceHighErrorRate is firing'
+        description: '{{ $labels.service }} has triggered BusinessIntelligenceHighErrorRate
+          for more than 5 minutes.'
+    - alert: BusinessIntelligenceDataStale
+      expr: business_intelligence_data_freshness_seconds > 3600
+      for: 5m
+      labels:
+        severity: warning
+        service: business-intelligence
+      annotations:
+        summary: '{{ $labels.service }}: BusinessIntelligenceDataStale is firing'
+        description: '{{ $labels.service }} has triggered BusinessIntelligenceDataStale
+          for more than 5 minutes.'
+    - alert: BusinessIntelligenceHighQueryLatency
+      expr: histogram_quantile(0.95, rate(business_intelligence_query_latency_seconds_bucket[5m]))
+        > 10.0
+      for: 5m
+      labels:
+        severity: warning
+        service: business-intelligence
+      annotations:
+        summary: '{{ $labels.service }}: BusinessIntelligenceHighQueryLatency is firing'
+        description: '{{ $labels.service }} has triggered BusinessIntelligenceHighQueryLatency
+          for more than 5 minutes.'
+    - alert: BusinessIntelligenceHighLatency
+      expr: histogram_quantile(0.95, rate(business_intelligence_api_latency_seconds_bucket[5m]))
+        > 5.0
+      for: 5m
+      labels:
+        severity: warning
+        service: business-intelligence
+      annotations:
+        summary: '{{ $labels.service }}: BusinessIntelligenceHighLatency is firing'
+        description: '{{ $labels.service }} has triggered BusinessIntelligenceHighLatency
+          for more than 5 minutes.'
+
+
+---
+# Alertmanager Configuration: Routing and notification for business-intelligence alerts
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      service: business-intelligence
+    receiver: business-intelligence-alerts
+    group_by:
+    - alertname
+    - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+receivers:
+- name: default
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#alerts'
+    send_resolved: true
+- name: business-intelligence-alerts
+  slack_configs:
+  - api_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    channel: '#business-intelligence-alerts'
+    send_resolved: true
+  pagerduty_configs:
+  - service_key: YOUR_PAGERDUTY_KEY
+    severity: '{{ .GroupLabels.severity }}'
+inhibit_rules:
+- source_match:
+    severity: critical
+  target_match:
+    severity: warning
+  equal:
+  - alertname
+  - service
+

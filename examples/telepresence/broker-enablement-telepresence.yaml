@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: broker-enablement-intercept
+  namespace: default
+  labels:
+    app: broker-enablement
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Broker enablement platform providing training, compliance tools,
+      and sales support resources for insurance and real estate brokers.
+    telepresence.io/service: broker-enablement
+    telepresence.io/deployment: broker-enablement
+spec:
+  service:
+    name: broker-enablement
+    namespace: default
+    ports:
+    - name: http
+      port: 8092
+      targetPort: 8092
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /portal
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: broker-enablement
+    namespace: default
+    containerPort: 8092
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: COMPLIANCE_MODE
+      value: strict
+    volumes:
+    - name: broker-resources
+      mountPath: /resources
+      hostPath: /tmp/broker-resources
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8092
+  preview:
+    enabled: true
+    path: /portal
+    headers: *id001
+    port: 8092
+    targetPort: 8092
+    protocol: http

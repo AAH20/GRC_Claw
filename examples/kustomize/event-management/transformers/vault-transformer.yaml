@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: event-management-vault-secrets
+spec:
+  vaultAuthRef: event-management-vault-auth
+  mount: secret
+  path: event-management
+  destination:
+    create: true
+    name: event-management-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: event-management
+
+target:
+  kind: Deployment
+  name: event-management

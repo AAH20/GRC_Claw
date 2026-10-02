@@ -1,0 +1,6 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cross-project-orchestrator
+spec:
+  replicas: 1

@@ -1,0 +1,67 @@
+apiVersion: telepresence.io/v2
+kind: Intercept
+metadata:
+  name: brand-monitoring-intercept
+  namespace: default
+  labels:
+    app: brand-monitoring
+    project: grc-claw
+    environment: development
+    managed-by: telepresence
+  annotations:
+    description: Brand monitoring service that tracks brand mentions, sentiment, and
+      reputation across social media, news, and review sites.
+    telepresence.io/service: brand-monitoring
+    telepresence.io/deployment: brand-monitoring
+spec:
+  service:
+    name: brand-monitoring
+    namespace: default
+    ports:
+    - name: http
+      port: 8108
+      targetPort: 8108
+      protocol: TCP
+  intercept:
+    headers: &id001
+    - name: X-Dev-User
+      value: developer@example.com
+    paths:
+    - /mentions
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+  swap:
+    deployment: brand-monitoring
+    namespace: default
+    containerPort: 8108
+    protocol: http
+    env:
+    - name: ENV
+      value: development
+    - name: MONITORING_SOURCES
+      value: social,news,reviews
+    volumes:
+    - name: brand-data
+      mountPath: /data
+      hostPath: /tmp/brand-data
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    healthCheck:
+      path: /health
+      port: 8108
+  preview:
+    enabled: true
+    path: /mentions
+    headers: *id001
+    port: 8108
+    targetPort: 8108
+    protocol: http

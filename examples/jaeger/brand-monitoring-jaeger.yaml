@@ -1,0 +1,1178 @@
+---
+# Jaeger Distributed Tracing Configuration for Brand Monitoring
+# Production-grade configuration with deployment, trace queries, and alerting
+# Generated for GRC_Claw brand-monitoring service
+
+# ===============================================================================
+# SECTION 1: JAEGER DEPLOYMENT CONFIGURATION
+# ===============================================================================
+
+# Jaeger ConfigMap - Core Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: brand-monitoring-jaeger-config
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger
+    tier: observability
+data:
+  jaeger-agent.conf: |
+    # Agent configuration for Brand Monitoring
+    reporter:
+      grpc:
+        hostPort: jaeger-collector:14250
+        insecure: true
+    sampler:
+      type: probabilistic
+      param: 0.1
+    tags:
+      - service=brand-monitoring
+      - environment=production
+      - version=1.0.0
+    logging:
+      level: info
+
+  jaeger-collector.conf: |
+    # Collector configuration for Brand Monitoring
+    collector:
+      num-workers: 50
+      queue-size: 2000
+      zipkin:
+        hostPort: ":9411"
+    sampling:
+      strategies-file: /etc/jaeger/sampling_strategies.json
+    storage:
+      type: elasticsearch
+      es:
+        server-urls: http://elasticsearch:9200
+        index-prefix: jaeger
+        max-span-age: 168h0m0s
+        num-shards: 5
+        num-replicas: 1
+    metrics:
+      backend: prometheus
+      prometheus:
+        endpoint: ":14269"
+
+  jaeger-query.conf: |
+    # Query service configuration for Brand Monitoring
+    query:
+      port: 16686
+      static-files: /usr/share/jaeger-ui/
+      base-path: /
+      ui-config: /etc/jaeger/ui-config.json
+    storage:
+      type: elasticsearch
+      es:
+        server-urls: http://elasticsearch:9200
+        index-prefix: jaeger
+    metrics:
+      backend: prometheus
+      prometheus:
+        endpoint: ":14268"
+
+  sampling_strategies.json: |
+    {
+      "default_strategy": {
+        "type": "probabilistic",
+        "param": 0.1
+      },
+      "service_strategies": [
+        {
+          "service": "brand-monitoring",
+          "type": "probabilistic",
+          "param": 0.25
+        },
+        {
+          "service": "brand-monitoring",
+          "operation": "monitor_mentions",
+          "type": "probabilistic",
+          "param": 1.0
+        },
+        {
+          "service": "brand-monitoring",
+          "operation": "analyze_sentiment",
+          "type": "probabilistic",
+          "param": 1.0
+        }
+      ]
+    }
+
+  ui-config.json: |
+    {
+      "menu": [
+        {"label": "About", "url": "/about"},
+        {"label": "Documentation", "url": "https://www.jaegertracing.io/docs/"}
+      ],
+      "tracking": {
+        "gaID": null,
+        "trackErrors": true
+      },
+      "dependencies": {
+        "menuEnabled": true
+      },
+      "linkPatterns": [
+        {
+          "type": "process",
+          "key": "ip",
+          "url": "/api/processes/{{.ip}}",
+          "text": "Process at {{.ip}}"
+        }
+      ]
+    }
+
+---
+# Jaeger Agent DaemonSet - Runs on every node
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: brand-monitoring-jaeger-agent
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-agent
+spec:
+  selector:
+    matchLabels:
+      app: brand-monitoring
+      component: jaeger-agent
+  template:
+    metadata:
+      labels:
+        app: brand-monitoring
+        component: jaeger-agent
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "14271"
+    spec:
+      containers:
+      - name: jaeger-agent
+        image: jaegertracing/jaeger-agent:1.52.0
+        command:
+          - "/go/bin/agent"
+          - "--reporter.grpc.host-port=jaeger-collector:14250"
+          - "--reporter.grpc.insecure=true"
+        ports:
+        - containerPort: 5775
+          protocol: UDP
+          name: zipkin-compact
+        - containerPort: 5778
+          protocol: TCP
+          name: http-config
+        - containerPort: 6831
+          protocol: UDP
+          name: jaeger-compact
+        - containerPort: 6832
+          protocol: UDP
+          name: jaeger-binary
+        - containerPort: 14271
+          protocol: TCP
+          name: http-admin
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 14271
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 14271
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /etc/jaeger
+      volumes:
+      - name: config
+        configMap:
+          name: brand-monitoring-jaeger-config
+
+---
+# Jaeger Collector Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brand-monitoring-jaeger-collector
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-collector
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: brand-monitoring
+      component: jaeger-collector
+  template:
+    metadata:
+      labels:
+        app: brand-monitoring
+        component: jaeger-collector
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "14269"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - jaeger-collector
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: jaeger-collector
+        image: jaegertracing/jaeger-collector:1.52.0
+        args:
+          - "--collector.num-workers=50"
+          - "--collector.queue-size=2000"
+          - "--sampling.strategies-file=/etc/jaeger/sampling_strategies.json"
+          - "--storage.type=elasticsearch"
+          - "--storage.es.server-urls=http://elasticsearch:9200"
+          - "--storage.es.index-prefix=jaeger"
+          - "--storage.es.max-span-age=168h0m0s"
+          - "--storage.es.num-shards=5"
+          - "--storage.es.num-replicas=1"
+          - "--metrics.backend=prometheus"
+          - "--metrics.prometheus.endpoint=:14269"
+        ports:
+        - containerPort: 14250
+          protocol: TCP
+          name: grpc
+        - containerPort: 14268
+          protocol: TCP
+          name: http
+        - containerPort: 14269
+          protocol: TCP
+          name: http-metrics
+        - containerPort: 9411
+          protocol: TCP
+          name: zipkin
+        env:
+        - name: SPAN_STORAGE_TYPE
+          value: elasticsearch
+        - name: ES_SERVER_URLS
+          value: http://elasticsearch:9200
+        - name: ES_INDEX_PREFIX
+          value: jaeger
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 14268
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 14268
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /etc/jaeger
+      volumes:
+      - name: config
+        configMap:
+          name: brand-monitoring-jaeger-config
+
+---
+# Jaeger Collector Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: brand-monitoring-jaeger-collector
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-collector
+spec:
+  type: ClusterIP
+  selector:
+    app: brand-monitoring
+    component: jaeger-collector
+  ports:
+  - port: 14250
+    targetPort: 14250
+    protocol: TCP
+    name: grpc
+  - port: 14268
+    targetPort: 14268
+    protocol: TCP
+    name: http
+  - port: 14269
+    targetPort: 14269
+    protocol: TCP
+    name: http-metrics
+  - port: 9411
+    targetPort: 9411
+    protocol: TCP
+    name: zipkin
+
+---
+# Jaeger Query Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brand-monitoring-jaeger-query
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-query
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: brand-monitoring
+      component: jaeger-query
+  template:
+    metadata:
+      labels:
+        app: brand-monitoring
+        component: jaeger-query
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "14268"
+    spec:
+      containers:
+      - name: jaeger-query
+        image: jaegertracing/jaeger-query:1.52.0
+        args:
+          - "--query.port=16686"
+          - "--query.static-files=/usr/share/jaeger-ui/"
+          - "--query.base-path=/"
+          - "--query.ui-config=/etc/jaeger/ui-config.json"
+          - "--storage.type=elasticsearch"
+          - "--storage.es.server-urls=http://elasticsearch:9200"
+          - "--storage.es.index-prefix=jaeger"
+          - "--metrics.backend=prometheus"
+          - "--metrics.prometheus.endpoint=:14268"
+        ports:
+        - containerPort: 16686
+          protocol: TCP
+          name: http-query
+        - containerPort: 14268
+          protocol: TCP
+          name: http-metrics
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 16686
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 16686
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /etc/jaeger
+      volumes:
+      - name: config
+        configMap:
+          name: brand-monitoring-jaeger-config
+
+---
+# Jaeger Query Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: brand-monitoring-jaeger-query
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-query
+spec:
+  type: ClusterIP
+  selector:
+    app: brand-monitoring
+    component: jaeger-query
+  ports:
+  - port: 16686
+    targetPort: 16686
+    protocol: TCP
+    name: http-query
+  - port: 14268
+    targetPort: 14268
+    protocol: TCP
+    name: http-metrics
+
+---
+# Jaeger Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: brand-monitoring-jaeger-ingress
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger
+  annotations:
+    kubernetes.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - jaeger-brand-monitoring.example.com
+    secretName: brand-monitoring-jaeger-tls
+  rules:
+  - host: jaeger-brand-monitoring.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: brand-monitoring-jaeger-query
+            port:
+              number: 16686
+
+---
+# ===============================================================================
+# SECTION 2: TRACE QUERIES (Jaeger API)
+# ===============================================================================
+
+# Trace Query ConfigMap - Pre-built queries for Brand Monitoring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: brand-monitoring-jaeger-queries
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-queries
+data:
+  # Query 1: Get recent traces for Brand Monitoring
+  query_recent_traces.sh: |
+    #!/bin/bash
+    # Get recent traces for Brand Monitoring
+    LIMIT=${1:-20}
+    LOOKBACK=${2:-1h}
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=${LIMIT}&lookback=${LOOKBACK}" | jq '.'
+
+  # Query 2: Get trace by ID
+  query_trace_by_id.sh: |
+    #!/bin/bash
+    TRACE_ID=$1
+    if [ -z "$TRACE_ID" ]; then
+      echo "Usage: $0 <trace_id>"
+      exit 1
+    fi
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces/${TRACE_ID}" | jq '.'
+
+  # Query 3: Get service dependencies
+  query_dependencies.sh: |
+    #!/bin/bash
+    LOOKBACK=${1:-1h}
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/dependencies?lookback=${LOOKBACK}" | jq '.'
+
+  # Query 4: Get service operations
+  query_operations.sh: |
+    #!/bin/bash
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/services/brand-monitoring/operations" | jq '.'
+
+  # Query 5: Get error traces
+  query_error_traces.sh: |
+    #!/bin/bash
+    LIMIT=${1:-50}
+    LOOKBACK=${2:-24h}
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=${LIMIT}&lookback=${LOOKBACK}&tags=\"error=true\"" | jq '.'
+
+  # Query 6: Get slow traces
+  query_slow_traces.sh: |
+    #!/bin/bash
+    MIN_DURATION=${1:-1000}
+    LIMIT=${2:-20}
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=${LIMIT}&lookback=1h&minDuration=${MIN_DURATION}ms" | jq '.'
+
+  # Query 7: Get traces by operation
+  query_traces_by_operation.sh: |
+    #!/bin/bash
+    OPERATION=$1
+    if [ -z "$OPERATION" ]; then
+      echo "Usage: $0 <operation_name>"
+      echo "Available operations: monitor_mentions, analyze_sentiment, detect_crises, track_competitors"
+      exit 1
+    fi
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&operation=${OPERATION}&limit=50&lookback=24h" | jq '.'
+
+  # Query 8: Get service list
+  query_services.sh: |
+    #!/bin/bash
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/services" | jq '.'
+
+  # Query 9: Get trace statistics
+  query_trace_stats.sh: |
+    #!/bin/bash
+    LOOKBACK=${1:-24h}
+    echo "=== Trace Statistics for Brand Monitoring ==="
+    echo ""
+    echo "--- Total Traces ---"
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=1&lookback=${LOOKBACK}" | jq '.data | length'
+    echo ""
+    echo "--- Error Traces ---"
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=1&lookback=${LOOKBACK}&tags=\"error=true\"" | jq '.data | length'
+    echo ""
+    echo "--- Operations ---"
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/services/brand-monitoring/operations" | jq '.'
+
+  # Query 10: Get critical path analysis
+  query_critical_path.sh: |
+    #!/bin/bash
+    TRACE_ID=$1
+    if [ -z "$TRACE_ID" ]; then
+      echo "Usage: $0 <trace_id>"
+      exit 1
+    fi
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces/${TRACE_ID}" | jq '
+      .data[0].spans
+      | groupBy(.processID)
+      | map({
+        process: .[0].process,
+        spans: length,
+        duration: (map(.duration) | add)
+      })
+    '
+
+  # Query 11: Get span tags for debugging
+  query_span_tags.sh: |
+    #!/bin/bash
+    LOOKBACK=${1:-24h}
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=100&lookback=${LOOKBACK}" | jq '
+      [.data[].spans[].tags[]?.key] | unique
+    '
+
+  # Query 12: Get process information
+  query_processes.sh: |
+    #!/bin/bash
+    curl -s "http://brand-monitoring-jaeger-query:16686/api/traces?service=brand-monitoring&limit=1&lookback=1h" | jq '
+      .data[0].processes
+      | to_entries
+      | map({
+        processID: .key,
+        serviceName: .value.serviceName,
+        tags: .value.tags
+      })
+    '
+
+---
+# ===============================================================================
+# SECTION 3: ALERTING CONFIGURATION
+# ===============================================================================
+
+# Prometheus Alerting Rules for Brand Monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: brand-monitoring-jaeger-alerts
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-alerts
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+  - name: brand-monitoring.jaeger.alerts
+    interval: 30s
+    rules:
+    # Alert 1: High error rate in traces
+    - alert: brand_monitoring_high_error_rate
+      expr: |
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring",status="error"}[5m]))
+        /
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring"}[5m]))
+        > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "High error rate in Brand Monitoring traces"
+        description: "Error rate for brand-monitoring is {{ $value | humanizePercentage }} (threshold: 5%)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/high-error-rate"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 2: High latency (p99)
+    - alert: brand_monitoring_high_latency_p99
+      expr: |
+        histogram_quantile(0.99,
+          sum(rate(jaeger_collector_spans_received_duration_milliseconds_bucket{service="brand-monitoring"}[5m])) by (le)
+        ) > 2000
+      for: 5m
+      labels:
+        severity: warning
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "High p99 latency in Brand Monitoring"
+        description: "P99 latency for brand-monitoring is {{ $value }}ms (threshold: 2000ms)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/high-latency"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 3: High latency (p95)
+    - alert: brand_monitoring_high_latency_p95
+      expr: |
+        histogram_quantile(0.95,
+          sum(rate(jaeger_collector_spans_received_duration_milliseconds_bucket{service="brand-monitoring"}[5m])) by (le)
+        ) > 1000
+      for: 5m
+      labels:
+        severity: warning
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "High p95 latency in Brand Monitoring"
+        description: "P95 latency for brand-monitoring is {{ $value }}ms (threshold: 1000ms)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/high-latency"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 4: Trace collection rate drop
+    - alert: brand_monitoring_trace_rate_drop
+      expr: |
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring"}[5m]))
+        <
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring"}[5m] offset 1h)) * 0.5
+      for: 10m
+      labels:
+        severity: warning
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "Trace collection rate dropped for Brand Monitoring"
+        description: "Trace rate for brand-monitoring dropped by more than 50% compared to 1 hour ago"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/trace-rate-drop"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 5: Jaeger collector queue full
+    - alert: brand_monitoring_collector_queue_full
+      expr: |
+        jaeger_collector_queue_length{service="brand-monitoring"} > 1500
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "Jaeger collector queue near capacity for Brand Monitoring"
+        description: "Collector queue length for brand-monitoring is {{ $value }} (threshold: 1500)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/collector-queue-full"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 6: Jaeger collector down
+    - alert: brand_monitoring_collector_down
+      expr: |
+        up{job="brand-monitoring-jaeger-collector"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "Jaeger collector down for Brand Monitoring"
+        description: "Jaeger collector for brand-monitoring has been down for more than 1 minute"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/collector-down"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 7: Jaeger query down
+    - alert: brand_monitoring_query_down
+      expr: |
+        up{job="brand-monitoring-jaeger-query"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "Jaeger query service down for Brand Monitoring"
+        description: "Jaeger query service for brand-monitoring has been down for more than 1 minute"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/query-down"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 8: High span drop rate
+    - alert: brand_monitoring_span_drop_rate
+      expr: |
+        sum(rate(jaeger_collector_spans_dropped_total{service="brand-monitoring"}[5m]))
+        /
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring"}[5m]))
+        > 0.01
+      for: 5m
+      labels:
+        severity: warning
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "High span drop rate for Brand Monitoring"
+        description: "Span drop rate for brand-monitoring is {{ $value | humanizePercentage }} (threshold: 1%)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/span-drop-rate"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 9: Elasticsearch storage errors
+    - alert: brand_monitoring_storage_errors
+      expr: |
+        sum(rate(jaeger_collector_spans_dropped_total{service="brand-monitoring",reason="storage_error"}[5m])) > 0
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "Storage errors in Brand Monitoring Jaeger"
+        description: "Jaeger storage errors detected for brand-monitoring"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/storage-errors"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 10: Sampling rate too low
+    - alert: brand_monitoring_low_sampling_rate
+      expr: |
+        sum(rate(jaeger_collector_spans_sampled_total{service="brand-monitoring"}[5m]))
+        /
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring"}[5m]))
+        < 0.05
+      for: 15m
+      labels:
+        severity: info
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "Low sampling rate for Brand Monitoring"
+        description: "Sampling rate for brand-monitoring is {{ $value | humanizePercentage }} (threshold: 5%)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/low-sampling-rate"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 11: Operation-specific error rate
+    - alert: brand_monitoring_operation_error_rate
+      expr: |
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring",operation="monitor_mentions",status="error"}[5m]))
+        /
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring",operation="monitor_mentions"}[5m]))
+        > 0.1
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "High error rate for operation monitor_mentions in Brand Monitoring"
+        description: "Error rate for operation monitor_mentions in brand-monitoring is {{ $value | humanizePercentage }} (threshold: 10%)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/operation-error-rate"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+    # Alert 12: Dependency failure rate
+    - alert: brand_monitoring_dependency_failure
+      expr: |
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring",span_kind="client",status="error"}[5m]))
+        /
+        sum(rate(jaeger_collector_spans_received_total{service="brand-monitoring",span_kind="client"}[5m]))
+        > 0.15
+      for: 5m
+      labels:
+        severity: critical
+        service: brand-monitoring
+        team: platform
+      annotations:
+        summary: "High dependency failure rate for Brand Monitoring"
+        description: "Client span error rate for brand-monitoring is {{ $value | humanizePercentage }} (threshold: 15%)"
+        runbook_url: "https://wiki.example.com/runbooks/brand-monitoring/dependency-failure"
+        dashboard_url: "https://grafana.example.com/d/brand-monitoring-jaeger"
+
+---
+# ===============================================================================
+# SECTION 4: GRAFANA DASHBOARD CONFIG
+# ===============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: brand-monitoring-jaeger-dashboard
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: grafana-dashboard
+    grafana_dashboard: "1"
+data:
+  brand-monitoring-jaeger-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Brand Monitoring - Jaeger Tracing",
+        "tags": ["brand-monitoring", "jaeger", "tracing", "observability"],
+        "timezone": "utc",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Trace Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(jaeger_collector_spans_received_total{service=\"brand-monitoring\"}[5m]))",
+                "legendFormat": "Spans/sec",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ops",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(jaeger_collector_spans_received_total{service=\"brand-monitoring\",status=\"error\"}[5m])) / sum(rate(jaeger_collector_spans_received_total{service=\"brand-monitoring\"}[5m]))",
+                "legendFormat": "Error %",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          },
+          {
+            "id": 3,
+            "title": "P50/P95/P99 Latency",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, sum(rate(jaeger_collector_spans_received_duration_milliseconds_bucket{service=\"brand-monitoring\"}[5m])) by (le))",
+                "legendFormat": "P50",
+                "refId": "A"
+              },
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(jaeger_collector_spans_received_duration_milliseconds_bucket{service=\"brand-monitoring\"}[5m])) by (le))",
+                "legendFormat": "P95",
+                "refId": "B"
+              },
+              {
+                "expr": "histogram_quantile(0.99, sum(rate(jaeger_collector_spans_received_duration_milliseconds_bucket{service=\"brand-monitoring\"}[5m])) by (le))",
+                "legendFormat": "P99",
+                "refId": "C"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ms",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          },
+          {
+            "id": 4,
+            "title": "Operations Breakdown",
+            "type": "bargauge",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "sum by (operation) (rate(jaeger_collector_spans_received_total{service=\"brand-monitoring\"}[5m]))",
+                "legendFormat": "{{operation}}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ops",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          },
+          {
+            "id": 5,
+            "title": "Collector Queue Length",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "jaeger_collector_queue_length{service=\"brand-monitoring\"}",
+                "legendFormat": "Queue Length",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          },
+          {
+            "id": 6,
+            "title": "Sampling Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+            "targets": [
+              {
+                "expr": "sum(rate(jaeger_collector_spans_sampled_total{service=\"brand-monitoring\"}[5m])) / sum(rate(jaeger_collector_spans_received_total{service=\"brand-monitoring\"}[5m]))",
+                "legendFormat": "Sampling Rate",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          },
+          {
+            "id": 7,
+            "title": "Dropped Spans",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+            "targets": [
+              {
+                "expr": "sum(rate(jaeger_collector_spans_dropped_total{service=\"brand-monitoring\"}[5m]))",
+                "legendFormat": "Dropped/sec",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "ops",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 10
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+
+---
+# ===============================================================================
+# SECTION 5: SERVICE MONITOR
+# ===============================================================================
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: brand-monitoring-jaeger-monitor
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-monitor
+    prometheus: k8s
+spec:
+  selector:
+    matchLabels:
+      app: brand-monitoring
+      component: jaeger-collector
+  endpoints:
+  - port: http-metrics
+    interval: 15s
+    scrapeTimeout: 10s
+    path: /metrics
+    scheme: http
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: "jaeger_(.*)"
+      targetLabel: component
+      replacement: jaeger
+
+---
+# ===============================================================================
+# SECTION 6: NETWORK POLICY
+# ===============================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: brand-monitoring-jaeger-network-policy
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger
+spec:
+  podSelector:
+    matchLabels:
+      app: brand-monitoring
+      component: jaeger-collector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: grc
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 14250
+    - protocol: TCP
+      port: 14268
+    - protocol: TCP
+      port: 14269
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: grc
+    ports:
+    - protocol: TCP
+      port: 9200
+    - protocol: TCP
+      port: 14250
+
+---
+# ===============================================================================
+# SECTION 7: POD DISRUPTION BUDGET
+# ===============================================================================
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: brand-monitoring-jaeger-pdb
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: brand-monitoring
+      component: jaeger-collector
+
+---
+# ===============================================================================
+# SECTION 8: HORIZONTAL POD AUTOSCALER
+# ===============================================================================
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: brand-monitoring-jaeger-collector-hpa
+  namespace: grc
+  labels:
+    app: brand-monitoring
+    component: jaeger-collector
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: brand-monitoring-jaeger-collector
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 120

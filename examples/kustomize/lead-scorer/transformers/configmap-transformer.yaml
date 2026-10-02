@@ -1,0 +1,16 @@
+apiVersion: builtin
+kind: ConfigMapTransformer
+metadata:
+  name: configmap-config
+configMapGenerator:
+  - name: lead-scorer-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=warn
+      - METRICS_ENABLED=true
+      - TRACING_ENABLED=true
+      - PROFILING_ENABLED=false
+fieldSpecs:
+  - path: spec/template/spec/containers/envFrom/configMapRef/name
+    create: true

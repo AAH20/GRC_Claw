@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: topologyspread-patch
+patch: |-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onboarding-training
+spec:
+  template:
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: onboarding-training
+
+target:
+  kind: Deployment
+  name: onboarding-training

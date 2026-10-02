@@ -1,0 +1,23 @@
+apiVersion: builtin
+kind: PatchTransformer
+metadata:
+  name: vault-patch
+patch: |-
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultDynamicSecret
+metadata:
+  name: smb-marketing-vault-secrets
+spec:
+  vaultAuthRef: smb-marketing-vault-auth
+  mount: secret
+  path: smb-marketing
+  destination:
+    create: true
+    name: smb-marketing-vault-secrets
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: smb-marketing
+
+target:
+  kind: Deployment
+  name: smb-marketing

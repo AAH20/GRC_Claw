@@ -1,0 +1,84 @@
+app:
+  name: brand-monitoring
+  version: "0.1.0"
+  env: dev
+  log_level: INFO
+  host: 0.0.0.0
+  port: 8000
+
+agents:
+  listening:
+    enabled: true
+    poll_interval_seconds: 60
+    max_mentions_per_poll: 100
+    platforms:
+      - twitter
+      - reddit
+      - newsapi
+  analysis:
+    enabled: true
+    sentiment_model: openai
+    batch_size: 50
+    topics:
+      - product
+      - service
+      - pricing
+      - support
+      - competition
+  response:
+    enabled: true
+    auto_respond: false
+    response_templates_dir: config/templates
+    max_response_length: 280
+    approval_required: true
+  reporting:
+    enabled: true
+    schedule: "0 9 * * 1"  # Weekly on Monday at 9 AM
+    formats:
+      - json
+      - pdf
+    retention_days: 90
+  performance_analytics:
+    enabled: true
+    metrics:
+      - mention_volume
+      - sentiment_score
+      - response_time
+      - resolution_rate
+      - roi
+
+integrations:
+  twitter:
+    enabled: true
+    rate_limit_per_minute: 300
+    search_query: "@YourBrand OR #YourBrand"
+    include_retweets: false
+  reddit:
+    enabled: true
+    rate_limit_per_minute: 60
+    subreddits:
+      - technology
+      - business
+      - marketing
+  newsapi:
+    enabled: true
+    rate_limit_per_minute: 100
+    query: "YourBrand"
+    language: en
+    sort_by: publishedAt
+
+database:
+  url: postgresql://brandmon:brandmon@localhost:5432/brand_monitoring
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+
+redis:
+  url: redis://localhost:6379/0
+  ttl_seconds: 3600
+
+monitoring:
+  prometheus_enabled: true
+  sentry_enabled: false
+  sentry_dsn: ""
+  sentry_traces_sample_rate: 0.1
