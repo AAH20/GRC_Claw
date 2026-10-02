@@ -1,5 +1,4 @@
 """API routes for content optimization endpoints."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -59,7 +58,6 @@ async def optimize_content(
 
     Args:
         request: Content optimization parameters.
-        settings: Application settings.
 
     Returns:
         Task acceptance response with task ID.
@@ -67,7 +65,7 @@ async def optimize_content(
     import uuid
 
     settings = get_settings()
-    task_id = str(uuid.uuid4()
+    task_id = str(uuid.uuid4())
     agent = ContentOptimizationAgent(config=settings.model_dump())
 
     _tasks[task_id] = {
