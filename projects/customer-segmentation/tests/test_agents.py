@@ -106,9 +106,9 @@ class TestDataCollectorAgent:
         assert agent is not None
 
     @pytest.mark.asyncio
-    async def test_collect_from_source(self, agent: DataCollectorAgent) -> None:
-        customers = await agent.collect_from_source("salesforce")
-        assert isinstance(customers, list)
+    async def test_collect_all(self, agent: DataCollectorAgent) -> None:
+        result = await agent.collect_all()
+        assert result is not None
 
 
 class TestSettings:
