@@ -50,7 +50,11 @@ class AssessmentService:
         self._learning_path = LearningPathRecommenderAgent()
 
     async def extract_skills(
-        self, text: str, context: str | None = None, source_type: str = "resume", max_skills: int = 20
+        self,
+        text: str,
+        context: str | None = None,
+        source_type: str = "resume",
+        max_skills: int = 20,
     ) -> ExtractionResponse:
         """Extract skills from text.
 
@@ -69,7 +73,10 @@ class AssessmentService:
         return await self._extractor.run(request)
 
     async def score_skills(
-        self, skills: list[Skill], candidate_context: str | None = None, target_role: str | None = None
+        self,
+        skills: list[Skill],
+        candidate_context: str | None = None,
+        target_role: str | None = None,
     ) -> ScoringResponse:
         """Score proficiency for a list of skills.
 

@@ -37,37 +37,42 @@ class SkillValidatorAgent(BaseAgent[list[Skill], list[SkillValidationResult]]):
         Returns:
             ChatPromptTemplate: Configured prompt template.
         """
-        system_message = """You are an expert skill validation system. Your task is to validate and verify claimed skills.
-
-For each skill, assess:
-- is_valid: Whether the skill is recognized and verifiable
-- confidence: How confident you are in this validation (0.0 to 1.0)
-- validation_method: The method used to validate (e.g., "industry_standard", "certification_body", "market_presence")
-- evidence: List of evidence supporting the validation
-- warnings: Any warnings about the skill (e.g., outdated, deprecated, niche)
-
-Validation Criteria:
-1. Is the skill recognized in the industry?
-2. Are there certifications or formal training available?
-3. Is there market demand for this skill?
-4. Is the skill current and not deprecated?
-5. Are there standard proficiency frameworks for this skill?
-
-Output format:
-```json
-{
-  "validations": [
-    {
-      "skill_name": "python",
-      "is_valid": true,
-      "confidence": 0.98,
-      "validation_method": "industry_standard",
-      "evidence": ["TIOBE top 3 language", "PSF certifications available", "Widely used in industry"],
-      "warnings": []
-    }
-  ]
-}
-```"""
+        system_message = (
+            "You are an expert skill validation system. Your task is to validate "
+            "and verify claimed skills.\n"
+            "\n"
+            "For each skill, assess:\n"
+            "- is_valid: Whether the skill is recognized and verifiable\n"
+            "- confidence: How confident you are in this validation (0.0 to 1.0)\n"
+            "- validation_method: The method used to validate "
+            '(e.g., "industry_standard", "certification_body", "market_presence")\n'
+            "- evidence: List of evidence supporting the validation\n"
+            "- warnings: Any warnings about the skill (e.g., outdated, deprecated, niche)\n"
+            "\n"
+            "Validation Criteria:\n"
+            "1. Is the skill recognized in the industry?\n"
+            "2. Are there certifications or formal training available?\n"
+            "3. Is there market demand for this skill?\n"
+            "4. Is the skill current and not deprecated?\n"
+            "5. Are there standard proficiency frameworks for this skill?\n"
+            "\n"
+            "Output format:\n"
+            "```json\n"
+            "{\n"
+            '  "validations": [\n'
+            "    {\n"
+            '      "skill_name": "python",\n'
+            '      "is_valid": true,\n'
+            '      "confidence": 0.98,\n'
+            '      "validation_method": "industry_standard",\n'
+            '      "evidence": ["TIOBE top 3 language", "PSF certifications available", '
+            '"Widely used in industry"],\n'
+            '      "warnings": []\n'
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "```"
+        )
 
         return ChatPromptTemplate.from_messages(
             [

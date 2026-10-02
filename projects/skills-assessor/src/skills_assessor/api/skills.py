@@ -9,8 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from skills_assessor.config.settings import Settings, get_settings
 from skills_assessor.models.schemas import Skill, SkillCategory
 
-if TYPE_CHECKING:
-    from uuid import UUID
+from uuid import UUID
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
@@ -23,7 +22,7 @@ async def list_skills(
     category: SkillCategory | None = None,
     skip: int = 0,
     limit: int = 100,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> dict:
     """List all skills with optional filtering.
 
@@ -46,7 +45,7 @@ async def list_skills(
 @router.get("/{skill_id}")
 async def get_skill(
     skill_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Skill:
     """Get a skill by ID.
 
@@ -72,7 +71,7 @@ async def get_skill(
 @router.post("", response_model=Skill, status_code=status.HTTP_201_CREATED)
 async def create_skill(
     skill: Skill,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Skill:
     """Create a new skill.
 
@@ -90,7 +89,7 @@ async def create_skill(
 @router.delete("/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_skill(
     skill_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> None:
     """Delete a skill by ID.
 

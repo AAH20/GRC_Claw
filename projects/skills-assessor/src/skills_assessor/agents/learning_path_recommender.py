@@ -48,60 +48,63 @@ class LearningPathRecommenderAgent(BaseAgent[LearningPathRequest, LearningPathRe
         system_message = (
             "You are an expert learning path designer. Your task is to create "
             "personalized learning paths to help candidates close skill gaps.\n"
-
-For the learning path, provide:
-- title: A descriptive title for the learning path
-- description: Overview of what the path covers
-- difficulty: One of [beginner, intermediate, advanced]
-- steps: Ordered list of learning steps
-
-Each step should include:
-- order: Step number (1-indexed)
-- title: Step title
-- description: What this step covers
-- skill_target: The skill being developed
-- proficiency_goal: Target proficiency level [novice, beginner, intermediate, advanced, expert]
-- estimated_hours: Time to complete this step
-- resources: List of learning resources
-- milestones: Achievable milestones for this step
-
-Each resource should include:
-- title: Resource title
-- type: One of [course, article, video, book, tutorial, documentation, project, other]
-- url: Resource URL (null if unknown)
-- provider: Provider name (null if unknown)
-- is_free: Whether the resource is free
-- estimated_hours: Time to complete (null if unknown)
-
-Output format:
-```json
-{
-  "title": "Full Stack Developer Learning Path",
-  "description": "A comprehensive path to become a full stack developer",
-  "difficulty": "intermediate",
-  "steps": [
-    {
-      "order": 1,
-      "title": "Master Python Fundamentals",
-      "description": "Learn Python programming from scratch",
-      "skill_target": "python",
-      "proficiency_goal": "intermediate",
-      "estimated_hours": 40,
-      "resources": [
-        {
-          "title": "Python for Everybody",
-          "type": "course",
-          "url": "https://example.com/python-course",
-          "provider": "Coursera",
-          "is_free": true,
-          "estimated_hours": 30
-        }
-      ],
-      "milestones": ["Complete 10 Python projects", "Pass Python assessment"]
-    }
-  ]
-}
-```"""
+            "\n"
+            "For the learning path, provide:\n"
+            "- title: A descriptive title for the learning path\n"
+            "- description: Overview of what the path covers\n"
+            "- difficulty: One of [beginner, intermediate, advanced]\n"
+            "- steps: Ordered list of learning steps\n"
+            "\n"
+            "Each step should include:\n"
+            "- order: Step number (1-indexed)\n"
+            "- title: Step title\n"
+            "- description: What this step covers\n"
+            "- skill_target: The skill being developed\n"
+            "- proficiency_goal: Target proficiency level "
+            "[novice, beginner, intermediate, advanced, expert]\n"
+            "- estimated_hours: Time to complete this step\n"
+            "- resources: List of learning resources\n"
+            "- milestones: Achievable milestones for this step\n"
+            "\n"
+            "Each resource should include:\n"
+            "- title: Resource title\n"
+            "- type: One of [course, article, video, book, tutorial, documentation, "
+            "project, other]\n"
+            "- url: Resource URL (null if unknown)\n"
+            "- provider: Provider name (null if unknown)\n"
+            "- is_free: Whether the resource is free\n"
+            "- estimated_hours: Time to complete (null if unknown)\n"
+            "\n"
+            "Output format:\n"
+            "```json\n"
+            "{\n"
+            '  "title": "Full Stack Developer Learning Path",\n'
+            '  "description": "A comprehensive path to become a full stack developer",\n'
+            '  "difficulty": "intermediate",\n'
+            '  "steps": [\n'
+            "    {\n"
+            '      "order": 1,\n'
+            '      "title": "Master Python Fundamentals",\n'
+            '      "description": "Learn Python programming from scratch",\n'
+            '      "skill_target": "python",\n'
+            '      "proficiency_goal": "intermediate",\n'
+            '      "estimated_hours": 40,\n'
+            '      "resources": [\n'
+            "        {\n"
+            '          "title": "Python for Everybody",\n'
+            '          "type": "course",\n'
+            '          "url": "https://example.com/python-course",\n'
+            '          "provider": "Coursera",\n'
+            '          "is_free": true,\n'
+            '          "estimated_hours": 30\n'
+            "        }\n"
+            "      ],\n"
+            '      "milestones": ["Complete 10 Python projects", "Pass Python assessment"]\n'
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "```"
+        )
 
         return ChatPromptTemplate.from_messages(
             [

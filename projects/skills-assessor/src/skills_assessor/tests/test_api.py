@@ -101,7 +101,10 @@ class TestAssessmentsAPI:
         """Test analyzing gaps for non-existent assessment."""
         response = test_client.post(
             "/assessments/123e4567-e89b-12d3-a456-426614174000/analyze-gaps",
-            json={"assessment_id": "123e4567-e89b-12d3-a456-426614174000", "target_role": "Engineer"},
+            json={
+                "assessment_id": "123e4567-e89b-12d3-a456-426614174000",
+                "target_role": "Engineer",
+            },
         )
         assert response.status_code == 404
 
@@ -117,7 +120,10 @@ class TestAssessmentsAPI:
         """Test generating learning path for non-existent assessment."""
         response = test_client.post(
             "/assessments/123e4567-e89b-12d3-a456-426614174000/learning-path",
-            json={"assessment_id": "123e4567-e89b-12d3-a456-426614174000", "target_role": "Engineer"},
+            json={
+                "assessment_id": "123e4567-e89b-12d3-a456-426614174000",
+                "target_role": "Engineer",
+            },
         )
         assert response.status_code == 404
 

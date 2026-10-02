@@ -28,8 +28,7 @@ from skills_assessor.models.schemas import (
     SkillValidationResult,
 )
 
-if TYPE_CHECKING:
-    from uuid import UUID
+from uuid import UUID
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
@@ -88,7 +87,7 @@ def _get_agents(settings: Settings) -> dict[str, Any]:
 @router.post("", response_model=SkillAssessment, status_code=status.HTTP_201_CREATED)
 async def create_assessment(
     request: CreateAssessmentRequest,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> SkillAssessment:
     """Create a new skill assessment.
 
@@ -114,7 +113,7 @@ async def create_assessment(
 async def list_assessments(
     skip: int = 0,
     limit: int = 100,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> AssessmentListResponse:
     """List all assessments with pagination.
 
@@ -134,7 +133,7 @@ async def list_assessments(
 @router.get("/{assessment_id}", response_model=SkillAssessment)
 async def get_assessment(
     assessment_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> SkillAssessment:
     """Get an assessment by ID.
 
@@ -160,7 +159,7 @@ async def get_assessment(
 @router.delete("/{assessment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_assessment(
     assessment_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> None:
     """Delete an assessment by ID.
 
@@ -183,7 +182,7 @@ async def delete_assessment(
 async def extract_skills(
     assessment_id: UUID,
     request: ExtractionRequest,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> ExtractionResponse:
     """Extract skills from text and add to assessment.
 
@@ -239,7 +238,7 @@ async def extract_skills(
 async def score_proficiency(
     assessment_id: UUID,
     request: ScoringRequest,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> ScoringResponse:
     """Score proficiency levels for assessment skills.
 
@@ -285,7 +284,7 @@ async def score_proficiency(
 async def analyze_gaps(
     assessment_id: UUID,
     request: GapAnalysisRequest,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> GapAnalysisResponse:
     """Analyze skill gaps for the assessment.
 
@@ -324,7 +323,7 @@ async def analyze_gaps(
 async def validate_skills(
     assessment_id: UUID,
     request: ValidationRequest,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> ValidationResponse:
     """Validate skills in the assessment.
 
@@ -365,7 +364,7 @@ async def validate_skills(
 async def generate_learning_path(
     assessment_id: UUID,
     request: LearningPathRequest,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> LearningPathResponse:
     """Generate a learning path for the assessment.
 
@@ -403,7 +402,7 @@ async def generate_learning_path(
 @router.post("/{assessment_id}/complete", response_model=SkillAssessment)
 async def complete_assessment(
     assessment_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> SkillAssessment:
     """Mark an assessment as completed.
 
@@ -433,7 +432,7 @@ async def complete_assessment(
 @router.get("/{assessment_id}/summary")
 async def get_assessment_summary(
     assessment_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> dict[str, Any]:
     """Get a summary of the assessment.
 

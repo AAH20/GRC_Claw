@@ -133,15 +133,16 @@ class ScoringService:
         start_time = time.time()
         score_id = str(uuid.uuid4())
 
-        # Check cache
-        cache_key = f"score:{hash(content_input.content)}"
+        # Determine which dimensions to score
+        dims_to_score = dimensions or list(ScoreDimension)
+
+        # Check cache (include dimensions in key to avoid stale results)
+        dim_key = ",".join(sorted(d.value for d in dims_to_score))
+        cache_key = f"score:{hash(content_input.content)}:{dim_key}"
         cached = self.cache.get(cache_key)
         if cached:
             logger.info("Returning cached score for content")
             return cached
-
-        # Determine which dimensions to score
-        dims_to_score = dimensions or list(ScoreDimension)
 
         # Run agents concurrently
         import asyncio

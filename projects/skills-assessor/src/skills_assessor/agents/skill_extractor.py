@@ -42,36 +42,40 @@ class SkillExtractorAgent(BaseAgent[ExtractionRequest, ExtractionResponse]):
         Returns:
             ChatPromptTemplate: Configured prompt template.
         """
-        system_message = """You are an expert skill extraction system. Your task is to analyze text and extract all relevant skills.
-
-For each skill found, provide:
-- name: The skill name (normalized, lowercase)
-- category: One of [technical, soft, leadership, domain, tool, language, framework, methodology]
-- description: Brief description of the skill
-- keywords: Related keywords and technologies
-- confidence: How confident you are this is a real skill (0.0 to 1.0)
-
-Rules:
-1. Extract both hard skills (technical) and soft skills
-2. Normalize skill names (e.g., "React.js" and "React" are the same)
-3. Include related keywords for each skill
-4. Be thorough but avoid false positives
-5. Return results as a JSON array
-
-Output format:
-```json
-{
-  "skills": [
-    {
-      "name": "python",
-      "category": "technical",
-      "description": "Python programming language",
-      "keywords": ["python3", "python scripting"],
-      "confidence": 0.95
-    }
-  ]
-}
-```"""
+        system_message = (
+            "You are an expert skill extraction system. Your task is to analyze text "
+            "and extract all relevant skills.\n"
+            "\n"
+            "For each skill found, provide:\n"
+            "- name: The skill name (normalized, lowercase)\n"
+            "- category: One of [technical, soft, leadership, domain, tool, language, "
+            "framework, methodology]\n"
+            "- description: Brief description of the skill\n"
+            "- keywords: Related keywords and technologies\n"
+            "- confidence: How confident you are this is a real skill (0.0 to 1.0)\n"
+            "\n"
+            "Rules:\n"
+            "1. Extract both hard skills (technical) and soft skills\n"
+            '2. Normalize skill names (e.g., "React.js" and "React" are the same)\n'
+            "3. Include related keywords for each skill\n"
+            "4. Be thorough but avoid false positives\n"
+            "5. Return results as a JSON array\n"
+            "\n"
+            "Output format:\n"
+            "```json\n"
+            "{\n"
+            '  "skills": [\n'
+            "    {\n"
+            '      "name": "python",\n'
+            '      "category": "technical",\n'
+            '      "description": "Python programming language",\n'
+            '      "keywords": ["python3", "python scripting"],\n'
+            '      "confidence": 0.95\n'
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "```"
+        )
 
         return ChatPromptTemplate.from_messages(
             [

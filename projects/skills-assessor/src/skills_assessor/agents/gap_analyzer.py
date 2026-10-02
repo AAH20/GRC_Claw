@@ -82,7 +82,10 @@ class GapAnalyzerAgent(BaseAgent[GapAnalysisRequest, GapAnalysisResponse]):
             "    }\n"
             "  ],\n"
             '  "overall_readiness": 0.65,\n'
-            '  "recommendations": ["Complete CKA certification", "Practice with production clusters"]\n'
+            '  "recommendations": [\n'
+            '    "Complete CKA certification",\n'
+            '    "Practice with production clusters"\n'
+            "  ]\n"
             "}\n"
             "```"
         )

@@ -43,37 +43,40 @@ class ProficiencyScorerAgent(BaseAgent[ScoringRequest, ScoringResponse]):
         Returns:
             ChatPromptTemplate: Configured prompt template.
         """
-        system_message = """You are an expert skill proficiency assessor. Your task is to evaluate skill proficiency levels.
-
-For each skill, assess:
-- level: One of [novice, beginner, intermediate, advanced, expert]
-- confidence: How confident you are in this assessment (0.0 to 1.0)
-- years_experience: Estimated years of experience (null if unknown)
-- evidence: List of evidence supporting the assessment
-- notes: Additional notes about the assessment
-
-Proficiency Level Definitions:
-- Novice: Basic understanding, limited practical experience
-- Beginner: Can perform basic tasks with guidance
-- Intermediate: Can work independently on standard tasks
-- Advanced: Deep understanding, can handle complex scenarios
-- Expert: Mastery level, can teach others and innovate
-
-Output format:
-```json
-{
-  "proficiencies": [
-    {
-      "skill_name": "python",
-      "level": "advanced",
-      "confidence": 0.85,
-      "years_experience": 5.0,
-      "evidence": ["Built production systems", "Led team of 5 developers"],
-      "notes": "Strong practical experience"
-    }
-  ]
-}
-```"""
+        system_message = (
+            "You are an expert skill proficiency assessor. Your task is to evaluate "
+            "skill proficiency levels.\n"
+            "\n"
+            "For each skill, assess:\n"
+            "- level: One of [novice, beginner, intermediate, advanced, expert]\n"
+            "- confidence: How confident you are in this assessment (0.0 to 1.0)\n"
+            "- years_experience: Estimated years of experience (null if unknown)\n"
+            "- evidence: List of evidence supporting the assessment\n"
+            "- notes: Additional notes about the assessment\n"
+            "\n"
+            "Proficiency Level Definitions:\n"
+            "- Novice: Basic understanding, limited practical experience\n"
+            "- Beginner: Can perform basic tasks with guidance\n"
+            "- Intermediate: Can work independently on standard tasks\n"
+            "- Advanced: Deep understanding, can handle complex scenarios\n"
+            "- Expert: Mastery level, can teach others and innovate\n"
+            "\n"
+            "Output format:\n"
+            "```json\n"
+            "{\n"
+            '  "proficiencies": [\n'
+            "    {\n"
+            '      "skill_name": "python",\n'
+            '      "level": "advanced",\n'
+            '      "confidence": 0.85,\n'
+            '      "years_experience": 5.0,\n'
+            '      "evidence": ["Built production systems", "Led team of 5 developers"],\n'
+            '      "notes": "Strong practical experience"\n'
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "```"
+        )
 
         return ChatPromptTemplate.from_messages(
             [

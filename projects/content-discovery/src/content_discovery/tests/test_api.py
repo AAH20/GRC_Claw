@@ -173,15 +173,13 @@ def test_add_user_history_endpoint(test_client: TestClient) -> None:
     """
     from unittest.mock import AsyncMock, patch
 
-    mock_redis = AsyncMock()
-    mock_redis.lpush = AsyncMock()
-    mock_redis.ltrim = AsyncMock()
+    mock_client = AsyncMock()
+    mock_client.add_history = AsyncMock(return_value=True)
 
     with patch(
-        "content_discovery.integrations.UserProfileClient._get_client",
-        new_callable=AsyncMock,
-    ) as mock_get:
-        mock_get.return_value = mock_redis
+        "content_discovery.api.get_user_profile",
+        return_value=mock_client,
+    ):
         response = test_client.post(
             "/api/v1/users/user_123/history",
             json={
