@@ -7,7 +7,7 @@ sales team productivity and reduce manual data entry.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 import structlog

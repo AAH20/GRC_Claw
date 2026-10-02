@@ -7,7 +7,7 @@ no lead or opportunity falls through the cracks.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 import structlog
@@ -242,12 +242,10 @@ class FollowUpAutomationAgent:
             and action.status == FollowUpStatus.REPLIED
         ):
             return True
-        if (
+        return (
             FollowUpStatus.UNSUBSCRIBED in [FollowUpStatus(c) for c in exit_conditions]
             and action.status == FollowUpStatus.UNSUBSCRIBED
-        ):
-            return True
-        return False
+        )
 
     async def get_sequence_metrics(
         self,
