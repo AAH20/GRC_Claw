@@ -1,4 +1,4 @@
-Tests for funnel analysis endpoints."""
+"""Tests for funnel analysis endpoints."""
 
 from __future__ import annotations
 
@@ -44,4 +44,3 @@ class TestFunnelEndpoints:
         response = test_client.post("/api/v1/funnel/analyze", json=payload)
         assert response.status_code == 422
 
-"""

@@ -1,4 +1,4 @@
-Tests for predictive hiring endpoints."""
+"""Tests for predictive hiring endpoints."""
 
 from __future__ import annotations
 
@@ -39,4 +39,3 @@ class TestPredictionEndpoints:
         assert "strong_hire" in data
         assert "no_hire" in data
 
-"""

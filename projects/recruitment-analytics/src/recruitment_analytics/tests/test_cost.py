@@ -1,4 +1,4 @@
-Tests for cost analysis endpoints."""
+"""Tests for cost analysis endpoints."""
 
 from __future__ import annotations
 
@@ -31,4 +31,3 @@ class TestCostEndpoints:
         assert "job_board" in data
         assert "referral" in data
 
-"""

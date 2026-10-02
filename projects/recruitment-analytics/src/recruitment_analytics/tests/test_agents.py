@@ -1,4 +1,4 @@
-Tests for agent implementations."""
+"""Tests for agent implementations."""
 
 from __future__ import annotations
 
@@ -112,4 +112,3 @@ class TestCostAnalyzerAgent:
         assert response.report.total_cost > 0
         assert len(response.report.breakdown) > 0
 
-"""

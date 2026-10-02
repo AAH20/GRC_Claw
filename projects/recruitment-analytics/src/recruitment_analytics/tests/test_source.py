@@ -1,4 +1,4 @@
-Tests for source tracking endpoints."""
+"""Tests for source tracking endpoints."""
 
 from __future__ import annotations
 
@@ -31,4 +31,3 @@ class TestSourceEndpoints:
         assert "referral" in data
         assert "linkedin" in data
 
-"""

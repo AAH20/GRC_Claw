@@ -31,4 +31,3 @@ class TestDiversityEndpoints:
         assert "gender" in data
         assert "ethnicity" in data
 
-"""
