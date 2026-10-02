@@ -1,5 +1,4 @@
 """Response Agent - generates personalized responses to feedback."""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -178,8 +177,9 @@ class ResponseAgent:
             Formatted prompt string.
         """
         topics_str = (
-            ", ".join(t.name.replace("_", " ") for t in analysis.topics) or "general feed"
-            "back")
+            ", ".join(t.name.replace("_", " ") for t in analysis.topics)
+            or "general feedback"
+        )
 
         return (
             f"""You are a customer feedback response specialist. """
@@ -203,6 +203,7 @@ Requirements:
 - Sign off appropriately
 
 Response:"""
+        )
 
     def _generate_template_response(self, item: FeedbackItem, analysis: AnalysisResult) -> str:
         """Generate a template-based response when LLM is unavailable.
@@ -216,8 +217,9 @@ Response:"""
         """
         sentiment = analysis.sentiment.label
         topics_str = (
-            ", ".join(t.name.replace("_", " ") for t in analysis.topics[:2]) or "your fee"
-            "dback")
+            ", ".join(t.name.replace("_", " ") for t in analysis.topics[:2])
+            or "your feedback"
+        )
 
         if sentiment == "negative":
             return self._negative_template(item, topics_str, analysis)
@@ -226,32 +228,40 @@ Response:"""
         else:
             return self._neutral_template(item, topics_str, analysis)
 
-    def _negative_template(self,
-        item: FeedbackItem, topics_str: str, analysis: AnalysisResult) -> str:
+    def _negative_template(
+        self, item: FeedbackItem, topics_str: str, analysis: AnalysisResult
+    ) -> str:
         """Generate a template response for negative feedback."""
-        return f"""Dear Valued Customer,
+        return (
+            f"""Dear Valued Customer,
 
 Thank you for taking the time to share your feedback with us. """
-            f"""We sincerely apologize that your experience with {topics_str} did not meet your expectations.
+            f"""We sincerely apologize that your experience with {topics_str} """
+            f"""did not meet your expectations.
 
 We take your concerns seriously
     and want to make this right. Your feedback has been escalated to our team, """
             f"""and a representative will reach out to you within 24 hours """
             f"""to discuss how we can improve your experience.
 
-If you have any additional details you'd like to share, please don't hesitate to reply to this message.
+If you have any additional details you'd like to share, """
+            f"""please don't hesitate to reply to this message.
 
 We appreciate your patience and the opportunity to serve you better.
 
 Best regards,
 Customer Experience Team"""
+        )
 
-    def _positive_template(self,
-        item: FeedbackItem, topics_str: str, analysis: AnalysisResult) -> str:
+    def _positive_template(
+        self, item: FeedbackItem, topics_str: str, analysis: AnalysisResult
+    ) -> str:
         """Generate a template response for positive feedback."""
-        return f"""Dear Valued Customer,
+        return (
+            f"""Dear Valued Customer,
 
-Thank you so much for your wonderful feedback! We're thrilled to hear that you had a great experience with {topics_str}.
+Thank you so much for your wonderful feedback! We're thrilled to hear """
+            f"""that you had a great experience with {topics_str}.
 
 Your satisfaction is our top priority,
     and it's customers like you that make our work rewarding. """
@@ -261,22 +271,27 @@ If there's anything else we can do for you, please don't hesitate to reach out.
 
 Best regards,
 Customer Experience Team"""
+        )
 
-    def _neutral_template(self,
-        item: FeedbackItem, topics_str: str, analysis: AnalysisResult) -> str:
+    def _neutral_template(
+        self, item: FeedbackItem, topics_str: str, analysis: AnalysisResult
+    ) -> str:
         """Generate a template response for neutral feedback."""
-        return f"""Dear Valued Customer,
+        return (
+            f"""Dear Valued Customer,
 
 Thank you for your feedback regarding {topics_str}. """
             f"""We appreciate you taking the time to share your thoughts with us.
 
-Your input helps us improve our products and services. If you have any additional suggestions
+Your input helps us improve our products and services. """
+            f"""If you have any additional suggestions
     or questions, please feel free to reach out.
 
 We look forward to serving you again.
 
 Best regards,
 Customer Experience Team"""
+        )
 
     def _generate_subject(self, item: FeedbackItem, analysis: AnalysisResult) -> str:
         """Generate an email subject line for the response."""
