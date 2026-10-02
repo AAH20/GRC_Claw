@@ -129,6 +129,11 @@ class TestViolationEndpoints:
 
 class TestScanEndpoint:
     def test_trigger_scan(self, client: TestClient) -> None:
+        # Set up the orchestrator on app.state since TestClient doesn't run lifespan
+        from compliance.agents.orchestrator import OrchestratorAgent
+        from compliance.config import get_config
+        client.app.state.orchestrator = OrchestratorAgent(get_config())
+
         response = client.post(
             "/api/v1/monitor/scan",
             json={

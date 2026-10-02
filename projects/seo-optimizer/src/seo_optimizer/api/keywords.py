@@ -1,5 +1,4 @@
 """API routes for keyword research endpoints."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -63,7 +62,6 @@ async def research_keywords(
 
     Args:
         request: Keyword research parameters.
-        settings: Application settings.
 
     Returns:
         Task acceptance response with task ID.
@@ -71,10 +69,9 @@ async def research_keywords(
     import uuid
 
     settings = get_settings()
-    task_id = str(uuid.uuid4()
+    task_id = str(uuid.uuid4())
     agent = KeywordResearchAgent(config=settings.model_dump())
 
-    # Store task
     _tasks[task_id] = {
         "status": "pending",
         "agent": agent,

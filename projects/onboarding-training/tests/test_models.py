@@ -19,8 +19,8 @@ class TestModels:
         learner = Learner(
             learner_id="learn_1",
             email="test@example.com",
-            first_name="Test",
-            last_name="User",
+            full_name="Test User",
+            role="engineer",
         )
         assert learner.learner_id == "learn_1"
         assert learner.email == "test@example.com"
@@ -65,6 +65,7 @@ class TestModels:
             score=0.85,
             passed=True,
             mastery_achieved=True,
+            feedback="Good job!",
         )
         assert result.score == 0.85
         assert result.passed is True
