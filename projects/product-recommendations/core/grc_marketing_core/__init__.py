@@ -72,9 +72,21 @@ from .agent.memory import (
 )
 from .agent.planner import CriticFeedback, ExecutionResult, PlanStep
 
+# Config
+from .config.feature_flags import FeatureFlags, get_feature_flags
+from .config.settings import Settings, get_settings
+
+# Data
+from .data.cdp import CDPClient
+from .data.identity import CustomerProfile, IdentityResolver
+
 # Governance
 from .governance.audit import AuditEntry, AuditTrail
 from .governance.policy import PolicyDecision, PolicyEngine
+
+# Integration
+from .integration.connectors import BaseConnector, ConnectorRegistry
+from .integration.mcp import MCPClient
 
 # Monitoring
 from .monitoring.metrics import MetricsManager
@@ -83,15 +95,3 @@ from .monitoring.tracing import TracingManager
 # Security
 from .security.auth import AuthManager, TokenClaims
 from .security.encryption import EncryptionManager
-
-# Data
-from .data.cdp import CDPClient
-from .data.identity import CustomerProfile, IdentityResolver
-
-# Integration
-from .integration.connectors import BaseConnector, ConnectorRegistry
-from .integration.mcp import MCPClient
-
-# Config
-from .config.feature_flags import FeatureFlags, get_feature_flags
-from .config.settings import Settings, get_settings

@@ -3,4 +3,4 @@
 from .auth import AuthManager, TokenClaims
 from .encryption import EncryptionManager
 
-__all__ = ["AuthManager", "TokenClaims", "EncryptionManager"]
+__all__ = ["AuthManager", "EncryptionManager", "TokenClaims"]

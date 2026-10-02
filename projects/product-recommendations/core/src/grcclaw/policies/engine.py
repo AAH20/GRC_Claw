@@ -6,23 +6,20 @@ Provides policy CRUD operations, template management, and validation.
 
 from __future__ import annotations
 
-import copy
 import logging
-import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .models import (
-    Policy,
-    PolicyMetadata,
-    PolicySection,
-    PolicyTemplate,
-    PolicyStatus,
-    PolicyCategory,
-    PolicyPriority,
-    EnforcementMode,
-    PolicyChange,
     ChangeType,
+    EnforcementMode,
+    Policy,
+    PolicyCategory,
+    PolicyChange,
+    PolicyMetadata,
+    PolicyPriority,
+    PolicySection,
+    PolicyStatus,
+    PolicyTemplate,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,7 +42,7 @@ class PolicyDefinitionEngine:
         template_id: str,
         owner: str,
         approver: str,
-        overrides: Optional[dict] = None,
+        overrides: dict | None = None,
     ) -> Policy:
         """Create a policy from a registered template."""
         template = self._templates.get(template_id)
@@ -104,7 +101,7 @@ class PolicyDefinitionEngine:
     def create_policy(
         self,
         metadata: PolicyMetadata,
-        sections: Optional[list[PolicySection]] = None,
+        sections: list[PolicySection] | None = None,
         created_by: str = "",
     ) -> Policy:
         """Create a policy from scratch."""
@@ -127,7 +124,7 @@ class PolicyDefinitionEngine:
         self._policies[policy.id] = policy
         return policy
 
-    def get_policy(self, policy_id: str) -> Optional[Policy]:
+    def get_policy(self, policy_id: str) -> Policy | None:
         """Retrieve a policy by ID."""
         return self._policies.get(policy_id)
 
@@ -136,7 +133,7 @@ class PolicyDefinitionEngine:
         policy_id: str,
         updates: dict,
         updated_by: str = "",
-    ) -> Optional[Policy]:
+    ) -> Policy | None:
         """Update a policy."""
         policy = self._policies.get(policy_id)
         if not policy:
@@ -173,7 +170,7 @@ class PolicyDefinitionEngine:
         if "enforcement_mode" in updates:
             policy.enforcement_mode = updates["enforcement_mode"]
 
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = updated_by
 
         change = PolicyChange(
@@ -195,10 +192,10 @@ class PolicyDefinitionEngine:
 
     def list_policies(
         self,
-        status: Optional[PolicyStatus] = None,
-        category: Optional[PolicyCategory] = None,
-        framework: Optional[str] = None,
-        owner: Optional[str] = None,
+        status: PolicyStatus | None = None,
+        category: PolicyCategory | None = None,
+        framework: str | None = None,
+        owner: str | None = None,
     ) -> list[Policy]:
         """List policies with optional filtering."""
         policies = list(self._policies.values())
@@ -245,8 +242,8 @@ class PolicyDefinitionEngine:
 
     def list_templates(
         self,
-        category: Optional[PolicyCategory] = None,
-        framework: Optional[str] = None,
+        category: PolicyCategory | None = None,
+        framework: str | None = None,
     ) -> list[PolicyTemplate]:
         """List available templates."""
         templates = list(self._templates.values())

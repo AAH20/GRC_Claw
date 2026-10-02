@@ -11,19 +11,16 @@ Provides cost forecasting using multiple methods:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone
-from collections import defaultdict
-import statistics
-import random
 import math
+import random
+import statistics
+from dataclasses import dataclass, field
 
 from .models import (
+    BudgetForecast,
     CostCategory,
     CostLineItem,
     ForecastMethod,
-    BudgetForecast,
 )
 
 
@@ -81,7 +78,7 @@ class BudgetForecaster:
     - Monte Carlo simulation for risk analysis
     """
 
-    def __init__(self, config: Optional[ForecastConfig] = None):
+    def __init__(self, config: ForecastConfig | None = None):
         self.config = config or ForecastConfig()
         self.historical_data: list[HistoricalCost] = []
         self.line_items: list[CostLineItem] = []
@@ -99,7 +96,7 @@ class BudgetForecaster:
         """Load multiple historical cost data points."""
         self.historical_data.extend(costs)
 
-    def forecast(self, periods: Optional[int] = None) -> list[BudgetForecast]:
+    def forecast(self, periods: int | None = None) -> list[BudgetForecast]:
         """
         Generate cost forecasts for future periods.
 

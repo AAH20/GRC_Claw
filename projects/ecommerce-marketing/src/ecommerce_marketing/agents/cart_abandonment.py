@@ -188,7 +188,8 @@ class CartAbandonmentAgent:
         intervals = self.settings.agents.cart_abandonment.reminder_intervals
         actions: list[RecoveryAction] = []
 
-        for i, interval in enumerate(intervals[: self.settings.agents.cart_abandonment.max_reminders]):
+        max_reminders = self.settings.agents.cart_abandonment.max_reminders
+        for i, interval in enumerate(intervals[:max_reminders]):
             scheduled_time = datetime.now(UTC) + timedelta(hours=interval)
             actions.append(
                 RecoveryAction(

@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from .models import Notification, NotificationType, Template, TemplateVariable
 
@@ -43,11 +43,11 @@ class TemplateEngine:
         """Remove a template."""
         self._templates.pop(template_id, None)
 
-    def get(self, template_id: str) -> Optional[Template]:
+    def get(self, template_id: str) -> Template | None:
         """Get a template by ID."""
         return self._templates.get(template_id)
 
-    def get_by_name(self, name: str) -> Optional[Template]:
+    def get_by_name(self, name: str) -> Template | None:
         """Get a template by name."""
         for template in self._templates.values():
             if template.name == name:
@@ -56,7 +56,7 @@ class TemplateEngine:
 
     def list_templates(
         self,
-        notification_type: Optional[NotificationType] = None,
+        notification_type: NotificationType | None = None,
         enabled_only: bool = True,
     ) -> list[Template]:
         """List all templates, optionally filtered."""
@@ -73,7 +73,7 @@ class TemplateEngine:
         self,
         template: Template,
         data: dict[str, Any],
-        channel: Optional[str] = None,
+        channel: str | None = None,
     ) -> dict[str, str]:
         """
         Render a template with the given data.
@@ -108,7 +108,7 @@ class TemplateEngine:
     def render_for_notification(
         self,
         notification: Notification,
-        channel: Optional[str] = None,
+        channel: str | None = None,
     ) -> dict[str, str]:
         """Render a notification using its assigned template."""
         if not notification.template_id:
@@ -132,7 +132,7 @@ class TemplateEngine:
     def apply_to_notification(
         self,
         notification: Notification,
-        channel: Optional[str] = None,
+        channel: str | None = None,
     ) -> Notification:
         """Apply template rendering to a notification, updating its content."""
         rendered = self.render_for_notification(notification, channel)
@@ -245,10 +245,10 @@ class TemplateEngine:
 
         return re.sub(pattern, replace_variable, text)
 
-    def _apply_filter(self, value: Any, filter_name: str, args: Optional[str]) -> Any:
+    def _apply_filter(self, value: Any, filter_name: str, args: str | None) -> Any:
         """Apply a filter to a value."""
         if filter_name == "default":
-            return value if value else (args or "")
+            return value or (args or "")
         elif filter_name == "upper":
             return str(value).upper()
         elif filter_name == "lower":
@@ -277,7 +277,7 @@ class TemplateEngine:
 
     def _build_context(self, data: dict[str, Any]) -> dict[str, Any]:
         """Build the rendering context with built-in variables."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         context = {
             **data,
             "current_date": now.strftime("%Y-%m-%d"),
@@ -476,6 +476,6 @@ Please renew this certificate before expiration to avoid service disruption.""",
         for template in self._default_templates.values():
             self._templates[template.id] = template
 
-    def get_default_template(self, notification_type: NotificationType) -> Optional[Template]:
+    def get_default_template(self, notification_type: NotificationType) -> Template | None:
         """Get the default template for a notification type."""
         return self._default_templates.get(notification_type.value)

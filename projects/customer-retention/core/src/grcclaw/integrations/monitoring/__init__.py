@@ -10,11 +10,12 @@ import time
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Optional
-from datetime import datetime, timezone
 from threading import Lock
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class HealthCheckResult:
 
     name: str
     status: HealthStatus
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     response_time_ms: float = 0.0
     message: str = ""
     details: dict[str, Any] = field(default_factory=dict)
@@ -52,7 +53,7 @@ class MetricPoint:
 
     name: str
     value: float
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     labels: dict[str, str] = field(default_factory=dict)
     unit: str = ""
 
@@ -66,10 +67,10 @@ class Alert:
     severity: AlertSeverity = AlertSeverity.WARNING
     message: str = ""
     source: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     acknowledged: bool = False
     resolved: bool = False
-    resolved_at: Optional[str] = None
+    resolved_at: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -79,7 +80,7 @@ class TraceSpan:
 
     trace_id: str = ""
     span_id: str = field(default_factory=lambda: str(uuid.uuid4())[:16])
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
     name: str = ""
     start_time: str = ""
     end_time: str = ""
@@ -132,7 +133,7 @@ class HealthChecker:
             if isinstance(result, HealthCheckResult):
                 result.response_time_ms = elapsed_ms
                 if not result.timestamp:
-                    result.timestamp = datetime.now(timezone.utc).isoformat()
+                    result.timestamp = datetime.now(UTC).isoformat()
             elif isinstance(result, dict):
                 result = HealthCheckResult(
                     name=name,
@@ -395,7 +396,7 @@ class AlertManager:
             alert = self._alerts.get(alert_id)
             if alert:
                 alert.resolved = True
-                alert.resolved_at = datetime.now(timezone.utc).isoformat()
+                alert.resolved_at = datetime.now(UTC).isoformat()
                 return True
         return False
 
@@ -449,7 +450,7 @@ class IntegrationTracer:
             trace_id=trace_id or str(uuid.uuid4())[:16],
             parent_span_id=parent_span_id,
             name=name,
-            start_time=datetime.now(timezone.utc).isoformat(),
+            start_time=datetime.now(UTC).isoformat(),
             attributes=attributes or {},
         )
         self._active_spans[span.span_id] = span
@@ -460,13 +461,13 @@ class IntegrationTracer:
         span_id: str,
         status: str = "ok",
         attributes: dict[str, Any] | None = None,
-    ) -> Optional[TraceSpan]:
+    ) -> TraceSpan | None:
         """End a trace span."""
         span = self._active_spans.pop(span_id, None)
         if not span:
             return None
 
-        span.end_time = datetime.now(timezone.utc).isoformat()
+        span.end_time = datetime.now(UTC).isoformat()
         span.status = status
 
         # Calculate duration
@@ -495,7 +496,7 @@ class IntegrationTracer:
         if span:
             span.events.append({
                 "name": name,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "attributes": attributes or {},
             })
 

@@ -6,17 +6,20 @@ from datetime import datetime
 
 import pytest
 
-from sales_automator.agents.prospecting import Prospect, ProspectingAgent, ProspectScore
+from sales_automator.agents.demo_scheduling import DemoBooking, DemoSchedulingAgent, TimeSlot
+from sales_automator.agents.followup import FollowUpAction, FollowUpAgent
 from sales_automator.agents.outreach import Channel, OutreachAgent, OutreachSequence
+from sales_automator.agents.prospecting import Prospect, ProspectingAgent, ProspectScore
 from sales_automator.agents.qualification import (
     BANTScore,
     QualificationAgent,
     QualificationFramework,
     QualificationResult,
 )
-from sales_automator.agents.demo_scheduling import DemoBooking, DemoSchedulingAgent, TimeSlot
-from sales_automator.agents.followup import FollowUpAction, FollowUpAgent
-from sales_automator.agents.sales_forecasting import DealForecast, ForecastResult, SalesForecastingAgent
+from sales_automator.agents.sales_forecasting import (
+    ForecastResult,
+    SalesForecastingAgent,
+)
 
 
 class TestProspectingAgent:

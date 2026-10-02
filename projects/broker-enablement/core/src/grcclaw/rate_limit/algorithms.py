@@ -7,12 +7,11 @@ indicating whether the request is allowed and the current rate limit status.
 
 from __future__ import annotations
 
-import time
 import threading
+import time
 from abc import ABC, abstractmethod
 from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 from .models import RateLimitAlgorithm
 
@@ -24,7 +23,7 @@ class RateLimitResult:
     limit: int
     remaining: int
     reset_at: int
-    retry_after: Optional[int] = None
+    retry_after: int | None = None
     algorithm: RateLimitAlgorithm = RateLimitAlgorithm.TOKEN_BUCKET
     current_usage: float = 0.0
     window_start: float = 0.0

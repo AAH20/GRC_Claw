@@ -10,8 +10,7 @@ import hmac
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Optional
-from datetime import datetime, timezone
+from typing import Any
 
 
 class AuthStrategy(ABC):
@@ -113,9 +112,9 @@ class OAuth2Auth(AuthStrategy):
 
     def _fetch_token(self) -> None:
         """Fetch a new access token from the token endpoint."""
-        import urllib.request
-        import urllib.parse
         import json
+        import urllib.parse
+        import urllib.request
 
         data = urllib.parse.urlencode({
             "grant_type": "client_credentials",

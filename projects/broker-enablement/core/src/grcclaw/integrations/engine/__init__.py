@@ -9,10 +9,11 @@ import logging
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Optional
-from datetime import datetime, timezone
+from typing import Any, Optional
 
 from ..sdk import BaseConnector, ConnectorConfig, ConnectorStatus
 from ..transformation import TransformationResult
@@ -39,13 +40,13 @@ class PipelineStep:
     operation: str
     config: dict[str, Any] = field(default_factory=dict)
     depends_on: list[str] = field(default_factory=list)
-    condition: Optional[str] = None
+    condition: str | None = None
     timeout_seconds: float = 300.0
     retry_count: int = 0
     max_retries: int = 3
     on_failure: str = "abort"  # abort, skip, continue
-    transform_input: Optional[str] = None
-    transform_output: Optional[str] = None
+    transform_input: str | None = None
+    transform_output: str | None = None
 
 
 @dataclass
@@ -183,7 +184,7 @@ class IntegrationPipeline:
         execution = PipelineExecution(
             pipeline_name=self.name,
             state=IntegrationState.RUNNING,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
             metadata=context or {},
         )
 
@@ -191,7 +192,7 @@ class IntegrationPipeline:
         if errors:
             execution.state = IntegrationState.FAILED
             execution.error_message = "; ".join(errors)
-            execution.completed_at = datetime.now(timezone.utc).isoformat()
+            execution.completed_at = datetime.now(UTC).isoformat()
             return execution
 
         current_data = initial_input
@@ -231,7 +232,7 @@ class IntegrationPipeline:
             execution.state = IntegrationState.COMPLETED
 
         execution.final_output = current_data
-        execution.completed_at = datetime.now(timezone.utc).isoformat()
+        execution.completed_at = datetime.now(UTC).isoformat()
         if execution.started_at:
             start = datetime.fromisoformat(execution.started_at)
             end = datetime.fromisoformat(execution.completed_at)
@@ -250,7 +251,7 @@ class IntegrationPipeline:
         result = PipelineResult(
             step_name=step.name,
             state=IntegrationState.RUNNING,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
             input_data=input_data,
         )
 
@@ -260,7 +261,7 @@ class IntegrationPipeline:
             result.state = IntegrationState.FAILED
             result.error_message = f"Connector '{step.connector}' not found"
             result.error_type = "ConnectorNotFound"
-            result.completed_at = datetime.now(timezone.utc).isoformat()
+            result.completed_at = datetime.now(UTC).isoformat()
             return result
 
         try:
@@ -301,7 +302,7 @@ class IntegrationPipeline:
             if step.on_failure == "abort":
                 raise
 
-        result.completed_at = datetime.now(timezone.utc).isoformat()
+        result.completed_at = datetime.now(UTC).isoformat()
         if result.started_at:
             start = datetime.fromisoformat(result.started_at)
             end = datetime.fromisoformat(result.completed_at)
@@ -344,7 +345,7 @@ class IntegrationOrchestrator:
         """Register a connector for use in pipelines."""
         self._connectors[name] = connector
 
-    def get_connector(self, name: str) -> Optional[BaseConnector]:
+    def get_connector(self, name: str) -> BaseConnector | None:
         """Get a registered connector."""
         return self._connectors.get(name)
 
@@ -416,7 +417,7 @@ class IntegrationOrchestrator:
             except Exception as e:
                 logger.error("Event handler error: %s", e)
 
-    def get_execution(self, execution_id: str) -> Optional[PipelineExecution]:
+    def get_execution(self, execution_id: str) -> PipelineExecution | None:
         """Get execution result by ID."""
         return self._executions.get(execution_id)
 
@@ -433,7 +434,7 @@ class IntegrationOrchestrator:
             results = [e for e in results if e.state == state]
         return results
 
-    def get_pipeline(self, name: str) -> Optional[IntegrationPipeline]:
+    def get_pipeline(self, name: str) -> IntegrationPipeline | None:
         """Get a registered pipeline."""
         return self._pipelines.get(name)
 
@@ -468,7 +469,7 @@ class IntegrationScheduler:
     def __init__(self, orchestrator: IntegrationOrchestrator):
         self.orchestrator = orchestrator
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Start the scheduler loop."""
@@ -489,7 +490,7 @@ class IntegrationScheduler:
         """Main scheduler loop."""
         while self._running:
             try:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for schedule_id, schedule in list(self.orchestrator._schedules.items()):
                     if not schedule.get("enabled"):
                         continue

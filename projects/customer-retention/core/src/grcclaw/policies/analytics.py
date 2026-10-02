@@ -9,18 +9,15 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from .models import (
-    Policy,
-    PolicyStatus,
-    PolicyCategory,
-    PolicyPriority,
-    EnforcementMode,
-    EnforcementResult,
     EnforcementEvent,
+    EnforcementResult,
+    Policy,
     PolicyAnalytics,
+    PolicyCategory,
+    PolicyStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,7 +48,7 @@ class PolicyAnalyticsEngine:
     def generate_portfolio_analytics(self) -> PolicyAnalytics:
         """Generate portfolio-wide analytics."""
         policies = list(self._policies.values())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         by_status: dict[str, int] = defaultdict(int)
         by_category: dict[str, int] = defaultdict(int)
@@ -238,7 +235,7 @@ class PolicyAnalyticsEngine:
                 }
 
         return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "compliance_score": round(compliance_score, 2),
             "total_policies": analytics.total_policies,
             "published_policies": analytics.by_status.get("published", 0),
@@ -263,7 +260,7 @@ class PolicyAnalyticsEngine:
     def _generate_compliance_trend(self) -> list[dict]:
         """Generate 6-month compliance trend data."""
         trend = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         for i in range(5, -1, -1):
             month_start = now - timedelta(days=30 * i)

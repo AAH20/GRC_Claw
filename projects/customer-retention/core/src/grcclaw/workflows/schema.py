@@ -8,11 +8,11 @@ retry policies, run tracking, and template metadata.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Optional
 import uuid
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 
 class WorkflowStatus(str, Enum):
@@ -83,7 +83,7 @@ class WorkflowStep:
     tool: str = ""
     parameters: dict[str, Any] = field(default_factory=dict)
     depends_on: list[str] = field(default_factory=list)
-    condition: Optional[StepCondition] = None
+    condition: StepCondition | None = None
     retry_policy: RetryPolicy = field(default_factory=RetryPolicy)
     timeout_seconds: float = 300.0
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -113,8 +113,8 @@ class WorkflowDefinition:
     steps: list[WorkflowStep] = field(default_factory=list)
     variables: dict[str, Any] = field(default_factory=dict)
     tags: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     owner: str = ""
     max_concurrent_runs: int = 1
     timeout_seconds: float = 3600.0
@@ -136,7 +136,7 @@ class WorkflowDefinition:
                         f"step '{step.id}' depends on unknown step '{dep}'"
                     )
 
-    def get_step(self, step_id: str) -> Optional[WorkflowStep]:
+    def get_step(self, step_id: str) -> WorkflowStep | None:
         for step in self.steps:
             if step.id == step_id:
                 return step
@@ -259,8 +259,8 @@ class WorkflowDefinition:
             steps=steps,
             variables=data.get("variables", {}),
             tags=data.get("tags", []),
-            created_at=data.get("created_at", datetime.now(timezone.utc).isoformat()),
-            updated_at=data.get("updated_at", datetime.now(timezone.utc).isoformat()),
+            created_at=data.get("created_at", datetime.now(UTC).isoformat()),
+            updated_at=data.get("updated_at", datetime.now(UTC).isoformat()),
             owner=data.get("owner", ""),
             max_concurrent_runs=data.get("max_concurrent_runs", 1),
             timeout_seconds=data.get("timeout_seconds", 3600.0),
@@ -278,11 +278,11 @@ class WorkflowDefinition:
 class StepResult:
     step_id: str
     status: StepStatus = StepStatus.PENDING
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    started_at: str | None = None
+    finished_at: str | None = None
     duration_seconds: float = 0.0
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     attempt: int = 1
     logs: list[str] = field(default_factory=list)
 
@@ -308,12 +308,12 @@ class WorkflowRun:
     parameters: dict[str, Any] = field(default_factory=dict)
     context: dict[str, Any] = field(default_factory=dict)
     step_results: dict[str, StepResult] = field(default_factory=dict)
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    started_at: str | None = None
+    finished_at: str | None = None
     duration_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
     triggered_by: str = ""
-    parent_run_id: Optional[str] = None
+    parent_run_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property

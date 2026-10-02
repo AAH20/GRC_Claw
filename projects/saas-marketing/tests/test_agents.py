@@ -5,10 +5,14 @@ from __future__ import annotations
 import pytest
 
 from saas_marketing.agents.analytics import AnalyticsAgent, AnalyticsQuery, FunnelStage
-from saas_marketing.agents.churn_prevention import AccountHealth, ChurnPreventionAgent, ChurnRiskLevel
+from saas_marketing.agents.churn_prevention import (
+    AccountHealth,
+    ChurnPreventionAgent,
+    ChurnRiskLevel,
+)
 from saas_marketing.agents.content import ContentAgent, ContentRequest
 from saas_marketing.agents.pql_scoring import PQLScoringAgent, PQLTier, UserBehavior
-from saas_marketing.agents.reporting import ReportFormat, ReportRequest, ReportType, ReportingAgent
+from saas_marketing.agents.reporting import ReportFormat, ReportingAgent, ReportRequest, ReportType
 
 
 class TestContentAgent:

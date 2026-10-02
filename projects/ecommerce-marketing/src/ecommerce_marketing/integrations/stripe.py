@@ -71,7 +71,12 @@ class StripeIntegration:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         reraise=True,
     )
-    async def create_customer(self, email: str, name: str | None = None, metadata: dict[str, str] | None = None) -> dict[str, Any]:
+    async def create_customer(
+        self,
+        email: str,
+        name: str | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Create a customer in Stripe.
 
         Args:

@@ -9,21 +9,21 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
-from datetime import datetime, timezone
 
 from ..sdk import (
-    BaseConnector,
-    ConnectorConfig,
-    ConnectorMetadata,
-    ConnectorCapability,
-    ConnectorStatus,
     APIKeyAuth,
-    OAuth2Auth,
+    BaseConnector,
     BasicAuth,
     BearerAuth,
+    ConnectorCapability,
+    ConnectorConfig,
+    ConnectorMetadata,
+    ConnectorStatus,
+    OAuth2Auth,
 )
-from ..transformation import SchemaMapper, TransformationRule, DataNormalizer, DataValidator
+from ..transformation import DataNormalizer, DataValidator, SchemaMapper, TransformationRule
 
 logger = logging.getLogger(__name__)
 
@@ -347,8 +347,8 @@ class WebhookConnector(BaseConnector):
 
     def verify_signature(self, payload: bytes, signature: str, algorithm: str = "sha256") -> bool:
         """Verify webhook signature."""
-        import hmac
         import hashlib
+        import hmac
 
         if not self._secret:
             return True  # No secret configured, skip verification
@@ -367,7 +367,7 @@ class WebhookConnector(BaseConnector):
             "event_type": event_type,
             "payload": payload,
             "headers": headers or {},
-            "received_at": datetime.now(timezone.utc).isoformat(),
+            "received_at": datetime.now(UTC).isoformat(),
             "processed": False,
         }
 
@@ -688,7 +688,7 @@ class TemplateRegistry:
         """Register a template."""
         self._templates[template.name] = template
 
-    def get(self, name: str) -> Optional[IntegrationTemplate]:
+    def get(self, name: str) -> IntegrationTemplate | None:
         """Get a template by name."""
         return self._templates.get(name)
 

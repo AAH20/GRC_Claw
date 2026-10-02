@@ -8,18 +8,14 @@ from __future__ import annotations
 
 import copy
 import logging
-import re
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 from .models import (
-    Policy,
-    PolicyVersion,
-    PolicyChange,
     ChangeType,
-    PolicySection,
+    Policy,
+    PolicyChange,
+    PolicyVersion,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,7 +95,7 @@ class PolicyVersioning:
         # Update policy
         policy.metadata.version = new_version_str
         policy.versions = self._versions[policy.id]
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = created_by
 
         change = PolicyChange(
@@ -113,7 +109,7 @@ class PolicyVersioning:
 
         return version
 
-    def get_version(self, policy_id: str, version: str) -> Optional[PolicyVersion]:
+    def get_version(self, policy_id: str, version: str) -> PolicyVersion | None:
         """Get a specific version."""
         versions = self._versions.get(policy_id, [])
         for v in versions:
@@ -203,7 +199,7 @@ class PolicyVersioning:
         policy.metadata.description = target.metadata_snapshot.get("description", policy.metadata.description)
         policy.metadata.version = new_version_str
         policy.versions = self._versions[policy.id]
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = rolled_back_by
 
         change = PolicyChange(

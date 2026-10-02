@@ -14,9 +14,10 @@ import asyncio
 import logging
 import random
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Generic, TypeVar
+from typing import Any, TypeVar
 
 from .taxonomy import ErrorRecoverability, classify_error
 
@@ -213,7 +214,7 @@ class CircuitBreaker(RecoveryStrategy):
             result = await operation(*args, **kwargs)
             await self._on_success()
             return result
-        except Exception as exc:
+        except Exception:
             await self._on_failure()
             raise
 

@@ -7,16 +7,14 @@ for multiple formats, templates, and delivery methods.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-from typing import Optional
 import json
+from datetime import UTC, datetime, timedelta
 
 from .models import (
     BillingCycle,
     BillingLineItem,
-    Invoice,
     BillingStatus,
-    MeteringDimension,
+    Invoice,
 )
 
 
@@ -51,11 +49,11 @@ class InvoiceGenerator:
     def generate_invoice(
         self,
         cycle: BillingCycle,
-        tenant_info: Optional[dict] = None,
+        tenant_info: dict | None = None,
         due_days: int = 30,
-        notes: Optional[list[str]] = None,
-        purchase_order: Optional[str] = None,
-        template: Optional[str] = None,
+        notes: list[str] | None = None,
+        purchase_order: str | None = None,
+        template: str | None = None,
     ) -> Invoice:
         """
         Generate an invoice from a billing cycle.
@@ -77,7 +75,7 @@ class InvoiceGenerator:
         try:
             issue_dt = datetime.fromisoformat(cycle.period_end.replace("Z", "+00:00"))
         except (ValueError, TypeError):
-            issue_dt = datetime.now(timezone.utc)
+            issue_dt = datetime.now(UTC)
 
         due_dt = issue_dt + timedelta(days=due_days)
 
@@ -101,7 +99,7 @@ class InvoiceGenerator:
             all_notes.extend(notes)
 
         invoice = Invoice(
-            invoice_number=f"INV-{datetime.now(timezone.utc).strftime('%Y%m')}-{self._invoice_counter:05d}",
+            invoice_number=f"INV-{datetime.now(UTC).strftime('%Y%m')}-{self._invoice_counter:05d}",
             tenant_id=cycle.tenant_id,
             billing_cycle_id=cycle.cycle_id,
             status=BillingStatus.ISSUED,
@@ -127,7 +125,7 @@ class InvoiceGenerator:
     def generate_bulk_invoices(
         self,
         cycles: list[BillingCycle],
-        tenant_info_map: Optional[dict[str, dict]] = None,
+        tenant_info_map: dict[str, dict] | None = None,
         due_days: int = 30,
     ) -> list[Invoice]:
         """

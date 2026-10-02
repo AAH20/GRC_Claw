@@ -4,11 +4,10 @@ Data models for rate limiting and quota management.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Optional
-from datetime import datetime, timezone
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 
 
 class RateLimitAlgorithm(str, Enum):
@@ -51,7 +50,7 @@ class RateLimitStatus:
     window: int
     algorithm: RateLimitAlgorithm
     allowed: bool
-    retry_after: Optional[int] = None
+    retry_after: int | None = None
     policy_name: str = "default"
     tier: str = "free"
 
@@ -80,7 +79,7 @@ class UsageRecord:
     identifier: str = ""
     endpoint: str = ""
     method: str = "GET"
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     quantity: float = 1.0
     unit: str = "request"
     cost: float = 0.0
@@ -100,7 +99,7 @@ class QuotaUsage:
     total_limit: float = 0.0
     usage_percentage: float = 0.0
     reset_at: str = ""
-    last_updated: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     breakdown: dict = field(default_factory=dict)
 
 
@@ -113,12 +112,12 @@ class RateLimitPolicy:
     algorithm: RateLimitAlgorithm = RateLimitAlgorithm.TOKEN_BUCKET
     requests_per_second: float = 100.0
     burst_size: int = 200
-    daily_limit: Optional[int] = None
-    monthly_limit: Optional[int] = None
+    daily_limit: int | None = None
+    monthly_limit: int | None = None
     endpoints: list[str] = field(default_factory=list)
     tiers: list[str] = field(default_factory=list)
     is_active: bool = True
     priority: int = 0
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict = field(default_factory=dict)

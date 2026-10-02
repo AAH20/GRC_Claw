@@ -4,8 +4,8 @@ Unit Economics Dashboard — cost per agent, policy, evidence, framework.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
+
 from .models import OrganizationProfile, Quote
 
 

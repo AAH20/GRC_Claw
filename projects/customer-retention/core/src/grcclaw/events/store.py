@@ -8,19 +8,15 @@ file-based backends.
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 import threading
 from collections import defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
-import uuid
+from typing import Any
 
-from .schema import Event, EventCategory, EventStatus, EventSeverity
+from .schema import Event, EventCategory, EventSeverity, EventStatus
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +27,18 @@ logger = logging.getLogger(__name__)
 class EventQuery:
     """Query parameters for filtering events in the store."""
 
-    event_type: Optional[str] = None
-    category: Optional[EventCategory] = None
-    severity: Optional[EventSeverity] = None
-    status: Optional[EventStatus] = None
-    source: Optional[str] = None
-    correlation_id: Optional[str] = None
-    trace_id: Optional[str] = None
-    tenant_id: Optional[str] = None
-    agent_id: Optional[str] = None
-    tags: Optional[list[str]] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
+    event_type: str | None = None
+    category: EventCategory | None = None
+    severity: EventSeverity | None = None
+    status: EventStatus | None = None
+    source: str | None = None
+    correlation_id: str | None = None
+    trace_id: str | None = None
+    tenant_id: str | None = None
+    agent_id: str | None = None
+    tags: list[str] | None = None
+    start_time: str | None = None
+    end_time: str | None = None
     limit: int = 100
     offset: int = 0
 
@@ -86,10 +82,10 @@ class StorageBackend:
     def query(self, query: EventQuery) -> list[Event]:
         raise NotImplementedError
 
-    def get(self, event_id: str) -> Optional[Event]:
+    def get(self, event_id: str) -> Event | None:
         raise NotImplementedError
 
-    def count(self, query: Optional[EventQuery] = None) -> int:
+    def count(self, query: EventQuery | None = None) -> int:
         raise NotImplementedError
 
     def clear(self) -> None:
@@ -121,10 +117,10 @@ class InMemoryBackend(StorageBackend):
             results.sort(key=lambda e: e.timestamp, reverse=True)
             return results[query.offset : query.offset + query.limit]
 
-    def get(self, event_id: str) -> Optional[Event]:
+    def get(self, event_id: str) -> Event | None:
         return self._index.get(event_id)
 
-    def count(self, query: Optional[EventQuery] = None) -> int:
+    def count(self, query: EventQuery | None = None) -> int:
         with self._lock:
             if query is None:
                 return len(self._events)
@@ -155,12 +151,12 @@ class FileBackend(StorageBackend):
         self._rotate_daily = rotate_daily
         self._max_file_size_bytes = max_file_size_mb * 1024 * 1024
         self._lock = threading.Lock()
-        self._current_file: Optional[Path] = None
+        self._current_file: Path | None = None
         self._ensure_file()
 
     def _ensure_file(self) -> None:
         if self._rotate_daily:
-            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
             self._current_file = self._base_path / f"events-{date_str}.jsonl"
         else:
             self._current_file = self._base_path / "events.jsonl"
@@ -170,14 +166,14 @@ class FileBackend(StorageBackend):
             self._ensure_file()
             return
         if self._rotate_daily:
-            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
             expected = self._base_path / f"events-{date_str}.jsonl"
             if self._current_file != expected:
                 self._current_file = expected
         if self._current_file.exists():
             if self._current_file.stat().st_size >= self._max_file_size_bytes:
                 # Add timestamp suffix for rotation
-                ts = datetime.now(timezone.utc).strftime("%H%M%S")
+                ts = datetime.now(UTC).strftime("%H%M%S")
                 stem = self._current_file.stem
                 self._current_file = self._base_path / f"{stem}-{ts}.jsonl"
 
@@ -192,7 +188,7 @@ class FileBackend(StorageBackend):
         results: list[Event] = []
         files = sorted(self._base_path.glob("events-*.jsonl"), reverse=True)
         for file_path in files:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -208,10 +204,10 @@ class FileBackend(StorageBackend):
         results.sort(key=lambda e: e.timestamp, reverse=True)
         return results[query.offset : query.offset + query.limit]
 
-    def get(self, event_id: str) -> Optional[Event]:
+    def get(self, event_id: str) -> Event | None:
         files = sorted(self._base_path.glob("events-*.jsonl"), reverse=True)
         for file_path in files:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -224,11 +220,11 @@ class FileBackend(StorageBackend):
                         continue
         return None
 
-    def count(self, query: Optional[EventQuery] = None) -> int:
+    def count(self, query: EventQuery | None = None) -> int:
         count = 0
         files = sorted(self._base_path.glob("events-*.jsonl"), reverse=True)
         for file_path in files:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -257,7 +253,7 @@ class EventStore:
     statistics, and event replay capabilities.
     """
 
-    def __init__(self, backend: Optional[StorageBackend] = None) -> None:
+    def __init__(self, backend: StorageBackend | None = None) -> None:
         self._backend = backend or InMemoryBackend()
         self._type_index: dict[str, list[str]] = defaultdict(list)
         self._correlation_index: dict[str, list[str]] = defaultdict(list)
@@ -278,7 +274,7 @@ class EventStore:
             if event.trace_id:
                 self._trace_index[event.trace_id].append(event.id)
 
-    def get(self, event_id: str) -> Optional[Event]:
+    def get(self, event_id: str) -> Event | None:
         """Retrieve a single event by ID."""
         return self._backend.get(event_id)
 
@@ -310,7 +306,7 @@ class EventStore:
         self,
         start: str,
         end: str,
-        event_type: Optional[str] = None,
+        event_type: str | None = None,
         limit: int = 100,
     ) -> list[Event]:
         """Find events within a time range."""
@@ -323,7 +319,7 @@ class EventStore:
             )
         )
 
-    def count(self, query: Optional[EventQuery] = None) -> int:
+    def count(self, query: EventQuery | None = None) -> int:
         """Count events matching a query."""
         return self._backend.count(query)
 
@@ -344,14 +340,13 @@ class EventStore:
             self._correlation_index.clear()
             self._trace_index.clear()
 
-    def export_to_file(self, path: str | Path, query: Optional[EventQuery] = None) -> int:
+    def export_to_file(self, path: str | Path, query: EventQuery | None = None) -> int:
         """Export events to a JSON lines file. Returns count exported."""
         events = self._backend.query(query or EventQuery(limit=100000))
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         with open(target, "w", encoding="utf-8") as f:
-            for event in events:
-                f.write(event.to_json() + "\n")
+            f.writelines(event.to_json() + "\n" for event in events)
         return len(events)
 
     def import_from_file(self, path: str | Path) -> int:
@@ -360,7 +355,7 @@ class EventStore:
         if not source.exists():
             raise FileNotFoundError(f"event file not found: {source}")
         count = 0
-        with open(source, "r", encoding="utf-8") as f:
+        with open(source, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

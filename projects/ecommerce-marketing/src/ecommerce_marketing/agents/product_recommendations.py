@@ -30,8 +30,12 @@ class RecommendationRequest(BaseModel):
 
     customer_id: str = Field(..., description="Customer identifier")
     cart_items: list[str] = Field(default_factory=list, description="Current cart item IDs")
-    browsing_history: list[str] = Field(default_factory=list, description="Recently viewed product IDs")
-    num_recommendations: int = Field(default=5, ge=1, le=20, description="Number of recommendations")
+    browsing_history: list[str] = Field(
+        default_factory=list, description="Recently viewed product IDs"
+    )
+    num_recommendations: int = Field(
+        default=5, ge=1, le=20, description="Number of recommendations"
+    )
 
 
 class Recommendation(BaseModel):
@@ -72,7 +76,8 @@ class ProductRecommendationsAgent:
                     "system",
                     "You are an expert e-commerce product recommendation system. "
                     "Analyze the customer's browsing history, cart contents, and preferences "
-                    "to suggest the most relevant products. Provide clear reasoning for each recommendation.",
+                    "to suggest the most relevant products. Provide clear reasoning "
+                    "for each recommendation.",
                 ),
                 (
                     "human",

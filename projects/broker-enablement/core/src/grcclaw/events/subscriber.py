@@ -11,13 +11,14 @@ import asyncio
 import functools
 import inspect
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Coroutine, Optional, Type, Union
+from typing import Any
 
-from .schema import Event, EventCategory, EventStatus
 from .publisher import EventPublisher
+from .schema import Event, EventCategory
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +43,13 @@ class HandlerContext:
     event: Event
     handler_id: str
     attempt: int = 1
-    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    started_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def duration_seconds(self) -> float:
         start = datetime.fromisoformat(self.started_at)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return (now - start).total_seconds()
 
 
@@ -57,11 +58,11 @@ class HandlerContext:
 def on_event(
     event_type: str,
     *,
-    category: Optional[EventCategory] = None,
-    severity: Optional[str] = None,
-    source: Optional[str] = None,
-    tags: Optional[list[str]] = None,
-    tenant_id: Optional[str] = None,
+    category: EventCategory | None = None,
+    severity: str | None = None,
+    source: str | None = None,
+    tags: list[str] | None = None,
+    tenant_id: str | None = None,
 ):
     """
     Decorator to mark a function as an event handler.
@@ -96,8 +97,8 @@ def on_event(
 def on_category(
     category: EventCategory,
     *,
-    severity: Optional[str] = None,
-    source: Optional[str] = None,
+    severity: str | None = None,
+    source: str | None = None,
 ):
     """
     Decorator to subscribe a function to all events in a category.
@@ -135,7 +136,7 @@ class SubscriberRegistrar:
         self._publisher = publisher
         self._handlers: dict[str, str] = {}  # handler_id -> event_type
 
-    def register_function(self, func: Callable) -> Optional[str]:
+    def register_function(self, func: Callable) -> str | None:
         """
         Register a single decorated function.
 
@@ -218,10 +219,10 @@ class SubscriberRegistrar:
     def _wrap_with_filters(
         self,
         handler: Callable,
-        severity: Optional[str] = None,
-        source: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        tenant_id: Optional[str] = None,
+        severity: str | None = None,
+        source: str | None = None,
+        tags: list[str] | None = None,
+        tenant_id: str | None = None,
     ) -> Callable:
         """Wrap a handler with filter checks."""
         @functools.wraps(handler)
@@ -284,7 +285,7 @@ class AsyncEventSubscriber:
     """
 
     def __init__(self) -> None:
-        self._publisher: Optional[EventPublisher] = None
+        self._publisher: EventPublisher | None = None
         self._subscription_ids: list[str] = []
 
     def register(self, publisher: EventPublisher) -> list[str]:
@@ -338,7 +339,7 @@ class AsyncEventSubscriber:
 
 # ─── Default Publisher Singleton ────────────────────────────────────────────
 
-_default_publisher: Optional[EventPublisher] = None
+_default_publisher: EventPublisher | None = None
 
 
 def get_default_publisher() -> EventPublisher:

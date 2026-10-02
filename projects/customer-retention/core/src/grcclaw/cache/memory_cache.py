@@ -14,8 +14,7 @@ import sys
 import threading
 import time
 from collections import OrderedDict, defaultdict
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from .base import (
     CacheBackend,
@@ -45,7 +44,7 @@ class InMemoryCache(CacheBackend):
 
     def __init__(
         self,
-        config: Optional[CacheConfig] = None,
+        config: CacheConfig | None = None,
         cleanup_interval: float = 60.0,
         enable_stats: bool = True,
     ):
@@ -74,8 +73,8 @@ class InMemoryCache(CacheBackend):
         }
 
         # Background cleanup task
-        self._cleanup_task: Optional[asyncio.Task] = None
-        self._cleanup_event: Optional[asyncio.Event] = None
+        self._cleanup_task: asyncio.Task | None = None
+        self._cleanup_event: asyncio.Event | None = None
         self._running = False
 
     async def connect(self) -> None:
@@ -113,7 +112,7 @@ class InMemoryCache(CacheBackend):
                     timeout=self.cleanup_interval,
                 )
                 break  # Event set, exit
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass  # Normal timeout, proceed with cleanup
             except asyncio.CancelledError:
                 break
@@ -208,7 +207,7 @@ class InMemoryCache(CacheBackend):
         except Exception as e:
             raise CacheSerializationError(f"Deserialization failed: {e}") from e
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Retrieve a value from in-memory cache."""
         start = time.time()
         full_key = self._make_key(key)
@@ -243,8 +242,8 @@ class InMemoryCache(CacheBackend):
         self,
         key: str,
         value: Any,
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Store a value in in-memory cache."""
         start = time.time()
@@ -340,7 +339,7 @@ class InMemoryCache(CacheBackend):
         prefix = self._make_key("")
         result = []
         for full_key in all_keys:
-            stripped = full_key[len(prefix):] if full_key.startswith(prefix) else full_key
+            stripped = full_key.removeprefix(prefix)
             if fnmatch.fnmatch(stripped, pattern):
                 result.append(stripped)
 
@@ -423,8 +422,8 @@ class InMemoryCache(CacheBackend):
     async def set_many(
         self,
         mapping: dict[str, Any],
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Store multiple values."""
         for key, value in mapping.items():

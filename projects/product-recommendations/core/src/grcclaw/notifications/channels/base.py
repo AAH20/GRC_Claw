@@ -53,12 +53,10 @@ class BaseChannel(ABC):
             return False
 
         if self.config.priority_filter:
-            from ..models import NotificationPriority
             if notification.priority not in self.config.priority_filter:
                 return False
 
         if self.config.type_filter:
-            from ..models import NotificationType
             if notification.type not in self.config.type_filter:
                 return False
 

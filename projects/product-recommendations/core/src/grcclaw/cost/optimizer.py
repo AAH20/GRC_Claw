@@ -7,19 +7,16 @@ including rightsizing, scheduling, reserved capacity, and storage tiering.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone
-from collections import defaultdict
 import statistics
+from collections import defaultdict
+from dataclasses import dataclass, field
 
 from .models import (
-    CostCategory,
     CostLineItem,
-    ResourceType,
-    ResourceUsage,
     OptimizationAction,
     OptimizationRecommendation,
+    ResourceType,
+    ResourceUsage,
 )
 
 
@@ -83,7 +80,7 @@ class ResourceOptimizationEngine:
     - Savings plan purchases
     """
 
-    def __init__(self, thresholds: Optional[UtilizationThresholds] = None):
+    def __init__(self, thresholds: UtilizationThresholds | None = None):
         self.thresholds = thresholds or UtilizationThresholds()
         self.resource_usage: list[ResourceUsage] = []
         self.line_items: list[CostLineItem] = []
@@ -217,7 +214,7 @@ class ResourceOptimizationEngine:
 
     def _recommend_rightsize(
         self, res_type: ResourceType, metrics: ResourceMetrics
-    ) -> Optional[OptimizationRecommendation]:
+    ) -> OptimizationRecommendation | None:
         """Recommend rightsizing an underutilized resource."""
         target_util = self.thresholds.target_utilization_pct
         current_util = metrics.avg_utilization
@@ -261,7 +258,7 @@ class ResourceOptimizationEngine:
 
     def _recommend_scheduled_shutdown(
         self, res_type: ResourceType, metrics: ResourceMetrics
-    ) -> Optional[OptimizationRecommendation]:
+    ) -> OptimizationRecommendation | None:
         """Recommend scheduled shutdown for idle resources."""
         if metrics.avg_utilization >= self.thresholds.idle_threshold_pct:
             return None
@@ -298,7 +295,7 @@ class ResourceOptimizationEngine:
 
     def _recommend_auto_scaling(
         self, res_type: ResourceType, metrics: ResourceMetrics
-    ) -> Optional[OptimizationRecommendation]:
+    ) -> OptimizationRecommendation | None:
         """Recommend auto-scaling for overutilized resources."""
         if metrics.peak_utilization <= self.thresholds.overutilized_pct:
             return None
@@ -332,7 +329,7 @@ class ResourceOptimizationEngine:
 
     def _recommend_reserved_capacity(
         self, res_type: ResourceType, metrics: ResourceMetrics
-    ) -> Optional[OptimizationRecommendation]:
+    ) -> OptimizationRecommendation | None:
         """Recommend reserved capacity for stable workloads."""
         if metrics.avg_utilization < 60 or metrics.utilization_std_dev > 15:
             return None
@@ -369,7 +366,7 @@ class ResourceOptimizationEngine:
 
     def _recommend_spot_instances(
         self, res_type: ResourceType, metrics: ResourceMetrics
-    ) -> Optional[OptimizationRecommendation]:
+    ) -> OptimizationRecommendation | None:
         """Recommend spot instances for burstable workloads."""
         if metrics.peak_utilization < 80 or metrics.avg_utilization > 50:
             return None
@@ -403,7 +400,7 @@ class ResourceOptimizationEngine:
 
     def _recommend_storage_tier_migration(
         self, res_type: ResourceType, metrics: ResourceMetrics
-    ) -> Optional[OptimizationRecommendation]:
+    ) -> OptimizationRecommendation | None:
         """Recommend migrating cold data to cheaper storage tiers."""
         if metrics.avg_utilization >= 40:
             return None
@@ -491,7 +488,7 @@ class ResourceOptimizationEngine:
 
         return recommendations
 
-    def _recommend_savings_plan(self) -> Optional[OptimizationRecommendation]:
+    def _recommend_savings_plan(self) -> OptimizationRecommendation | None:
         """Recommend compute savings plans for consistent spend."""
         # Calculate total compute spend
         compute_cost = sum(

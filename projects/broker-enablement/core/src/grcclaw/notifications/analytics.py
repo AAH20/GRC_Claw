@@ -7,16 +7,14 @@ from __future__ import annotations
 import logging
 import statistics
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from .models import (
     AnalyticsSummary,
     DeliveryResult,
     Notification,
-    NotificationPriority,
     NotificationStatus,
-    NotificationType,
 )
 
 logger = logging.getLogger(__name__)
@@ -122,10 +120,10 @@ class NotificationAnalytics:
     def get_summary(
         self,
         hours: int = 24,
-        channel: Optional[str] = None,
+        channel: str | None = None,
     ) -> AnalyticsSummary:
         """Get an analytics summary for the specified time period."""
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
         cutoff_str = cutoff.isoformat()
 
         # Filter events in the time window
@@ -182,7 +180,7 @@ class NotificationAnalytics:
             by_status=dict(by_status),
             top_failures=top_failures,
             period_start=cutoff.isoformat(),
-            period_end=datetime.now(timezone.utc).isoformat(),
+            period_end=datetime.now(UTC).isoformat(),
         )
 
     def get_channel_health(self) -> dict[str, dict[str, Any]]:
@@ -231,13 +229,13 @@ class NotificationAnalytics:
 
     def get_trends(self, hours: int = 24, bucket_minutes: int = 60) -> list[dict[str, Any]]:
         """Get notification volume trends over time."""
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
         bucket_delta = timedelta(minutes=bucket_minutes)
 
         # Create time buckets
         buckets: dict[str, dict[str, Any]] = {}
         current = cutoff
-        while current < datetime.now(timezone.utc):
+        while current < datetime.now(UTC):
             key = current.strftime("%Y-%m-%d %H:%M")
             buckets[key] = {
                 "timestamp": key,
@@ -400,7 +398,7 @@ class NotificationAnalytics:
 
     def _prune_old_events(self) -> None:
         """Remove events older than the retention period."""
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=self._retention_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=self._retention_hours)
         cutoff_str = cutoff.isoformat()
         self._events = [e for e in self._events if e.get("created_at", "") >= cutoff_str]
 

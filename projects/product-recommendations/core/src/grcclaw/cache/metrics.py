@@ -11,9 +11,10 @@ import asyncio
 import logging
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .base import CacheBackend
 
@@ -170,7 +171,7 @@ class MetricsCollector:
         self._custom_histograms: dict[str, list[float]] = defaultdict(list)
 
         # Background task
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._running = False
 
     async def start(self) -> None:
@@ -332,14 +333,14 @@ class MetricsCollector:
             "p999": percentile(99.9),
         }
 
-    def get_snapshot(self) -> Optional[CacheMetricsSnapshot]:
+    def get_snapshot(self) -> CacheMetricsSnapshot | None:
         """Get the most recent metrics snapshot."""
         return self._snapshots[-1] if self._snapshots else None
 
     def get_history(
         self,
         limit: int = 100,
-        since: Optional[float] = None,
+        since: float | None = None,
     ) -> list[CacheMetricsSnapshot]:
         """Get historical metrics snapshots."""
         snapshots = self._snapshots
@@ -381,7 +382,7 @@ class HealthMonitor:
         self._alert_rules: list[AlertRule] = []
         self._alerts: list[Alert] = []
         self._max_alerts = 1000
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._running = False
         self._alert_handlers: list[Callable[[Alert], None]] = []
 
@@ -535,8 +536,8 @@ class HealthMonitor:
     def get_alerts(
         self,
         limit: int = 100,
-        severity: Optional[AlertSeverity] = None,
-        acknowledged: Optional[bool] = None,
+        severity: AlertSeverity | None = None,
+        acknowledged: bool | None = None,
     ) -> list[Alert]:
         """Get alerts with optional filtering."""
         alerts = self._alerts

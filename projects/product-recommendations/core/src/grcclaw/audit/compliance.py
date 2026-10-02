@@ -11,9 +11,9 @@ import json
 import sqlite3
 import threading
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .models import (
     AuditEngagement,
@@ -30,7 +30,6 @@ from .models import (
     OverallOpinion,
     Workpaper,
 )
-
 
 # ---------------------------------------------------------------------------
 # Framework control catalog
@@ -383,7 +382,7 @@ class ComplianceTracker:
     - SQLite persistence
     """
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         self._lock = threading.RLock()
         self._controls: dict[str, ComplianceControl] = {}
         self._assessments: dict[str, ComplianceAssessment] = {}
@@ -398,7 +397,7 @@ class ComplianceTracker:
             self._init_storage()
         else:
             self._storage_path = None
-            self._conn: Optional[sqlite3.Connection] = None
+            self._conn: sqlite3.Connection | None = None
 
     # ------------------------------------------------------------------
     # Storage
@@ -897,8 +896,8 @@ class ComplianceTracker:
         title: str,
         description: str = "",
         control_type: ControlType = ControlType.PREVENTIVE,
-        owner: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        owner: str | None = None,
+        tags: list[str] | None = None,
     ) -> ComplianceControl:
         """Create a new compliance control."""
         with self._lock:
@@ -916,13 +915,13 @@ class ComplianceTracker:
             self._persist_control(control)
             return control
 
-    def get_control(self, control_id: str) -> Optional[ComplianceControl]:
+    def get_control(self, control_id: str) -> ComplianceControl | None:
         """Get a control by ID."""
         return self._controls.get(control_id)
 
     def get_control_by_identifier(
         self, framework: ComplianceFramework, identifier: str
-    ) -> Optional[ComplianceControl]:
+    ) -> ComplianceControl | None:
         """Get a control by its framework identifier (e.g., 'CC6.1')."""
         for cid in self._framework_controls.get(framework.value, []):
             ctrl = self._controls.get(cid)
@@ -932,10 +931,10 @@ class ComplianceTracker:
 
     def list_controls(
         self,
-        framework: Optional[ComplianceFramework] = None,
-        status: Optional[ControlStatus] = None,
-        control_type: Optional[ControlType] = None,
-        owner: Optional[str] = None,
+        framework: ComplianceFramework | None = None,
+        status: ControlStatus | None = None,
+        control_type: ControlType | None = None,
+        owner: str | None = None,
     ) -> list[ComplianceControl]:
         """List controls with optional filters."""
         controls = list(self._controls.values())
@@ -953,9 +952,9 @@ class ComplianceTracker:
         self,
         control_id: str,
         status: ControlStatus,
-        assessor: Optional[str] = None,
-        notes: Optional[str] = None,
-    ) -> Optional[ComplianceControl]:
+        assessor: str | None = None,
+        notes: str | None = None,
+    ) -> ComplianceControl | None:
         """Update a control's assessment status."""
         with self._lock:
             control = self._controls.get(control_id)
@@ -963,8 +962,8 @@ class ComplianceTracker:
                 return None
             control.status = status
             control.assessor = assessor or control.assessor
-            control.assessment_date = datetime.now(timezone.utc).isoformat()
-            control.updated_at = datetime.now(timezone.utc).isoformat()
+            control.assessment_date = datetime.now(UTC).isoformat()
+            control.updated_at = datetime.now(UTC).isoformat()
             if notes:
                 control.notes.append(notes)
             self._persist_control(control)
@@ -978,7 +977,7 @@ class ComplianceTracker:
                 return False
             if evidence_id not in control.evidence_ids:
                 control.evidence_ids.append(evidence_id)
-                control.updated_at = datetime.now(timezone.utc).isoformat()
+                control.updated_at = datetime.now(UTC).isoformat()
                 self._persist_control(control)
             return True
 
@@ -990,7 +989,7 @@ class ComplianceTracker:
                 return False
             if finding_id not in control.finding_ids:
                 control.finding_ids.append(finding_id)
-                control.updated_at = datetime.now(timezone.utc).isoformat()
+                control.updated_at = datetime.now(UTC).isoformat()
                 self._persist_control(control)
             return True
 
@@ -1002,9 +1001,9 @@ class ComplianceTracker:
         self,
         framework: ComplianceFramework,
         assessment_name: str,
-        assessor: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        assessor: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> ComplianceAssessment:
         """Create a new compliance assessment."""
         with self._lock:
@@ -1024,14 +1023,14 @@ class ComplianceTracker:
             self._persist_assessment(assessment)
             return assessment
 
-    def get_assessment(self, assessment_id: str) -> Optional[ComplianceAssessment]:
+    def get_assessment(self, assessment_id: str) -> ComplianceAssessment | None:
         """Get an assessment by ID."""
         return self._assessments.get(assessment_id)
 
     def list_assessments(
         self,
-        framework: Optional[ComplianceFramework] = None,
-        status: Optional[AuditStatus] = None,
+        framework: ComplianceFramework | None = None,
+        status: AuditStatus | None = None,
     ) -> list[ComplianceAssessment]:
         """List assessments with optional filters."""
         assessments = list(self._assessments.values())
@@ -1043,20 +1042,20 @@ class ComplianceTracker:
 
     def update_assessment_status(
         self, assessment_id: str, status: AuditStatus
-    ) -> Optional[ComplianceAssessment]:
+    ) -> ComplianceAssessment | None:
         """Update an assessment's status."""
         with self._lock:
             assessment = self._assessments.get(assessment_id)
             if not assessment:
                 return None
             assessment.status = status
-            assessment.updated_at = datetime.now(timezone.utc).isoformat()
+            assessment.updated_at = datetime.now(UTC).isoformat()
             if status == AuditStatus.CLOSED and not assessment.end_date:
-                assessment.end_date = datetime.now(timezone.utc).isoformat()
+                assessment.end_date = datetime.now(UTC).isoformat()
             self._persist_assessment(assessment)
             return assessment
 
-    def compute_compliance_score(self, assessment_id: str) -> Optional[float]:
+    def compute_compliance_score(self, assessment_id: str) -> float | None:
         """
         Compute compliance score for an assessment.
 
@@ -1079,11 +1078,11 @@ class ComplianceTracker:
                 * 100
             )
             assessment.compliance_score = round(score, 2)
-            assessment.updated_at = datetime.now(timezone.utc).isoformat()
+            assessment.updated_at = datetime.now(UTC).isoformat()
             self._persist_assessment(assessment)
             return assessment.compliance_score
 
-    def refresh_assessment_counts(self, assessment_id: str) -> Optional[ComplianceAssessment]:
+    def refresh_assessment_counts(self, assessment_id: str) -> ComplianceAssessment | None:
         """Recalculate control status counts for an assessment."""
         with self._lock:
             assessment = self._assessments.get(assessment_id)
@@ -1102,7 +1101,7 @@ class ComplianceTracker:
             assessment.non_compliant_controls = counts[ControlStatus.NON_COMPLIANT]
             assessment.not_assessed_controls = counts[ControlStatus.NOT_ASSESSED]
             assessment.not_applicable_controls = counts[ControlStatus.NOT_APPLICABLE]
-            assessment.updated_at = datetime.now(timezone.utc).isoformat()
+            assessment.updated_at = datetime.now(UTC).isoformat()
             self._persist_assessment(assessment)
             self.compute_compliance_score(assessment_id)
             return assessment
@@ -1115,13 +1114,13 @@ class ComplianceTracker:
         self,
         name: str,
         audit_type: AuditType = AuditType.INTERNAL,
-        framework: Optional[ComplianceFramework] = None,
-        scope: Optional[list[str]] = None,
-        objectives: Optional[list[str]] = None,
-        lead_auditor: Optional[str] = None,
-        team: Optional[list[str]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        framework: ComplianceFramework | None = None,
+        scope: list[str] | None = None,
+        objectives: list[str] | None = None,
+        lead_auditor: str | None = None,
+        team: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> AuditEngagement:
         """Create a new audit engagement."""
         with self._lock:
@@ -1140,15 +1139,15 @@ class ComplianceTracker:
             self._persist_audit(audit)
             return audit
 
-    def get_audit(self, audit_id: str) -> Optional[AuditEngagement]:
+    def get_audit(self, audit_id: str) -> AuditEngagement | None:
         """Get an audit by ID."""
         return self._audits.get(audit_id)
 
     def list_audits(
         self,
-        status: Optional[AuditStatus] = None,
-        audit_type: Optional[AuditType] = None,
-        framework: Optional[ComplianceFramework] = None,
+        status: AuditStatus | None = None,
+        audit_type: AuditType | None = None,
+        framework: ComplianceFramework | None = None,
     ) -> list[AuditEngagement]:
         """List audits with optional filters."""
         audits = list(self._audits.values())
@@ -1162,16 +1161,16 @@ class ComplianceTracker:
 
     def transition_audit_status(
         self, audit_id: str, new_status: AuditStatus
-    ) -> Optional[AuditEngagement]:
+    ) -> AuditEngagement | None:
         """Transition an audit to a new status."""
         with self._lock:
             audit = self._audits.get(audit_id)
             if not audit:
                 return None
             audit.status = new_status
-            audit.updated_at = datetime.now(timezone.utc).isoformat()
+            audit.updated_at = datetime.now(UTC).isoformat()
 
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
             if new_status == AuditStatus.FIELDWORK and not audit.fieldwork_start:
                 audit.fieldwork_start = now
             elif new_status == AuditStatus.REPORTING and not audit.fieldwork_end:
@@ -1191,7 +1190,7 @@ class ComplianceTracker:
                 return False
             if control_id not in audit.control_ids:
                 audit.control_ids.append(control_id)
-                audit.updated_at = datetime.now(timezone.utc).isoformat()
+                audit.updated_at = datetime.now(UTC).isoformat()
                 self._persist_audit(audit)
             return True
 
@@ -1203,7 +1202,7 @@ class ComplianceTracker:
                 return False
             if finding_id not in audit.finding_ids:
                 audit.finding_ids.append(finding_id)
-                audit.updated_at = datetime.now(timezone.utc).isoformat()
+                audit.updated_at = datetime.now(UTC).isoformat()
                 self._persist_audit(audit)
             return True
 
@@ -1216,13 +1215,13 @@ class ComplianceTracker:
         title: str,
         description: str,
         severity: FindingSeverity = FindingSeverity.MEDIUM,
-        audit_id: Optional[str] = None,
-        control_id: Optional[str] = None,
-        root_cause: Optional[str] = None,
-        impact: Optional[str] = None,
-        recommendation: Optional[str] = None,
-        remediation_owner: Optional[str] = None,
-        due_date: Optional[str] = None,
+        audit_id: str | None = None,
+        control_id: str | None = None,
+        root_cause: str | None = None,
+        impact: str | None = None,
+        recommendation: str | None = None,
+        remediation_owner: str | None = None,
+        due_date: str | None = None,
     ) -> Finding:
         """Create a new audit finding."""
         with self._lock:
@@ -1248,16 +1247,16 @@ class ComplianceTracker:
 
             return finding
 
-    def get_finding(self, finding_id: str) -> Optional[Finding]:
+    def get_finding(self, finding_id: str) -> Finding | None:
         """Get a finding by ID."""
         return self._findings.get(finding_id)
 
     def list_findings(
         self,
-        audit_id: Optional[str] = None,
-        control_id: Optional[str] = None,
-        severity: Optional[FindingSeverity] = None,
-        status: Optional[FindingStatus] = None,
+        audit_id: str | None = None,
+        control_id: str | None = None,
+        severity: FindingSeverity | None = None,
+        status: FindingStatus | None = None,
     ) -> list[Finding]:
         """List findings with optional filters."""
         findings = list(self._findings.values())
@@ -1275,26 +1274,26 @@ class ComplianceTracker:
         self,
         finding_id: str,
         new_status: FindingStatus,
-        remediation: Optional[str] = None,
-        verified_by: Optional[str] = None,
-    ) -> Optional[Finding]:
+        remediation: str | None = None,
+        verified_by: str | None = None,
+    ) -> Finding | None:
         """Update a finding's status."""
         with self._lock:
             finding = self._findings.get(finding_id)
             if not finding:
                 return None
             finding.status = new_status
-            finding.updated_at = datetime.now(timezone.utc).isoformat()
+            finding.updated_at = datetime.now(UTC).isoformat()
 
             if remediation:
                 finding.remediation = remediation
             if new_status == FindingStatus.REMEDIATED:
-                finding.remediated_at = datetime.now(timezone.utc).isoformat()
+                finding.remediated_at = datetime.now(UTC).isoformat()
             elif new_status == FindingStatus.VERIFIED:
-                finding.verified_at = datetime.now(timezone.utc).isoformat()
+                finding.verified_at = datetime.now(UTC).isoformat()
                 finding.verified_by = verified_by
             elif new_status == FindingStatus.CLOSED:
-                finding.verified_at = finding.verified_at or datetime.now(timezone.utc).isoformat()
+                finding.verified_at = finding.verified_at or datetime.now(UTC).isoformat()
                 finding.verified_by = finding.verified_by or verified_by
 
             self._persist_finding(finding)
@@ -1309,7 +1308,7 @@ class ComplianceTracker:
 
     def get_overdue_findings(self) -> list[Finding]:
         """Get all overdue findings."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         overdue = []
         for f in self._findings.values():
             if f.status in (FindingStatus.OPEN, FindingStatus.IN_PROGRESS) and f.due_date:
@@ -1328,11 +1327,11 @@ class ComplianceTracker:
     def create_workpaper(
         self,
         title: str,
-        audit_id: Optional[str] = None,
-        control_id: Optional[str] = None,
-        description: Optional[str] = None,
-        procedure: Optional[str] = None,
-        preparer: Optional[str] = None,
+        audit_id: str | None = None,
+        control_id: str | None = None,
+        description: str | None = None,
+        procedure: str | None = None,
+        preparer: str | None = None,
     ) -> Workpaper:
         """Create a new workpaper."""
         with self._lock:
@@ -1343,7 +1342,7 @@ class ComplianceTracker:
                 description=description,
                 procedure=procedure,
                 preparer=preparer,
-                preparation_date=datetime.now(timezone.utc).isoformat(),
+                preparation_date=datetime.now(UTC).isoformat(),
             )
             self._workpapers[wp.workpaper_id] = wp
             self._persist_workpaper(wp)
@@ -1352,19 +1351,19 @@ class ComplianceTracker:
                 audit = self._audits.get(audit_id)
                 if audit and wp.workpaper_id not in audit.workpaper_ids:
                     audit.workpaper_ids.append(wp.workpaper_id)
-                    audit.updated_at = datetime.now(timezone.utc).isoformat()
+                    audit.updated_at = datetime.now(UTC).isoformat()
                     self._persist_audit(audit)
 
             return wp
 
-    def get_workpaper(self, workpaper_id: str) -> Optional[Workpaper]:
+    def get_workpaper(self, workpaper_id: str) -> Workpaper | None:
         """Get a workpaper by ID."""
         return self._workpapers.get(workpaper_id)
 
     def list_workpapers(
         self,
-        audit_id: Optional[str] = None,
-        control_id: Optional[str] = None,
+        audit_id: str | None = None,
+        control_id: str | None = None,
     ) -> list[Workpaper]:
         """List workpapers with optional filters."""
         wps = list(self._workpapers.values())
@@ -1379,7 +1378,7 @@ class ComplianceTracker:
         workpaper_id: str,
         conclusion: str,
         reviewer: str,
-    ) -> Optional[Workpaper]:
+    ) -> Workpaper | None:
         """Review and conclude a workpaper."""
         with self._lock:
             wp = self._workpapers.get(workpaper_id)
@@ -1387,8 +1386,8 @@ class ComplianceTracker:
                 return None
             wp.conclusion = conclusion
             wp.reviewer = reviewer
-            wp.review_date = datetime.now(timezone.utc).isoformat()
-            wp.updated_at = datetime.now(timezone.utc).isoformat()
+            wp.review_date = datetime.now(UTC).isoformat()
+            wp.updated_at = datetime.now(UTC).isoformat()
             self._persist_workpaper(wp)
             return wp
 
@@ -1397,7 +1396,7 @@ class ComplianceTracker:
     # ------------------------------------------------------------------
 
     def get_compliance_summary(
-        self, framework: Optional[ComplianceFramework] = None
+        self, framework: ComplianceFramework | None = None
     ) -> dict[str, Any]:
         """Get a compliance summary across all or a specific framework."""
         with self._lock:
@@ -1438,7 +1437,7 @@ class ComplianceTracker:
                 "by_type": dict(by_type),
             }
 
-    def get_audit_summary(self, audit_id: str) -> Optional[dict[str, Any]]:
+    def get_audit_summary(self, audit_id: str) -> dict[str, Any] | None:
         """Get a summary of an audit engagement."""
         with self._lock:
             audit = self._audits.get(audit_id)

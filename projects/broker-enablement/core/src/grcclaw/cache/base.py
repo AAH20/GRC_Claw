@@ -10,9 +10,10 @@ import abc
 import hashlib
 import json
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -108,7 +109,7 @@ class CacheBackend(abc.ABC, Generic[T]):
     operations across different cache implementations.
     """
 
-    def __init__(self, config: Optional[CacheConfig] = None):
+    def __init__(self, config: CacheConfig | None = None):
         self.config = config or CacheConfig()
         self._initialized = False
 
@@ -123,7 +124,7 @@ class CacheBackend(abc.ABC, Generic[T]):
         ...
 
     @abc.abstractmethod
-    async def get(self, key: str) -> Optional[T]:
+    async def get(self, key: str) -> T | None:
         """Retrieve a value from cache. Returns None if not found or expired."""
         ...
 
@@ -132,8 +133,8 @@ class CacheBackend(abc.ABC, Generic[T]):
         self,
         key: str,
         value: T,
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Store a value in cache with optional TTL and tags."""
         ...
@@ -182,8 +183,8 @@ class CacheBackend(abc.ABC, Generic[T]):
     async def set_many(
         self,
         mapping: dict[str, T],
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Store multiple values in one round-trip."""
         ...
@@ -276,10 +277,10 @@ class CacheDecorator:
     def __init__(
         self,
         backend: CacheBackend,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
         key_prefix: str = "",
-        tags: Optional[list[str]] = None,
-        key_builder: Optional[Callable[..., str]] = None,
+        tags: list[str] | None = None,
+        key_builder: Callable[..., str] | None = None,
     ):
         self.backend = backend
         self.ttl = ttl

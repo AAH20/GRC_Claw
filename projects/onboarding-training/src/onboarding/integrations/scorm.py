@@ -299,8 +299,18 @@ class ScormClient:
     <meta charset="UTF-8">
     <title>{lesson.title}</title>
     <style>
-        body {{ font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }}  # noqa: E501
-        .quiz {{ margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; }}  # noqa: E501
+        body {{
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        .quiz {{
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }}
         .quiz-question {{ margin-bottom: 15px; }}
     </style>
 </head>

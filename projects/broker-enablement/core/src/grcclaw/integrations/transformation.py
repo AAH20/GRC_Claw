@@ -12,14 +12,13 @@ Provides:
 
 from __future__ import annotations
 
-import copy
-import json
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Optional, Union
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class TransformationRule:
     target_field: str
     transform_type: TransformationType = TransformationType.MAP
     params: dict[str, Any] = field(default_factory=dict)
-    condition: Optional[Callable[[Any], bool]] = None
+    condition: Callable[[Any], bool] | None = None
     required: bool = False
     default_value: Any = None
 
@@ -343,7 +342,7 @@ class DataNormalizer:
             try:
                 dt = datetime.strptime(value, fmt)
                 if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
+                    dt = dt.replace(tzinfo=UTC)
                 return dt
             except ValueError:
                 continue

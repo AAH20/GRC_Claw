@@ -8,18 +8,16 @@ for internal chargeback and cost transparency.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone
 from collections import defaultdict
-import statistics
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 from .models import (
+    AllocationMethod,
+    CostAllocation,
     CostCategory,
     CostLineItem,
     ResourceType,
-    AllocationMethod,
-    CostAllocation,
 )
 
 
@@ -32,8 +30,8 @@ class AllocationRule:
     targets: list[str] = field(default_factory=list)  # department/project names
     method: AllocationMethod = AllocationMethod.EQUAL_SPLIT
     weights: dict[str, float] = field(default_factory=dict)
-    filter_category: Optional[CostCategory] = None
-    filter_resource: Optional[ResourceType] = None
+    filter_category: CostCategory | None = None
+    filter_resource: ResourceType | None = None
 
 
 @dataclass
@@ -65,7 +63,7 @@ class ShowbackReport:
     allocations: list[CostAllocation] = field(default_factory=list)
     unallocated: float = 0.0
     currency: str = "USD"
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass

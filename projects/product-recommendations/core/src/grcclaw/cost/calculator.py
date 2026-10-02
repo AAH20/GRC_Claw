@@ -7,15 +7,13 @@ across all GRC_Claw deployment dimensions.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone
 from collections import defaultdict
+from dataclasses import dataclass
 
 from .models import (
+    CostBreakdown,
     CostCategory,
     CostLineItem,
-    CostBreakdown,
     ResourceType,
     ResourceUsage,
     TCOSummary,
@@ -349,7 +347,7 @@ class CostModelCalculator:
 
     def compare_scenarios(
         self,
-        baseline: "CostModelCalculator",
+        baseline: CostModelCalculator,
         scenario_name: str = "optimized",
     ) -> dict:
         """
@@ -388,7 +386,7 @@ class CostModelCalculator:
         self,
         months: int = 12,
         monthly_growth_rate: float = 0.02,
-        seasonality: Optional[list[float]] = None,
+        seasonality: list[float] | None = None,
     ) -> list[dict]:
         """
         Project costs forward with optional growth and seasonality.

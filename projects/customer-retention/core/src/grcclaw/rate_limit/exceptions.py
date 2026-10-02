@@ -4,8 +4,6 @@ Custom exceptions for rate limiting and quota management.
 
 from __future__ import annotations
 
-from typing import Optional
-
 
 class RateLimitError(Exception):
     """Base exception for rate limiting errors."""

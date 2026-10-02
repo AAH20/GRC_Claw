@@ -8,12 +8,11 @@ and 12 agentic AI metrics.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Optional
 import uuid
-
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -166,10 +165,10 @@ class MetricValue:
 
     metric_id: str
     value: float
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     period: str = ""
-    numerator: Optional[float] = None
-    denominator: Optional[float] = None
+    numerator: float | None = None
+    denominator: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     source: str = ""
     confidence: float = 1.0
@@ -203,13 +202,13 @@ class MetricSnapshot:
     trend_pct: float
     tier: MetricTier
     unit: str
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     period: str = ""
     owner: str = ""
     dashboard_layers: list[DashboardLayer] = field(default_factory=list)
     history: list[MetricValue] = field(default_factory=list)
     escalation_required: bool = False
-    escalation_tier: Optional[MetricTier] = None
+    escalation_tier: MetricTier | None = None
     notes: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -251,7 +250,7 @@ class KPISummary:
     top_risks: list[dict[str, Any]] = field(default_factory=list)
     decisions_required: list[dict[str, Any]] = field(default_factory=list)
     period: str = ""
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     @property
     def health_pct(self) -> float:
@@ -295,9 +294,9 @@ class TrendAnalysis:
     change_pct: float = 0.0
     volatility: float = 0.0
     seasonality_detected: bool = False
-    seasonality_period: Optional[int] = None
+    seasonality_period: int | None = None
     change_points: list[dict[str, Any]] = field(default_factory=list)
-    forecast_next: Optional[float] = None
+    forecast_next: float | None = None
     forecast_confidence: float = 0.0
     insights: list[str] = field(default_factory=list)
 
@@ -365,7 +364,7 @@ class PredictiveModel:
     predictions: list[Prediction] = field(default_factory=list)
     feature_importance: dict[str, float] = field(default_factory=dict)
     model_metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     valid_until: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -421,7 +420,7 @@ class ExecutiveReport:
     frequency: ReportFrequency = ReportFrequency.QUARTERLY
     audience: list[str] = field(default_factory=list)
     period: str = ""
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     valid_until: str = ""
     sections: list[ReportSection] = field(default_factory=list)
     summary: str = ""
@@ -462,7 +461,7 @@ class AnalyticsEvent:
     metric_id: str = ""
     category: MetricCategory = MetricCategory.RISK_COMPLIANCE
     value: float = 0.0
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     source: str = ""
     entity_id: str = ""
     entity_type: str = ""

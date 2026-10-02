@@ -14,32 +14,19 @@ Modules:
     reporting: Board-ready executive report generation
 """
 
-from .models import (
-    MetricCategory,
-    MetricTier,
-    RAGStatus,
-    DashboardLayer,
-    TrendDirection,
-    PredictionConfidence,
-    ReportType,
-    ReportFrequency,
-    ForecastMethod,
-    MetricDefinition,
-    MetricValue,
-    MetricSnapshot,
-    KPISummary,
-    TrendAnalysis,
-    Prediction,
-    PredictiveModel,
-    ReportSection,
-    ExecutiveReport,
-    AnalyticsEvent,
-    BenchmarkComparison,
+from .dashboard import (
+    DashboardManager,
+    DashboardWidget,
+    ExecutiveDashboard,
+    OperatingDashboard,
+    ProgramDashboard,
 )
+from .engine import AnalyticsEngine, RAGStatusEngine, TrendEngine
 from .metrics_registry import (
+    AG_METRICS,
     ALL_METRICS,
-    METRICS_BY_ID,
     METRICS_BY_CATEGORY,
+    METRICS_BY_ID,
     UC1_METRICS,
     UC2_METRICS,
     UC3_METRICS,
@@ -48,45 +35,58 @@ from .metrics_registry import (
     UC6_METRICS,
     UC7_METRICS,
     UC8_METRICS,
-    AG_METRICS,
+    get_agentic_metrics,
+    get_executive_metrics,
     get_metric,
     get_metrics_by_category,
     get_metrics_by_layer,
-    get_executive_metrics,
-    get_program_metrics,
     get_operating_metrics,
-    get_agentic_metrics,
+    get_program_metrics,
 )
-from .engine import AnalyticsEngine, RAGStatusEngine, TrendEngine
-from .dashboard import (
-    DashboardManager,
-    ExecutiveDashboard,
-    ProgramDashboard,
-    OperatingDashboard,
-    DashboardWidget,
-)
-from .trend_analysis import (
-    TrendAnalyzer,
-    LinearRegression,
-    MovingAverage,
-    ExponentialSmoothing,
-    SeasonalDecomposition,
-    ChangePointDetector,
+from .models import (
+    AnalyticsEvent,
+    BenchmarkComparison,
+    DashboardLayer,
+    ExecutiveReport,
+    ForecastMethod,
+    KPISummary,
+    MetricCategory,
+    MetricDefinition,
+    MetricSnapshot,
+    MetricTier,
+    MetricValue,
+    Prediction,
+    PredictionConfidence,
+    PredictiveModel,
+    RAGStatus,
+    ReportFrequency,
+    ReportSection,
+    ReportType,
+    TrendAnalysis,
+    TrendDirection,
 )
 from .predictive import (
-    PredictiveAnalyticsEngine,
-    MonteCarloSimulator,
     AnomalyDetector,
+    MonteCarloSimulator,
+    PredictiveAnalyticsEngine,
     RiskPredictor,
     WhatIfAnalyzer,
 )
 from .reporting import (
-    ReportGenerator,
     BoardComplianceSummary,
-    RegulatoryEvidencePack,
     ProgramStatusReport,
-    TransparencyReport,
+    RegulatoryEvidencePack,
+    ReportGenerator,
     ReportTemplate,
+    TransparencyReport,
+)
+from .trend_analysis import (
+    ChangePointDetector,
+    ExponentialSmoothing,
+    LinearRegression,
+    MovingAverage,
+    SeasonalDecomposition,
+    TrendAnalyzer,
 )
 
 __all__ = [

@@ -317,7 +317,7 @@ including {', '.join(t.value.replace('_', ' ') for t in analysis.analysis_types)
         content += "## Social\n" + "\n".join(f"- {s}" for s in pestel.social) + "\n\n"
         content += "## Technological\n" + "\n".join(f"- {t}" for t in pestel.technological) + "\n\n"
         content += "## Environmental\n" + "\n".join(f"- {e}" for e in pestel.environmental) + "\n\n"
-        content += "## Legal\n" + "\n".join(f"- {item}" for item in pestel.legal) + "\n"
+        content += "## Legal\n" + "\n".join(f"- {item}" for item in pestel.legal) + "\n\n"
 
         return ReportSection(title="PESTEL Analysis", content=content, order=order)
 

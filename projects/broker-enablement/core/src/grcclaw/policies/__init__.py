@@ -18,41 +18,41 @@ Usage:
     mgr.enforce(policy.id, target={"id": "server-01", "type": "server"})
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Optional
 
-from .models import (
-    Policy,
-    PolicyMetadata,
-    PolicySection,
-    PolicyTemplate,
-    PolicyStatus,
-    PolicyCategory,
-    PolicyPriority,
-    EnforcementMode,
-    EnforcementResult,
-    PolicyChange,
-    PolicyVersion,
-    ApprovalRecord,
-    ApprovalStep,
-    ApprovalStatus,
-    Attestation,
-    EnforcementRule,
-    EnforcementEvent,
-    EnforcementFinding,
-    PolicyAnalytics,
-)
-from .engine import PolicyDefinitionEngine, PolicyValidationError
-from .versioning import PolicyVersioning, VersionBumpType
-from .approval import PolicyApprovalWorkflow, ApprovalWorkflowError
+from .analytics import PolicyAnalyticsEngine
+from .approval import ApprovalWorkflowError, PolicyApprovalWorkflow
 from .enforcement import (
+    AccessReviewEvaluator,
+    ConfigScanEvaluator,
     PolicyEnforcementEngine,
     RuleEvaluator,
     TagCheckEvaluator,
-    ConfigScanEvaluator,
-    AccessReviewEvaluator,
 )
-from .analytics import PolicyAnalyticsEngine
+from .engine import PolicyDefinitionEngine, PolicyValidationError
+from .models import (
+    ApprovalRecord,
+    ApprovalStatus,
+    ApprovalStep,
+    Attestation,
+    EnforcementEvent,
+    EnforcementFinding,
+    EnforcementMode,
+    EnforcementResult,
+    EnforcementRule,
+    Policy,
+    PolicyAnalytics,
+    PolicyCategory,
+    PolicyChange,
+    PolicyMetadata,
+    PolicyPriority,
+    PolicySection,
+    PolicyStatus,
+    PolicyTemplate,
+    PolicyVersion,
+)
+from .versioning import PolicyVersioning, VersionBumpType
 
 
 class PolicyManager:
@@ -79,7 +79,7 @@ class PolicyManager:
         template_id: str,
         owner: str,
         approver: str,
-        overrides: Optional[dict] = None,
+        overrides: dict | None = None,
     ) -> Policy:
         """Create a policy from a registered template."""
         from .approval import register_policy
@@ -91,7 +91,7 @@ class PolicyManager:
     def create_policy(
         self,
         metadata: PolicyMetadata,
-        sections: Optional[list[PolicySection]] = None,
+        sections: list[PolicySection] | None = None,
         created_by: str = "",
     ) -> Policy:
         """Create a policy from scratch."""
@@ -101,7 +101,7 @@ class PolicyManager:
         register_policy(policy)
         return policy
 
-    def get_policy(self, policy_id: str) -> Optional[Policy]:
+    def get_policy(self, policy_id: str) -> Policy | None:
         """Retrieve a policy by ID."""
         return self._engine.get_policy(policy_id)
 
@@ -110,7 +110,7 @@ class PolicyManager:
         policy_id: str,
         updates: dict,
         updated_by: str = "",
-    ) -> Optional[Policy]:
+    ) -> Policy | None:
         """Update a policy."""
         return self._engine.update_policy(policy_id, updates, updated_by)
 
@@ -120,10 +120,10 @@ class PolicyManager:
 
     def list_policies(
         self,
-        status: Optional[PolicyStatus] = None,
-        category: Optional[PolicyCategory] = None,
-        framework: Optional[str] = None,
-        owner: Optional[str] = None,
+        status: PolicyStatus | None = None,
+        category: PolicyCategory | None = None,
+        framework: str | None = None,
+        owner: str | None = None,
     ) -> list[Policy]:
         """List policies with optional filtering."""
         return self._engine.list_policies(status, category, framework, owner)
@@ -138,8 +138,8 @@ class PolicyManager:
 
     def list_templates(
         self,
-        category: Optional[PolicyCategory] = None,
-        framework: Optional[str] = None,
+        category: PolicyCategory | None = None,
+        framework: str | None = None,
     ) -> list[PolicyTemplate]:
         """List available templates."""
         return self._engine.list_templates(category, framework)
@@ -156,7 +156,7 @@ class PolicyManager:
         """Create a new version of a policy."""
         return self._versioning.create_version(policy, change_summary, created_by, bump_type)
 
-    def get_version(self, policy_id: str, version: str) -> Optional[PolicyVersion]:
+    def get_version(self, policy_id: str, version: str) -> PolicyVersion | None:
         """Get a specific version."""
         return self._versioning.get_version(policy_id, version)
 
@@ -183,7 +183,7 @@ class PolicyManager:
         self,
         policy: Policy,
         approvers: list[str],
-        required_approvals: Optional[int] = None,
+        required_approvals: int | None = None,
     ) -> ApprovalRecord:
         """Submit a policy for approval."""
         return self._approval.configure_approval_chain(policy, approvers, required_approvals)
@@ -211,12 +211,12 @@ class PolicyManager:
         approval_id: str,
         escalated_by: str,
         reason: str,
-        escalate_to: Optional[str] = None,
+        escalate_to: str | None = None,
     ) -> ApprovalStatus:
         """Escalate a stalled approval."""
         return self._approval.escalate(approval_id, escalated_by, reason, escalate_to)
 
-    def get_pending_approvals(self, approver: Optional[str] = None) -> list[ApprovalRecord]:
+    def get_pending_approvals(self, approver: str | None = None) -> list[ApprovalRecord]:
         """Get pending approvals."""
         return self._approval.get_pending_approvals(approver)
 
@@ -228,11 +228,11 @@ class PolicyManager:
             return False
 
         policy.status = PolicyStatus.PUBLISHED
-        policy.metadata.effective_date = datetime.now(timezone.utc).isoformat()
+        policy.metadata.effective_date = datetime.now(UTC).isoformat()
         policy.metadata.review_date = (
-            datetime.now(timezone.utc) + timedelta(days=365)
+            datetime.now(UTC) + timedelta(days=365)
         ).isoformat()
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = published_by
 
         from .models import ChangeType, PolicyChange
@@ -252,7 +252,7 @@ class PolicyManager:
             return False
 
         policy.status = PolicyStatus.SUSPENDED
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = suspended_by
 
         from .models import ChangeType, PolicyChange
@@ -269,7 +269,7 @@ class PolicyManager:
     def archive(self, policy: Policy, archived_by: str) -> bool:
         """Archive a policy."""
         policy.status = PolicyStatus.ARCHIVED
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = archived_by
 
         from .models import ChangeType, PolicyChange
@@ -283,11 +283,11 @@ class PolicyManager:
         policy.change_log.append(change)
         return True
 
-    def deprecate(self, policy: Policy, deprecated_by: str, replacement_id: Optional[str] = None) -> bool:
+    def deprecate(self, policy: Policy, deprecated_by: str, replacement_id: str | None = None) -> bool:
         """Deprecate a policy, optionally specifying a replacement."""
         policy.status = PolicyStatus.DEPRECATED
         policy.supersedes = replacement_id
-        policy.updated_at = datetime.now(timezone.utc).isoformat()
+        policy.updated_at = datetime.now(UTC).isoformat()
         policy.updated_by = deprecated_by
 
         from .models import ChangeType, PolicyChange
@@ -311,7 +311,7 @@ class PolicyManager:
         employee_email: str = "",
         department: str = "",
         attestation_method: str = "digital_signature",
-    ) -> Optional[Attestation]:
+    ) -> Attestation | None:
         """Record an employee attestation."""
         policy = self._engine.get_policy(policy_id)
         if not policy:
@@ -342,10 +342,10 @@ class PolicyManager:
         name: str,
         rule_type: str,
         condition: dict,
-        action: Optional[dict] = None,
+        action: dict | None = None,
         severity: PolicyPriority = PolicyPriority.MEDIUM,
-        target_scope: Optional[list[str]] = None,
-    ) -> Optional[EnforcementRule]:
+        target_scope: list[str] | None = None,
+    ) -> EnforcementRule | None:
         """Add an enforcement rule to a policy."""
         policy = self._engine.get_policy(policy_id)
         if not policy:
@@ -361,8 +361,8 @@ class PolicyManager:
         self,
         policy_id: str,
         target: dict,
-        context: Optional[dict] = None,
-    ) -> Optional[EnforcementEvent]:
+        context: dict | None = None,
+    ) -> EnforcementEvent | None:
         """Evaluate a policy against a target."""
         policy = self._engine.get_policy(policy_id)
         if not policy:
@@ -376,7 +376,7 @@ class PolicyManager:
         self,
         policy_id: str,
         targets: list[dict],
-        context: Optional[dict] = None,
+        context: dict | None = None,
     ) -> list[EnforcementEvent]:
         """Evaluate a policy against multiple targets."""
         policy = self._engine.get_policy(policy_id)
@@ -392,7 +392,7 @@ class PolicyManager:
         """Get enforcement events for a policy."""
         return self._enforcement.get_events_for_policy(policy_id)
 
-    def get_open_findings(self, policy_id: Optional[str] = None) -> list[dict]:
+    def get_open_findings(self, policy_id: str | None = None) -> list[dict]:
         """Get open findings."""
         return self._enforcement.get_open_findings(policy_id)
 

@@ -8,21 +8,19 @@ trend charts, and material risk identification.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
+from .engine import AnalyticsEngine
 from .models import (
+    DashboardLayer,
     ExecutiveReport,
+    MetricCategory,
+    MetricSnapshot,
+    RAGStatus,
+    ReportFrequency,
     ReportSection,
     ReportType,
-    ReportFrequency,
-    RAGStatus,
-    MetricSnapshot,
-    MetricCategory,
-    DashboardLayer,
 )
-from .engine import AnalyticsEngine
-from .metrics_registry import get_metric, ALL_METRICS
 
 
 class ReportTemplate:
@@ -44,7 +42,7 @@ class ReportTemplate:
         self,
         snapshots: list[MetricSnapshot],
         period: str = "",
-        engine: Optional[AnalyticsEngine] = None,
+        engine: AnalyticsEngine | None = None,
     ) -> ExecutiveReport:
         raise NotImplementedError
 
@@ -64,7 +62,7 @@ class BoardComplianceSummary(ReportTemplate):
         self,
         snapshots: list[MetricSnapshot],
         period: str = "",
-        engine: Optional[AnalyticsEngine] = None,
+        engine: AnalyticsEngine | None = None,
     ) -> ExecutiveReport:
         engine = engine or AnalyticsEngine()
 
@@ -172,7 +170,7 @@ class BoardComplianceSummary(ReportTemplate):
             result.append({"framework": fw, "score": avg, "metric_count": len(values)})
         return sorted(result, key=lambda x: x["score"], reverse=True)
 
-    def _metric_to_framework(self, metric_id: str) -> Optional[str]:
+    def _metric_to_framework(self, metric_id: str) -> str | None:
         mapping = {
             "UC1-001": "ISO 42001", "UC1-002": "NIST AI RMF", "UC1-003": "NIST AI RMF",
             "UC1-004": "ISO 42001", "UC1-005": "EU AI Act",
@@ -259,7 +257,7 @@ class RegulatoryEvidencePack(ReportTemplate):
         self,
         snapshots: list[MetricSnapshot],
         period: str = "",
-        engine: Optional[AnalyticsEngine] = None,
+        engine: AnalyticsEngine | None = None,
     ) -> ExecutiveReport:
         # Group metrics by framework
         framework_metrics: dict[str, list[MetricSnapshot]] = {}
@@ -291,7 +289,7 @@ class RegulatoryEvidencePack(ReportTemplate):
             overall_rag_status=self._compute_overall_rag(snapshots),
         )
 
-    def _metric_to_framework(self, metric_id: str) -> Optional[str]:
+    def _metric_to_framework(self, metric_id: str) -> str | None:
         mapping = {
             "UC1-001": "ISO 42001", "UC1-002": "NIST AI RMF", "UC1-003": "NIST AI RMF",
             "UC1-004": "ISO 42001", "UC1-005": "EU AI Act",
@@ -337,7 +335,7 @@ class ProgramStatusReport(ReportTemplate):
         self,
         snapshots: list[MetricSnapshot],
         period: str = "",
-        engine: Optional[AnalyticsEngine] = None,
+        engine: AnalyticsEngine | None = None,
     ) -> ExecutiveReport:
         engine = engine or AnalyticsEngine()
         program_kpi = engine.compute_kpi_summary(DashboardLayer.PROGRAM, snapshots, period)
@@ -398,7 +396,7 @@ class TransparencyReport(ReportTemplate):
         self,
         snapshots: list[MetricSnapshot],
         period: str = "",
-        engine: Optional[AnalyticsEngine] = None,
+        engine: AnalyticsEngine | None = None,
     ) -> ExecutiveReport:
         # Public-facing: only high-level metrics
         public_metrics = [
@@ -449,7 +447,7 @@ class ReportGenerator:
     Main report generator. Creates executive reports from metric snapshots.
     """
 
-    def __init__(self, engine: Optional[AnalyticsEngine] = None):
+    def __init__(self, engine: AnalyticsEngine | None = None):
         self.engine = engine or AnalyticsEngine()
         self.templates: dict[ReportType, ReportTemplate] = {
             ReportType.BOARD_COMPLIANCE_SUMMARY: BoardComplianceSummary(),

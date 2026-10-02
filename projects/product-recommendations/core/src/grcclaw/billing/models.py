@@ -4,11 +4,10 @@ Data models for the GRC_Claw billing and usage tracking system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Optional
-from datetime import datetime, timezone, date
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 
 
 class MeteringDimension(str, Enum):
@@ -76,12 +75,12 @@ class UsageRecord:
     dimension: MeteringDimension = MeteringDimension.API_CALLS
     quantity: float = 0.0
     unit: str = "count"
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict = field(default_factory=dict)
-    resource_id: Optional[str] = None
-    agent_id: Optional[str] = None
-    policy_id: Optional[str] = None
-    cost_center: Optional[str] = None
+    resource_id: str | None = None
+    agent_id: str | None = None
+    policy_id: str | None = None
+    cost_center: str | None = None
     tags: list[str] = field(default_factory=list)
 
     def __post_init__(self):
@@ -102,7 +101,7 @@ class UsageAggregation:
     record_count: int = 0
     average_per_day: float = 0.0
     peak_quantity: float = 0.0
-    peak_timestamp: Optional[str] = None
+    peak_timestamp: str | None = None
     metadata: dict = field(default_factory=dict)
 
 
@@ -132,15 +131,15 @@ class BillingCycle:
     line_items: list[BillingLineItem] = field(default_factory=list)
     subtotal: float = 0.0
     discount_amount: float = 0.0
-    discount_reason: Optional[str] = None
+    discount_reason: str | None = None
     tax_rate: float = 0.0
     tax_amount: float = 0.0
     total: float = 0.0
     currency: str = "USD"
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    issued_at: Optional[str] = None
-    due_date: Optional[str] = None
-    paid_at: Optional[str] = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    issued_at: str | None = None
+    due_date: str | None = None
+    paid_at: str | None = None
     notes: list[str] = field(default_factory=list)
 
     def calculate_totals(self):
@@ -156,7 +155,7 @@ class BillingLineItem:
 
     line_item_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
     description: str = ""
-    dimension: Optional[MeteringDimension] = None
+    dimension: MeteringDimension | None = None
     quantity: float = 0.0
     unit: str = "count"
     unit_price: float = 0.0
@@ -179,7 +178,7 @@ class Invoice:
     invoice_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
     invoice_number: str = ""
     tenant_id: str = ""
-    billing_cycle_id: Optional[str] = None
+    billing_cycle_id: str | None = None
     status: BillingStatus = BillingStatus.DRAFT
     line_items: list[BillingLineItem] = field(default_factory=list)
     subtotal: float = 0.0
@@ -192,11 +191,11 @@ class Invoice:
     currency: str = "USD"
     issue_date: str = ""
     due_date: str = ""
-    paid_date: Optional[str] = None
+    paid_date: str | None = None
     notes: list[str] = field(default_factory=list)
     terms: str = "Net 30"
-    purchase_order: Optional[str] = None
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    purchase_order: str | None = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def __post_init__(self):
         if not self.invoice_number:
@@ -218,11 +217,11 @@ class PaymentMethod:
     tenant_id: str = ""
     type: str = "credit_card"  # credit_card, ach, wire, stripe, paypal
     last_four: str = ""
-    expiry_month: Optional[int] = None
-    expiry_year: Optional[int] = None
+    expiry_month: int | None = None
+    expiry_year: int | None = None
     is_default: bool = False
     billing_address: dict = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -231,18 +230,18 @@ class Payment:
 
     payment_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     tenant_id: str = ""
-    invoice_id: Optional[str] = None
+    invoice_id: str | None = None
     amount: float = 0.0
     currency: str = "USD"
     status: PaymentStatus = PaymentStatus.PENDING
     method: str = "credit_card"
-    method_id: Optional[str] = None
-    transaction_id: Optional[str] = None  # External payment processor ID
-    processed_at: Optional[str] = None
-    failure_reason: Optional[str] = None
+    method_id: str | None = None
+    transaction_id: str | None = None  # External payment processor ID
+    processed_at: str | None = None
+    failure_reason: str | None = None
     refund_amount: float = 0.0
     metadata: dict = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -251,8 +250,8 @@ class RevenueRecognitionEntry:
 
     entry_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     tenant_id: str = ""
-    invoice_id: Optional[str] = None
-    billing_cycle_id: Optional[str] = None
+    invoice_id: str | None = None
+    billing_cycle_id: str | None = None
     amount: float = 0.0
     currency: str = "USD"
     method: RevenueRecognitionMethod = RevenueRecognitionMethod.OVER_TIME
@@ -263,4 +262,4 @@ class RevenueRecognitionEntry:
     remaining_to_recognize: float = 0.0
     period_recognized: float = 0.0
     is_fully_recognized: bool = False
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())

@@ -16,32 +16,24 @@ import hmac
 import json
 import logging
 import os
-import time
-import urllib.request
-import urllib.error
 from abc import abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Callable, Optional
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 
+from .sdk.auth import AuthStrategy
 from .sdk.base import BaseConnector
 from .sdk.config import ConnectorConfig
-from .sdk.auth import AuthStrategy, APIKeyAuth, BearerAuth, OAuth2Auth
-from .sdk.types import (
-    ConnectorMetadata,
-    ConnectorCapability,
-    ConnectorStatus,
-    RequestContext,
-    ResponseContext,
-)
 from .sdk.exceptions import (
-    ConnectorError,
-    AuthenticationError,
     ConnectionError,
-    TimeoutError,
-    RateLimitError,
-    ValidationError,
+    ConnectorError,
     WebhookError,
+)
+from .sdk.types import (
+    ConnectorCapability,
+    ConnectorMetadata,
+    ConnectorStatus,
+    ResponseContext,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,8 +50,8 @@ class IntegrationTemplate:
     def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
-        self._config: Optional[ConnectorConfig] = None
-        self._auth: Optional[AuthStrategy] = None
+        self._config: ConnectorConfig | None = None
+        self._auth: AuthStrategy | None = None
 
     @abstractmethod
     def create_connector(self) -> BaseConnector:
@@ -71,7 +63,7 @@ class IntegrationTemplate:
         """Return the default configuration for this template."""
         ...
 
-    def get_auth_strategy(self) -> Optional[AuthStrategy]:
+    def get_auth_strategy(self) -> AuthStrategy | None:
         """Get the authentication strategy for this template."""
         return self._auth
 
@@ -116,12 +108,12 @@ class RESTAPIConnector(BaseConnector):
         ConnectorCapability.INCREMENTAL_SYNC,
     ]
 
-    def __init__(self, config: ConnectorConfig, auth: Optional[AuthStrategy] = None):
+    def __init__(self, config: ConnectorConfig, auth: AuthStrategy | None = None):
         super().__init__(config, auth)
         self._default_headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "User-Agent": f"GRCClaw-RESTConnector/1.0",
+            "User-Agent": "GRCClaw-RESTConnector/1.0",
         }
 
     def _define_metadata(self) -> ConnectorMetadata:
@@ -366,7 +358,7 @@ class DatabaseConnector(BaseConnector):
         ConnectorCapability.INCREMENTAL_SYNC,
     ]
 
-    def __init__(self, config: ConnectorConfig, auth: Optional[AuthStrategy] = None):
+    def __init__(self, config: ConnectorConfig, auth: AuthStrategy | None = None):
         super().__init__(config, auth)
         self._connection_string = config.custom.get("connection_string", "")
         self._db_type = config.custom.get("db_type", "postgresql")
@@ -692,7 +684,7 @@ class WebhookConnector(BaseConnector):
         ConnectorCapability.WEBHOOK,
     ]
 
-    def __init__(self, config: ConnectorConfig, auth: Optional[AuthStrategy] = None):
+    def __init__(self, config: ConnectorConfig, auth: AuthStrategy | None = None):
         super().__init__(config, auth)
         self._webhook_secret = config.custom.get("webhook_secret", "")
         self._signature_header = config.custom.get("signature_header", "X-Signature")
@@ -834,7 +826,7 @@ class WebhookConnector(BaseConnector):
         # Store event
         self._received_events.append({
             "event": event,
-            "received_at": datetime.now(timezone.utc).isoformat(),
+            "received_at": datetime.now(UTC).isoformat(),
             "headers": dict(headers),
         })
 
@@ -957,7 +949,7 @@ class FileTransferConnector(BaseConnector):
         ConnectorCapability.INCREMENTAL_SYNC,
     ]
 
-    def __init__(self, config: ConnectorConfig, auth: Optional[AuthStrategy] = None):
+    def __init__(self, config: ConnectorConfig, auth: AuthStrategy | None = None):
         super().__init__(config, auth)
         self._protocol = config.custom.get("protocol", "sftp")  # sftp, s3, local
         self._host = config.custom.get("host", "")
@@ -1101,7 +1093,6 @@ class FileTransferConnector(BaseConnector):
             if self._protocol == "local":
                 return os.path.exists(remote_path)
             elif self._protocol == "sftp":
-                import paramiko
                 ssh = self._get_sftp_client()
                 sftp = ssh.open_sftp()
                 try:
@@ -1132,11 +1123,10 @@ class FileTransferConnector(BaseConnector):
             return {
                 "path": remote_path,
                 "size": stat.st_size,
-                "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-                "created": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
+                "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+                "created": datetime.fromtimestamp(stat.st_ctime, tz=UTC).isoformat(),
             }
         elif self._protocol == "sftp":
-            import paramiko
             ssh = self._get_sftp_client()
             sftp = ssh.open_sftp()
             try:
@@ -1144,7 +1134,7 @@ class FileTransferConnector(BaseConnector):
                 return {
                     "path": remote_path,
                     "size": stat.st_size,
-                    "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+                    "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
                     "permissions": oct(stat.st_mode)[-3:],
                 }
             finally:
@@ -1300,7 +1290,7 @@ class FileTransferConnector(BaseConnector):
                     results.append({
                         "path": full,
                         "size": entry.st_size,
-                        "modified": datetime.fromtimestamp(entry.st_mtime, tz=timezone.utc).isoformat(),
+                        "modified": datetime.fromtimestamp(entry.st_mtime, tz=UTC).isoformat(),
                     })
         finally:
             sftp.close()

@@ -10,17 +10,18 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
-import uuid
+from typing import Any
 
-from .schema import Event, EventCategory, EventStatus, EventSeverity
-from .store import EventStore, EventQuery
 from .publisher import EventPublisher, PublishResult
+from .schema import Event, EventCategory
+from .store import EventQuery, EventStore
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,8 @@ class ReplayResult:
     skipped_count: int = 0
     failed_count: int = 0
     results: list[PublishResult] = field(default_factory=list)
-    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    finished_at: Optional[str] = None
+    started_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    finished_at: str | None = None
     errors: list[str] = field(default_factory=list)
 
     @property
@@ -64,7 +65,7 @@ class ReplayResult:
         end = (
             datetime.fromisoformat(self.finished_at)
             if self.finished_at
-            else datetime.now(timezone.utc)
+            else datetime.now(UTC)
         )
         return (end - start).total_seconds()
 
@@ -94,10 +95,10 @@ class AuditEntry:
     event_id: str = ""
     action: str = ""
     actor: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     details: dict[str, Any] = field(default_factory=dict)
-    event_snapshot: Optional[dict[str, Any]] = None
-    compliance_framework: Optional[str] = None
+    event_snapshot: dict[str, Any] | None = None
+    compliance_framework: str | None = None
     retention_class: str = "standard"
     hash: str = ""
 
@@ -129,7 +130,7 @@ class EventReplayer:
     def __init__(
         self,
         event_store: EventStore,
-        publisher: Optional[EventPublisher] = None,
+        publisher: EventPublisher | None = None,
     ) -> None:
         self._store = event_store
         self._publisher = publisher
@@ -141,7 +142,7 @@ class EventReplayer:
         return self._store
 
     @property
-    def publisher(self) -> Optional[EventPublisher]:
+    def publisher(self) -> EventPublisher | None:
         return self._publisher
 
     def add_filter(self, filter_fn: Callable[[Event], bool]) -> None:
@@ -154,8 +155,8 @@ class EventReplayer:
 
     def replay_all(
         self,
-        event_type: Optional[str] = None,
-        category: Optional[EventCategory] = None,
+        event_type: str | None = None,
+        category: EventCategory | None = None,
         limit: int = 1000,
     ) -> ReplayResult:
         """
@@ -176,7 +177,7 @@ class EventReplayer:
         self,
         start: str,
         end: str,
-        event_type: Optional[str] = None,
+        event_type: str | None = None,
         limit: int = 1000,
     ) -> ReplayResult:
         """Replay events within a specific time range."""
@@ -217,8 +218,8 @@ class EventReplayer:
 
     def dry_run(
         self,
-        event_type: Optional[str] = None,
-        category: Optional[EventCategory] = None,
+        event_type: str | None = None,
+        category: EventCategory | None = None,
         limit: int = 1000,
     ) -> list[Event]:
         """
@@ -266,7 +267,7 @@ class EventReplayer:
             else:
                 result.replayed_count += 1
 
-        result.finished_at = datetime.now(timezone.utc).isoformat()
+        result.finished_at = datetime.now(UTC).isoformat()
         self._replay_history.append(result)
         return result
 
@@ -284,7 +285,7 @@ class AuditTrail:
     def __init__(
         self,
         event_store: EventStore,
-        storage_path: Optional[str | Path] = None,
+        storage_path: str | Path | None = None,
     ) -> None:
         self._store = event_store
         self._entries: list[AuditEntry] = []
@@ -303,8 +304,8 @@ class AuditTrail:
         event: Event,
         action: str,
         actor: str = "system",
-        details: Optional[dict[str, Any]] = None,
-        compliance_framework: Optional[str] = None,
+        details: dict[str, Any] | None = None,
+        compliance_framework: str | None = None,
         retention_class: str = "standard",
     ) -> AuditEntry:
         """
@@ -339,7 +340,7 @@ class AuditTrail:
         self,
         replay_result: ReplayResult,
         actor: str = "system",
-        compliance_framework: Optional[str] = None,
+        compliance_framework: str | None = None,
     ) -> AuditEntry:
         """Record a replay operation in the audit trail."""
         return self.record(
@@ -353,12 +354,12 @@ class AuditTrail:
 
     def query(
         self,
-        event_id: Optional[str] = None,
-        action: Optional[str] = None,
-        actor: Optional[str] = None,
-        compliance_framework: Optional[str] = None,
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
+        event_id: str | None = None,
+        action: str | None = None,
+        actor: str | None = None,
+        compliance_framework: str | None = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
         limit: int = 100,
     ) -> list[AuditEntry]:
         """Query audit entries with filters."""
@@ -410,8 +411,7 @@ class AuditTrail:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         with open(target, "w", encoding="utf-8") as f:
-            for entry in self._entries:
-                f.write(json.dumps(entry.to_dict(), default=str) + "\n")
+            f.writelines(json.dumps(entry.to_dict(), default=str) + "\n" for entry in self._entries)
         return len(self._entries)
 
     def _compute_hash(self, data: str) -> str:
@@ -423,7 +423,7 @@ class AuditTrail:
         """Persist a single audit entry to storage."""
         if self._storage_path is None:
             return
-        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        date_str = datetime.now(UTC).strftime("%Y-%m-%d")
         file_path = self._storage_path / f"audit-{date_str}.jsonl"
         with open(file_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.to_dict(), default=str) + "\n")
@@ -443,9 +443,9 @@ class ComplianceReport:
 
     def generate(
         self,
-        framework: Optional[str] = None,
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
+        framework: str | None = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
     ) -> dict[str, Any]:
         """Generate a compliance report."""
         entries = self._audit.query(
@@ -472,7 +472,7 @@ class ComplianceReport:
 
         return {
             "report_id": str(uuid.uuid4()),
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "framework": framework,
             "period_start": start_time,
             "period_end": end_time,

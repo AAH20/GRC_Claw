@@ -18,13 +18,13 @@ import threading
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .sdk.base import BaseConnector
-from .sdk.types import ConnectorStatus
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class HealthCheckResult:
 
     integration_name: str
     status: HealthStatus
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     response_time_ms: float = 0.0
     message: str = ""
     details: dict[str, Any] = field(default_factory=dict)
@@ -70,7 +70,7 @@ class MetricPoint:
 
     name: str
     value: float
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     labels: dict[str, str] = field(default_factory=dict)
     unit: str = ""
 
@@ -84,10 +84,10 @@ class Alert:
     severity: AlertSeverity = AlertSeverity.WARNING
     message: str = ""
     integration_name: str = ""
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     acknowledged: bool = False
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def acknowledge(self) -> None:
@@ -95,7 +95,7 @@ class Alert:
 
     def resolve(self) -> None:
         self.resolved = True
-        self.resolved_at = datetime.now(timezone.utc)
+        self.resolved_at = datetime.now(UTC)
 
 
 @dataclass
@@ -151,10 +151,10 @@ class Span:
 
     trace_id: str
     span_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
     name: str = ""
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    end_time: Optional[datetime] = None
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    end_time: datetime | None = None
     duration_ms: float = 0.0
     status: str = "ok"  # ok, error
     attributes: dict[str, Any] = field(default_factory=dict)
@@ -166,12 +166,12 @@ class Span:
     def add_event(self, name: str, attributes: dict[str, Any] | None = None) -> None:
         self.events.append({
             "name": name,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "attributes": attributes or {},
         })
 
     def finish(self, status: str = "ok") -> None:
-        self.end_time = datetime.now(timezone.utc)
+        self.end_time = datetime.now(UTC)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
         self.status = status
 
@@ -182,15 +182,15 @@ class Trace:
 
     trace_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
     spans: list[Span] = field(default_factory=list)
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    end_time: Optional[datetime] = None
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    end_time: datetime | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_span(self, span: Span) -> None:
         self.spans.append(span)
 
     def finish(self) -> None:
-        self.end_time = datetime.now(timezone.utc)
+        self.end_time = datetime.now(UTC)
 
     @property
     def duration_ms(self) -> float:
@@ -246,9 +246,9 @@ class HealthChecker:
         self._checks: dict[str, Callable[[], HealthCheckResult]] = {}
         self._results: dict[str, HealthCheckResult] = {}
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
-        self._on_status_change: Optional[Callable[[str, HealthStatus, HealthStatus], None]] = None
+        self._on_status_change: Callable[[str, HealthStatus, HealthStatus], None] | None = None
 
     def register(
         self,
@@ -276,7 +276,7 @@ class HealthChecker:
                 return True
         return False
 
-    def check(self, name: str) -> Optional[HealthCheckResult]:
+    def check(self, name: str) -> HealthCheckResult | None:
         """Run a single health check."""
         check_func = self._checks.get(name)
         if not check_func:
@@ -312,7 +312,7 @@ class HealthChecker:
             results[name] = self.check(name)
         return results
 
-    def get_status(self, name: str) -> Optional[HealthCheckResult]:
+    def get_status(self, name: str) -> HealthCheckResult | None:
         """Get the last health check result for an integration."""
         return self._results.get(name)
 
@@ -449,8 +449,8 @@ class IntegrationMetrics:
         self,
         name: str,
         *,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> list[MetricPoint]:
         """Get metric data points, optionally filtered by time range."""
         with self._lock:
@@ -648,7 +648,7 @@ class AlertManager:
         alert_id: str,
         *,
         include_resolved: bool = True,
-    ) -> Optional[Alert]:
+    ) -> Alert | None:
         """Get an alert by ID."""
         with self._lock:
             alert = self._alerts.get(alert_id)
@@ -744,8 +744,8 @@ class IntegrationTracer:
         self,
         name: str,
         *,
-        trace_id: Optional[str] = None,
-        parent_span_id: Optional[str] = None,
+        trace_id: str | None = None,
+        parent_span_id: str | None = None,
         attributes: dict[str, Any] | None = None,
     ) -> Span:
         """Start a new span."""
@@ -779,7 +779,7 @@ class IntegrationTracer:
         span_id: str,
         *,
         status: str = "ok",
-    ) -> Optional[Span]:
+    ) -> Span | None:
         """Finish a span."""
         with self._lock:
             span = self._active_spans.pop(span_id, None)
@@ -787,7 +787,7 @@ class IntegrationTracer:
             span.finish(status)
         return span
 
-    def finish_trace(self, trace_id: str) -> Optional[Trace]:
+    def finish_trace(self, trace_id: str) -> Trace | None:
         """Finish a trace."""
         with self._lock:
             trace = self._traces.get(trace_id)
@@ -795,7 +795,7 @@ class IntegrationTracer:
                 trace.finish()
             return trace
 
-    def get_trace(self, trace_id: str) -> Optional[Trace]:
+    def get_trace(self, trace_id: str) -> Trace | None:
         """Get a trace by ID."""
         return self._traces.get(trace_id)
 
@@ -819,7 +819,7 @@ class IntegrationTracer:
         with self._lock:
             return list(self._active_spans.values())
 
-    def export_trace(self, trace_id: str) -> Optional[str]:
+    def export_trace(self, trace_id: str) -> str | None:
         """Export a trace as JSON."""
         trace = self._traces.get(trace_id)
         if not trace:

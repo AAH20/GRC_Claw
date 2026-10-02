@@ -5,15 +5,15 @@ Run this to see the quote engine in action with sample data.
 """
 
 from grcclaw.quoting import (
-    OrganizationProfile,
-    QuoteCalculator,
-    ROICalculator,
-    UnitEconomicsDashboard,
-    QuoteGenerator,
-    QuoteComparison,
     DeploymentModel,
-    SupportLevel,
+    OrganizationProfile,
     PricingTier,
+    QuoteCalculator,
+    QuoteComparison,
+    QuoteGenerator,
+    ROICalculator,
+    SupportLevel,
+    UnitEconomicsDashboard,
 )
 
 
@@ -94,7 +94,7 @@ def main():
     md_path = generator.save(f"{output_dir}/quote_{quote.quote_id}", format="markdown")
     txt_path = generator.save(f"{output_dir}/quote_{quote.quote_id}", format="text")
 
-    print(f"Quote exported to:")
+    print("Quote exported to:")
     print(f"  JSON:     {json_path}")
     print(f"  HTML:     {html_path}")
     print(f"  Markdown: {md_path}")

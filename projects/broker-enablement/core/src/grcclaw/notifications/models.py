@@ -4,12 +4,11 @@ Data models for the GRC_Claw notification and alerting framework.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Optional
 import uuid
-
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -97,18 +96,18 @@ class Notification:
     metadata: dict[str, Any] = field(default_factory=dict)
     channels: list[str] = field(default_factory=list)
     recipients: list[str] = field(default_factory=list)
-    template_id: Optional[str] = None
+    template_id: str | None = None
     template_data: dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    scheduled_at: Optional[str] = None
-    delivered_at: Optional[str] = None
-    expires_at: Optional[str] = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    scheduled_at: str | None = None
+    delivered_at: str | None = None
+    expires_at: str | None = None
     retry_count: int = 0
     max_retries: int = 3
     delivery_results: list[DeliveryResult] = field(default_factory=list)
-    correlation_id: Optional[str] = None
-    parent_id: Optional[str] = None
+    correlation_id: str | None = None
+    parent_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -157,16 +156,16 @@ class Alert:
     control_id: str = ""
     evidence: dict[str, Any] = field(default_factory=dict)
     context: dict[str, Any] = field(default_factory=dict)
-    assigned_to: Optional[str] = None
-    escalated_to: Optional[str] = None
+    assigned_to: str | None = None
+    escalated_to: str | None = None
     tags: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    acknowledged_at: Optional[str] = None
-    resolved_at: Optional[str] = None
-    closed_at: Optional[str] = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    acknowledged_at: str | None = None
+    resolved_at: str | None = None
+    closed_at: str | None = None
     notification_ids: list[str] = field(default_factory=list)
-    runbook_url: Optional[str] = None
+    runbook_url: str | None = None
     related_alerts: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -219,13 +218,13 @@ class AlertRule:
     escalation_severity: AlertSeverity = AlertSeverity.CRITICAL
     channels: list[str] = field(default_factory=list)
     recipients: list[str] = field(default_factory=list)
-    template_id: Optional[str] = None
+    template_id: str | None = None
     tags: list[str] = field(default_factory=list)
     framework: str = ""
     control_id: str = ""
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    last_triggered_at: Optional[str] = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    last_triggered_at: str | None = None
     trigger_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
@@ -265,10 +264,10 @@ class DeliveryResult:
     success: bool = False
     status: NotificationStatus = NotificationStatus.PENDING
     recipient: str = ""
-    message_id: Optional[str] = None
-    error: Optional[str] = None
+    message_id: str | None = None
+    error: str | None = None
     latency_ms: float = 0.0
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     retry_count: int = 0
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -314,8 +313,8 @@ class Template:
     tags: list[str] = field(default_factory=list)
     version: int = 1
     enabled: bool = True
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -375,11 +374,11 @@ class RoutingRule:
     conditions: dict[str, Any] = field(default_factory=dict)
     channels: list[str] = field(default_factory=list)
     recipients: list[str] = field(default_factory=list)
-    template_id: Optional[str] = None
+    template_id: str | None = None
     throttle_minutes: int = 0
     suppress_duplicates: bool = True
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def to_dict(self) -> dict[str, Any]:
         return {

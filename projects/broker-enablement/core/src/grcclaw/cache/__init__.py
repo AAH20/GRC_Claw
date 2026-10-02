@@ -8,32 +8,31 @@ invalidation strategies, and comprehensive monitoring.
 from .base import (
     CacheBackend,
     CacheConfig,
+    CacheConnectionError,
     CacheDecorator,
     CacheEntry,
     CacheError,
+    CacheKeyBuilder,
     CacheKeyError,
     CacheLevel,
-    CacheStrategy,
-    CacheConnectionError,
     CacheSerializationError,
-    CacheKeyBuilder,
+    CacheStrategy,
 )
-from .memory_cache import InMemoryCache
-from .redis_cache import RedisCache
 from .invalidation import (
+    DependencyInvalidationStrategy,
+    EventInvalidationStrategy,
     InvalidationEvent,
     InvalidationManager,
     InvalidationRule,
     InvalidationScope,
     InvalidationStrategy,
     InvalidationTrigger,
-    TTLInvalidationStrategy,
-    EventInvalidationStrategy,
-    TagInvalidationStrategy,
-    DependencyInvalidationStrategy,
-    WriteThroughInvalidationStrategy,
     ScheduledInvalidationStrategy,
+    TagInvalidationStrategy,
+    TTLInvalidationStrategy,
+    WriteThroughInvalidationStrategy,
 )
+from .memory_cache import InMemoryCache
 from .metrics import (
     Alert,
     AlertRule,
@@ -41,10 +40,11 @@ from .metrics import (
     CacheMetricsSnapshot,
     CacheMonitor,
     HealthMonitor,
-    MetricType,
     MetricsCollector,
+    MetricType,
     PrometheusExporter,
 )
+from .redis_cache import RedisCache
 
 __all__ = [
     # Base

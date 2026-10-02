@@ -5,8 +5,8 @@ Connector configuration models.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
 from enum import Enum
+from typing import Any
 
 
 class LogLevel(str, Enum):
@@ -69,7 +69,7 @@ class ConnectorConfig:
     headers: dict[str, str] = field(default_factory=dict)
     timeout_seconds: float = 30.0
     verify_ssl: bool = True
-    proxy_url: Optional[str] = None
+    proxy_url: str | None = None
     retry: RetryConfig = field(default_factory=RetryConfig)
     rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)

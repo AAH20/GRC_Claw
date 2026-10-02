@@ -3,4 +3,4 @@
 from .metrics import MetricsManager
 from .tracing import TracingManager
 
-__all__ = ["TracingManager", "MetricsManager"]
+__all__ = ["MetricsManager", "TracingManager"]

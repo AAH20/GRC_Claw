@@ -15,8 +15,9 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -24,8 +25,8 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from .codes import ErrorCode, get_error_code
-from .taxonomy import ErrorCategory, ErrorClassification, classify_error
+from .codes import get_error_code
+from .taxonomy import ErrorCategory, classify_error
 
 logger = logging.getLogger("grcclaw.errors")
 
@@ -124,7 +125,7 @@ class GRCClawException(Exception):
             detail=self.message,
             instance=instance,
             code=self.code,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             request_id=self.context.request_id,
             trace_id=self.context.trace_id,
             errors=self.errors,
@@ -483,7 +484,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             detail=str(exc) if self.debug else "An unexpected error occurred",
             instance=str(request.url.path),
             code=code,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             request_id=request_id,
             trace_id=trace_id,
             retry_after=classification.retry_after_seconds,
@@ -652,7 +653,7 @@ def setup_error_handling(
             detail="An unexpected error occurred",
             instance=str(request.url.path),
             code="INTERNAL_ERROR",
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             request_id=request_id,
             trace_id=trace_id,
         )

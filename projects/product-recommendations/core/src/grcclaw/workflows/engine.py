@@ -10,19 +10,18 @@ from __future__ import annotations
 import asyncio
 import copy
 import logging
-import time
-from collections import defaultdict
-from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 
 from .schema import (
+    StepResult,
     StepStatus,
     StepType,
+    TriggerType,
     WorkflowDefinition,
     WorkflowRun,
     WorkflowStatus,
-    StepResult,
-    TriggerType,
 )
 
 logger = logging.getLogger(__name__)
@@ -90,13 +89,13 @@ class WorkflowEngine:
             return True
         return False
 
-    def get_workflow(self, workflow_id: str) -> Optional[WorkflowDefinition]:
+    def get_workflow(self, workflow_id: str) -> WorkflowDefinition | None:
         return self._workflows.get(workflow_id)
 
     def list_workflows(
         self,
-        status: Optional[WorkflowStatus] = None,
-        tag: Optional[str] = None,
+        status: WorkflowStatus | None = None,
+        tag: str | None = None,
     ) -> list[WorkflowDefinition]:
         results = list(self._workflows.values())
         if status is not None:
@@ -119,7 +118,7 @@ class WorkflowEngine:
         if wf is None:
             raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
         wf.status = WorkflowStatus.ACTIVE
-        wf.updated_at = datetime.now(timezone.utc).isoformat()
+        wf.updated_at = datetime.now(UTC).isoformat()
         self._emit("on_activate", wf)
         logger.info("activated workflow %s", workflow_id)
         return wf
@@ -130,7 +129,7 @@ class WorkflowEngine:
         if wf is None:
             raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
         wf.status = WorkflowStatus.PAUSED
-        wf.updated_at = datetime.now(timezone.utc).isoformat()
+        wf.updated_at = datetime.now(UTC).isoformat()
         self._emit("on_pause", wf)
         logger.info("paused workflow %s", workflow_id)
         return wf
@@ -141,7 +140,7 @@ class WorkflowEngine:
         if wf is None:
             raise WorkflowNotFoundError(f"workflow '{workflow_id}' not found")
         wf.status = WorkflowStatus.DEPRECATED
-        wf.updated_at = datetime.now(timezone.utc).isoformat()
+        wf.updated_at = datetime.now(UTC).isoformat()
         self._emit("on_deprecate", wf)
         logger.info("deprecated workflow %s", workflow_id)
         return wf
@@ -168,7 +167,7 @@ class WorkflowEngine:
             )
         restored = copy.deepcopy(target)
         restored.status = WorkflowStatus.DRAFT
-        restored.updated_at = datetime.now(timezone.utc).isoformat()
+        restored.updated_at = datetime.now(UTC).isoformat()
         self._workflows[workflow_id] = restored
         logger.info("rolled back workflow %s to version %s", workflow_id, version)
         return restored
@@ -180,9 +179,9 @@ class WorkflowEngine:
     async def start_run(
         self,
         workflow_id: str,
-        parameters: Optional[dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         triggered_by: str = "",
-        parent_run_id: Optional[str] = None,
+        parent_run_id: str | None = None,
     ) -> WorkflowRun:
         definition = self._workflows.get(workflow_id)
         if definition is None:
@@ -200,7 +199,7 @@ class WorkflowEngine:
             parameters=parameters or {},
             triggered_by=triggered_by,
             parent_run_id=parent_run_id,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
 
         for step in definition.steps:
@@ -221,19 +220,19 @@ class WorkflowEngine:
         if run.is_complete:
             return False
         run.status = StepStatus.CANCELLED
-        run.finished_at = datetime.now(timezone.utc).isoformat()
+        run.finished_at = datetime.now(UTC).isoformat()
         async with self._lock:
             self._running.discard(run_id)
         logger.info("cancelled run %s", run_id)
         return True
 
-    async def get_run(self, run_id: str) -> Optional[WorkflowRun]:
+    async def get_run(self, run_id: str) -> WorkflowRun | None:
         return self._runs.get(run_id)
 
     async def list_runs(
         self,
-        workflow_id: Optional[str] = None,
-        status: Optional[StepStatus] = None,
+        workflow_id: str | None = None,
+        status: StepStatus | None = None,
     ) -> list[WorkflowRun]:
         results = list(self._runs.values())
         if workflow_id is not None:
@@ -274,7 +273,7 @@ class WorkflowEngine:
             run.status = StepStatus.FAILED
             run.error = str(exc)
         finally:
-            run.finished_at = datetime.now(timezone.utc).isoformat()
+            run.finished_at = datetime.now(UTC).isoformat()
             if run.started_at:
                 start = datetime.fromisoformat(run.started_at)
                 end = datetime.fromisoformat(run.finished_at)
@@ -379,13 +378,13 @@ class WorkflowEngine:
     ) -> None:
         result = run.step_results[step.id]
         result.status = StepStatus.RUNNING
-        result.started_at = datetime.now(timezone.utc).isoformat()
+        result.started_at = datetime.now(UTC).isoformat()
 
         handler = self._handlers.get(step.type)
         if handler is None:
             result.status = StepStatus.FAILED
             result.error = f"no handler registered for step type '{step.type}'"
-            result.finished_at = datetime.now(timezone.utc).isoformat()
+            result.finished_at = datetime.now(UTC).isoformat()
             return
 
         for attempt in range(1, step.retry_policy.max_attempts + 1):
@@ -397,14 +396,14 @@ class WorkflowEngine:
                 )
                 result.output = output
                 result.status = StepStatus.SUCCEEDED
-                result.finished_at = datetime.now(timezone.utc).isoformat()
+                result.finished_at = datetime.now(UTC).isoformat()
                 if result.started_at:
                     start = datetime.fromisoformat(result.started_at)
                     end = datetime.fromisoformat(result.finished_at)
                     result.duration_seconds = (end - start).total_seconds()
                 run.context[f"step_{step.id}_output"] = output
                 return
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 result.status = StepStatus.TIMED_OUT
                 result.error = f"timed out after {step.timeout_seconds}s"
             except Exception as exc:
@@ -424,7 +423,7 @@ class WorkflowEngine:
                 result.status = StepStatus.RETRYING
                 await asyncio.sleep(backoff)
 
-        result.finished_at = datetime.now(timezone.utc).isoformat()
+        result.finished_at = datetime.now(UTC).isoformat()
 
     async def _execute_parallel_step(
         self,
@@ -434,13 +433,13 @@ class WorkflowEngine:
     ) -> None:
         result = run.step_results[step.id]
         result.status = StepStatus.RUNNING
-        result.started_at = datetime.now(timezone.utc).isoformat()
+        result.started_at = datetime.now(UTC).isoformat()
 
         handler = self._handlers.get(step.type)
         if handler is None:
             result.status = StepStatus.FAILED
             result.error = f"no handler registered for step type '{step.type}'"
-            result.finished_at = datetime.now(timezone.utc).isoformat()
+            result.finished_at = datetime.now(UTC).isoformat()
             return
 
         try:
@@ -451,14 +450,14 @@ class WorkflowEngine:
             result.output = output
             result.status = StepStatus.SUCCEEDED
             run.context[f"step_{step.id}_output"] = output
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = StepStatus.TIMED_OUT
             result.error = f"timed out after {step.timeout_seconds}s"
         except Exception as exc:
             result.status = StepStatus.FAILED
             result.error = str(exc)
 
-        result.finished_at = datetime.now(timezone.utc).isoformat()
+        result.finished_at = datetime.now(UTC).isoformat()
         if result.started_at:
             start = datetime.fromisoformat(result.started_at)
             end = datetime.fromisoformat(result.finished_at)

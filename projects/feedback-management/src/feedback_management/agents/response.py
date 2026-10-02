@@ -181,7 +181,9 @@ class ResponseAgent:
             ", ".join(t.name.replace("_", " ") for t in analysis.topics) or "general feed"
             "back")
 
-        return f"""You are a customer feedback response specialist. Write a {self.tone} response to the following customer feedback.  # noqa: E501
+        return (
+            f"""You are a customer feedback response specialist. """
+            f"""Write a {self.tone} response to the following customer feedback.
 
 Customer Feedback:
 - Rating: {item.rating or "N/A"}/5
@@ -229,12 +231,15 @@ Response:"""
         """Generate a template response for negative feedback."""
         return f"""Dear Valued Customer,
 
-Thank you for taking the time to share your feedback with us. We sincerely apologize that your experience with {topics_str} did not meet your expectations.  # noqa: E501
+Thank you for taking the time to share your feedback with us. """
+            f"""We sincerely apologize that your experience with {topics_str} did not meet your expectations.
 
 We take your concerns seriously
-    and want to make this right. Your feedback has been escalated to our team, and a representative will reach out to you within 24 hours to discuss how we can improve your experience.  # noqa: E501
+    and want to make this right. Your feedback has been escalated to our team, """
+            f"""and a representative will reach out to you within 24 hours """
+            f"""to discuss how we can improve your experience.
 
-If you have any additional details you'd like to share, please don't hesitate to reply to this message.  # noqa: E501
+If you have any additional details you'd like to share, please don't hesitate to reply to this message.
 
 We appreciate your patience and the opportunity to serve you better.
 
@@ -246,10 +251,11 @@ Customer Experience Team"""
         """Generate a template response for positive feedback."""
         return f"""Dear Valued Customer,
 
-Thank you so much for your wonderful feedback! We're thrilled to hear that you had a great experience with {topics_str}.  # noqa: E501
+Thank you so much for your wonderful feedback! We're thrilled to hear that you had a great experience with {topics_str}.
 
 Your satisfaction is our top priority,
-    and it's customers like you that make our work rewarding. We look forward to serving you again soon.  # noqa: E501
+    and it's customers like you that make our work rewarding. """
+            f"""We look forward to serving you again soon.
 
 If there's anything else we can do for you, please don't hesitate to reach out.
 
@@ -261,7 +267,8 @@ Customer Experience Team"""
         """Generate a template response for neutral feedback."""
         return f"""Dear Valued Customer,
 
-Thank you for your feedback regarding {topics_str}. We appreciate you taking the time to share your thoughts with us.  # noqa: E501
+Thank you for your feedback regarding {topics_str}. """
+            f"""We appreciate you taking the time to share your thoughts with us.
 
 Your input helps us improve our products and services. If you have any additional suggestions
     or questions, please feel free to reach out.

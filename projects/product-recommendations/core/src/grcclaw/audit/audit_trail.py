@@ -13,9 +13,10 @@ import json
 import sqlite3
 import threading
 from collections import defaultdict
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .models import (
     Actor,
@@ -41,8 +42,8 @@ class AuditTrailEngine:
 
     def __init__(
         self,
-        storage_path: Optional[str] = None,
-        tenant_id: Optional[str] = None,
+        storage_path: str | None = None,
+        tenant_id: str | None = None,
     ):
         self._lock = threading.RLock()
         self._events: list[AuditEvent] = []
@@ -50,7 +51,7 @@ class AuditTrailEngine:
         self._index_by_actor: dict[str, list[int]] = defaultdict(list)
         self._index_by_resource: dict[str, list[int]] = defaultdict(list)
         self._index_by_correlation: dict[str, list[int]] = defaultdict(list)
-        self._last_hash: Optional[str] = None
+        self._last_hash: str | None = None
         self._tenant_id = tenant_id
         self._hooks: list[Callable[[AuditEvent], None]] = []
 
@@ -60,7 +61,7 @@ class AuditTrailEngine:
             self._init_sqlite_storage()
         else:
             self._storage_path = None
-            self._conn: Optional[sqlite3.Connection] = None
+            self._conn: sqlite3.Connection | None = None
 
     # ------------------------------------------------------------------
     # Storage
@@ -189,9 +190,9 @@ class AuditTrailEngine:
         actor: Actor,
         resource: Resource,
         severity: AuditEventSeverity = AuditEventSeverity.INFO,
-        details: Optional[dict[str, Any]] = None,
-        correlation_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        details: dict[str, Any] | None = None,
+        correlation_id: str | None = None,
+        session_id: str | None = None,
     ) -> AuditEvent:
         """
         Log a new audit event.
@@ -242,7 +243,7 @@ class AuditTrailEngine:
         control_id: str,
         control_name: str,
         result: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log a control evaluation event."""
         merged = details or {}
@@ -261,7 +262,7 @@ class AuditTrailEngine:
         evidence_id: str,
         evidence_title: str,
         evidence_type: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log an evidence collection event."""
         merged = details or {}
@@ -280,7 +281,7 @@ class AuditTrailEngine:
         finding_id: str,
         finding_title: str,
         severity: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log a finding being raised."""
         merged = details or {}
@@ -299,7 +300,7 @@ class AuditTrailEngine:
         actor: Actor,
         finding_id: str,
         finding_title: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log a finding remediation."""
         return self.log_event(
@@ -316,7 +317,7 @@ class AuditTrailEngine:
         resource_type: str,
         resource_id: str,
         grantee: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log an access grant."""
         merged = details or {}
@@ -335,7 +336,7 @@ class AuditTrailEngine:
         resource_type: str,
         resource_id: str,
         destination: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Log a data export event."""
         merged = details or {}
@@ -375,18 +376,18 @@ class AuditTrailEngine:
 
     def get_events(
         self,
-        event_type: Optional[AuditEventType] = None,
-        actor_id: Optional[str] = None,
-        resource_id: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        severity: Optional[AuditEventSeverity] = None,
+        event_type: AuditEventType | None = None,
+        actor_id: str | None = None,
+        resource_id: str | None = None,
+        correlation_id: str | None = None,
+        severity: AuditEventSeverity | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditEvent]:
         """Query audit events with filters."""
         with self._lock:
             # Use indexes for the most selective filter
-            candidate_positions: Optional[set[int]] = None
+            candidate_positions: set[int] | None = None
 
             if correlation_id and correlation_id in self._index_by_correlation:
                 candidate_positions = set(self._index_by_correlation[correlation_id])
@@ -416,7 +417,7 @@ class AuditTrailEngine:
 
             return events[offset:offset + limit]
 
-    def get_event_by_id(self, event_id: str) -> Optional[AuditEvent]:
+    def get_event_by_id(self, event_id: str) -> AuditEvent | None:
         """Retrieve a specific event by its ID."""
         with self._lock:
             for event in self._events:
@@ -481,7 +482,7 @@ class AuditTrailEngine:
                 "first_event_id": self._events[0].event_id if self._events else None,
                 "last_event_id": self._events[-1].event_id if self._events else None,
                 "tampered_events": tampered,
-                "verified_at": datetime.now(timezone.utc).isoformat(),
+                "verified_at": datetime.now(UTC).isoformat(),
             }
 
     def verify_event(self, event_id: str) -> bool:
@@ -520,9 +521,9 @@ class AuditTrailEngine:
     def export_events(
         self,
         format: str = "json",
-        event_type: Optional[AuditEventType] = None,
-        actor_id: Optional[str] = None,
-        resource_id: Optional[str] = None,
+        event_type: AuditEventType | None = None,
+        actor_id: str | None = None,
+        resource_id: str | None = None,
     ) -> str:
         """Export events in JSON or CSV format."""
         events = self.get_events(

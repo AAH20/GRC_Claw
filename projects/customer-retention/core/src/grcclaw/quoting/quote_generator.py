@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional, Union
-from .models import Quote, OrganizationProfile
-from .pricing_engine import PricingEngine
+
+from .models import Quote
 
 
 class QuoteGenerator:
@@ -199,8 +198,8 @@ class QuoteGenerator:
             "",
             "## Organization Profile",
             "",
-            f"| Attribute | Value |",
-            f"|-----------|-------|",
+            "| Attribute | Value |",
+            "|-----------|-------|",
             f"| Industry | {org.industry.title()} |",
             f"| Deployment | {org.deployment_model.value.replace('_', ' ').title()} |",
             f"| Support Level | {org.support_level.value.title()} |",
@@ -224,8 +223,8 @@ class QuoteGenerator:
             "",
             "## Summary",
             "",
-            f"| Item | Amount |",
-            f"|------|--------|",
+            "| Item | Amount |",
+            "|------|--------|",
             f"| Subtotal | ${q.subtotal:,.2f} |",
             f"| Volume Discount ({q.volume_discount_pct:.0f}%) | -${q.volume_discount_amount:,.2f} |",
             f"| Support Multiplier | {q.support_multiplier:.2f}x |",
@@ -312,7 +311,7 @@ class QuoteGenerator:
 
         return "\n".join(lines)
 
-    def save(self, filepath: Union[str, Path], format: str = "html") -> Path:
+    def save(self, filepath: str | Path, format: str = "html") -> Path:
         """Save quote to file in specified format."""
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)

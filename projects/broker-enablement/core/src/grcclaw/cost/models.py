@@ -4,11 +4,10 @@ Shared data models for the GRC_Claw cost optimization framework.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Optional
-from datetime import datetime, timezone
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 
 
 class CostCategory(str, Enum):
@@ -112,11 +111,11 @@ class CostLineItem:
     amount: float = 0.0
     currency: str = "USD"
     period: str = ""  # e.g. "2024-01"
-    resource_type: Optional[ResourceType] = None
+    resource_type: ResourceType | None = None
     tags: dict = field(default_factory=dict)
     allocated_to: str = ""  # department/project/team
     metadata: dict = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -159,7 +158,7 @@ class Anomaly:
     anomaly_type: AnomalyType = AnomalyType.COST_SPIKE
     severity: AnomalySeverity = AnomalySeverity.MEDIUM
     description: str = ""
-    detected_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    detected_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     period: str = ""
     expected_cost: float = 0.0
     actual_cost: float = 0.0

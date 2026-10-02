@@ -18,7 +18,9 @@ class SocialPost(BaseModel):
     """Social media post data model."""
 
     id: str = Field(..., description="Post identifier")
-    platform: str = Field(..., description="Target platform (twitter, facebook, instagram, linkedin)")
+    platform: str = Field(
+        ..., description="Target platform (twitter, facebook, instagram, linkedin)"
+    )
     content: str = Field(..., description="Post content text")
     hashtags: list[str] = Field(default_factory=list, description="Hashtags for the post")
     media_urls: list[str] = Field(default_factory=list, description="Media attachment URLs")

@@ -7,12 +7,12 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
-from typing import Any, Optional, Type
 from threading import Lock
+from typing import Any
 
 from .base import BaseConnector
 from .config import ConnectorConfig
-from .types import ConnectorMetadata, ConnectorCapability
+from .types import ConnectorCapability, ConnectorMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class ConnectorRegistry:
     - Listing all registered connectors
     """
 
-    _instance: Optional[ConnectorRegistry] = None
+    _instance: ConnectorRegistry | None = None
     _lock: Lock = Lock()
 
     def __new__(cls) -> ConnectorRegistry:
@@ -42,7 +42,7 @@ class ConnectorRegistry:
     def __init__(self):
         if getattr(self, "_initialized", False):
             return
-        self._connectors: dict[str, Type[BaseConnector]] = {}
+        self._connectors: dict[str, type[BaseConnector]] = {}
         self._instances: dict[str, BaseConnector] = {}
         self._configs: dict[str, ConnectorConfig] = {}
         self._initialized = True
@@ -50,8 +50,8 @@ class ConnectorRegistry:
     def register(
         self,
         name: str,
-        connector_class: Type[BaseConnector],
-        config: Optional[ConnectorConfig] = None,
+        connector_class: type[BaseConnector],
+        config: ConnectorConfig | None = None,
     ) -> None:
         """Register a connector class."""
         if not issubclass(connector_class, BaseConnector):
@@ -73,7 +73,7 @@ class ConnectorRegistry:
             self._configs.pop(name, None)
             logger.info("Unregistered connector: %s", name)
 
-    def create(self, name: str, config: Optional[ConnectorConfig] = None) -> BaseConnector:
+    def create(self, name: str, config: ConnectorConfig | None = None) -> BaseConnector:
         """Create a connector instance by name."""
         with self._lock:
             if name not in self._connectors:
@@ -88,7 +88,7 @@ class ConnectorRegistry:
             self._instances[name] = instance
             return instance
 
-    def get(self, name: str) -> Optional[BaseConnector]:
+    def get(self, name: str) -> BaseConnector | None:
         """Get an existing connector instance."""
         return self._instances.get(name)
 
@@ -118,7 +118,7 @@ class ConnectorRegistry:
                 continue
         return results
 
-    def get_metadata(self, name: str) -> Optional[ConnectorMetadata]:
+    def get_metadata(self, name: str) -> ConnectorMetadata | None:
         """Get metadata for a registered connector."""
         connector_class = self._connectors.get(name)
         if not connector_class:

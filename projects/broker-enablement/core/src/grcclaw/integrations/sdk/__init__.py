@@ -2,38 +2,38 @@
 Connector SDK — Base classes and utilities for building GRC_Claw connectors.
 """
 
+from .auth import APIKeyAuth, AuthStrategy, BasicAuth, BearerAuth, OAuth2Auth
 from .base import BaseConnector, ConnectorCapability, ConnectorStatus
 from .config import ConnectorConfig
-from .auth import AuthStrategy, APIKeyAuth, OAuth2Auth, BasicAuth, BearerAuth
 from .exceptions import (
-    ConnectorError,
     AuthenticationError,
     ConnectionError,
-    TimeoutError,
+    ConnectorError,
     RateLimitError,
+    TimeoutError,
     ValidationError,
 )
 from .registry import ConnectorRegistry
 from .types import ConnectorMetadata, RequestContext, ResponseContext
 
 __all__ = [
-    "BaseConnector",
-    "ConnectorCapability",
-    "ConnectorStatus",
-    "ConnectorConfig",
-    "AuthStrategy",
     "APIKeyAuth",
-    "OAuth2Auth",
+    "AuthStrategy",
+    "AuthenticationError",
+    "BaseConnector",
     "BasicAuth",
     "BearerAuth",
-    "ConnectorError",
-    "AuthenticationError",
     "ConnectionError",
-    "TimeoutError",
-    "RateLimitError",
-    "ValidationError",
-    "ConnectorRegistry",
+    "ConnectorCapability",
+    "ConnectorConfig",
+    "ConnectorError",
     "ConnectorMetadata",
+    "ConnectorRegistry",
+    "ConnectorStatus",
+    "OAuth2Auth",
+    "RateLimitError",
     "RequestContext",
     "ResponseContext",
+    "TimeoutError",
+    "ValidationError",
 ]

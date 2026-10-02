@@ -10,10 +10,8 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, Callable, Awaitable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from .models import UsageRecord, QuotaUsage, QuotaPeriod
 from .config import QuotaConfig
 
 logger = logging.getLogger(__name__)
@@ -22,11 +20,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BillingEvent:
     """A billing event triggered by rate limiting or quota management."""
-    event_id: str = field(default_factory=lambda: f"evt_{datetime.now(timezone.utc).timestamp()}")
+    event_id: str = field(default_factory=lambda: f"evt_{datetime.now(UTC).timestamp()}")
     event_type: str = ""  # "rate_limit_exceeded", "quota_exceeded", "quota_warning", "overage"
     tenant_id: str = ""
     quota_name: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     quantity: float = 0.0
     unit: str = "request"
     cost: float = 0.0
@@ -37,7 +35,7 @@ class BillingEvent:
 @dataclass
 class OverageCharge:
     """An overage charge for exceeding quota."""
-    charge_id: str = field(default_factory=lambda: f"chg_{datetime.now(timezone.utc).timestamp()}")
+    charge_id: str = field(default_factory=lambda: f"chg_{datetime.now(UTC).timestamp()}")
     tenant_id: str = ""
     quota_name: str = ""
     overage_quantity: float = 0.0
@@ -45,7 +43,7 @@ class OverageCharge:
     unit_price: float = 0.0
     total_cost: float = 0.0
     period: str = ""
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     billed: bool = False
 
 
@@ -120,7 +118,7 @@ class LoggingBillingHook(BillingHook):
 class WebhookBillingHook(BillingHook):
     """Billing hook that sends events to a webhook."""
 
-    def __init__(self, webhook_url: str, headers: Optional[dict] = None):
+    def __init__(self, webhook_url: str, headers: dict | None = None):
         self.webhook_url = webhook_url
         self.headers = headers or {}
 
@@ -142,22 +140,21 @@ class WebhookBillingHook(BillingHook):
 
         payload = {
             "event_type": event_type,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "data": data.__dict__ if hasattr(data, "__dict__") else str(data),
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    self.webhook_url,
-                    json=payload,
-                    headers=self.headers,
-                ) as response:
-                    if response.status >= 400:
-                        logger.error(
-                            f"Webhook billing hook failed: {response.status}",
-                            extra={"event_type": event_type},
-                        )
+            async with aiohttp.ClientSession() as session, session.post(
+                self.webhook_url,
+                json=payload,
+                headers=self.headers,
+            ) as response:
+                if response.status >= 400:
+                    logger.error(
+                        f"Webhook billing hook failed: {response.status}",
+                        extra={"event_type": event_type},
+                    )
         except Exception as e:
             logger.error(f"Webhook billing hook error: {e}", exc_info=True)
 
@@ -169,7 +166,7 @@ class BillingHookManager:
     Dispatches events to registered hooks and manages overage charges.
     """
 
-    def __init__(self, config: Optional[QuotaConfig] = None):
+    def __init__(self, config: QuotaConfig | None = None):
         self.config = config or QuotaConfig()
         self._hooks: list[BillingHook] = []
         self._overage_charges: list[OverageCharge] = []
@@ -192,7 +189,7 @@ class BillingHookManager:
         self,
         tenant_id: str,
         endpoint: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Notify hooks of a rate limit exceeded event."""
         event = BillingEvent(
@@ -208,7 +205,7 @@ class BillingHookManager:
         quota_name: str,
         used: float,
         limit: float,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Notify hooks of a quota exceeded event."""
         event = BillingEvent(
@@ -238,7 +235,7 @@ class BillingHookManager:
         tenant_id: str,
         quota_name: str,
         usage_percentage: float,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Notify hooks of a quota warning event."""
         event = BillingEvent(
@@ -254,7 +251,7 @@ class BillingHookManager:
         tenant_id: str,
         quota_name: str,
         usage_percentage: float,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Notify hooks of a quota critical event."""
         event = BillingEvent(
@@ -267,8 +264,8 @@ class BillingHookManager:
 
     def get_overage_charges(
         self,
-        tenant_id: Optional[str] = None,
-        billed: Optional[bool] = None,
+        tenant_id: str | None = None,
+        billed: bool | None = None,
     ) -> list[OverageCharge]:
         """Get overage charges with optional filters."""
         charges = self._overage_charges

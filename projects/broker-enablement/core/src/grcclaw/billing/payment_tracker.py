@@ -7,16 +7,15 @@ and monitors payment status across multiple payment processors.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
 import threading
+from datetime import UTC, datetime
 
 from .models import (
+    BillingStatus,
     Invoice,
     Payment,
     PaymentMethod,
     PaymentStatus,
-    BillingStatus,
 )
 
 
@@ -62,7 +61,7 @@ class PaymentTracker:
         """Get all payment methods for a tenant."""
         return self._payment_methods.get(tenant_id, [])
 
-    def get_default_method(self, tenant_id: str) -> Optional[PaymentMethod]:
+    def get_default_method(self, tenant_id: str) -> PaymentMethod | None:
         """Get the default payment method for a tenant."""
         methods = self._payment_methods.get(tenant_id, [])
         for m in methods:
@@ -90,9 +89,9 @@ class PaymentTracker:
         invoice_id: str,
         amount: float,
         method: str = "credit_card",
-        method_id: Optional[str] = None,
+        method_id: str | None = None,
         currency: str = "USD",
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> Payment:
         """
         Process a payment for an invoice.
@@ -136,7 +135,7 @@ class PaymentTracker:
                 if result.get("success"):
                     payment.status = PaymentStatus.COMPLETED
                     payment.transaction_id = result.get("transaction_id")
-                    payment.processed_at = datetime.now(timezone.utc).isoformat()
+                    payment.processed_at = datetime.now(UTC).isoformat()
                 else:
                     payment.status = PaymentStatus.FAILED
                     payment.failure_reason = result.get("error", "Unknown error")
@@ -146,8 +145,8 @@ class PaymentTracker:
         else:
             # No processor registered - mark as completed for testing
             payment.status = PaymentStatus.COMPLETED
-            payment.transaction_id = f"TXN-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
-            payment.processed_at = datetime.now(timezone.utc).isoformat()
+            payment.transaction_id = f"TXN-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+            payment.processed_at = datetime.now(UTC).isoformat()
 
         with self._lock:
             self._payments.append(payment)
@@ -157,7 +156,7 @@ class PaymentTracker:
     def process_refund(
         self,
         payment_id: str,
-        amount: Optional[float] = None,
+        amount: float | None = None,
         reason: str = "",
     ) -> Payment:
         """
@@ -190,7 +189,7 @@ class PaymentTracker:
             status=PaymentStatus.COMPLETED,
             method=original.method,
             transaction_id=f"REF-{original.transaction_id}",
-            processed_at=datetime.now(timezone.utc).isoformat(),
+            processed_at=datetime.now(UTC).isoformat(),
             metadata={"refund_reason": reason, "original_payment": payment_id},
         )
 
@@ -205,7 +204,7 @@ class PaymentTracker:
 
         return refund
 
-    def get_payment(self, payment_id: str) -> Optional[Payment]:
+    def get_payment(self, payment_id: str) -> Payment | None:
         """Get a payment by ID."""
         for p in self._payments:
             if p.payment_id == payment_id:
@@ -214,9 +213,9 @@ class PaymentTracker:
 
     def get_payments(
         self,
-        tenant_id: Optional[str] = None,
-        invoice_id: Optional[str] = None,
-        status: Optional[PaymentStatus] = None,
+        tenant_id: str | None = None,
+        invoice_id: str | None = None,
+        status: PaymentStatus | None = None,
     ) -> list[Payment]:
         """Query payments with filters."""
         results = self._payments
@@ -279,7 +278,7 @@ class PaymentTracker:
     def get_aging_report(
         self,
         invoices: list[Invoice],
-        as_of_date: Optional[str] = None,
+        as_of_date: str | None = None,
     ) -> dict:
         """
         Generate an aging report for outstanding invoices.
@@ -292,12 +291,12 @@ class PaymentTracker:
             Aging report with buckets.
         """
         if as_of_date is None:
-            as_of_date = datetime.now(timezone.utc).isoformat()
+            as_of_date = datetime.now(UTC).isoformat()
 
         try:
             as_of = datetime.fromisoformat(as_of_date.replace("Z", "+00:00"))
         except (ValueError, TypeError):
-            as_of = datetime.now(timezone.utc)
+            as_of = datetime.now(UTC)
 
         buckets = {
             "current": {"amount": 0.0, "invoices": []},

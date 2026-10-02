@@ -7,16 +7,14 @@ analytics, and quota enforcement.
 
 from __future__ import annotations
 
-import time
 import logging
 import threading
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone, timedelta
 from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 
-from .models import UsageRecord, QuotaUsage, QuotaPeriod
 from .config import QuotaConfig
+from .models import QuotaPeriod, QuotaUsage, UsageRecord
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +45,7 @@ class UsageTracker:
     Supports aggregation by endpoint, dimension, and time period.
     """
 
-    def __init__(self, config: Optional[QuotaConfig] = None):
+    def __init__(self, config: QuotaConfig | None = None):
         self.config = config or QuotaConfig()
         self._records: list[UsageRecord] = []
         self._lock = threading.Lock()
@@ -62,10 +60,10 @@ class UsageTracker:
         unit: str = "request",
         cost: float = 0.0,
         identifier: str = "",
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
         rate_limited: bool = False,
         quota_exceeded: bool = False,
-        tags: Optional[list[str]] = None,
+        tags: list[str] | None = None,
     ) -> UsageRecord:
         """Record a usage event."""
         record = UsageRecord(
@@ -91,9 +89,9 @@ class UsageTracker:
     def get_usage(
         self,
         tenant_id: str,
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
-        endpoint: Optional[str] = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
+        endpoint: str | None = None,
     ) -> list[UsageRecord]:
         """Get usage records for a tenant with optional filters."""
         with self._lock:
@@ -114,7 +112,7 @@ class UsageTracker:
         period: QuotaPeriod = QuotaPeriod.DAILY,
     ) -> UsageSummary:
         """Get a usage summary for a tenant over a period."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if period == QuotaPeriod.HOURLY:
             start = now - timedelta(hours=1)
@@ -179,7 +177,7 @@ class UsageTracker:
         period: QuotaPeriod = QuotaPeriod.MONTHLY,
     ) -> QuotaUsage:
         """Get current quota usage for a tenant."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if period == QuotaPeriod.HOURLY:
             start = now - timedelta(hours=1)
@@ -214,8 +212,8 @@ class UsageTracker:
     def get_rate_limit_hits(
         self,
         tenant_id: str,
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
     ) -> list[UsageRecord]:
         """Get rate-limited requests for a tenant."""
         records = self.get_usage(tenant_id, start_time, end_time)
@@ -224,14 +222,14 @@ class UsageTracker:
     def get_quota_exceeded(
         self,
         tenant_id: str,
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
     ) -> list[UsageRecord]:
         """Get quota-exceeded requests for a tenant."""
         records = self.get_usage(tenant_id, start_time, end_time)
         return [r for r in records if r.quota_exceeded]
 
-    def clear(self, tenant_id: Optional[str] = None) -> None:
+    def clear(self, tenant_id: str | None = None) -> None:
         """Clear usage records, optionally for a specific tenant."""
         with self._lock:
             if tenant_id:
@@ -241,6 +239,6 @@ class UsageTracker:
 
     def _cleanup_old_records(self) -> None:
         """Remove records older than the retention period."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=self._retention_days)
+        cutoff = datetime.now(UTC) - timedelta(days=self._retention_days)
         cutoff_str = cutoff.isoformat()
         self._records = [r for r in self._records if r.timestamp >= cutoff_str]

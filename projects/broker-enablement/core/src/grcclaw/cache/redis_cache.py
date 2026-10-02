@@ -11,13 +11,12 @@ import asyncio
 import json
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 from .base import (
     CacheBackend,
     CacheConfig,
     CacheConnectionError,
-    CacheEntry,
     CacheError,
     CacheSerializationError,
 )
@@ -54,17 +53,17 @@ class RedisCache(CacheBackend):
 
     def __init__(
         self,
-        config: Optional[CacheConfig] = None,
+        config: CacheConfig | None = None,
         url: str = "redis://localhost:6379",
         db: int = 0,
-        password: Optional[str] = None,
+        password: str | None = None,
         max_connections: int = 10,
         socket_timeout: float = 5.0,
         socket_connect_timeout: float = 5.0,
         retry_on_timeout: bool = True,
         health_check_interval: int = 30,
         ssl: bool = False,
-        ssl_cert_reqs: Optional[str] = None,
+        ssl_cert_reqs: str | None = None,
     ):
         super().__init__(config)
         self.url = url
@@ -78,7 +77,7 @@ class RedisCache(CacheBackend):
         self.ssl = ssl
         self.ssl_cert_reqs = ssl_cert_reqs
 
-        self._client: Optional[Redis] = None
+        self._client: Redis | None = None
         self._pool = None
         self._lock = asyncio.Lock()
         self._retry_count = 3
@@ -191,7 +190,7 @@ class RedisCache(CacheBackend):
     def _meta_key(self, key: str) -> str:
         return self._make_key(f"meta:{key}")
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Retrieve a value from Redis cache."""
         client = self._ensure_connected()
         entry_key = self._entry_key(key)
@@ -242,8 +241,8 @@ class RedisCache(CacheBackend):
         self,
         key: str,
         value: Any,
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Store a value in Redis cache with optional TTL and tags."""
         client = self._ensure_connected()
@@ -533,8 +532,8 @@ class RedisCache(CacheBackend):
     async def set_many(
         self,
         mapping: dict[str, Any],
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Store multiple values in one round-trip using pipeline."""
         client = self._ensure_connected()

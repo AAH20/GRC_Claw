@@ -5,8 +5,8 @@ Quote Comparison Tool — compare multiple quotes side by side.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
-from .models import Quote, OrganizationProfile, DeploymentModel, SupportLevel, PricingTier
+
+from .models import DeploymentModel, OrganizationProfile, PricingTier, Quote, SupportLevel
 from .quote_calculator import QuoteCalculator
 
 
@@ -37,7 +37,7 @@ class QuoteComparison:
     or pricing tiers for the same organization.
     """
 
-    def __init__(self, quotes: Optional[list[Quote]] = None):
+    def __init__(self, quotes: list[Quote] | None = None):
         self.quotes = quotes or []
 
     def add_quote(self, quote: Quote):
@@ -302,8 +302,8 @@ class QuoteComparison:
     @staticmethod
     def compare_deployment_models(
         profile: OrganizationProfile,
-        calculator: Optional[QuoteCalculator] = None,
-    ) -> "QuoteComparison":
+        calculator: QuoteCalculator | None = None,
+    ) -> QuoteComparison:
         """Compare all deployment models for a given profile."""
         calc = calculator or QuoteCalculator()
         comparison = QuoteComparison()
@@ -329,8 +329,8 @@ class QuoteComparison:
     @staticmethod
     def compare_support_levels(
         profile: OrganizationProfile,
-        calculator: Optional[QuoteCalculator] = None,
-    ) -> "QuoteComparison":
+        calculator: QuoteCalculator | None = None,
+    ) -> QuoteComparison:
         """Compare all support levels for a given profile."""
         calc = calculator or QuoteCalculator()
         comparison = QuoteComparison()
@@ -356,8 +356,8 @@ class QuoteComparison:
     @staticmethod
     def compare_pricing_tiers(
         profile: OrganizationProfile,
-        calculator: Optional[QuoteCalculator] = None,
-    ) -> "QuoteComparison":
+        calculator: QuoteCalculator | None = None,
+    ) -> QuoteComparison:
         """Compare all pricing tiers for a given profile."""
         calc = calculator or QuoteCalculator()
         comparison = QuoteComparison()

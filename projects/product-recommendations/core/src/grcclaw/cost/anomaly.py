@@ -11,20 +11,17 @@ Detects cost anomalies using statistical methods including:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone
-from collections import defaultdict
 import statistics
-import math
+from collections import defaultdict
+from dataclasses import dataclass, field
 
 from .models import (
+    Anomaly,
+    AnomalySeverity,
+    AnomalyType,
     CostCategory,
     CostLineItem,
     ResourceType,
-    AnomalyType,
-    AnomalySeverity,
-    Anomaly,
 )
 
 
@@ -51,7 +48,7 @@ class CostTimeSeries:
     costs: list[float] = field(default_factory=list)
     budget: float = 0.0
     category: CostCategory = CostCategory.OTHER
-    resource_type: Optional[ResourceType] = None
+    resource_type: ResourceType | None = None
     metadata: dict = field(default_factory=dict)
 
 
@@ -83,7 +80,7 @@ class CostAnomalyDetector:
     - Unusual spending patterns
     """
 
-    def __init__(self, thresholds: Optional[AnomalyThresholds] = None):
+    def __init__(self, thresholds: AnomalyThresholds | None = None):
         self.thresholds = thresholds or AnomalyThresholds()
         self.time_series: list[CostTimeSeries] = []
         self.line_items: list[CostLineItem] = []

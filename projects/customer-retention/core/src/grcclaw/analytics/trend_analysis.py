@@ -7,22 +7,19 @@ seasonal decomposition, change point detection, and volatility analysis.
 
 from __future__ import annotations
 
-import math
 import statistics
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
+from typing import Any
 
+from .metrics_registry import get_metric
 from .models import (
-    MetricCategory,
-    MetricValue,
-    TrendDirection,
-    TrendAnalysis,
-    Prediction,
     ForecastMethod,
+    MetricValue,
+    Prediction,
     PredictionConfidence,
     PredictiveModel,
+    TrendAnalysis,
+    TrendDirection,
 )
-from .metrics_registry import get_metric
 
 
 class LinearRegression:
@@ -118,7 +115,7 @@ class SeasonalDecomposition:
     """Simple seasonal decomposition."""
 
     @staticmethod
-    def detect_seasonality(values: list[float], max_period: int = 12) -> tuple[bool, Optional[int]]:
+    def detect_seasonality(values: list[float], max_period: int = 12) -> tuple[bool, int | None]:
         """
         Detect seasonality using autocorrelation.
 
@@ -212,7 +209,7 @@ class TrendAnalyzer:
         metric_id: str,
         values: list[MetricValue],
         forecast_periods: int = 3,
-    ) -> Optional[TrendAnalysis]:
+    ) -> TrendAnalysis | None:
         """
         Perform complete trend analysis on a metric's time series.
         """
@@ -324,7 +321,7 @@ class TrendAnalyzer:
         volatility: float,
         change_points: list[dict[str, Any]],
         has_season: bool,
-        season_period: Optional[int],
+        season_period: int | None,
         values: list[float],
     ) -> list[str]:
         """Generate human-readable insights from trend analysis."""
@@ -376,7 +373,7 @@ class TrendAnalyzer:
         method: ForecastMethod = ForecastMethod.LINEAR_REGRESSION,
         periods: int = 3,
         confidence: float = 0.95,
-    ) -> Optional[PredictiveModel]:
+    ) -> PredictiveModel | None:
         """
         Generate a predictive model for a metric.
         """

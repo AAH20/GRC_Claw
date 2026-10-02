@@ -4,12 +4,11 @@ Quote Calculator — generates custom quotes from organization profiles.
 
 from __future__ import annotations
 
-from typing import Optional
 from .models import (
+    DeploymentModel,
     OrganizationProfile,
     Quote,
     QuoteLineItem,
-    DeploymentModel,
     SupportLevel,
 )
 from .pricing_engine import PricingEngine
@@ -21,7 +20,7 @@ class QuoteCalculator:
     a fully itemized Quote with transparent pricing.
     """
 
-    def __init__(self, engine: Optional[PricingEngine] = None):
+    def __init__(self, engine: PricingEngine | None = None):
         self.engine = engine or PricingEngine()
 
     def calculate(self, profile: OrganizationProfile) -> Quote:
@@ -133,7 +132,7 @@ class QuoteCalculator:
 
         # Add assumptions
         quote.assumptions = [
-            f"Annual billing cycle",
+            "Annual billing cycle",
             f"{profile.deployment_model.value.replace('_', ' ').title()} deployment",
             f"{profile.support_level.value.title()} support included",
             f"Up to {profile.evidence_volume_gb:.0f} GB evidence storage",
@@ -156,7 +155,7 @@ class QuoteCalculator:
         models: int = 1,
         policies: int = 10,
         evidence_volume_gb: float = 100,
-        frameworks: Optional[list[str]] = None,
+        frameworks: list[str] | None = None,
         deployment_model: DeploymentModel = DeploymentModel.CLOUD_SAAS,
         support_level: SupportLevel = SupportLevel.STANDARD,
     ) -> Quote:

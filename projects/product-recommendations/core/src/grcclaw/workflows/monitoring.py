@@ -12,10 +12,11 @@ import logging
 import statistics
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .engine import WorkflowEngine
 from .schema import StepStatus, WorkflowRun
@@ -116,13 +117,13 @@ class WorkflowAlert:
     run_id: str = ""
     step_id: str = ""
     timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     acknowledged: bool = False
     acknowledged_by: str = ""
-    acknowledged_at: Optional[str] = None
+    acknowledged_at: str | None = None
     resolved: bool = False
-    resolved_at: Optional[str] = None
+    resolved_at: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -136,7 +137,7 @@ class WorkflowMonitor:
         self._step_durations: list[float] = []
         self._alert_rules: list[AlertRule] = []
         self._alert_handlers: list[Callable] = []
-        self._watch_task: Optional[asyncio.Task] = None
+        self._watch_task: asyncio.Task | None = None
         self._watch_interval: float = 5.0
         self._max_history: int = 10000
         self._alerts: list[Alert] = []
@@ -197,7 +198,7 @@ class WorkflowMonitor:
     def get_recent_alerts(self, limit: int = 50) -> list[Alert]:
         return self._alerts[-limit:]
 
-    def get_run_summary(self, run_id: str) -> Optional[dict[str, Any]]:
+    def get_run_summary(self, run_id: str) -> dict[str, Any] | None:
         run = self.engine._runs.get(run_id)
         if run is None:
             return None
@@ -336,7 +337,7 @@ class WorkflowMonitor:
                 if r.started_at and (now - self._parse_ts(r.started_at)) < 60
             ]
             m.runs_per_minute = len(recent)
-            m.last_updated = datetime.now(timezone.utc).isoformat()
+            m.last_updated = datetime.now(UTC).isoformat()
 
     def _percentile(self, sorted_data: list[float], pct: float) -> float:
         if not sorted_data:
@@ -360,7 +361,7 @@ class WorkflowMonitor:
                     rule_name=rule.name,
                     severity=rule.severity,
                     message=rule.message,
-                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    timestamp=datetime.now(UTC).isoformat(),
                     metrics=self._metrics.to_dict(),
                 )
                 self._alerts.append(alert)
@@ -437,8 +438,8 @@ class WorkflowMonitor:
 
     def get_workflow_alerts(
         self,
-        acknowledged: Optional[bool] = None,
-        severity: Optional[str] = None,
+        acknowledged: bool | None = None,
+        severity: str | None = None,
     ) -> list[WorkflowAlert]:
         """Get workflow alerts, optionally filtered."""
         alerts = self._workflow_alerts
@@ -454,7 +455,7 @@ class WorkflowMonitor:
             if alert.alert_id == alert_id:
                 alert.acknowledged = True
                 alert.acknowledged_by = acknowledged_by
-                alert.acknowledged_at = datetime.now(timezone.utc).isoformat()
+                alert.acknowledged_at = datetime.now(UTC).isoformat()
                 return True
         return False
 
@@ -463,7 +464,7 @@ class WorkflowMonitor:
         for alert in self._workflow_alerts:
             if alert.alert_id == alert_id:
                 alert.resolved = True
-                alert.resolved_at = datetime.now(timezone.utc).isoformat()
+                alert.resolved_at = datetime.now(UTC).isoformat()
                 return True
         return False
 

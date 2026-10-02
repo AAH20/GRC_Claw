@@ -3,4 +3,4 @@
 from .feature_flags import FeatureFlags, get_feature_flags
 from .settings import Settings, get_settings
 
-__all__ = ["Settings", "get_settings", "FeatureFlags", "get_feature_flags"]
+__all__ = ["FeatureFlags", "Settings", "get_feature_flags", "get_settings"]

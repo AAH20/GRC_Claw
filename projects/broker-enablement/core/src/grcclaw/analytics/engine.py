@@ -8,21 +8,18 @@ tiers, aggregates KPIs, and produces metric snapshots for dashboards.
 from __future__ import annotations
 
 import statistics
-from datetime import datetime, timezone
-from typing import Any, Optional
 
+from .metrics_registry import get_metric
 from .models import (
-    MetricCategory,
+    AnalyticsEvent,
+    DashboardLayer,
+    KPISummary,
     MetricSnapshot,
     MetricTier,
     MetricValue,
     RAGStatus,
     TrendDirection,
-    KPISummary,
-    DashboardLayer,
-    AnalyticsEvent,
 )
-from .metrics_registry import get_metric, ALL_METRICS
 
 
 class RAGStatusEngine:
@@ -52,15 +49,14 @@ class RAGStatusEngine:
                 return RAGStatus.RED
             else:
                 return RAGStatus.CRITICAL
-        else:  # gte
-            if value >= target:
-                return RAGStatus.GREEN
-            elif value >= tier1:
-                return RAGStatus.AMBER
-            elif value >= tier2:
-                return RAGStatus.RED
-            else:
-                return RAGStatus.CRITICAL
+        elif value >= target:
+            return RAGStatus.GREEN
+        elif value >= tier1:
+            return RAGStatus.AMBER
+        elif value >= tier2:
+            return RAGStatus.RED
+        else:
+            return RAGStatus.CRITICAL
 
     @staticmethod
     def compute_tier(
@@ -80,15 +76,14 @@ class RAGStatusEngine:
                 return MetricTier.TIER_1_OPERATIONAL
             else:
                 return MetricTier.TIER_1_OPERATIONAL
+        elif value < tier3:
+            return MetricTier.TIER_3_BOARD
+        elif value < tier2:
+            return MetricTier.TIER_2_MANAGEMENT
+        elif value < tier1:
+            return MetricTier.TIER_1_OPERATIONAL
         else:
-            if value < tier3:
-                return MetricTier.TIER_3_BOARD
-            elif value < tier2:
-                return MetricTier.TIER_2_MANAGEMENT
-            elif value < tier1:
-                return MetricTier.TIER_1_OPERATIONAL
-            else:
-                return MetricTier.TIER_1_OPERATIONAL
+            return MetricTier.TIER_1_OPERATIONAL
 
 
 class TrendEngine:
@@ -155,7 +150,7 @@ class AnalyticsEngine:
         if len(self._metric_history[mid]) > 365:
             self._metric_history[mid] = self._metric_history[mid][-365:]
 
-    def process_event(self, event: AnalyticsEvent) -> Optional[MetricSnapshot]:
+    def process_event(self, event: AnalyticsEvent) -> MetricSnapshot | None:
         """Process an analytics event and return a metric snapshot."""
         metric_def = get_metric(event.metric_id)
         if not metric_def:
@@ -179,9 +174,9 @@ class AnalyticsEngine:
         self,
         metric_id: str,
         current_value: float,
-        previous_value: Optional[float] = None,
+        previous_value: float | None = None,
         period: str = "",
-    ) -> Optional[MetricSnapshot]:
+    ) -> MetricSnapshot | None:
         """Compute a metric snapshot from current and previous values."""
         metric_def = get_metric(metric_id)
         if not metric_def:
@@ -329,7 +324,7 @@ class AnalyticsEngine:
         """Get historical values for a metric."""
         return self._metric_history.get(metric_id, [])
 
-    def clear_history(self, metric_id: Optional[str] = None) -> None:
+    def clear_history(self, metric_id: str | None = None) -> None:
         """Clear metric history (all or specific)."""
         if metric_id:
             self._metric_history.pop(metric_id, None)

@@ -11,9 +11,10 @@ import asyncio
 import logging
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .base import CacheBackend, CacheConfig
 
@@ -63,11 +64,11 @@ class InvalidationRule:
     trigger: InvalidationTrigger
     scope: InvalidationScope
     target: str
-    condition: Optional[Callable[[Any], bool]] = None
+    condition: Callable[[Any], bool] | None = None
     cascade_targets: list[str] = field(default_factory=list)
     priority: int = 0  # Higher = evaluated first
     enabled: bool = True
-    ttl_override: Optional[int] = None  # Override TTL for matching entries
+    ttl_override: int | None = None  # Override TTL for matching entries
 
 
 class InvalidationStrategy(ABC):
@@ -130,7 +131,7 @@ class TTLInvalidationStrategy(InvalidationStrategy):
     async def teardown(self) -> None:
         self._ttl_tracker.clear()
 
-    def compute_ttl(self, base_ttl: Optional[int] = None) -> int:
+    def compute_ttl(self, base_ttl: int | None = None) -> int:
         """Compute TTL with jitter to prevent cache stampedes."""
         import random
 
@@ -166,7 +167,7 @@ class TTLInvalidationStrategy(InvalidationStrategy):
         """Get remaining TTL for a key."""
         return await self.cache.ttl(key)
 
-    async def is_near_expiry(self, key: str, threshold: Optional[float] = None) -> bool:
+    async def is_near_expiry(self, key: str, threshold: float | None = None) -> bool:
         """Check if a key is near its expiration time."""
         threshold = threshold or self.proactive_threshold
         remaining = await self.cache.ttl(key)
@@ -192,7 +193,7 @@ class EventInvalidationStrategy(InvalidationStrategy):
         super().__init__(cache)
         self._rules: list[InvalidationRule] = []
         self._event_queue: asyncio.Queue[InvalidationEvent] = asyncio.Queue()
-        self._worker_task: Optional[asyncio.Task] = None
+        self._worker_task: asyncio.Task | None = None
         self._running = False
 
     async def setup(self) -> None:
@@ -240,7 +241,7 @@ class EventInvalidationStrategy(InvalidationStrategy):
                     timeout=1.0,
                 )
                 await self._handle_event(event)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except asyncio.CancelledError:
                 break
@@ -511,7 +512,7 @@ class WriteThroughInvalidationStrategy(InvalidationStrategy):
 
         return count
 
-    async def write_through(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def write_through(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Write to cache and invalidate related entries."""
         # Write to cache
         success = await self.cache.set(key, value, ttl=ttl)
@@ -540,7 +541,7 @@ class ScheduledInvalidationStrategy(InvalidationStrategy):
     def __init__(self, cache: CacheBackend):
         super().__init__(cache)
         self._schedules: list[dict[str, Any]] = []
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._running = False
 
     async def setup(self) -> None:
@@ -565,7 +566,7 @@ class ScheduledInvalidationStrategy(InvalidationStrategy):
         interval_seconds: float,
         scope: InvalidationScope,
         target: str,
-        last_run: Optional[float] = None,
+        last_run: float | None = None,
     ) -> None:
         """Add a scheduled invalidation."""
         self._schedules.append({
@@ -737,7 +738,7 @@ class InvalidationManager:
     def get_history(
         self,
         limit: int = 100,
-        trigger: Optional[InvalidationTrigger] = None,
+        trigger: InvalidationTrigger | None = None,
     ) -> list[InvalidationEvent]:
         """Get invalidation history."""
         history = self._history

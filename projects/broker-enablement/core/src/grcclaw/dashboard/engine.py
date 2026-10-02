@@ -6,39 +6,27 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
 from collections import defaultdict
+from datetime import UTC, datetime
+from typing import Any
 
+from .analytics import (
+    ComplianceAggregator,
+    GovernanceScorer,
+    MetricCalculator,
+    RiskAggregator,
+    TrendAnalyzer,
+)
 from .models import (
-    DashboardConfig,
-    DashboardWidget,
-    DashboardSnapshot,
-    DashboardLayout,
-    WidgetType,
-    WidgetSize,
     ChartType,
+    DashboardConfig,
+    DashboardSnapshot,
+    DashboardWidget,
     DataSourceType,
     FilterCriteria,
-    TimeRange,
-    MetricAggregation,
-    AlertLevel,
     GovernanceScore,
     TrendDirection,
-    ComplianceStatus,
-    RiskLevel,
-    KPIWidget,
-    ChartWidget,
-    TableWidget,
-    AlertWidget,
-    TextWidget,
-)
-from .analytics import (
-    MetricCalculator,
-    TrendAnalyzer,
-    ComplianceAggregator,
-    RiskAggregator,
-    GovernanceScorer,
+    WidgetType,
 )
 
 
@@ -64,7 +52,7 @@ class DashboardEngine:
     def fetch_widget_data(
         self,
         widget: DashboardWidget,
-        filters: Optional[list[FilterCriteria]] = None,
+        filters: list[FilterCriteria] | None = None,
         force_refresh: bool = False,
     ) -> Any:
         """Fetch data for a single widget with caching."""
@@ -83,14 +71,14 @@ class DashboardEngine:
             data = provider.fetch(widget.data_query, filters or widget.filters)
 
         self._cache[cache_key] = (now, data)
-        widget.last_refreshed = datetime.now(timezone.utc).isoformat()
+        widget.last_refreshed = datetime.now(UTC).isoformat()
         widget.cached_data = data
         return data
 
     def render_dashboard(
         self,
         config: DashboardConfig,
-        filters: Optional[list[FilterCriteria]] = None,
+        filters: list[FilterCriteria] | None = None,
     ) -> dict[str, Any]:
         """Render a complete dashboard with all widget data."""
         effective_filters = filters or config.filters
@@ -133,13 +121,13 @@ class DashboardEngine:
                 "breakdown": governance_score.breakdown,
                 "recommendations": governance_score.recommendations,
             },
-            "rendered_at": datetime.now(timezone.utc).isoformat(),
+            "rendered_at": datetime.now(UTC).isoformat(),
         }
 
     def create_snapshot(
         self,
         config: DashboardConfig,
-        filters: Optional[list[FilterCriteria]] = None,
+        filters: list[FilterCriteria] | None = None,
     ) -> DashboardSnapshot:
         """Create a point-in-time snapshot of the dashboard."""
         rendered = self.render_dashboard(config, filters)
@@ -169,7 +157,7 @@ class DashboardEngine:
             },
         )
 
-    def invalidate_cache(self, widget_id: Optional[str] = None) -> None:
+    def invalidate_cache(self, widget_id: str | None = None) -> None:
         """Invalidate cache for a specific widget or all widgets."""
         if widget_id:
             keys_to_remove = [k for k in self._cache if k.startswith(f"{widget_id}:")]
@@ -326,7 +314,7 @@ class DashboardRenderer:
     Supports JSON, HTML, and Markdown rendering.
     """
 
-    def __init__(self, engine: Optional[DashboardEngine] = None):
+    def __init__(self, engine: DashboardEngine | None = None):
         self.engine = engine or DashboardEngine()
 
     def render_json(self, rendered_dashboard: dict[str, Any]) -> str:
@@ -348,8 +336,8 @@ class DashboardRenderer:
             "",
             "## Score Breakdown",
             "",
-            f"| Dimension | Score |",
-            f"|-----------|-------|",
+            "| Dimension | Score |",
+            "|-----------|-------|",
             f"| Governance | {score.get('governance', 0):.1f} |",
             f"| Risk | {score.get('risk', 0):.1f} |",
             f"| Compliance | {score.get('compliance', 0):.1f} |",
@@ -494,15 +482,15 @@ class DashboardManager:
         self._dashboards[config.id] = config
         return config
 
-    def get_dashboard(self, dashboard_id: str) -> Optional[DashboardConfig]:
+    def get_dashboard(self, dashboard_id: str) -> DashboardConfig | None:
         """Retrieve a dashboard by ID."""
         dashboard = self._dashboards.get(dashboard_id)
         if dashboard:
-            dashboard.last_accessed = datetime.now(timezone.utc).isoformat()
+            dashboard.last_accessed = datetime.now(UTC).isoformat()
             dashboard.access_count += 1
         return dashboard
 
-    def update_dashboard(self, dashboard_id: str, updates: dict[str, Any]) -> Optional[DashboardConfig]:
+    def update_dashboard(self, dashboard_id: str, updates: dict[str, Any]) -> DashboardConfig | None:
         """Update an existing dashboard."""
         dashboard = self._dashboards.get(dashboard_id)
         if not dashboard:
@@ -511,7 +499,7 @@ class DashboardManager:
             if hasattr(dashboard, key):
                 setattr(dashboard, key, value)
         dashboard.version += 1
-        dashboard.updated_at = datetime.now(timezone.utc).isoformat()
+        dashboard.updated_at = datetime.now(UTC).isoformat()
         return dashboard
 
     def delete_dashboard(self, dashboard_id: str) -> bool:
@@ -524,9 +512,9 @@ class DashboardManager:
 
     def list_dashboards(
         self,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
-        owner: Optional[str] = None,
+        category: str | None = None,
+        tag: str | None = None,
+        owner: str | None = None,
     ) -> list[DashboardConfig]:
         """List dashboards with optional filtering."""
         results = list(self._dashboards.values())
@@ -538,7 +526,7 @@ class DashboardManager:
             results = [d for d in results if d.owner == owner]
         return results
 
-    def clone_dashboard(self, dashboard_id: str, new_name: str) -> Optional[DashboardConfig]:
+    def clone_dashboard(self, dashboard_id: str, new_name: str) -> DashboardConfig | None:
         """Clone an existing dashboard."""
         source = self._dashboards.get(dashboard_id)
         if not source:
@@ -549,8 +537,8 @@ class DashboardManager:
         cloned.name = new_name
         cloned.version = 1
         cloned.is_default = False
-        cloned.created_at = datetime.now(timezone.utc).isoformat()
-        cloned.updated_at = datetime.now(timezone.utc).isoformat()
+        cloned.created_at = datetime.now(UTC).isoformat()
+        cloned.updated_at = datetime.now(UTC).isoformat()
         cloned.access_count = 0
         self._dashboards[cloned.id] = cloned
         return cloned
@@ -567,8 +555,8 @@ class DashboardManager:
         self,
         dashboard_id: str,
         output_format: str = "json",
-        filters: Optional[list[FilterCriteria]] = None,
-    ) -> Optional[str]:
+        filters: list[FilterCriteria] | None = None,
+    ) -> str | None:
         """Render a dashboard in the specified format."""
         dashboard = self._dashboards.get(dashboard_id)
         if not dashboard:

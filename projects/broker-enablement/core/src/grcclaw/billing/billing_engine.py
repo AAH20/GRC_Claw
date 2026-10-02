@@ -7,17 +7,11 @@ discounts, and generates billing line items and cycles.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-from typing import Optional
-import calendar
-
 from .models import (
     BillingCycle,
     BillingLineItem,
     MeteringDimension,
     PricingPlan,
-    PricingTierConfig,
-    UsageAggregation,
 )
 from .usage_metering import UsageMeteringEngine
 
@@ -103,7 +97,7 @@ class BillingCalculationEngine:
         },
     }
 
-    def __init__(self, metering_engine: Optional[UsageMeteringEngine] = None):
+    def __init__(self, metering_engine: UsageMeteringEngine | None = None):
         self.metering = metering_engine or UsageMeteringEngine()
         self._custom_plans: dict[str, dict] = {}
         self._discount_rules: list[dict] = []

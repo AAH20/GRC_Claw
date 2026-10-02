@@ -7,12 +7,11 @@ enforcement, and analytics across the GRC_Claw platform.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Optional
 import uuid
-
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 # ── Enumerations ─────────────────────────────────────────────────────────────
 
@@ -127,12 +126,12 @@ class Policy:
     approvals: list[ApprovalRecord] = field(default_factory=list)
     attestations: list[Attestation] = field(default_factory=list)
     enforcement_rules: list[EnforcementRule] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     created_by: str = ""
     updated_by: str = ""
-    parent_policy_id: Optional[str] = None
-    supersedes: Optional[str] = None
+    parent_policy_id: str | None = None
+    supersedes: str | None = None
 
 
 @dataclass
@@ -143,7 +142,7 @@ class PolicyChange:
     version_from: str = ""
     version_to: str = ""
     changed_by: str = ""
-    changed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    changed_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     summary: str = ""
     diff: dict[str, Any] = field(default_factory=dict)
     reason: str = ""
@@ -159,7 +158,7 @@ class PolicyVersion:
     metadata_snapshot: dict[str, Any] = field(default_factory=dict)
     change_summary: str = ""
     created_by: str = ""
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     is_active: bool = False
 
 
@@ -171,9 +170,9 @@ class ApprovalRecord:
     version: str = "1.0.0"
     status: ApprovalStatus = ApprovalStatus.PENDING
     approver: str = ""
-    delegated_to: Optional[str] = None
-    requested_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    decided_at: Optional[str] = None
+    delegated_to: str | None = None
+    requested_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    decided_at: str | None = None
     comments: str = ""
     escalation_reason: str = ""
     required_approvers: list[str] = field(default_factory=list)
@@ -187,7 +186,7 @@ class ApprovalStep:
     order: int = 0
     approver: str = ""
     status: ApprovalStatus = ApprovalStatus.PENDING
-    decided_at: Optional[str] = None
+    decided_at: str | None = None
     comments: str = ""
 
 
@@ -201,7 +200,7 @@ class Attestation:
     employee_name: str = ""
     employee_email: str = ""
     department: str = ""
-    acknowledged_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    acknowledged_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     attestation_method: str = "digital_signature"
     ip_address: str = ""
     user_agent: str = ""
@@ -220,7 +219,7 @@ class EnforcementRule:
     severity: PolicyPriority = PolicyPriority.MEDIUM
     enabled: bool = True
     target_scope: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -234,7 +233,7 @@ class EnforcementEvent:
     result: EnforcementResult = EnforcementResult.NOT_APPLICABLE
     findings: list[EnforcementFinding] = field(default_factory=list)
     remediation: str = ""
-    enforced_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    enforced_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     enforced_by: str = "system"
     evidence_refs: list[str] = field(default_factory=list)
 
@@ -249,8 +248,8 @@ class EnforcementFinding:
     evidence: str = ""
     remediation: str = ""
     status: str = "open"  # open, acknowledged, remediated, accepted_risk
-    cwe_id: Optional[str] = None
-    owasp_category: Optional[str] = None
+    cwe_id: str | None = None
+    owasp_category: str | None = None
 
 
 @dataclass
@@ -267,7 +266,7 @@ class PolicyTemplate:
     default_rules: list[EnforcementRule] = field(default_factory=list)
     is_builtin: bool = False
     version: str = "1.0.0"
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass

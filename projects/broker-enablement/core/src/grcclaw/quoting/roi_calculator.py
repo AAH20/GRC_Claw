@@ -4,8 +4,8 @@ ROI Calculator — shows cost vs risk reduction for GRC_Claw investment.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
+
 from .models import OrganizationProfile, Quote
 
 

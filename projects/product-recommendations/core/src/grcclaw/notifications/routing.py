@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from .models import (
     Alert,
@@ -209,17 +209,17 @@ class AlertRouter:
         if not alert.acknowledged_at:
             # Never acknowledged — check creation time
             created = datetime.fromisoformat(alert.created_at.replace("Z", "+00:00"))
-            elapsed = (datetime.now(timezone.utc) - created).total_seconds() / 60
+            elapsed = (datetime.now(UTC) - created).total_seconds() / 60
             threshold = self._get_escalation_threshold(alert.severity)
             return elapsed >= threshold
 
         # Acknowledged but not resolved — check ack time
         ack_time = datetime.fromisoformat(alert.acknowledged_at.replace("Z", "+00:00"))
-        elapsed = (datetime.now(timezone.utc) - ack_time).total_seconds() / 60
+        elapsed = (datetime.now(UTC) - ack_time).total_seconds() / 60
         threshold = self._get_escalation_threshold(alert.severity) * 2
         return elapsed >= threshold
 
-    def escalate(self, alert: Alert) -> Optional[Alert]:
+    def escalate(self, alert: Alert) -> Alert | None:
         """Escalate an alert to the next level in the escalation chain."""
         chain = self._escalation_chains.get(alert.severity.value, [])
         if not chain:
@@ -238,7 +238,7 @@ class AlertRouter:
         if next_target:
             alert.escalated_to = next_target
             alert.status = AlertStatus.ESCALATED
-            alert.updated_at = datetime.now(timezone.utc).isoformat()
+            alert.updated_at = datetime.now(UTC).isoformat()
 
             self._escalation_history.append({
                 "alert_id": alert.id,
@@ -313,12 +313,12 @@ class AlertRouter:
 
     def _is_business_hours(self) -> bool:
         """Check if current time is within business hours."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if now.weekday() not in self._business_days:
             return False
         return self._business_hours["start"] <= now.hour < self._business_hours["end"]
 
-    def _get_on_call(self, alert: Alert) -> Optional[str]:
+    def _get_on_call(self, alert: Alert) -> str | None:
         """Get the on-call person for the alert's team."""
         if alert.entity_type == "incident":
             return self._on_call.get("incident_response")

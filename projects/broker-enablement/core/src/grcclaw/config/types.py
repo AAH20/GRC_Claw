@@ -9,8 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
-
+from typing import Any
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -112,7 +111,7 @@ class ApplicationConfig:
     environment: Environment = Environment.DEVELOPMENT
     debug: bool = False
     timezone: str = "UTC"
-    instance_id: Optional[str] = None
+    instance_id: str | None = None
     shutdown_timeout_seconds: float = 30.0
 
 
@@ -146,11 +145,11 @@ class SecurityConfig:
     jwt_audience: str = "https://api.grc-claw.io"
     oidc_issuer: str = "https://auth.grc-claw.io"
     oidc_audience: str = "https://api.grc-claw.io"
-    oidc_jwks_uri: Optional[str] = None
+    oidc_jwks_uri: str | None = None
     api_key_header: str = "Authorization"
     api_key_prefix: str = "grc_"
     mtls_enabled: bool = False
-    mtls_ca_cert_path: Optional[str] = None
+    mtls_ca_cert_path: str | None = None
     password_hash_algorithm: str = "bcrypt"
     password_hash_rounds: int = 12
     mfa_enabled: bool = False
@@ -188,7 +187,7 @@ class RedisConfig:
     host: str = "localhost"
     port: int = 6379
     db: int = 0
-    password: Optional[str] = None
+    password: str | None = None
     ssl: bool = False
     ssl_cert_reqs: str = "required"
     key_prefix: str = "grcclaw"
@@ -208,7 +207,7 @@ class RateLimitingConfig:
     enforcement_rps: int = 10000
     enforcement_burst: int = 2000
     algorithm: RateLimitAlgorithm = RateLimitAlgorithm.TOKEN_BUCKET
-    daily_limit: Optional[int] = None
+    daily_limit: int | None = None
     key_prefix: str = "ratelimit"
     exclude_paths: list[str] = field(default_factory=lambda: ["/health", "/metrics"])
     enabled: bool = True
@@ -223,8 +222,8 @@ class GrpcConfig:
     max_workers: int = 100
     max_concurrent_streams: int = 1000
     tls_enabled: bool = False
-    tls_cert_path: Optional[str] = None
-    tls_key_path: Optional[str] = None
+    tls_cert_path: str | None = None
+    tls_key_path: str | None = None
     reflection_enabled: bool = True
     health_check_enabled: bool = True
     max_receive_message_length: int = 4194304
@@ -243,7 +242,7 @@ class WebhookConfig:
     )
     timeout_seconds: int = 10
     timestamp_tolerance: int = 300
-    signing_secret: Optional[str] = None
+    signing_secret: str | None = None
     delivery_mode: str = "at_least_once"  # at_least_once, at_most_once, exactly_once
     max_payload_size_mb: int = 10
     allowed_content_types: list[str] = field(
@@ -258,7 +257,7 @@ class ObservabilityConfig:
     log_level: LogLevel = LogLevel.INFO
     log_format: str = "json"  # json, text
     log_destination: str = "stdout"  # stdout, file, webhook
-    log_file_path: Optional[str] = None
+    log_file_path: str | None = None
     log_rotation: str = "daily"  # daily, size, none
     log_max_bytes: int = 104857600  # 100MB
     log_backup_count: int = 7
@@ -315,20 +314,20 @@ class NotificationChannelConfig:
     priority_filter: list[str] = field(default_factory=list)
     type_filter: list[str] = field(default_factory=list)
     # Email
-    smtp_host: Optional[str] = None
+    smtp_host: str | None = None
     smtp_port: int = 587
-    smtp_username: Optional[str] = None
-    smtp_password: Optional[str] = None
+    smtp_username: str | None = None
+    smtp_password: str | None = None
     smtp_use_tls: bool = True
-    smtp_from_address: Optional[str] = None
+    smtp_from_address: str | None = None
     # Slack
-    slack_webhook_url: Optional[str] = None
-    slack_bot_token: Optional[str] = None
-    slack_default_channel: Optional[str] = None
+    slack_webhook_url: str | None = None
+    slack_bot_token: str | None = None
+    slack_default_channel: str | None = None
     # Teams
-    teams_webhook_url: Optional[str] = None
+    teams_webhook_url: str | None = None
     # Webhook
-    webhook_url: Optional[str] = None
+    webhook_url: str | None = None
     webhook_headers: dict[str, str] = field(default_factory=dict)
     webhook_auth_type: str = "none"
     webhook_auth_config: dict[str, str] = field(default_factory=dict)
@@ -469,7 +468,7 @@ class BillingConfig:
     usage_retention_days: int = 365
     invoice_retention_days: int = 2555  # 7 years
     tax_calculation_enabled: bool = False
-    tax_provider: Optional[str] = None
+    tax_provider: str | None = None
 
 
 # ─── Top-Level Config Container ──────────────────────────────────────────────

@@ -13,7 +13,6 @@ from typing import Any
 
 from .exceptions import SchemaError
 
-
 CONFIG_SCHEMA: dict[str, Any] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://grc-claw.io/schemas/config.json",
@@ -490,7 +489,7 @@ def load_schema_from_file(path: str | Path) -> dict[str, Any]:
     """
     schema_path = Path(path)
     try:
-        with open(schema_path, "r", encoding="utf-8") as f:
+        with open(schema_path, encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError as e:
         raise SchemaError(

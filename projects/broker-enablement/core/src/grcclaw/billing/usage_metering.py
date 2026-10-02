@@ -7,16 +7,14 @@ Supports real-time metering, batch ingestion, and usage analytics.
 
 from __future__ import annotations
 
-from collections import defaultdict
-from datetime import datetime, timezone, timedelta
-from typing import Optional
 import threading
+from datetime import UTC, datetime
 
 from .models import (
-    UsageRecord,
-    UsageAggregation,
     MeteringDimension,
     PricingTierConfig,
+    UsageAggregation,
+    UsageRecord,
 )
 
 
@@ -38,7 +36,7 @@ class UsageMeteringEngine:
         """Register a pricing configuration for a metering dimension."""
         self._pricing_configs[config.dimension] = config
 
-    def get_pricing_config(self, dimension: MeteringDimension) -> Optional[PricingTierConfig]:
+    def get_pricing_config(self, dimension: MeteringDimension) -> PricingTierConfig | None:
         """Get the pricing configuration for a dimension."""
         return self._pricing_configs.get(dimension)
 
@@ -48,13 +46,13 @@ class UsageMeteringEngine:
         dimension: MeteringDimension,
         quantity: float,
         unit: str = "count",
-        timestamp: Optional[str] = None,
-        metadata: Optional[dict] = None,
-        resource_id: Optional[str] = None,
-        agent_id: Optional[str] = None,
-        policy_id: Optional[str] = None,
-        cost_center: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        timestamp: str | None = None,
+        metadata: dict | None = None,
+        resource_id: str | None = None,
+        agent_id: str | None = None,
+        policy_id: str | None = None,
+        cost_center: str | None = None,
+        tags: list[str] | None = None,
     ) -> UsageRecord:
         """
         Record a single usage event.
@@ -83,7 +81,7 @@ class UsageMeteringEngine:
             dimension=dimension,
             quantity=quantity,
             unit=unit,
-            timestamp=timestamp or datetime.now(timezone.utc).isoformat(),
+            timestamp=timestamp or datetime.now(UTC).isoformat(),
             metadata=metadata or {},
             resource_id=resource_id,
             agent_id=agent_id,
@@ -129,14 +127,14 @@ class UsageMeteringEngine:
 
     def get_records(
         self,
-        tenant_id: Optional[str] = None,
-        dimension: Optional[MeteringDimension] = None,
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
-        agent_id: Optional[str] = None,
-        policy_id: Optional[str] = None,
-        cost_center: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        tenant_id: str | None = None,
+        dimension: MeteringDimension | None = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
+        agent_id: str | None = None,
+        policy_id: str | None = None,
+        cost_center: str | None = None,
+        tags: list[str] | None = None,
     ) -> list[UsageRecord]:
         """
         Query usage records with filters.
@@ -316,7 +314,7 @@ class UsageMeteringEngine:
 
         return price
 
-    def clear_records(self, tenant_id: Optional[str] = None) -> int:
+    def clear_records(self, tenant_id: str | None = None) -> int:
         """
         Clear usage records, optionally filtered by tenant.
 
@@ -339,7 +337,7 @@ class UsageMeteringEngine:
 
     def export_records(
         self,
-        tenant_id: Optional[str] = None,
+        tenant_id: str | None = None,
         format: str = "json",
     ) -> list[dict]:
         """

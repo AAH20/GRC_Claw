@@ -10,15 +10,14 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 import structlog
 
-from .base import AgentContext, AgentResult, AgentStatus, BaseAgent, ToolError
+from .base import AgentContext, AgentResult, BaseAgent, ToolError
 
 logger = structlog.get_logger(__name__)
 
@@ -135,8 +134,8 @@ class Executor(BaseAgent[T]):
     ) -> ExecutionResult:
         """Execute a single plan step."""
         step.status = StepStatus.IN_PROGRESS
-        step.started_at = datetime.now(timezone.utc)
-        start = datetime.now(timezone.utc)
+        step.started_at = datetime.now(UTC)
+        start = datetime.now(UTC)
         try:
             if step.tool_name:
                 data = await self.execute_tool(step.tool_name, **step.parameters)
@@ -144,8 +143,8 @@ class Executor(BaseAgent[T]):
                 data = step.parameters
             step.status = StepStatus.COMPLETED
             step.result = data
-            step.completed_at = datetime.now(timezone.utc)
-            elapsed = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+            step.completed_at = datetime.now(UTC)
+            elapsed = (datetime.now(UTC) - start).total_seconds() * 1000
             return ExecutionResult(
                 step_id=step.id,
                 success=True,
@@ -155,8 +154,8 @@ class Executor(BaseAgent[T]):
         except (ToolError, Exception) as exc:
             step.status = StepStatus.FAILED
             step.error = str(exc)
-            step.completed_at = datetime.now(timezone.utc)
-            elapsed = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+            step.completed_at = datetime.now(UTC)
+            elapsed = (datetime.now(UTC) - start).total_seconds() * 1000
             return ExecutionResult(
                 step_id=step.id,
                 success=False,

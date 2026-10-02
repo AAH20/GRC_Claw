@@ -8,18 +8,16 @@ batch enforcement, and finding management.
 from __future__ import annotations
 
 import logging
-import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .models import (
-    Policy,
-    EnforcementRule,
     EnforcementEvent,
     EnforcementFinding,
-    EnforcementResult,
     EnforcementMode,
+    EnforcementResult,
+    EnforcementRule,
+    Policy,
     PolicyPriority,
 )
 
@@ -30,7 +28,7 @@ class RuleEvaluator(ABC):
     """Abstract base class for rule evaluators."""
 
     @abstractmethod
-    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
+    def evaluate(self, rule: EnforcementRule, target: dict, context: dict | None = None) -> EnforcementEvent:
         """Evaluate a rule against a target."""
         pass
 
@@ -38,7 +36,7 @@ class RuleEvaluator(ABC):
 class TagCheckEvaluator(RuleEvaluator):
     """Evaluates tag-based compliance rules."""
 
-    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
+    def evaluate(self, rule: EnforcementRule, target: dict, context: dict | None = None) -> EnforcementEvent:
         condition = rule.condition
         required_tags = condition.get("required_tags", [])
         target_tags = target.get("tags", [])
@@ -70,7 +68,7 @@ class TagCheckEvaluator(RuleEvaluator):
 class ConfigScanEvaluator(RuleEvaluator):
     """Evaluates configuration-based compliance rules."""
 
-    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
+    def evaluate(self, rule: EnforcementRule, target: dict, context: dict | None = None) -> EnforcementEvent:
         condition = rule.condition
         config_key = condition.get("config_key", "")
         expected_value = condition.get("expected_value")
@@ -122,7 +120,7 @@ class ConfigScanEvaluator(RuleEvaluator):
 class AccessReviewEvaluator(RuleEvaluator):
     """Evaluates access review compliance rules."""
 
-    def evaluate(self, rule: EnforcementRule, target: dict, context: Optional[dict] = None) -> EnforcementEvent:
+    def evaluate(self, rule: EnforcementRule, target: dict, context: dict | None = None) -> EnforcementEvent:
         condition = rule.condition
         max_access_age_days = condition.get("max_access_age_days", 90)
         required_review = condition.get("required_review", True)
@@ -145,7 +143,7 @@ class AccessReviewEvaluator(RuleEvaluator):
             else:
                 try:
                     review_date = datetime.fromisoformat(last_review)
-                    age_days = (datetime.now(timezone.utc) - review_date).days
+                    age_days = (datetime.now(UTC) - review_date).days
                     if age_days > max_access_age_days:
                         findings.append(EnforcementFinding(
                             severity=rule.severity,
@@ -199,9 +197,9 @@ class PolicyEnforcementEngine:
         name: str,
         rule_type: str,
         condition: dict,
-        action: Optional[dict] = None,
+        action: dict | None = None,
         severity: PolicyPriority = PolicyPriority.MEDIUM,
-        target_scope: Optional[list[str]] = None,
+        target_scope: list[str] | None = None,
     ) -> EnforcementRule:
         """Add an enforcement rule."""
         rule = EnforcementRule(
@@ -219,7 +217,7 @@ class PolicyEnforcementEngine:
         self,
         policy: Policy,
         target: dict,
-        context: Optional[dict] = None,
+        context: dict | None = None,
     ) -> EnforcementEvent:
         """Evaluate all rules in a policy against a target."""
         if policy.enforcement_mode == EnforcementMode.DISABLED:
@@ -276,7 +274,7 @@ class PolicyEnforcementEngine:
         self,
         policy: Policy,
         targets: list[dict],
-        context: Optional[dict] = None,
+        context: dict | None = None,
     ) -> list[EnforcementEvent]:
         """Evaluate a policy against multiple targets."""
         return [self.evaluate_policy(policy, target, context) for target in targets]
@@ -285,7 +283,7 @@ class PolicyEnforcementEngine:
         """Get all enforcement events for a policy."""
         return self._events.get(policy_id, [])
 
-    def get_open_findings(self, policy_id: Optional[str] = None) -> list[dict]:
+    def get_open_findings(self, policy_id: str | None = None) -> list[dict]:
         """Get all open findings, optionally filtered by policy."""
         findings: list[dict] = []
         events = self._events.get(policy_id, []) if policy_id else [e for events in self._events.values() for e in events]

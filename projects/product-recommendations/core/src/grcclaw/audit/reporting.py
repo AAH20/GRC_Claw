@@ -7,16 +7,13 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from .models import (
     AuditEngagement,
     AuditReport,
-    AuditStatus,
     ComplianceAssessment,
-    ComplianceFramework,
-    ControlStatus,
     Finding,
     FindingSeverity,
     FindingStatus,
@@ -50,9 +47,9 @@ class AuditReporter:
         audit: AuditEngagement,
         findings: list[Finding],
         workpapers: list[Workpaper],
-        controls: Optional[list] = None,
-        assessment: Optional[ComplianceAssessment] = None,
-        generated_by: Optional[str] = None,
+        controls: list | None = None,
+        assessment: ComplianceAssessment | None = None,
+        generated_by: str | None = None,
     ) -> AuditReport:
         """
         Generate a comprehensive audit report.
@@ -104,7 +101,7 @@ class AuditReporter:
     def _determine_opinion(
         self,
         findings: list[Finding],
-        assessment: Optional[ComplianceAssessment] = None,
+        assessment: ComplianceAssessment | None = None,
     ) -> OverallOpinion:
         """Determine the overall audit opinion."""
         critical_count = sum(1 for f in findings if f.severity == FindingSeverity.CRITICAL)
@@ -135,7 +132,7 @@ class AuditReporter:
         audit: AuditEngagement,
         findings: list[Finding],
         opinion: OverallOpinion,
-        assessment: Optional[ComplianceAssessment] = None,
+        assessment: ComplianceAssessment | None = None,
     ) -> str:
         """Build the executive summary text."""
         parts = [
@@ -199,7 +196,7 @@ class AuditReporter:
         self,
         findings: list[Finding],
         opinion: OverallOpinion,
-        assessment: Optional[ComplianceAssessment] = None,
+        assessment: ComplianceAssessment | None = None,
     ) -> str:
         """Build the basis for the overall opinion."""
         parts = [f"The overall opinion of {opinion.value} is based on the following:\n\n"]
@@ -270,7 +267,7 @@ class AuditReporter:
     # Report retrieval
     # ------------------------------------------------------------------
 
-    def get_report(self, report_id: str) -> Optional[AuditReport]:
+    def get_report(self, report_id: str) -> AuditReport | None:
         """Get a report by ID."""
         return self._reports.get(report_id)
 
@@ -303,7 +300,7 @@ class AuditReporter:
             f"{report.methodology}\n\n",
             "---\n\n",
             "## Findings Summary\n\n",
-            f"| Severity | Count |\n|----------|-------|\n",
+            "| Severity | Count |\n|----------|-------|\n",
             f"| Critical | {report.critical_findings} |\n",
             f"| High | {report.high_findings} |\n",
             f"| Medium | {report.medium_findings} |\n",
@@ -435,7 +432,7 @@ class AuditReporter:
 
     def add_management_response(
         self, report_id: str, response: str
-    ) -> Optional[AuditReport]:
+    ) -> AuditReport | None:
         """Add a management response to a report."""
         report = self._reports.get(report_id)
         if not report:
@@ -466,7 +463,7 @@ class AuditReporter:
         ]
         overdue_findings = [
             f for f in open_findings
-            if f.due_date and datetime.fromisoformat(f.due_date) < datetime.now(timezone.utc)
+            if f.due_date and datetime.fromisoformat(f.due_date) < datetime.now(UTC)
         ]
 
         return {
@@ -483,5 +480,5 @@ class AuditReporter:
             "start_date": assessment.start_date,
             "end_date": assessment.end_date,
             "assessor": assessment.assessor,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }

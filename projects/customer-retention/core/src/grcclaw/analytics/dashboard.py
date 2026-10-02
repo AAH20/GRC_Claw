@@ -8,23 +8,15 @@ and drill-through capability.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
+from .engine import AnalyticsEngine
 from .models import (
     DashboardLayer,
-    KPISummary,
+    MetricCategory,
     MetricSnapshot,
     RAGStatus,
-    MetricCategory,
-)
-from .engine import AnalyticsEngine
-from .metrics_registry import (
-    get_executive_metrics,
-    get_program_metrics,
-    get_operating_metrics,
-    get_metrics_by_layer,
-    get_metrics_by_category,
 )
 
 
@@ -149,7 +141,7 @@ class ExecutiveDashboard:
             "layer": self.layer.value,
             "title": "Executive Dashboard",
             "period": period,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "kpi_summary": kpi.to_dict(),
             "widgets": [w.to_dict() for w in self.widgets],
         }
@@ -175,7 +167,7 @@ class ExecutiveDashboard:
             })
         return sorted(result, key=lambda x: x["score"], reverse=True)
 
-    def _metric_to_framework(self, metric_id: str) -> Optional[str]:
+    def _metric_to_framework(self, metric_id: str) -> str | None:
         """Map a metric ID to its primary framework."""
         mapping = {
             "UC1-001": "ISO 42001", "UC1-002": "NIST AI RMF", "UC1-003": "NIST AI RMF",
@@ -301,7 +293,7 @@ class ProgramDashboard:
             "layer": self.layer.value,
             "title": "Program Dashboard",
             "period": period,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "kpi_summary": kpi.to_dict(),
             "widgets": [w.to_dict() for w in self.widgets],
         }
@@ -473,7 +465,7 @@ class OperatingDashboard:
             "layer": self.layer.value,
             "title": "Operating Dashboard",
             "period": period,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "kpi_summary": kpi.to_dict(),
             "widgets": [w.to_dict() for w in self.widgets],
         }
@@ -514,7 +506,7 @@ class DashboardManager:
     Manages all three dashboard layers and provides unified access.
     """
 
-    def __init__(self, engine: Optional[AnalyticsEngine] = None):
+    def __init__(self, engine: AnalyticsEngine | None = None):
         self.engine = engine or AnalyticsEngine()
         self.executive = ExecutiveDashboard(self.engine)
         self.program = ProgramDashboard(self.engine)

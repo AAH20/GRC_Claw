@@ -11,18 +11,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from .engine import WorkflowEngine
 from .schema import (
-    StepStatus,
     StepType,
     WorkflowDefinition,
     WorkflowRun,
     WorkflowStatus,
-    StepResult,
-    TriggerType,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,7 +28,7 @@ logger = logging.getLogger(__name__)
 class WorkflowExecutor:
     """High-level workflow executor with GRC-specific integrations."""
 
-    def __init__(self, engine: Optional[WorkflowEngine] = None):
+    def __init__(self, engine: WorkflowEngine | None = None):
         self.engine = engine or WorkflowEngine()
         self._agent_handlers: dict[str, Callable] = {}
         self._tool_handlers: dict[str, Callable] = {}
@@ -52,10 +49,10 @@ class WorkflowExecutor:
     async def execute(
         self,
         workflow: WorkflowDefinition,
-        parameters: Optional[dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         triggered_by: str = "",
         wait: bool = True,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> WorkflowRun:
         if workflow.status != WorkflowStatus.ACTIVE:
             workflow.status = WorkflowStatus.ACTIVE
@@ -124,7 +121,7 @@ class WorkflowExecutor:
         try:
             result = await asyncio.wait_for(future, timeout=timeout)
             return bool(result)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
         finally:
             self._approval_callbacks.pop(key, None)
@@ -137,7 +134,7 @@ class WorkflowExecutor:
             return True
         return False
 
-    async def get_run_status(self, run_id: str) -> Optional[dict[str, Any]]:
+    async def get_run_status(self, run_id: str) -> dict[str, Any] | None:
         run = await self.engine.get_run(run_id)
         if run is None:
             return None
@@ -165,7 +162,7 @@ class WorkflowExecutor:
     async def cancel(self, run_id: str) -> bool:
         return await self.engine.cancel_run(run_id)
 
-    async def wait(self, run_id: str, timeout: Optional[float] = None) -> WorkflowRun:
+    async def wait(self, run_id: str, timeout: float | None = None) -> WorkflowRun:
         await self._wait_for_completion(run_id, timeout=timeout)
         run = await self.engine.get_run(run_id)
         if run is None:
@@ -208,7 +205,7 @@ class WorkflowExecutor:
     async def _wait_for_completion(
         self,
         run_id: str,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> None:
         start = time.monotonic()
         while True:
@@ -228,7 +225,7 @@ class WorkflowExecutor:
     async def execute_batch(
         self,
         workflows: list[WorkflowDefinition],
-        parameters: Optional[dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         triggered_by: str = "",
         max_concurrent: int = 5,
     ) -> list[WorkflowRun]:
@@ -262,7 +259,7 @@ class WorkflowExecutor:
     async def execute_chain(
         self,
         workflows: list[WorkflowDefinition],
-        parameters: Optional[dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         triggered_by: str = "",
         pass_context: bool = True,
     ) -> list[WorkflowRun]:

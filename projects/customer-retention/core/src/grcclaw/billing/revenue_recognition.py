@@ -8,16 +8,12 @@ milestone-based, and usage-based recognition.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-from typing import Optional
 import calendar
+from datetime import datetime
 
 from .models import (
-    BillingCycle,
-    Invoice,
     RevenueRecognitionEntry,
     RevenueRecognitionMethod,
-    PaymentStatus,
 )
 
 
@@ -44,8 +40,8 @@ class RevenueRecognitionEngine:
         performance_obligation: str,
         recognition_start: str,
         recognition_end: str,
-        invoice_id: Optional[str] = None,
-        billing_cycle_id: Optional[str] = None,
+        invoice_id: str | None = None,
+        billing_cycle_id: str | None = None,
         currency: str = "USD",
     ) -> RevenueRecognitionEntry:
         """
@@ -146,7 +142,7 @@ class RevenueRecognitionEngine:
             "by_tenant": by_tenant,
         }
 
-    def get_entry(self, entry_id: str) -> Optional[RevenueRecognitionEntry]:
+    def get_entry(self, entry_id: str) -> RevenueRecognitionEntry | None:
         """Get a recognition entry by ID."""
         for e in self._entries:
             if e.entry_id == entry_id:
@@ -155,9 +151,9 @@ class RevenueRecognitionEngine:
 
     def get_entries(
         self,
-        tenant_id: Optional[str] = None,
-        invoice_id: Optional[str] = None,
-        method: Optional[RevenueRecognitionMethod] = None,
+        tenant_id: str | None = None,
+        invoice_id: str | None = None,
+        method: RevenueRecognitionMethod | None = None,
         active_only: bool = False,
     ) -> list[RevenueRecognitionEntry]:
         """Query recognition entries with filters."""
@@ -211,8 +207,7 @@ class RevenueRecognitionEngine:
 
             for i in range(months):
                 month_end = self._add_months(start, i + 1)
-                if month_end > end:
-                    month_end = end
+                month_end = min(month_end, end)
 
                 amount = monthly_amount
                 if i == months - 1:
@@ -237,7 +232,7 @@ class RevenueRecognitionEngine:
 
         return schedule
 
-    def get_deferred_revenue(self, tenant_id: Optional[str] = None) -> dict:
+    def get_deferred_revenue(self, tenant_id: str | None = None) -> dict:
         """
         Get deferred revenue (unrecognized) balance.
 
@@ -274,7 +269,7 @@ class RevenueRecognitionEngine:
         self,
         period_start: str,
         period_end: str,
-        tenant_id: Optional[str] = None,
+        tenant_id: str | None = None,
     ) -> dict:
         """
         Generate a revenue recognition report for a period.

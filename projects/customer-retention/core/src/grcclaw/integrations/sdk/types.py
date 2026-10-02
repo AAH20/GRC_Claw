@@ -5,9 +5,9 @@ Common type definitions for the connector SDK.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
-from datetime import datetime, timezone
+from typing import Any
 
 
 class ConnectorCapability(str, Enum):
@@ -65,8 +65,8 @@ class RequestContext:
     timeout_seconds: float = 30.0
     retry_count: int = 0
     max_retries: int = 3
-    idempotency_key: Optional[str] = None
-    correlation_id: str = field(default_factory=lambda: f"req_{datetime.now(timezone.utc).timestamp()}")
+    idempotency_key: str | None = None
+    correlation_id: str = field(default_factory=lambda: f"req_{datetime.now(UTC).timestamp()}")
 
 
 @dataclass
@@ -78,11 +78,11 @@ class ResponseContext:
     body: Any = None
     raw_content: bytes = b""
     latency_ms: float = 0.0
-    request: Optional[RequestContext] = None
+    request: RequestContext | None = None
     is_success: bool = False
     error_message: str = ""
-    retry_after_seconds: Optional[float] = None
-    rate_limit_remaining: Optional[int] = None
-    rate_limit_reset: Optional[datetime] = None
-    pagination_cursor: Optional[str] = None
+    retry_after_seconds: float | None = None
+    rate_limit_remaining: int | None = None
+    rate_limit_reset: datetime | None = None
+    pagination_cursor: str | None = None
     pagination_has_more: bool = False

@@ -15,17 +15,15 @@ import logging
 import threading
 import time
 import uuid
-from abc import ABC, abstractmethod
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .sdk.base import BaseConnector
 from .sdk.exceptions import ConnectorError
-from .sdk.types import ConnectorStatus
-from .transformation import TransformationResult
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +48,12 @@ class PipelineStep:
     connector: BaseConnector
     operation: str  # method name to call on connector
     params: dict[str, Any] = field(default_factory=dict)
-    transform: Optional[Callable[[Any], Any]] = None
+    transform: Callable[[Any], Any] | None = None
     on_error: str = "fail"  # fail, skip, retry
     max_retries: int = 3
     retry_delay_seconds: float = 1.0
     timeout_seconds: float = 60.0
-    condition: Optional[Callable[[PipelineResult], bool]] = None
+    condition: Callable[[PipelineResult], bool] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -66,11 +64,11 @@ class PipelineResult:
     step_name: str
     success: bool
     data: Any = None
-    error: Optional[str] = None
-    error_type: Optional[str] = None
+    error: str | None = None
+    error_type: str | None = None
     duration_ms: float = 0.0
     attempts: int = 1
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
 
@@ -86,11 +84,11 @@ class PipelineExecutionResult:
     pipeline_id: str
     state: IntegrationState
     step_results: list[PipelineResult] = field(default_factory=list)
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    end_time: Optional[datetime] = None
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    end_time: datetime | None = None
     total_duration_ms: float = 0.0
     data: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -131,8 +129,8 @@ class IntegrationPipeline:
         parallel: bool = False,
         max_parallelism: int = 4,
         pipeline_timeout_seconds: float = 300.0,
-        on_step_complete: Optional[Callable[[PipelineResult], None]] = None,
-        on_step_error: Optional[Callable[[PipelineResult], None]] = None,
+        on_step_complete: Callable[[PipelineResult], None] | None = None,
+        on_step_error: Callable[[PipelineResult], None] | None = None,
         metadata: dict[str, Any] | None = None,
     ):
         self.name = name
@@ -176,7 +174,7 @@ class IntegrationPipeline:
         self._results = []
         self._data = initial_data
         start = time.monotonic()
-        start_dt = datetime.now(timezone.utc)
+        start_dt = datetime.now(UTC)
 
         logger.info("Pipeline '%s' started (id=%s, steps=%d)", self.name, pipeline_id, len(self.steps))
 
@@ -200,7 +198,7 @@ class IntegrationPipeline:
             error_msg = str(e)
             logger.exception("Pipeline '%s' failed with exception", self.name)
 
-        end_dt = datetime.now(timezone.utc)
+        end_dt = datetime.now(UTC)
         duration_ms = (time.monotonic() - start) * 1000
 
         result = PipelineExecutionResult(
@@ -274,9 +272,8 @@ class IntegrationPipeline:
                 if result.success:
                     if self.on_step_complete:
                         self.on_step_complete(result)
-                else:
-                    if self.on_step_error:
-                        self.on_step_error(result)
+                elif self.on_step_error:
+                    self.on_step_error(result)
 
     def _execute_step(self, step: PipelineStep, pipeline_id: str) -> PipelineResult:
         """Execute a single step with retry logic."""
@@ -368,7 +365,7 @@ class IntegrationPipeline:
                 return True
         return False
 
-    def get_step(self, name: str) -> Optional[PipelineStep]:
+    def get_step(self, name: str) -> PipelineStep | None:
         """Get a step by name."""
         for s in self.steps:
             if s.name == name:
@@ -398,8 +395,8 @@ class IntegrationOrchestrator:
         self._max_concurrent = max_concurrent_pipelines
         self._lock = threading.Lock()
         self._executor = ThreadPoolExecutor(max_workers=max_concurrent_pipelines)
-        self._on_pipeline_complete: Optional[Callable[[PipelineExecutionResult], None]] = None
-        self._on_pipeline_error: Optional[Callable[[PipelineExecutionResult], None]] = None
+        self._on_pipeline_complete: Callable[[PipelineExecutionResult], None] | None = None
+        self._on_pipeline_error: Callable[[PipelineExecutionResult], None] | None = None
 
     @property
     def pipelines(self) -> dict[str, IntegrationPipeline]:
@@ -412,7 +409,7 @@ class IntegrationOrchestrator:
     def register(
         self,
         pipeline: IntegrationPipeline,
-        depends_on: Optional[list[str]] = None,
+        depends_on: list[str] | None = None,
     ) -> None:
         """Register a pipeline with optional dependencies."""
         with self._lock:
@@ -430,7 +427,7 @@ class IntegrationOrchestrator:
                 return True
         return False
 
-    def get(self, name: str) -> Optional[IntegrationPipeline]:
+    def get(self, name: str) -> IntegrationPipeline | None:
         """Get a pipeline by name."""
         return self._pipelines.get(name)
 
@@ -543,7 +540,7 @@ class IntegrationOrchestrator:
 
     def get_history(
         self,
-        pipeline_name: Optional[str] = None,
+        pipeline_name: str | None = None,
         limit: int = 100,
     ) -> list[PipelineExecutionResult]:
         """Get execution history, optionally filtered by pipeline name."""
@@ -590,7 +587,7 @@ class IntegrationScheduler:
         self.orchestrator = orchestrator
         self._schedules: dict[str, dict[str, Any]] = {}
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
     def add_interval_schedule(
@@ -762,7 +759,7 @@ class IntegrationScheduler:
         """Calculate the next run time for a cron schedule."""
         # Simplified: just add 1 minute for wildcard patterns
         # A full cron parser would be more complex
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         next_run = now
 
         if minute != "*":

@@ -7,19 +7,18 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 
+from .channels import BaseChannel, EmailChannel, SlackChannel, TeamsChannel, WebhookChannel
 from .models import (
     ChannelConfig,
     DeliveryResult,
     Notification,
-    NotificationPriority,
     NotificationStatus,
-    NotificationType,
     RoutingRule,
 )
-from .channels import BaseChannel, EmailChannel, SlackChannel, TeamsChannel, WebhookChannel
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +64,7 @@ class NotificationEngine:
         """Remove a registered channel."""
         self._channels.pop(name, None)
 
-    def get_channel(self, name: str) -> Optional[BaseChannel]:
+    def get_channel(self, name: str) -> BaseChannel | None:
         """Get a registered channel by name."""
         return self._channels.get(name)
 
@@ -189,7 +188,7 @@ class NotificationEngine:
 
         # Update status based on results
         notification.status = self._compute_status(notification.delivery_results)
-        notification.delivered_at = datetime.now(timezone.utc).isoformat()
+        notification.delivered_at = datetime.now(UTC).isoformat()
 
         # Record in history
         self._record_notification(notification)

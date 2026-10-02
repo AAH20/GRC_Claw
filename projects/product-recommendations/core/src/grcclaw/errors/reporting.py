@@ -16,14 +16,13 @@ import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
-from .codes import ErrorCode, get_error_code
+from .codes import get_error_code
 from .taxonomy import (
     ErrorCategory,
-    ErrorClassification,
     ErrorSeverity,
     classify_error,
 )
@@ -365,19 +364,18 @@ class WebhookBackend(ErrorBackend):
 
         payload = {
             "events": [event.to_dict() for event in events],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                self.url,
-                json=payload,
-                headers=self.headers,
-            ) as resp:
-                if resp.status >= 400:
-                    raise RuntimeError(
-                        f"Webhook returned {resp.status}: {await resp.text()}"
-                    )
+        async with aiohttp.ClientSession() as session, session.post(
+            self.url,
+            json=payload,
+            headers=self.headers,
+        ) as resp:
+            if resp.status >= 400:
+                raise RuntimeError(
+                    f"Webhook returned {resp.status}: {await resp.text()}"
+                )
 
 
 class FileBackend(ErrorBackend):
@@ -391,8 +389,7 @@ class FileBackend(ErrorBackend):
 
         lines = [json.dumps(event.to_dict()) for event in events]
         with open(self.filepath, "a") as f:
-            for line in lines:
-                f.write(line + "\n")
+            f.writelines(line + "\n" for line in lines)
 
 
 class ErrorAnalytics:
@@ -455,7 +452,7 @@ class ErrorAnalytics:
             "threshold": rule.error_threshold,
             "time_window_seconds": rule.time_window_seconds,
             "triggering_event": event.to_dict(),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         self._alert_history.append(alert)
 

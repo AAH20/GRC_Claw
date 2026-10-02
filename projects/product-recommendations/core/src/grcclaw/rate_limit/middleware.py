@@ -7,17 +7,17 @@ multiple algorithms, tier-based limits, and endpoint-specific policies.
 
 from __future__ import annotations
 
-import time
 import logging
-from typing import Optional, Callable, Awaitable
+import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from .algorithms import RateLimiter, create_limiter, RateLimitResult
-from .config import RateLimitConfig, DEFAULT_ENDPOINT_LIMITS, DEFAULT_TIERS
+from .algorithms import RateLimiter, create_limiter
+from .config import DEFAULT_ENDPOINT_LIMITS, DEFAULT_TIERS, RateLimitConfig
 from .exceptions import RateLimitExceeded
 from .models import RateLimitAlgorithm, RateLimitStatus
 
@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 class RateLimitContext:
     """Context for rate limit evaluation."""
     identifier: str
-    tenant_id: Optional[str] = None
+    tenant_id: str | None = None
     tier: str = "free"
     endpoint: str = ""
     method: str = "GET"
     path: str = ""
-    api_key: Optional[str] = None
-    user_id: Optional[str] = None
+    api_key: str | None = None
+    user_id: str | None = None
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -57,11 +57,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        config: Optional[RateLimitConfig] = None,
-        limiter: Optional[RateLimiter] = None,
-        get_tier: Optional[Callable[[Request], str]] = None,
-        get_identifier: Optional[Callable[[Request], str]] = None,
-        skip_paths: Optional[list[str]] = None,
+        config: RateLimitConfig | None = None,
+        limiter: RateLimiter | None = None,
+        get_tier: Callable[[Request], str] | None = None,
+        get_identifier: Callable[[Request], str] | None = None,
+        skip_paths: list[str] | None = None,
     ):
         super().__init__(app)
         self.config = config or RateLimitConfig()
@@ -105,7 +105,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         return path in self.skip_paths
 
-    def _get_endpoint_config(self, method: str, path: str) -> Optional[RateLimitConfig]:
+    def _get_endpoint_config(self, method: str, path: str) -> RateLimitConfig | None:
         """Get endpoint-specific rate limit configuration."""
         key = f"{method} {path}"
         endpoint_conf = DEFAULT_ENDPOINT_LIMITS.get(key)
@@ -207,9 +207,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 async def rate_limit_dependency(
     request: Request,
-    identifier: Optional[str] = None,
+    identifier: str | None = None,
     tier: str = "free",
-    endpoint: Optional[str] = None,
+    endpoint: str | None = None,
 ) -> RateLimitStatus:
     """
     FastAPI dependency for route-level rate limiting.

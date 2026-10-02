@@ -8,8 +8,7 @@ dashboard layer assignments per the metrics specification.
 
 from __future__ import annotations
 
-from .models import MetricDefinition, MetricCategory, DashboardLayer
-
+from .models import DashboardLayer, MetricCategory, MetricDefinition
 
 # ─── UC-1: Asset Inventory & Coverage ────────────────────────────────────────
 

@@ -4,26 +4,20 @@ Dashboard templates — pre-built dashboard layouts for common GRC use cases.
 
 from __future__ import annotations
 
-from typing import Any, Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 from .models import (
+    ChartType,
     DashboardConfig,
     DashboardLayout,
     DashboardWidget,
-    WidgetType,
-    WidgetSize,
-    ChartType,
     DataSourceType,
     FilterCriteria,
-    TimeRange,
     MetricAggregation,
-    AlertLevel,
-    KPIWidget,
-    ChartWidget,
-    TableWidget,
-    AlertWidget,
-    TextWidget,
+    TimeRange,
+    WidgetSize,
+    WidgetType,
 )
 
 
@@ -40,8 +34,8 @@ class DashboardTemplate:
         category: str,
         layout: DashboardLayout,
         widget_configs: list[dict[str, Any]],
-        default_filters: Optional[list[FilterCriteria]] = None,
-        tags: Optional[list[str]] = None,
+        default_filters: list[FilterCriteria] | None = None,
+        tags: list[str] | None = None,
         author: str = "",
         version: str = "1.0.0",
     ):
@@ -57,8 +51,8 @@ class DashboardTemplate:
 
     def instantiate(
         self,
-        name: Optional[str] = None,
-        custom_filters: Optional[list[FilterCriteria]] = None,
+        name: str | None = None,
+        custom_filters: list[FilterCriteria] | None = None,
         **overrides: Any,
     ) -> DashboardConfig:
         """Create a dashboard configuration from this template."""
@@ -147,14 +141,14 @@ class TemplateLibrary:
         """Register a template in the library."""
         self._templates[template.name] = template
 
-    def get(self, name: str) -> Optional[DashboardTemplate]:
+    def get(self, name: str) -> DashboardTemplate | None:
         """Retrieve a template by name."""
         return self._templates.get(name)
 
     def list_templates(
         self,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
+        category: str | None = None,
+        tag: str | None = None,
     ) -> list[DashboardTemplate]:
         """List available templates with optional filtering."""
         results = list(self._templates.values())
@@ -717,21 +711,21 @@ class TemplateRegistry:
     def register(
         self,
         template: DashboardTemplate,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Register a template with optional metadata."""
         self._templates[template.name] = template
         self._metadata[template.name] = metadata or {
-            "registered_at": datetime.now(timezone.utc).isoformat(),
+            "registered_at": datetime.now(UTC).isoformat(),
             "version": template.version,
             "author": template.author,
         }
 
-    def get(self, name: str) -> Optional[DashboardTemplate]:
+    def get(self, name: str) -> DashboardTemplate | None:
         """Retrieve a template by name."""
         return self._templates.get(name)
 
-    def get_metadata(self, name: str) -> Optional[dict[str, Any]]:
+    def get_metadata(self, name: str) -> dict[str, Any] | None:
         """Retrieve metadata for a template."""
         return self._metadata.get(name)
 

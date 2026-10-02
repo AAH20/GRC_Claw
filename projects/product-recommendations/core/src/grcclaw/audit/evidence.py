@@ -7,17 +7,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import shutil
 import sqlite3
 import threading
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Optional, Union
+from typing import Any, BinaryIO
 
 from .models import (
-    Actor,
     ChainOfCustodyStatus,
     Evidence,
     EvidenceStatus,
@@ -41,8 +38,8 @@ class EvidenceManager:
 
     def __init__(
         self,
-        storage_path: Optional[str] = None,
-        file_storage_path: Optional[str] = None,
+        storage_path: str | None = None,
+        file_storage_path: str | None = None,
     ):
         self._lock = threading.RLock()
         self._evidence: dict[str, Evidence] = {}
@@ -58,7 +55,7 @@ class EvidenceManager:
             self._init_storage()
         else:
             self._storage_path = None
-            self._conn: Optional[sqlite3.Connection] = None
+            self._conn: sqlite3.Connection | None = None
 
         # File storage for evidence binaries
         if file_storage_path:
@@ -194,18 +191,18 @@ class EvidenceManager:
         self,
         title: str,
         evidence_type: EvidenceType,
-        description: Optional[str] = None,
-        source: Optional[str] = None,
-        collector: Optional[str] = None,
-        retention_period_days: Optional[int] = None,
-        tags: Optional[list[str]] = None,
-        control_ids: Optional[list[str]] = None,
-        finding_ids: Optional[list[str]] = None,
-        audit_ids: Optional[list[str]] = None,
+        description: str | None = None,
+        source: str | None = None,
+        collector: str | None = None,
+        retention_period_days: int | None = None,
+        tags: list[str] | None = None,
+        control_ids: list[str] | None = None,
+        finding_ids: list[str] | None = None,
+        audit_ids: list[str] | None = None,
     ) -> Evidence:
         """Register a new evidence item (without file upload)."""
         with self._lock:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             ev = Evidence(
                 title=title,
                 evidence_type=evidence_type,
@@ -239,16 +236,16 @@ class EvidenceManager:
         self,
         title: str,
         evidence_type: EvidenceType,
-        file_data: Union[bytes, BinaryIO, str, Path],
-        description: Optional[str] = None,
-        source: Optional[str] = None,
-        collector: Optional[str] = None,
-        mime_type: Optional[str] = None,
-        retention_period_days: Optional[int] = None,
-        tags: Optional[list[str]] = None,
-        control_ids: Optional[list[str]] = None,
-        finding_ids: Optional[list[str]] = None,
-        audit_ids: Optional[list[str]] = None,
+        file_data: bytes | BinaryIO | str | Path,
+        description: str | None = None,
+        source: str | None = None,
+        collector: str | None = None,
+        mime_type: str | None = None,
+        retention_period_days: int | None = None,
+        tags: list[str] | None = None,
+        control_ids: list[str] | None = None,
+        finding_ids: list[str] | None = None,
+        audit_ids: list[str] | None = None,
     ) -> Evidence:
         """
         Collect evidence with file data.
@@ -257,7 +254,7 @@ class EvidenceManager:
         and creates the evidence record with chain of custody.
         """
         with self._lock:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # Read file data
             if isinstance(file_data, (str, Path)):
@@ -328,22 +325,22 @@ class EvidenceManager:
     # Evidence retrieval
     # ------------------------------------------------------------------
 
-    def get_evidence(self, evidence_id: str) -> Optional[Evidence]:
+    def get_evidence(self, evidence_id: str) -> Evidence | None:
         """Get evidence by ID."""
         return self._evidence.get(evidence_id)
 
     def list_evidence(
         self,
-        evidence_type: Optional[EvidenceType] = None,
-        status: Optional[EvidenceStatus] = None,
-        control_id: Optional[str] = None,
-        finding_id: Optional[str] = None,
-        audit_id: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        evidence_type: EvidenceType | None = None,
+        status: EvidenceStatus | None = None,
+        control_id: str | None = None,
+        finding_id: str | None = None,
+        audit_id: str | None = None,
+        tags: list[str] | None = None,
     ) -> list[Evidence]:
         """List evidence with optional filters."""
         # Use indexes for the most selective filter
-        candidate_ids: Optional[set[str]] = None
+        candidate_ids: set[str] | None = None
 
         if control_id and control_id in self._index_by_control:
             candidate_ids = set(self._index_by_control[control_id])
@@ -380,7 +377,7 @@ class EvidenceManager:
 
         return evidence_list
 
-    def get_evidence_file(self, evidence_id: str) -> Optional[bytes]:
+    def get_evidence_file(self, evidence_id: str) -> bytes | None:
         """Retrieve the file content of an evidence item."""
         ev = self._evidence.get(evidence_id)
         if not ev or not ev.storage_location:
@@ -421,8 +418,8 @@ class EvidenceManager:
         evidence_id: str,
         new_status: EvidenceStatus,
         actor: str,
-        notes: Optional[str] = None,
-    ) -> Optional[Evidence]:
+        notes: str | None = None,
+    ) -> Evidence | None:
         """Update evidence status with chain of custody entry."""
         with self._lock:
             ev = self._evidence.get(evidence_id)
@@ -431,7 +428,7 @@ class EvidenceManager:
 
             old_status = ev.status
             ev.status = new_status
-            ev.updated_at = datetime.now(timezone.utc).isoformat()
+            ev.updated_at = datetime.now(UTC).isoformat()
 
             # Add chain of custody entry
             ev.chain_of_custody.append({
@@ -452,8 +449,8 @@ class EvidenceManager:
         evidence_id: str,
         reviewer: str,
         accepted: bool,
-        notes: Optional[str] = None,
-    ) -> Optional[Evidence]:
+        notes: str | None = None,
+    ) -> Evidence | None:
         """Review evidence and accept or reject it."""
         new_status = EvidenceStatus.ACCEPTED if accepted else EvidenceStatus.REJECTED
         return self.update_evidence_status(evidence_id, new_status, reviewer, notes)
@@ -463,15 +460,15 @@ class EvidenceManager:
         evidence_id: str,
         from_actor: str,
         to_actor: str,
-        reason: Optional[str] = None,
-    ) -> Optional[Evidence]:
+        reason: str | None = None,
+    ) -> Evidence | None:
         """Transfer evidence custody."""
         with self._lock:
             ev = self._evidence.get(evidence_id)
             if not ev:
                 return None
 
-            ev.updated_at = datetime.now(timezone.utc).isoformat()
+            ev.updated_at = datetime.now(UTC).isoformat()
             ev.chain_of_custody.append({
                 "action": "custody_transfer",
                 "from": from_actor,
@@ -488,8 +485,8 @@ class EvidenceManager:
         self,
         evidence_id: str,
         accessor: str,
-        purpose: Optional[str] = None,
-    ) -> Optional[Evidence]:
+        purpose: str | None = None,
+    ) -> Evidence | None:
         """Record an evidence access event."""
         with self._lock:
             ev = self._evidence.get(evidence_id)
@@ -499,7 +496,7 @@ class EvidenceManager:
             ev.chain_of_custody.append({
                 "action": "accessed",
                 "actor": accessor,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "status": ChainOfCustodyStatus.ACCESSED.value,
                 "purpose": purpose,
             })
@@ -511,8 +508,8 @@ class EvidenceManager:
         self,
         evidence_id: str,
         disposer: str,
-        reason: Optional[str] = None,
-    ) -> Optional[Evidence]:
+        reason: str | None = None,
+    ) -> Evidence | None:
         """Dispose of evidence (retain record, remove file)."""
         with self._lock:
             ev = self._evidence.get(evidence_id)
@@ -528,7 +525,7 @@ class EvidenceManager:
                 ev.storage_location = None
 
             ev.status = EvidenceStatus.EXPIRED
-            ev.updated_at = datetime.now(timezone.utc).isoformat()
+            ev.updated_at = datetime.now(UTC).isoformat()
             ev.chain_of_custody.append({
                 "action": "disposed",
                 "actor": disposer,
@@ -552,7 +549,7 @@ class EvidenceManager:
                 return False
             if control_id not in ev.control_ids:
                 ev.control_ids.append(control_id)
-                ev.updated_at = datetime.now(timezone.utc).isoformat()
+                ev.updated_at = datetime.now(UTC).isoformat()
                 self._persist_evidence(ev)
             return True
 
@@ -564,7 +561,7 @@ class EvidenceManager:
                 return False
             if finding_id not in ev.finding_ids:
                 ev.finding_ids.append(finding_id)
-                ev.updated_at = datetime.now(timezone.utc).isoformat()
+                ev.updated_at = datetime.now(UTC).isoformat()
                 self._persist_evidence(ev)
             return True
 
@@ -576,7 +573,7 @@ class EvidenceManager:
                 return False
             if audit_id not in ev.audit_ids:
                 ev.audit_ids.append(audit_id)
-                ev.updated_at = datetime.now(timezone.utc).isoformat()
+                ev.updated_at = datetime.now(UTC).isoformat()
                 self._persist_evidence(ev)
             return True
 
@@ -586,7 +583,7 @@ class EvidenceManager:
 
     def get_expired_evidence(self) -> list[Evidence]:
         """Get all expired evidence."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expired = []
         for ev in self._evidence.values():
             if ev.expiry_date:

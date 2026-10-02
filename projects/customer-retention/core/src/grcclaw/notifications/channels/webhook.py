@@ -11,8 +11,8 @@ import json
 import time
 from typing import Any
 
-from .base import BaseChannel
 from ..models import ChannelConfig, DeliveryResult, Notification
+from .base import BaseChannel
 
 
 class WebhookChannel(BaseChannel):

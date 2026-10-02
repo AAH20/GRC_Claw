@@ -8,14 +8,13 @@ beyond what JSON Schema can express.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .exceptions import ValidationError
-from .schema import CONFIG_SCHEMA, get_schema, load_schema_from_file
-from .types import Config, Environment
+from .schema import get_schema, load_schema_from_file
+from .types import Config
 
 
 @dataclass
@@ -70,9 +69,9 @@ class ConfigValidator:
 
     def __init__(
         self,
-        schema: Optional[dict[str, Any]] = None,
-        schema_path: Optional[str | Path] = None,
-        custom_rules: Optional[list] = None,
+        schema: dict[str, Any] | None = None,
+        schema_path: str | Path | None = None,
+        custom_rules: list | None = None,
     ):
         """Initialize the validator.
 
@@ -88,7 +87,7 @@ class ConfigValidator:
         else:
             self._schema = get_schema()
         self._custom_rules = custom_rules or []
-        self._json_schema_validator: Optional[Any] = None
+        self._json_schema_validator: Any | None = None
 
     @property
     def schema(self) -> dict[str, Any]:

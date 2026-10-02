@@ -8,12 +8,11 @@ Codes are organized by category for discoverability.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from .taxonomy import (
     ErrorCategory,
-    ErrorClassification,
     ErrorRecoverability,
     ErrorScope,
     ErrorSeverity,

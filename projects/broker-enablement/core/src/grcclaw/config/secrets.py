@@ -21,12 +21,11 @@ import json
 import os
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .exceptions import SecretError
-
 
 # ─── Secret Reference Parsing ───────────────────────────────────────────────
 
@@ -40,7 +39,7 @@ class SecretReference:
     raw: str
     backend: str
     path: str
-    key: Optional[str] = None
+    key: str | None = None
 
     @classmethod
     def parse(cls, raw: str) -> SecretReference:
@@ -72,7 +71,7 @@ class SecretReference:
         backend, _, path = uri.partition("://")
 
         # Extract key from fragment or hash
-        key: Optional[str] = None
+        key: str | None = None
         if "#" in path:
             path, _, key = path.partition("#")
 
@@ -196,7 +195,7 @@ class FileSecretManager(SecretManager):
     Format: ``${secret:file:///path/to/secret_file}``
     """
 
-    def __init__(self, base_path: Optional[str | Path] = None):
+    def __init__(self, base_path: str | Path | None = None):
         self.base_path = Path(base_path) if base_path else None
 
     def resolve(self, ref: SecretReference) -> str:
@@ -238,9 +237,9 @@ class AWSSecretsManager(SecretManager):
 
     def __init__(
         self,
-        region: Optional[str] = None,
-        access_key_id: Optional[str] = None,
-        secret_access_key: Optional[str] = None,
+        region: str | None = None,
+        access_key_id: str | None = None,
+        secret_access_key: str | None = None,
     ):
         self.region = region or os.environ.get("AWS_REGION", "us-east-1")
         self.access_key_id = access_key_id
@@ -326,9 +325,9 @@ class HashiCorpVaultManager(SecretManager):
 
     def __init__(
         self,
-        url: Optional[str] = None,
-        token: Optional[str] = None,
-        role: Optional[str] = None,
+        url: str | None = None,
+        token: str | None = None,
+        role: str | None = None,
         mount_point: str = "secret",
     ):
         self.url = url or os.environ.get("VAULT_ADDR", "http://localhost:8200")
@@ -420,10 +419,10 @@ class AzureKeyVaultManager(SecretManager):
 
     def __init__(
         self,
-        vault_url: Optional[str] = None,
-        tenant_id: Optional[str] = None,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
+        vault_url: str | None = None,
+        tenant_id: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
     ):
         self.vault_url = vault_url or os.environ.get("AZURE_KEY_VAULT_URL")
         self.tenant_id = tenant_id or os.environ.get("AZURE_TENANT_ID")
@@ -501,7 +500,7 @@ class CompositeSecretManager(SecretManager):
     falling back from a cloud provider to environment variables.
     """
 
-    def __init__(self, managers: Optional[list[SecretManager]] = None):
+    def __init__(self, managers: list[SecretManager] | None = None):
         self.managers: list[SecretManager] = managers or []
 
     def add_manager(self, manager: SecretManager) -> None:

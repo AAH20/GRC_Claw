@@ -9,13 +9,10 @@ and description.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from .schema import CONFIG_SCHEMA, get_schema
-from .types import Config
-
+from .schema import get_schema
 
 # ─── Documentation Generator ───────────────────────────────────────────────
 
@@ -23,7 +20,7 @@ from .types import Config
 class ConfigDocsGenerator:
     """Generates Markdown documentation for GRC_Claw configuration."""
 
-    def __init__(self, schema: Optional[dict[str, Any]] = None):
+    def __init__(self, schema: dict[str, Any] | None = None):
         """Initialize the generator.
 
         Args:
@@ -276,7 +273,7 @@ The first backend that can resolve the reference wins.
 # ─── Quick Access ──────────────────────────────────────────────────────────
 
 
-def generate_config_docs(output_path: Optional[str | Path] = None) -> str:
+def generate_config_docs(output_path: str | Path | None = None) -> str:
     """Generate configuration documentation.
 
     Args:

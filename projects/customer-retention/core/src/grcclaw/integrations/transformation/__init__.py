@@ -8,9 +8,10 @@ import json
 import logging
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
 from datetime import datetime, timezone
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -240,8 +241,8 @@ class TransformationRule:
 
     source_path: str
     target_path: str
-    transform: Optional[Callable] = None
-    condition: Optional[Callable] = None
+    transform: Callable | None = None
+    condition: Callable | None = None
     default_value: Any = None
     required: bool = False
 
@@ -420,7 +421,7 @@ class FieldTransformerRegistry:
         """Register a transformer."""
         self._transformers[name] = transformer
 
-    def get(self, name: str) -> Optional[Callable]:
+    def get(self, name: str) -> Callable | None:
         """Get a transformer by name."""
         return self._transformers.get(name)
 

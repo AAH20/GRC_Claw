@@ -9,23 +9,18 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from .models import (
+    AuditAnalytics,
     AuditEngagement,
     AuditEvent,
-    AuditEventSeverity,
-    AuditEventType,
     AuditStatus,
-    AuditAnalytics,
     ComplianceAssessment,
     ComplianceControl,
-    ComplianceFramework,
     ControlStatus,
     Evidence,
-    EvidenceStatus,
-    EvidenceType,
     Finding,
     FindingSeverity,
     FindingStatus,
@@ -48,7 +43,7 @@ class AuditAnalyticsEngine:
 
     def __init__(self):
         self._cache: dict[str, Any] = {}
-        self._cache_timestamp: Optional[datetime] = None
+        self._cache_timestamp: datetime | None = None
 
     # ------------------------------------------------------------------
     # Core analytics
@@ -62,8 +57,8 @@ class AuditAnalyticsEngine:
         evidence: list[Evidence],
         controls: list[ComplianceControl],
         assessments: list[ComplianceAssessment],
-        period_start: Optional[str] = None,
-        period_end: Optional[str] = None,
+        period_start: str | None = None,
+        period_end: str | None = None,
     ) -> AuditAnalytics:
         """
         Compute comprehensive audit analytics.
@@ -103,7 +98,7 @@ class AuditAnalyticsEngine:
         analytics.findings_by_status = self._count_by_attr(findings, "status")
 
         # Overdue findings
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         analytics.overdue_findings = sum(
             1 for f in findings
             if f.status in (FindingStatus.OPEN, FindingStatus.IN_PROGRESS)
@@ -220,7 +215,7 @@ class AuditAnalyticsEngine:
         by_control: dict[str, int] = defaultdict(int)
         aging_buckets = {"0-30": 0, "31-60": 0, "61-90": 0, "90+": 0}
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for f in findings:
             by_severity[f.severity.value] += 1
             by_status[f.status.value] += 1
@@ -264,7 +259,7 @@ class AuditAnalyticsEngine:
             ),
         }
 
-    def _compute_mttr(self, findings: list[Finding]) -> Optional[float]:
+    def _compute_mttr(self, findings: list[Finding]) -> float | None:
         """Compute mean time to remediate in days."""
         remediated = []
         for f in findings:
@@ -517,7 +512,7 @@ class AuditAnalyticsEngine:
         evidence_coverage = self.analyze_evidence_coverage(evidence, controls)
 
         return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "summary": {
                 "total_events": analytics.total_events,
                 "total_audits": analytics.total_audits,

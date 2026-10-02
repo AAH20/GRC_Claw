@@ -4,12 +4,11 @@ Data models for the GRC_Claw audit and compliance tracking system.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Optional
-from datetime import datetime, timezone
 import uuid
-
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -208,10 +207,10 @@ class Actor:
 
     type: str  # user, system, agent, api, service
     id: str
-    name: Optional[str] = None
-    email: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    name: str | None = None
+    email: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
 
 
 @dataclass
@@ -220,8 +219,8 @@ class Resource:
 
     type: str  # control, policy, finding, evidence, report, etc.
     id: str
-    name: Optional[str] = None
-    parent_id: Optional[str] = None
+    name: str | None = None
+    parent_id: str | None = None
 
 
 @dataclass
@@ -233,13 +232,13 @@ class AuditEvent:
     severity: AuditEventSeverity = AuditEventSeverity.INFO
     actor: Actor = field(default_factory=lambda: Actor(type="system", id="system"))
     resource: Resource = field(default_factory=lambda: Resource(type="unknown", id="unknown"))
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     details: dict[str, Any] = field(default_factory=dict)
-    integrity_hash: Optional[str] = None
-    previous_event_hash: Optional[str] = None
-    correlation_id: Optional[str] = None
-    session_id: Optional[str] = None
-    tenant_id: Optional[str] = None
+    integrity_hash: str | None = None
+    previous_event_hash: str | None = None
+    correlation_id: str | None = None
+    session_id: str | None = None
+    tenant_id: str | None = None
 
     def __post_init__(self):
         if self.integrity_hash is None:
@@ -270,18 +269,18 @@ class ComplianceControl:
     description: str = ""
     control_type: ControlType = ControlType.PREVENTIVE
     status: ControlStatus = ControlStatus.NOT_ASSESSED
-    owner: Optional[str] = None
-    assessor: Optional[str] = None
-    assessment_date: Optional[str] = None
-    next_assessment_date: Optional[str] = None
+    owner: str | None = None
+    assessor: str | None = None
+    assessment_date: str | None = None
+    next_assessment_date: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
     finding_ids: list[str] = field(default_factory=list)
     risk_ids: list[str] = field(default_factory=list)
     compensating_controls: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -290,26 +289,26 @@ class Finding:
     """An audit finding."""
 
     finding_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
-    audit_id: Optional[str] = None
-    control_id: Optional[str] = None
+    audit_id: str | None = None
+    control_id: str | None = None
     severity: FindingSeverity = FindingSeverity.MEDIUM
     status: FindingStatus = FindingStatus.OPEN
     title: str = ""
     description: str = ""
-    root_cause: Optional[str] = None
-    impact: Optional[str] = None
-    recommendation: Optional[str] = None
-    remediation: Optional[str] = None
-    remediation_owner: Optional[str] = None
-    due_date: Optional[str] = None
-    remediated_at: Optional[str] = None
-    verified_at: Optional[str] = None
-    verified_by: Optional[str] = None
+    root_cause: str | None = None
+    impact: str | None = None
+    recommendation: str | None = None
+    remediation: str | None = None
+    remediation_owner: str | None = None
+    due_date: str | None = None
+    remediated_at: str | None = None
+    verified_at: str | None = None
+    verified_by: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
     risk_ids: list[str] = field(default_factory=list)
     capa_ids: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -321,23 +320,23 @@ class Evidence:
     evidence_type: EvidenceType = EvidenceType.DOCUMENT
     status: EvidenceStatus = EvidenceStatus.PENDING
     title: str = ""
-    description: Optional[str] = None
-    source: Optional[str] = None
-    collector: Optional[str] = None
-    collection_date: Optional[str] = None
-    storage_location: Optional[str] = None
-    file_hash: Optional[str] = None
-    file_size_bytes: Optional[int] = None
-    mime_type: Optional[str] = None
-    retention_period_days: Optional[int] = None
-    expiry_date: Optional[str] = None
+    description: str | None = None
+    source: str | None = None
+    collector: str | None = None
+    collection_date: str | None = None
+    storage_location: str | None = None
+    file_hash: str | None = None
+    file_size_bytes: int | None = None
+    mime_type: str | None = None
+    retention_period_days: int | None = None
+    expiry_date: str | None = None
     control_ids: list[str] = field(default_factory=list)
     finding_ids: list[str] = field(default_factory=list)
     audit_ids: list[str] = field(default_factory=list)
     chain_of_custody: list[dict[str, Any]] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -349,24 +348,24 @@ class AuditEngagement:
     name: str = ""
     audit_type: AuditType = AuditType.INTERNAL
     status: AuditStatus = AuditStatus.PLANNING
-    framework: Optional[ComplianceFramework] = None
+    framework: ComplianceFramework | None = None
     scope: list[str] = field(default_factory=list)
     objectives: list[str] = field(default_factory=list)
-    lead_auditor: Optional[str] = None
+    lead_auditor: str | None = None
     team: list[str] = field(default_factory=list)
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    fieldwork_start: Optional[str] = None
-    fieldwork_end: Optional[str] = None
-    report_date: Optional[str] = None
+    start_date: str | None = None
+    end_date: str | None = None
+    fieldwork_start: str | None = None
+    fieldwork_end: str | None = None
+    report_date: str | None = None
     control_ids: list[str] = field(default_factory=list)
     finding_ids: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
     workpaper_ids: list[str] = field(default_factory=list)
-    report_id: Optional[str] = None
-    overall_opinion: Optional[OverallOpinion] = None
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    report_id: str | None = None
+    overall_opinion: OverallOpinion | None = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -375,20 +374,20 @@ class Workpaper:
     """An audit workpaper."""
 
     workpaper_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
-    audit_id: Optional[str] = None
-    control_id: Optional[str] = None
+    audit_id: str | None = None
+    control_id: str | None = None
     title: str = ""
-    description: Optional[str] = None
-    procedure: Optional[str] = None
-    conclusion: Optional[str] = None  # satisfactory, needs_improvement, unsatisfactory
-    preparer: Optional[str] = None
-    reviewer: Optional[str] = None
-    preparation_date: Optional[str] = None
-    review_date: Optional[str] = None
+    description: str | None = None
+    procedure: str | None = None
+    conclusion: str | None = None  # satisfactory, needs_improvement, unsatisfactory
+    preparer: str | None = None
+    reviewer: str | None = None
+    preparation_date: str | None = None
+    review_date: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
     finding_ids: list[str] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -397,21 +396,21 @@ class CAPA:
     """Corrective and Preventive Action."""
 
     capa_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
-    finding_id: Optional[str] = None
+    finding_id: str | None = None
     capa_type: CAPAType = CAPAType.CORRECTIVE
     status: CAPAStatus = CAPAStatus.OPEN
     title: str = ""
     description: str = ""
-    root_cause: Optional[str] = None
-    action_plan: Optional[str] = None
-    owner: Optional[str] = None
-    due_date: Optional[str] = None
-    completed_at: Optional[str] = None
-    verified_at: Optional[str] = None
-    verified_by: Optional[str] = None
-    effectiveness_review: Optional[str] = None
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    root_cause: str | None = None
+    action_plan: str | None = None
+    owner: str | None = None
+    due_date: str | None = None
+    completed_at: str | None = None
+    verified_at: str | None = None
+    verified_by: str | None = None
+    effectiveness_review: str | None = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -420,11 +419,11 @@ class AuditReport:
     """Generated audit report."""
 
     report_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
-    audit_id: Optional[str] = None
+    audit_id: str | None = None
     title: str = ""
-    executive_summary: Optional[str] = None
-    scope_and_objectives: Optional[str] = None
-    methodology: Optional[str] = None
+    executive_summary: str | None = None
+    scope_and_objectives: str | None = None
+    methodology: str | None = None
     total_findings: int = 0
     critical_findings: int = 0
     high_findings: int = 0
@@ -433,12 +432,12 @@ class AuditReport:
     informational_findings: int = 0
     open_findings: int = 0
     closed_findings: int = 0
-    overall_opinion: Optional[OverallOpinion] = None
-    opinion_basis: Optional[str] = None
+    overall_opinion: OverallOpinion | None = None
+    opinion_basis: str | None = None
     recommendations: list[str] = field(default_factory=list)
-    management_response: Optional[str] = None
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    generated_by: Optional[str] = None
+    management_response: str | None = None
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    generated_by: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -450,9 +449,9 @@ class ComplianceAssessment:
     framework: ComplianceFramework = ComplianceFramework.CUSTOM
     assessment_name: str = ""
     status: AuditStatus = AuditStatus.PLANNING
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    assessor: Optional[str] = None
+    start_date: str | None = None
+    end_date: str | None = None
+    assessor: str | None = None
     total_controls: int = 0
     compliant_controls: int = 0
     partially_compliant_controls: int = 0
@@ -462,9 +461,9 @@ class ComplianceAssessment:
     compliance_score: float = 0.0  # 0-100
     control_ids: list[str] = field(default_factory=list)
     finding_ids: list[str] = field(default_factory=list)
-    report_id: Optional[str] = None
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    report_id: str | None = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -472,8 +471,8 @@ class ComplianceAssessment:
 class AuditAnalytics:
     """Aggregated audit analytics."""
 
-    period_start: Optional[str] = None
-    period_end: Optional[str] = None
+    period_start: str | None = None
+    period_end: str | None = None
     total_events: int = 0
     events_by_type: dict[str, int] = field(default_factory=dict)
     events_by_severity: dict[str, int] = field(default_factory=dict)
@@ -492,7 +491,7 @@ class AuditAnalytics:
     total_controls: int = 0
     controls_by_status: dict[str, int] = field(default_factory=dict)
     compliance_score_avg: float = 0.0
-    mean_time_to_remediate_days: Optional[float] = None
+    mean_time_to_remediate_days: float | None = None
     findings_trend: list[dict[str, Any]] = field(default_factory=dict)
     top_risk_areas: list[dict[str, Any]] = field(default_factory=list)
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())

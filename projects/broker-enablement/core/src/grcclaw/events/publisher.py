@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections import defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Callable, Coroutine, Optional
 import uuid
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 from .schema import (
     Event,
@@ -50,7 +51,7 @@ class PublishResult:
     delivered_count: int = 0
     failed_count: int = 0
     errors: list[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     @property
     def all_delivered(self) -> bool:
@@ -69,7 +70,7 @@ class EventPublisher:
 
     def __init__(
         self,
-        schema_registry: Optional[EventSchemaRegistry] = None,
+        schema_registry: EventSchemaRegistry | None = None,
         delivery_guarantee: DeliveryGuarantee = DeliveryGuarantee.AT_LEAST_ONCE,
     ) -> None:
         self._registry = schema_registry or create_default_registry()
@@ -78,7 +79,7 @@ class EventPublisher:
         self._category_subscribers: dict[EventCategory, list[Callable]] = defaultdict(list)
         self._global_subscribers: list[Callable] = []
         self._middleware: list[Callable] = []
-        self._event_store: Optional[Any] = None
+        self._event_store: Any | None = None
         self._published_count: int = 0
         self._failed_count: int = 0
 
@@ -216,7 +217,7 @@ class EventPublisher:
             event.error = "; ".join(result.errors)
         else:
             event.status = EventStatus.PROCESSED
-            event.processed_at = datetime.now(timezone.utc).isoformat()
+            event.processed_at = datetime.now(UTC).isoformat()
 
         self._published_count += 1
         return result
@@ -233,12 +234,12 @@ class EventPublisher:
         category: EventCategory = EventCategory.CUSTOM,
         severity: EventSeverity = EventSeverity.INFO,
         source: str = "",
-        correlation_id: Optional[str] = None,
-        causation_id: Optional[str] = None,
-        trace_id: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        tenant_id: Optional[str] = None,
-        agent_id: Optional[str] = None,
+        correlation_id: str | None = None,
+        causation_id: str | None = None,
+        trace_id: str | None = None,
+        tags: list[str] | None = None,
+        tenant_id: str | None = None,
+        agent_id: str | None = None,
     ) -> Event:
         """Convenience method to create and return an Event (without publishing)."""
         return Event(
@@ -305,12 +306,12 @@ class EventBuilder:
         self._source = ""
         self._data: dict[str, Any] = {}
         self._metadata: dict[str, Any] = {}
-        self._correlation_id: Optional[str] = None
-        self._causation_id: Optional[str] = None
-        self._trace_id: Optional[str] = None
+        self._correlation_id: str | None = None
+        self._causation_id: str | None = None
+        self._trace_id: str | None = None
         self._tags: list[str] = []
-        self._tenant_id: Optional[str] = None
-        self._agent_id: Optional[str] = None
+        self._tenant_id: str | None = None
+        self._agent_id: str | None = None
 
     def with_category(self, category: EventCategory) -> EventBuilder:
         self._category = category

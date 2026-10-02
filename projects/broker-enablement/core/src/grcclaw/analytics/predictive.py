@@ -7,23 +7,19 @@ anomaly detection, and what-if scenario analysis.
 
 from __future__ import annotations
 
-import math
 import random
 import statistics
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
-from .models import (
-    MetricCategory,
-    MetricValue,
-    Prediction,
-    PredictiveModel,
-    ForecastMethod,
-    PredictionConfidence,
-    TrendDirection,
-)
 from .metrics_registry import get_metric
-from .trend_analysis import TrendAnalyzer, LinearRegression
+from .models import (
+    ForecastMethod,
+    MetricValue,
+    PredictionConfidence,
+    PredictiveModel,
+)
+from .trend_analysis import LinearRegression, TrendAnalyzer
 
 
 class MonteCarloSimulator:
@@ -195,7 +191,7 @@ class AnomalyDetector:
     def detect_trend_break(
         values: list[float],
         window: int = 5,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Detect if the recent trend breaks from historical pattern.
         """
@@ -235,7 +231,7 @@ class RiskPredictor:
         metric_id: str,
         values: list[MetricValue],
         forecast_periods: int = 3,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Predict risk level for a metric based on trend and thresholds.
         """
@@ -271,17 +267,16 @@ class RiskPredictor:
                 elif pred > metric_def.tier1_threshold and risk_level == "low":
                     risk_level = "medium"
                     breach_period = i + 1
-            else:  # gte
-                if pred < metric_def.tier3_threshold:
-                    risk_level = "critical"
-                    breach_period = i + 1
-                    break
-                elif pred < metric_def.tier2_threshold and risk_level != "critical":
-                    risk_level = "high"
-                    breach_period = i + 1
-                elif pred < metric_def.tier1_threshold and risk_level == "low":
-                    risk_level = "medium"
-                    breach_period = i + 1
+            elif pred < metric_def.tier3_threshold:
+                risk_level = "critical"
+                breach_period = i + 1
+                break
+            elif pred < metric_def.tier2_threshold and risk_level != "critical":
+                risk_level = "high"
+                breach_period = i + 1
+            elif pred < metric_def.tier1_threshold and risk_level == "low":
+                risk_level = "medium"
+                breach_period = i + 1
 
         return {
             "metric_id": metric_id,
@@ -391,7 +386,7 @@ class PredictiveAnalyticsEngine:
         values: list[MetricValue],
         method: ForecastMethod = ForecastMethod.LINEAR_REGRESSION,
         periods: int = 6,
-    ) -> Optional[PredictiveModel]:
+    ) -> PredictiveModel | None:
         """Generate a forecast for a metric."""
         return self.trend_analyzer.forecast(metric_id, values, method, periods)
 
@@ -409,7 +404,7 @@ class PredictiveAnalyticsEngine:
         self,
         metric_id: str,
         values: list[MetricValue],
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Predict risk level for a metric."""
         return self.risk_predictor.predict_risk_level(metric_id, values)
 
@@ -473,7 +468,7 @@ class PredictiveAnalyticsEngine:
             "metric_id": metric_id,
             "metric_name": metric_def.name,
             "category": metric_def.category.value,
-            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
+            "analysis_timestamp": datetime.now(UTC).isoformat(),
             "trend_analysis": trend.to_dict() if trend else None,
             "forecast": forecast.to_dict() if forecast else None,
             "anomalies_detected": len(anomalies),

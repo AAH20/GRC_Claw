@@ -59,7 +59,12 @@ async def create_campaign(request: CampaignCreateRequest) -> CampaignResponse:
         HTTPException: If campaign creation fails.
     """
     campaign_id = str(uuid.uuid4())
-    logger.info("Creating campaign", campaign_id=campaign_id, name=request.name, type=request.campaign_type)
+    logger.info(
+        "Creating campaign",
+        campaign_id=campaign_id,
+        name=request.name,
+        type=request.campaign_type,
+    )
 
     try:
         _campaigns[campaign_id] = {

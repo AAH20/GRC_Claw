@@ -7,18 +7,16 @@ Provides multi-step approval chains with delegation, escalation, and tracking.
 from __future__ import annotations
 
 import logging
-import uuid
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime
 
 from .models import (
-    Policy,
     ApprovalRecord,
-    ApprovalStep,
     ApprovalStatus,
-    PolicyStatus,
-    PolicyChange,
+    ApprovalStep,
     ChangeType,
+    Policy,
+    PolicyChange,
+    PolicyStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,7 +37,7 @@ class PolicyApprovalWorkflow:
         self,
         policy: Policy,
         approvers: list[str],
-        required_approvals: Optional[int] = None,
+        required_approvals: int | None = None,
     ) -> ApprovalRecord:
         """Configure an approval chain for a policy."""
         if not approvers:
@@ -104,19 +102,19 @@ class PolicyApprovalWorkflow:
 
         current_step.status = ApprovalStatus.APPROVED
         current_step.comments = comments
-        current_step.decided_at = datetime.now(timezone.utc).isoformat()
+        current_step.decided_at = datetime.now(UTC).isoformat()
 
         # Check if all steps are approved
         all_approved = all(s.status == ApprovalStatus.APPROVED for s in record.approval_chain)
         if all_approved:
             record.status = ApprovalStatus.APPROVED
-            record.decided_at = datetime.now(timezone.utc).isoformat()
+            record.decided_at = datetime.now(UTC).isoformat()
 
             # Update policy status
             policy = self._find_policy(record.policy_id)
             if policy:
                 policy.status = PolicyStatus.APPROVED
-                policy.updated_at = datetime.now(timezone.utc).isoformat()
+                policy.updated_at = datetime.now(UTC).isoformat()
                 change = PolicyChange(
                     change_type=ChangeType.UPDATED,
                     version_from=policy.metadata.version,
@@ -154,17 +152,17 @@ class PolicyApprovalWorkflow:
 
         current_step.status = ApprovalStatus.REJECTED
         current_step.comments = reason
-        current_step.decided_at = datetime.now(timezone.utc).isoformat()
+        current_step.decided_at = datetime.now(UTC).isoformat()
 
         record.status = ApprovalStatus.REJECTED
-        record.decided_at = datetime.now(timezone.utc).isoformat()
+        record.decided_at = datetime.now(UTC).isoformat()
         record.comments = reason
 
         # Update policy status
         policy = self._find_policy(record.policy_id)
         if policy:
             policy.status = PolicyStatus.DRAFT
-            policy.updated_at = datetime.now(timezone.utc).isoformat()
+            policy.updated_at = datetime.now(UTC).isoformat()
             change = PolicyChange(
                 change_type=ChangeType.UPDATED,
                 version_from=policy.metadata.version,
@@ -209,7 +207,7 @@ class PolicyApprovalWorkflow:
         approval_id: str,
         escalated_by: str,
         reason: str,
-        escalate_to: Optional[str] = None,
+        escalate_to: str | None = None,
     ) -> ApprovalStatus:
         """Escalate a stalled approval."""
         record = self._approvals.get(approval_id)
@@ -230,7 +228,7 @@ class PolicyApprovalWorkflow:
 
         return record.status
 
-    def get_pending_approvals(self, approver: Optional[str] = None) -> list[ApprovalRecord]:
+    def get_pending_approvals(self, approver: str | None = None) -> list[ApprovalRecord]:
         """Get pending approvals, optionally filtered by approver."""
         records = [r for r in self._approvals.values() if r.status == ApprovalStatus.PENDING]
         if approver:
@@ -240,14 +238,13 @@ class PolicyApprovalWorkflow:
             ]
         return records
 
-    def get_approval(self, approval_id: str) -> Optional[ApprovalRecord]:
+    def get_approval(self, approval_id: str) -> ApprovalRecord | None:
         """Get an approval record by ID."""
         return self._approvals.get(approval_id)
 
-    def _find_policy(self, policy_id: str) -> Optional[Policy]:
+    def _find_policy(self, policy_id: str) -> Policy | None:
         """Find a policy by ID (uses the engine's storage)."""
         # This is a simplified lookup - in production, this would use a shared registry
-        from .engine import PolicyDefinitionEngine
         # The engine instance is managed by PolicyManager, so we use a module-level cache
         return _POLICY_CACHE.get(policy_id)
 

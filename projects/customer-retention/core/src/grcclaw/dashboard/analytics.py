@@ -7,22 +7,15 @@ from __future__ import annotations
 
 import math
 import statistics
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
 from collections import defaultdict
+from typing import Any
 
 from .models import (
-    GovernanceScore,
-    TrendDirection,
-    ComplianceStatus,
-    RiskLevel,
-    AlertLevel,
-    MetricAggregation,
-    TimeRange,
-    FilterCriteria,
     DashboardConfig,
-    DashboardWidget,
-    DataSourceType,
+    FilterCriteria,
+    GovernanceScore,
+    MetricAggregation,
+    TrendDirection,
 )
 
 
@@ -127,7 +120,7 @@ class TrendAnalyzer:
     Detects direction, momentum, seasonality, and inflection points.
     """
 
-    def analyze(self, values: list[float], labels: Optional[list[str]] = None) -> dict[str, Any]:
+    def analyze(self, values: list[float], labels: list[str] | None = None) -> dict[str, Any]:
         """Perform comprehensive trend analysis."""
         if len(values) < 2:
             return {
@@ -838,8 +831,8 @@ class DashboardAnalytics:
             "",
             "## Score Breakdown",
             "",
-            f"| Dimension | Score |",
-            f"|-----------|-------|",
+            "| Dimension | Score |",
+            "|-----------|-------|",
             f"| Governance | {score.get('governance', 0):.1f} |",
             f"| Risk | {score.get('risk', 0):.1f} |",
             f"| Compliance | {score.get('compliance', 0):.1f} |",

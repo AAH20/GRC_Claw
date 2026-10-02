@@ -20,15 +20,13 @@ from __future__ import annotations
 
 import json
 import os
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from .defaults import get_default_config
 from .exceptions import LoaderError
 from .types import Config, Environment
-
 
 # Prefix for environment variables
 ENV_PREFIX = "GRCCLAW_"
@@ -43,9 +41,9 @@ class LoadOptions:
     """Options for configuration loading."""
 
     environment: Environment | str = Environment.DEVELOPMENT
-    config_dir: Optional[str | Path] = None
+    config_dir: str | Path | None = None
     base_filename: str = "config"
-    env_file: Optional[str | Path] = None
+    env_file: str | Path | None = None
     use_env_vars: bool = True
     use_env_file: bool = True
     use_base_file: bool = True
@@ -58,7 +56,7 @@ class LoadOptions:
 class ConfigLoader:
     """Loads and merges GRC_Claw configuration from multiple sources."""
 
-    def __init__(self, options: Optional[LoadOptions] = None):
+    def __init__(self, options: LoadOptions | None = None):
         """Initialize the loader.
 
         Args:
@@ -126,7 +124,7 @@ class ConfigLoader:
         # Default: look in current working directory
         return Path.cwd()
 
-    def _load_base_file(self) -> Optional[dict[str, Any]]:
+    def _load_base_file(self) -> dict[str, Any] | None:
         """Load the base configuration file (config.json or config.yaml)."""
         config_dir = self._get_config_dir()
         for ext in [".json", ".yaml", ".yml"]:
@@ -135,7 +133,7 @@ class ConfigLoader:
                 return self._parse_file(path)
         return None
 
-    def _load_env_specific_file(self) -> Optional[dict[str, Any]]:
+    def _load_env_specific_file(self) -> dict[str, Any] | None:
         """Load environment-specific config (config.production.json)."""
         config_dir = self._get_config_dir()
         env_name = self.options.environment.value
@@ -145,7 +143,7 @@ class ConfigLoader:
                 return self._parse_file(path)
         return None
 
-    def _load_local_file(self) -> Optional[dict[str, Any]]:
+    def _load_local_file(self) -> dict[str, Any] | None:
         """Load local config file (config.local.json)."""
         config_dir = self._get_config_dir()
         for ext in [".json", ".yaml", ".yml"]:
@@ -154,7 +152,7 @@ class ConfigLoader:
                 return self._parse_file(path)
         return None
 
-    def _load_env_file(self) -> Optional[dict[str, Any]]:
+    def _load_env_file(self) -> dict[str, Any] | None:
         """Load .env file and parse into nested dict."""
         if self.options.env_file:
             env_path = Path(self.options.env_file)
@@ -166,7 +164,7 @@ class ConfigLoader:
 
         result: dict[str, Any] = {}
         try:
-            with open(env_path, "r", encoding="utf-8") as f:
+            with open(env_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#"):
@@ -184,7 +182,7 @@ class ConfigLoader:
                     source=str(env_path),
                 ) from e
 
-        return result if result else None
+        return result or None
 
     def _load_env_vars(self) -> dict[str, Any]:
         """Load GRCCLAW_* environment variables into nested dict."""
@@ -217,10 +215,10 @@ class ConfigLoader:
                         "PyYAML is required to load YAML config files. Install with: pip install pyyaml",
                         source=str(path),
                     ) from e
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     data = yaml.safe_load(f)
             else:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     data = json.load(f)
 
             if not isinstance(data, dict):

@@ -5,8 +5,8 @@ Configuration classes for rate limiting and quota management.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
-from .models import RateLimitAlgorithm, QuotaPeriod, QuotaType
+
+from .models import QuotaPeriod, RateLimitAlgorithm
 
 
 @dataclass
@@ -15,8 +15,8 @@ class RateLimitConfig:
     algorithm: RateLimitAlgorithm = RateLimitAlgorithm.TOKEN_BUCKET
     requests_per_second: float = 100.0
     burst_size: int = 200
-    daily_limit: Optional[int] = None
-    monthly_limit: Optional[int] = None
+    daily_limit: int | None = None
+    monthly_limit: int | None = None
     window_size: int = 60  # seconds
     key_prefix: str = "ratelimit"
     skip_paths: list[str] = field(default_factory=lambda: ["/health", "/ready", "/metrics"])

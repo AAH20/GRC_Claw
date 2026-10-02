@@ -3,4 +3,4 @@
 from .audit import AuditEntry, AuditTrail
 from .policy import PolicyDecision, PolicyEngine
 
-__all__ = ["PolicyEngine", "PolicyDecision", "AuditTrail", "AuditEntry"]
+__all__ = ["AuditEntry", "AuditTrail", "PolicyDecision", "PolicyEngine"]

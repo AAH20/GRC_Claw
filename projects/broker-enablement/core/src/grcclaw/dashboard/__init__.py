@@ -5,54 +5,54 @@ Unified governance dashboard providing real-time visibility into
 GRC (Governance, Risk, Compliance) posture, analytics, and reporting.
 """
 
-from .models import (
-    DashboardWidget,
-    DashboardLayout,
-    DashboardConfig,
-    DashboardSnapshot,
-    ReportDefinition,
-    ReportSchedule,
-    ReportOutput,
-    WidgetType,
-    WidgetSize,
-    ChartType,
-    ReportFormat,
-    ReportFrequency,
-    DataSourceType,
-    AlertLevel,
-    TimeRange,
-    FilterCriteria,
-    MetricAggregation,
-    TrendDirection,
-    ComplianceStatus,
-    RiskLevel,
-    GovernanceScore,
-    KPIWidget,
-    ChartWidget,
-    TableWidget,
-    AlertWidget,
-    TextWidget,
-)
-from .engine import DashboardEngine, DashboardRenderer, DashboardManager
-from .report_generator import ReportGenerator, ReportBuilder, ReportExporter
-from .visualizations import (
-    VisualizationEngine,
-    ChartRenderer,
-    HeatmapRenderer,
-    TrendRenderer,
-    GaugeRenderer,
-    TableRenderer,
-    SparklineRenderer,
-)
-from .templates import DashboardTemplate, TemplateLibrary, TemplateRegistry
 from .analytics import (
-    DashboardAnalytics,
-    MetricCalculator,
-    TrendAnalyzer,
     AnomalyDetector,
     ComplianceAggregator,
-    RiskAggregator,
+    DashboardAnalytics,
     GovernanceScorer,
+    MetricCalculator,
+    RiskAggregator,
+    TrendAnalyzer,
+)
+from .engine import DashboardEngine, DashboardManager, DashboardRenderer
+from .models import (
+    AlertLevel,
+    AlertWidget,
+    ChartType,
+    ChartWidget,
+    ComplianceStatus,
+    DashboardConfig,
+    DashboardLayout,
+    DashboardSnapshot,
+    DashboardWidget,
+    DataSourceType,
+    FilterCriteria,
+    GovernanceScore,
+    KPIWidget,
+    MetricAggregation,
+    ReportDefinition,
+    ReportFormat,
+    ReportFrequency,
+    ReportOutput,
+    ReportSchedule,
+    RiskLevel,
+    TableWidget,
+    TextWidget,
+    TimeRange,
+    TrendDirection,
+    WidgetSize,
+    WidgetType,
+)
+from .report_generator import ReportBuilder, ReportExporter, ReportGenerator
+from .templates import DashboardTemplate, TemplateLibrary, TemplateRegistry
+from .visualizations import (
+    ChartRenderer,
+    GaugeRenderer,
+    HeatmapRenderer,
+    SparklineRenderer,
+    TableRenderer,
+    TrendRenderer,
+    VisualizationEngine,
 )
 
 __all__ = [

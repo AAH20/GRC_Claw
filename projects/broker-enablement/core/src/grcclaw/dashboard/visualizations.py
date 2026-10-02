@@ -7,19 +7,12 @@ gauge displays, table formatting, and sparkline generation.
 
 from __future__ import annotations
 
-import json
 import math
-from datetime import datetime, timezone
-from typing import Any, Optional
-from collections import defaultdict
+from typing import Any
 
 from .models import (
     ChartType,
-    WidgetType,
-    AlertLevel,
     TrendDirection,
-    ComplianceStatus,
-    RiskLevel,
 )
 
 
@@ -38,7 +31,7 @@ class VisualizationEngine:
         self.table_renderer = TableRenderer()
         self.sparkline_renderer = SparklineRenderer()
 
-    def render(self, viz_type: str, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, viz_type: str, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Route rendering to the appropriate component."""
         config = config or {}
         renderers = {
@@ -69,7 +62,7 @@ class ChartRenderer:
     (Chart.js, D3.js, Recharts, etc.).
     """
 
-    def render(self, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Render chart data based on chart type."""
         config = config or {}
         chart_type = ChartType(config.get("chart_type", "line"))
@@ -277,7 +270,7 @@ class HeatmapRenderer:
     and domain-category cross-references.
     """
 
-    def render(self, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Render heatmap data."""
         config = config or {}
         domains = data.get("domains", [])
@@ -336,7 +329,7 @@ class TrendRenderer:
     Renders trend lines, sparklines, and trend indicators.
     """
 
-    def render(self, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Render trend visualization data."""
         config = config or {}
         values = data.get("values", [])
@@ -410,7 +403,7 @@ class GaugeRenderer:
     Renders gauge/meter visualizations for KPI displays.
     """
 
-    def render(self, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Render gauge visualization data."""
         config = config or {}
         value = data.get("value", 0)
@@ -449,7 +442,7 @@ class TableRenderer:
     Renders table data with sorting, filtering, and pagination.
     """
 
-    def render(self, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Render table visualization data."""
         config = config or {}
         columns = data.get("columns", [])
@@ -498,7 +491,7 @@ class SparklineRenderer:
     Renders sparkline (inline chart) data for KPI widgets.
     """
 
-    def render(self, data: dict[str, Any], config: Optional[dict] = None) -> dict[str, Any]:
+    def render(self, data: dict[str, Any], config: dict | None = None) -> dict[str, Any]:
         """Render sparkline visualization data."""
         config = config or {}
         values = data.get("values", [])

@@ -10,12 +10,11 @@ from __future__ import annotations
 import csv
 import io
 import json
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-from typing import Any, Optional
 import uuid
-
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
+from enum import Enum
+from typing import Any
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -78,8 +77,8 @@ class ReportFilter:
     frameworks: list[str] = field(default_factory=list)
     severity_levels: list[str] = field(default_factory=list)
     status_filter: list[str] = field(default_factory=list)
-    date_range_start: Optional[str] = None
-    date_range_end: Optional[str] = None
+    date_range_start: str | None = None
+    date_range_end: str | None = None
     tags: list[str] = field(default_factory=list)
     categories: list[str] = field(default_factory=list)
     entities: list[str] = field(default_factory=list)
@@ -96,12 +95,12 @@ class ReportSchedule:
     format: ReportFormat = ReportFormat.HTML
     recipients: list[str] = field(default_factory=list)
     dashboard_ids: list[str] = field(default_factory=list)
-    template_id: Optional[str] = None
+    template_id: str | None = None
     filters: ReportFilter = field(default_factory=ReportFilter)
     enabled: bool = True
-    last_run_at: Optional[str] = None
-    next_run_at: Optional[str] = None
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_run_at: str | None = None
+    next_run_at: str | None = None
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -129,7 +128,7 @@ class GeneratedReport:
     title: str = ""
     description: str = ""
     sections: list[ReportSectionData] = field(default_factory=list)
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     period_start: str = ""
     period_end: str = ""
     filters_applied: ReportFilter = field(default_factory=ReportFilter)
@@ -183,16 +182,16 @@ class ReportGenerator:
         report_type: ReportType,
         dashboard_snapshots: dict[str, Any],
         format: ReportFormat = ReportFormat.HTML,
-        filters: Optional[ReportFilter] = None,
-        period_start: Optional[str] = None,
-        period_end: Optional[str] = None,
-        title: Optional[str] = None,
-        custom_sections: Optional[list[ReportSectionData]] = None,
+        filters: ReportFilter | None = None,
+        period_start: str | None = None,
+        period_end: str | None = None,
+        title: str | None = None,
+        custom_sections: list[ReportSectionData] | None = None,
     ) -> GeneratedReport:
         import time
         start = time.time()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if period_end is None:
             period_end = now.isoformat()
         if period_start is None:
@@ -235,7 +234,7 @@ class ReportGenerator:
         self,
         template_id: str,
         dashboard_snapshots: dict[str, Any],
-        format: Optional[ReportFormat] = None,
+        format: ReportFormat | None = None,
     ) -> GeneratedReport:
         template = self._templates.get(template_id)
         if template is None:
@@ -814,11 +813,11 @@ class ReportGenerator:
         self._schedules[schedule.schedule_id] = schedule
         return schedule
 
-    def get_schedule(self, schedule_id: str) -> Optional[ReportSchedule]:
+    def get_schedule(self, schedule_id: str) -> ReportSchedule | None:
         return self._schedules.get(schedule_id)
 
     def list_schedules(
-        self, report_type: Optional[ReportType] = None, enabled_only: bool = False
+        self, report_type: ReportType | None = None, enabled_only: bool = False
     ) -> list[ReportSchedule]:
         results = list(self._schedules.values())
         if report_type:
@@ -835,7 +834,7 @@ class ReportGenerator:
     def register_template(self, template_id: str, config: dict[str, Any]) -> None:
         self._templates[template_id] = config
 
-    def get_template(self, template_id: str) -> Optional[dict[str, Any]]:
+    def get_template(self, template_id: str) -> dict[str, Any] | None:
         return self._templates.get(template_id)
 
     def list_templates(self) -> list[str]:
@@ -849,14 +848,14 @@ class ReportGenerator:
             self._report_history = self._report_history[-self._max_history:]
 
     def get_history(
-        self, report_type: Optional[ReportType] = None, limit: int = 20
+        self, report_type: ReportType | None = None, limit: int = 20
     ) -> list[GeneratedReport]:
         results = self._report_history
         if report_type:
             results = [r for r in results if r.report_type == report_type]
         return results[-limit:]
 
-    def get_report_by_id(self, report_id: str) -> Optional[GeneratedReport]:
+    def get_report_by_id(self, report_id: str) -> GeneratedReport | None:
         for report in self._report_history:
             if report.report_id == report_id:
                 return report

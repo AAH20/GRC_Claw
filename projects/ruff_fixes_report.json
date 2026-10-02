@@ -1,0 +1,47 @@
+{
+  "total_projects_checked": 45,
+  "projects_with_fixes": 3,
+  "total_issues_fixed": 5355,
+  "details": {
+    "analytics": {
+      "fixed": 0,
+      "remaining": 0
+    },
+    "broker-enablement": {
+      "fixed": 1785,
+      "remaining": 854
+    },
+    "customer-retention": {
+      "fixed": 1785,
+      "remaining": 854
+    },
+    "customer-segmentation": {
+      "fixed": 0,
+      "remaining": 0
+    },
+    "customer-service": {
+      "fixed": 0,
+      "remaining": 3
+    },
+    "pricing-optimizer": {
+      "fixed": 0,
+      "remaining": 0
+    },
+    "product-recommendations": {
+      "fixed": 1785,
+      "remaining": 854
+    },
+    "saas-marketing": {
+      "fixed": 0,
+      "remaining": 9
+    },
+    "sales-automator": {
+      "fixed": 0,
+      "remaining": 0
+    },
+    "sales-forecaster": {
+      "fixed": 0,
+      "remaining": 0
+    }
+  }
+}

@@ -8,9 +8,8 @@ No hidden multipliers — every cost driver is visible.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
-from .models import OrganizationProfile, DeploymentModel, SupportLevel, PricingTier
 
+from .models import DeploymentModel, OrganizationProfile, PricingTier, SupportLevel
 
 # ── Base Unit Prices (annual, USD) ──────────────────────────────────────────
 
@@ -127,7 +126,7 @@ class PricingEngine:
     Every factor is exposed and documented. No black-box pricing.
     """
 
-    def __init__(self, base_prices: Optional[dict] = None):
+    def __init__(self, base_prices: dict | None = None):
         self.base_prices = base_prices or BASE_PRICES.copy()
 
     def get_volume_discount(self, agents: int) -> float:

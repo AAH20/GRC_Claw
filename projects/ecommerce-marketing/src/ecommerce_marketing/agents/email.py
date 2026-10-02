@@ -41,8 +41,12 @@ class EmailCampaignRequest(BaseModel):
 
     name: str = Field(..., description="Campaign name")
     segment: str = Field(..., description="Target customer segment")
-    campaign_type: str = Field(..., description="Type of campaign (promotional, newsletter, welcome)")
-    context: dict[str, Any] = Field(default_factory=dict, description="Additional context for personalization")
+    campaign_type: str = Field(
+        ..., description="Type of campaign (promotional, newsletter, welcome)"
+    )
+    context: dict[str, Any] = Field(
+        default_factory=dict, description="Additional context for personalization"
+    )
     enable_ab_test: bool = Field(default=True, description="Whether to enable A/B testing")
 
 
@@ -67,7 +71,8 @@ class EmailAgent:
                 (
                     "system",
                     "You are an expert email marketing copywriter. "
-                    "Create compelling, personalized email content that drives engagement and conversions. "
+                    "Create compelling, personalized email content that drives "
+                    "engagement and conversions. "
                     "Follow best practices for subject lines, CTAs, and mobile optimization. "
                     "Output valid JSON with subject, body_html, body_text, and variables fields.",
                 ),

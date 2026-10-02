@@ -7,22 +7,26 @@ from __future__ import annotations
 import json
 import logging
 import time
-import urllib.request
 import urllib.error
 import urllib.parse
+import urllib.request
 from abc import ABC, abstractmethod
-from typing import Any, Optional, AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
-from .config import ConnectorConfig
 from .auth import AuthStrategy
-from .types import ConnectorMetadata, ConnectorCapability, ConnectorStatus, RequestContext, ResponseContext
+from .config import ConnectorConfig
 from .exceptions import (
-    ConnectorError,
     ConnectionError,
-    TimeoutError,
+    ConnectorError,
     RateLimitError,
-    ValidationError,
+    TimeoutError,
+)
+from .types import (
+    ConnectorMetadata,
+    ConnectorStatus,
+    RequestContext,
+    ResponseContext,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +46,7 @@ class BaseConnector(ABC):
     - Request/response logging
     """
 
-    def __init__(self, config: ConnectorConfig, auth: Optional[AuthStrategy] = None):
+    def __init__(self, config: ConnectorConfig, auth: AuthStrategy | None = None):
         self.config = config
         self.auth = auth
         self._status = ConnectorStatus.UNKNOWN
@@ -80,7 +84,7 @@ class BaseConnector(ABC):
             "name": self.config.name,
             "status": self._status.value,
             "healthy": self._status == ConnectorStatus.CONNECTED,
-            "last_check": datetime.now(timezone.utc).isoformat(),
+            "last_check": datetime.now(UTC).isoformat(),
             "request_count": self._request_count,
             "error_count": self._error_count,
             "error_rate": self._error_count / max(self._request_count, 1),
@@ -359,7 +363,7 @@ class BaseConnector(ABC):
             delay = base
         return min(delay, self.config.retry.max_delay_seconds)
 
-    def _extract_rate_limit_remaining(self, headers: dict[str, str]) -> Optional[int]:
+    def _extract_rate_limit_remaining(self, headers: dict[str, str]) -> int | None:
         for key in ("X-RateLimit-Remaining", "X-Rate-Limit-Remaining", "RateLimit-Remaining"):
             if key in headers:
                 try:
@@ -368,17 +372,17 @@ class BaseConnector(ABC):
                     pass
         return None
 
-    def _extract_rate_limit_reset(self, headers: dict[str, str]) -> Optional[datetime]:
+    def _extract_rate_limit_reset(self, headers: dict[str, str]) -> datetime | None:
         for key in ("X-RateLimit-Reset", "X-Rate-Limit-Reset", "RateLimit-Reset"):
             if key in headers:
                 try:
                     ts = int(headers[key])
-                    return datetime.fromtimestamp(ts, tz=timezone.utc)
+                    return datetime.fromtimestamp(ts, tz=UTC)
                 except (ValueError, TypeError):
                     pass
         return None
 
-    def _extract_pagination_cursor(self, body: Any) -> Optional[str]:
+    def _extract_pagination_cursor(self, body: Any) -> str | None:
         if isinstance(body, dict):
             for key in ("next_cursor", "cursor", "nextCursor", "page_token", "pageToken"):
                 if key in body:

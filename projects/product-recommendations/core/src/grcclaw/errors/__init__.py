@@ -9,30 +9,30 @@ Provides a comprehensive error handling system including:
 - Error reporting and analytics
 """
 
-from .taxonomy import (
-    ErrorCategory,
-    ErrorSeverity,
-    ErrorRecoverability,
-    ErrorScope,
-    ErrorClassification,
-    classify_error,
-)
 from .codes import ErrorCode, ErrorRegistry, get_error_code, register_error_code
 from .middleware import ErrorHandlingMiddleware, setup_error_handling
 from .recovery import (
-    RecoveryStrategy,
-    RetryStrategy,
     CircuitBreaker,
+    CircuitBreakerState,
     FallbackStrategy,
     RecoveryManager,
-    CircuitBreakerState,
+    RecoveryStrategy,
+    RetryStrategy,
 )
 from .reporting import (
-    ErrorReporter,
-    ErrorMetrics,
-    ErrorAnalytics,
     AlertRule,
+    ErrorAnalytics,
+    ErrorMetrics,
+    ErrorReporter,
     ErrorTrend,
+)
+from .taxonomy import (
+    ErrorCategory,
+    ErrorClassification,
+    ErrorRecoverability,
+    ErrorScope,
+    ErrorSeverity,
+    classify_error,
 )
 
 __all__ = [

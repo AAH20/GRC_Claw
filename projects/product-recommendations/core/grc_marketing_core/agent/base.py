@@ -9,10 +9,11 @@ from __future__ import annotations
 import asyncio
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Coroutine, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 import structlog
 
@@ -43,7 +44,7 @@ class AgentContext:
     parent_context: AgentContext | None = None
     depth: int = 0
     max_depth: int = 10
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     trace_id: str | None = None
     span_id: str | None = None
 
@@ -57,7 +58,7 @@ class AgentContext:
             "parent_context": self,
             "depth": self.depth + 1,
             "max_depth": self.max_depth,
-            "created_at": datetime.now(timezone.utc),
+            "created_at": datetime.now(UTC),
             "trace_id": self.trace_id,
             "span_id": self.span_id,
         }
@@ -181,17 +182,17 @@ class BaseAgent(ABC, Generic[T]):
         """Execute the agent with full lifecycle management."""
         ctx = context or AgentContext()
         self._status = AgentStatus.RUNNING
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         try:
             await self.setup(ctx)
             result = await self.run(input_data, ctx)
-            elapsed = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+            elapsed = (datetime.now(UTC) - start).total_seconds() * 1000
             result.execution_time_ms = elapsed
             result.agent_id = self.name
             self._status = AgentStatus.COMPLETED if result.success else AgentStatus.FAILED
             return result
         except Exception as exc:
-            elapsed = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+            elapsed = (datetime.now(UTC) - start).total_seconds() * 1000
             self._status = AgentStatus.FAILED
             self._logger.error("agent_execution_failed", error=str(exc))
             return AgentResult(
@@ -249,7 +250,7 @@ class AgentOrchestrator:
         self._execution_history.append({
             "agent": agent_name,
             "success": result.success,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         })
         return result
 

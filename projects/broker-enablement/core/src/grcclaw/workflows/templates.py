@@ -9,16 +9,15 @@ audit preparation, and incident response.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from .schema import (
-    RetryPolicy,
     StepCondition,
     StepType,
     TriggerType,
     WorkflowDefinition,
-    WorkflowStep,
     WorkflowStatus,
+    WorkflowStep,
     WorkflowTemplate,
 )
 
@@ -1047,13 +1046,13 @@ class WorkflowTemplates:
         self._templates[template.name] = template
         logger.debug("registered workflow template '%s'", template.name)
 
-    def get(self, name: str) -> Optional[WorkflowTemplate]:
+    def get(self, name: str) -> WorkflowTemplate | None:
         return self._templates.get(name)
 
     def list_templates(
         self,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
+        category: str | None = None,
+        tag: str | None = None,
     ) -> list[WorkflowTemplate]:
         results = list(self._templates.values())
         if category is not None:
@@ -1080,7 +1079,7 @@ class WorkflowTemplates:
     def instantiate(
         self,
         name: str,
-        workflow_name: Optional[str] = None,
+        workflow_name: str | None = None,
         **overrides: Any,
     ) -> WorkflowDefinition:
         template = self._templates.get(name)

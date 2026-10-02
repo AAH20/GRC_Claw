@@ -8,12 +8,12 @@ registry that all event producers and consumers reference.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Callable, Optional
 import uuid
-
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 # ─── Event Type Enums ────────────────────────────────────────────────────────
 
@@ -73,21 +73,21 @@ class Event:
     status: EventStatus = EventStatus.PENDING
     source: str = ""
     source_id: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     data: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
-    correlation_id: Optional[str] = None
-    causation_id: Optional[str] = None
-    trace_id: Optional[str] = None
+    correlation_id: str | None = None
+    causation_id: str | None = None
+    trace_id: str | None = None
     schema_version: str = "1.0.0"
     tags: list[str] = field(default_factory=list)
-    tenant_id: Optional[str] = None
-    agent_id: Optional[str] = None
-    parent_event_id: Optional[str] = None
+    tenant_id: str | None = None
+    agent_id: str | None = None
+    parent_event_id: str | None = None
     retry_count: int = 0
     max_retries: int = 3
-    processed_at: Optional[str] = None
-    error: Optional[str] = None
+    processed_at: str | None = None
+    error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -126,7 +126,7 @@ class Event:
             status=EventStatus(d.get("status", "pending")),
             source=d.get("source", ""),
             source_id=d.get("source_id", ""),
-            timestamp=d.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            timestamp=d.get("timestamp", datetime.now(UTC).isoformat()),
             data=d.get("data", {}),
             metadata=d.get("metadata", {}),
             correlation_id=d.get("correlation_id"),
@@ -174,8 +174,8 @@ class EventSchema:
     tags: list[str] = field(default_factory=list)
     deprecated: bool = False
     deprecation_message: str = ""
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def validate(self, data: dict[str, Any]) -> list[str]:
         """
@@ -275,11 +275,11 @@ class EventSchemaRegistry:
             return True
         return False
 
-    def get(self, event_type: str, version: str = "1.0.0") -> Optional[EventSchema]:
+    def get(self, event_type: str, version: str = "1.0.0") -> EventSchema | None:
         """Retrieve a schema by event type and version."""
         return self._schemas.get(self._key(event_type, version))
 
-    def get_latest(self, event_type: str) -> Optional[EventSchema]:
+    def get_latest(self, event_type: str) -> EventSchema | None:
         """Get the latest (highest version) schema for an event type."""
         matching = [
             s for key, s in self._schemas.items()
@@ -291,8 +291,8 @@ class EventSchemaRegistry:
 
     def list_schemas(
         self,
-        category: Optional[EventCategory] = None,
-        tag: Optional[str] = None,
+        category: EventCategory | None = None,
+        tag: str | None = None,
     ) -> list[EventSchema]:
         """List all registered schemas, optionally filtered."""
         schemas = list(self._schemas.values())

@@ -7,17 +7,15 @@ for multiple quota types, periods, and tenant-level granularity.
 
 from __future__ import annotations
 
-import time
 import logging
 import threading
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime, timezone, timedelta
 from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 
-from .config import QuotaConfig, DEFAULT_TIERS
-from .exceptions import QuotaExceeded, QuotaNotFoundError
-from .models import QuotaPeriod, QuotaType, QuotaStatus, QuotaUsage
+from .config import DEFAULT_TIERS, QuotaConfig
+from .exceptions import QuotaNotFoundError
+from .models import QuotaPeriod, QuotaStatus, QuotaType
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +44,7 @@ class QuotaEngine:
     Supports automatic reset, overage handling, and threshold notifications.
     """
 
-    def __init__(self, config: Optional[QuotaConfig] = None):
+    def __init__(self, config: QuotaConfig | None = None):
         self.config = config or QuotaConfig()
         self._quotas: dict[str, dict] = {}
         self._usage: dict[str, dict] = defaultdict(lambda: defaultdict(float))
@@ -60,7 +58,7 @@ class QuotaEngine:
         quota_type: QuotaType = QuotaType.REQUEST_COUNT,
         period: QuotaPeriod = QuotaPeriod.MONTHLY,
         limit: float = 1000.0,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Register a new quota for a tenant."""
         key = self._make_key(tenant_id, quota_name)
@@ -72,9 +70,9 @@ class QuotaEngine:
                 "period": period,
                 "limit": limit,
                 "metadata": metadata or {},
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
-            self._last_reset[key] = datetime.now(timezone.utc).isoformat()
+            self._last_reset[key] = datetime.now(UTC).isoformat()
 
     def unregister_quota(self, tenant_id: str, quota_name: str) -> None:
         """Remove a quota."""
@@ -148,7 +146,7 @@ class QuotaEngine:
             key = self._make_key(tenant_id, quota_name)
             with self._lock:
                 self._usage[key]["current"] += quantity
-                self._usage[key]["last_updated"] = datetime.now(timezone.utc).isoformat()
+                self._usage[key]["last_updated"] = datetime.now(UTC).isoformat()
 
         return result
 
@@ -202,7 +200,7 @@ class QuotaEngine:
         with self._lock:
             if key in self._usage:
                 self._usage[key]["current"] = 0.0
-                self._last_reset[key] = datetime.now(timezone.utc).isoformat()
+                self._last_reset[key] = datetime.now(UTC).isoformat()
 
     def reset_all_quotas(self, tenant_id: str) -> None:
         """Reset all quotas for a tenant."""
@@ -210,7 +208,7 @@ class QuotaEngine:
             for key in list(self._usage.keys()):
                 if key.startswith(f"{tenant_id}:"):
                     self._usage[key]["current"] = 0.0
-                    self._last_reset[key] = datetime.now(timezone.utc).isoformat()
+                    self._last_reset[key] = datetime.now(UTC).isoformat()
 
     def update_quota_limit(
         self,
@@ -257,11 +255,11 @@ class QuotaEngine:
 
         last_reset = self._last_reset.get(key)
         if last_reset is None:
-            self._last_reset[key] = datetime.now(timezone.utc).isoformat()
+            self._last_reset[key] = datetime.now(UTC).isoformat()
             return
 
         last_reset_dt = datetime.fromisoformat(last_reset)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         should_reset = False
         if period == QuotaPeriod.MINUTELY:
@@ -283,7 +281,7 @@ class QuotaEngine:
 
     def _calculate_reset_at(self, period: QuotaPeriod) -> str:
         """Calculate the next reset time for a period."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if period == QuotaPeriod.MINUTELY:
             reset = now + timedelta(minutes=1)
