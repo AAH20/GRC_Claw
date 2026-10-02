@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: candidate-matcher-api
+  namespace: candidate-matcher
+  labels:
+    app: candidate-matcher
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: candidate-matcher
+      component: api
+  template:
+    metadata:
+      labels:
+        app: candidate-matcher
+        component: api
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8000"
+      prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: candidate-matcher:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: candidate-matcher-config
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: candidate-matcher-secrets
+                  key: OPENAI_API_KEY
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: candidate-matcher-secrets
+                  key: REDIS_URL
+            - name: VECTOR_STORE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: candidate-matcher-secrets
+                  key: VECTOR_STORE_URL
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

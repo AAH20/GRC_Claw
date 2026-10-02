@@ -1,0 +1,8 @@
+# Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: escalation-workflow
+  labels:
+    app: escalation-workflow
+    environment: production

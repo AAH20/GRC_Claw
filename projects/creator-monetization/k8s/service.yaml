@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: creator-monetization
+  labels:
+    app: creator-monetization
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: creator-monetization

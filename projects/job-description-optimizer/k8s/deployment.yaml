@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-description-optimizer
+  labels:
+    app: job-description-optimizer
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: job-description-optimizer
+  template:
+    metadata:
+      labels:
+        app: job-description-optimizer
+        version: v1
+    spec:
+      containers:
+        - name: app
+          image: job-description-optimizer:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: DEBUG
+              value: "false"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jdo-secrets
+                  key: openai-api-key
+            - name: OPENAI_MODEL
+              value: "gpt-4o-mini"
+            - name: LANGCHAIN_TRACING_V2
+              value: "false"
+            - name: LANGCHAIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jdo-secrets
+                  key: langchain-api-key
+                  optional: true
+            - name: MAX_AGENT_ITERATIONS
+              value: "10"
+            - name: AGENT_TIMEOUT_SECONDS
+              value: "120"
+            - name: RATE_LIMIT_REQUESTS_PER_MINUTE
+              value: "60"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

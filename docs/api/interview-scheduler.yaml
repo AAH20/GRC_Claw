@@ -1,0 +1,795 @@
+openapi: 3.1.0
+info:
+  title: Interview Scheduler API
+  version: 1.0.0
+  description: Schedule, manage, and coordinate interviews across multiple participants.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Interview Scheduling
+    description: Schedule and manage interviews
+paths:
+  /interviews:
+    post:
+      tags: [Interview Scheduling]
+      summary: Schedule a new interview
+      operationId: scheduleInterview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewRequest'
+      responses:
+        '201':
+          description: Interview scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Interview Scheduling]
+      summary: List interviews
+      operationId: listInterviews
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in_progress, completed, cancelled, no_show]
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+        - name: interviewer_id
+          in: query
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of interviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interview'
+  /interviews/{interviewId}:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview by ID
+      operationId: getInterview
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interview details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Interview Scheduling]
+      summary: Update an interview
+      operationId: updateInterview
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewUpdate'
+      responses:
+        '200':
+          description: Updated interview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Interview Scheduling]
+      summary: Cancel an interview
+      operationId: cancelInterview
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Interview cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/{interviewId}/reschedule:
+    post:
+      tags: [Interview Scheduling]
+      summary: Reschedule an interview
+      operationId: rescheduleInterview
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [new_start_time, new_end_time]
+              properties:
+                new_start_time:
+                  type: string
+                  format: date-time
+                new_end_time:
+                  type: string
+                  format: date-time
+                notify_participants:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Rescheduled interview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /interviews/{interviewId}/feedback:
+    post:
+      tags: [Interview Scheduling]
+      summary: Submit interview feedback
+      operationId: submitFeedback
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewFeedback'
+      responses:
+        '201':
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewFeedback'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/{interviewId}/notes:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview notes
+      operationId: getInterviewNotes
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interview notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InterviewNote'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Interview Scheduling]
+      summary: Add interview note
+      operationId: addInterviewNote
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                author:
+                  type: string
+      responses:
+        '201':
+          description: Note added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewNote'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/availability:
+    post:
+      tags: [Interview Scheduling]
+      summary: Find available time slots
+      description: Find common available time slots for multiple participants.
+      operationId: findAvailability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [participant_ids, duration_minutes, date_range]
+              properties:
+                participant_ids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 2
+                duration_minutes:
+                  type: integer
+                  minimum: 15
+                date_range:
+                  type: object
+                  required: [start, end]
+                  properties:
+                    start:
+                      type: string
+                      format: date
+                    end:
+                      type: string
+                      format: date
+                timezone:
+                  type: string
+                  default: UTC
+      responses:
+        '200':
+          description: Available time slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimeSlot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /interviews/{interviewId}/join:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview join link
+      operationId: getJoinLink
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Join link details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  join_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/{interviewId}/reminders:
+    post:
+      tags: [Interview Scheduling]
+      summary: Send interview reminders
+      operationId: sendReminders
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reminder_type:
+                  type: string
+                  enum: [email, sms, push]
+                  default: email
+                minutes_before:
+                  type: integer
+                  default: 30
+      responses:
+        '200':
+          description: Reminders sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sent:
+                    type: integer
+                  failed:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/{interviewId}/recordings:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview recordings
+      operationId: getRecordings
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of recordings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recordings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recording'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/{interviewId}/transcript:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview transcript
+      operationId: getTranscript
+      parameters:
+        - name: interviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interview transcript
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcript'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /interviews/conflicts:
+    get:
+      tags: [Interview Scheduling]
+      summary: Check for scheduling conflicts
+      operationId: checkConflicts
+      parameters:
+        - name: participant_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Conflict check results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_conflict:
+                    type: boolean
+                  conflicts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interview'
+  /interviews/templates:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview templates
+      operationId: getTemplates
+      responses:
+        '200':
+          description: List of interview templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InterviewTemplate'
+    post:
+      tags: [Interview Scheduling]
+      summary: Create interview template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewTemplate'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewTemplate'
+  /interviews/templates/{templateId}:
+    get:
+      tags: [Interview Scheduling]
+      summary: Get interview template by ID
+      operationId: getTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Interview Scheduling]
+      summary: Update interview template
+      operationId: updateTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewTemplate'
+      responses:
+        '200':
+          description: Updated template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Interview Scheduling]
+      summary: Delete interview template
+      operationId: deleteTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    InterviewRequest:
+      type: object
+      required: [candidate_id, interviewer_ids, start_time, end_time, type]
+      properties:
+        candidate_id:
+          type: string
+        interviewer_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [phone_screen, technical, behavioral, panel, final]
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        meeting_link:
+          type: string
+        job_id:
+          type: string
+    Interview:
+      type: object
+      properties:
+        id:
+          type: string
+        candidate_id:
+          type: string
+        interviewer_ids:
+          type: array
+          items:
+            type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        type:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled, no_show]
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        meeting_link:
+          type: string
+        job_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    InterviewUpdate:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled, no_show]
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        meeting_link:
+          type: string
+    InterviewFeedback:
+      type: object
+      properties:
+        id:
+          type: string
+        interview_id:
+          type: string
+        interviewer_id:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        strengths:
+          type: string
+        weaknesses:
+          type: string
+        recommendation:
+          type: string
+          enum: [strong_hire, hire, lean_hire, lean_no_hire, no_hire, strong_no_hire]
+        notes:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+    InterviewNote:
+      type: object
+      properties:
+        id:
+          type: string
+        interview_id:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    TimeSlot:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        available_participants:
+          type: array
+          items:
+            type: string
+    Recording:
+      type: object
+      properties:
+        id:
+          type: string
+        interview_id:
+          type: string
+        url:
+          type: string
+        duration_seconds:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    Transcript:
+      type: object
+      properties:
+        interview_id:
+          type: string
+        segments:
+          type: array
+          items:
+            type: object
+            properties:
+              speaker:
+                type: string
+              text:
+                type: string
+              start_time:
+                type: number
+              end_time:
+                type: number
+        full_text:
+          type: string
+    InterviewTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [phone_screen, technical, behavioral, panel, final]
+        duration_minutes:
+          type: integer
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              question:
+                type: string
+              category:
+                type: string
+              required:
+                type: boolean
+        evaluation_criteria:
+          type: array
+          items:
+            type: object
+            properties:
+              criterion:
+                type: string
+              weight:
+                type: number
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Scheduling conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

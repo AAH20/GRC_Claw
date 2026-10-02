@@ -1,0 +1,8 @@
+# Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: member-verification
+  labels:
+    app: member-verification
+    environment: production

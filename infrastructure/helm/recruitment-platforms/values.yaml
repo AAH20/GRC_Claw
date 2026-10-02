@@ -1,0 +1,288 @@
+# Default values for recruitment-platforms.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings shared across all recruitment projects
+global:
+  # Image registry for all recruitment services
+  imageRegistry: "ghcr.io/ahmedhassan/grc-claw"
+  # Image pull secrets
+  imagePullSecrets: []
+  # Storage class for persistent volumes
+  storageClass: "standard"
+  # Environment: development, staging, production
+  environment: production
+  # Domain for ingress hosts
+  domain: "recruitment.grc-claw.local"
+
+# Number of recruitment projects to deploy
+projectCount: 10
+
+# Default configuration for each recruitment project
+defaults:
+  image:
+    repository: recruitment-platform
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    tls:
+      enabled: true
+      secretName: recruitment-tls
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  serviceAccount:
+    create: true
+    annotations: {}
+
+  networkPolicy:
+    enabled: true
+
+  config:
+    LOG_LEVEL: "info"
+    DB_POOL_SIZE: "20"
+    REDIS_POOL_SIZE: "10"
+    CORS_ORIGINS: "*"
+    METRICS_ENABLED: "true"
+    TRACING_ENABLED: "true"
+
+  secrets:
+    DB_PASSWORD: ""
+    REDIS_PASSWORD: ""
+    JWT_SECRET: ""
+    API_KEY: ""
+
+  persistence:
+    enabled: false
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 30
+
+# Individual project overrides
+# Each project can override any default value
+projects:
+  - name: job-board
+    displayName: "Job Board"
+    description: "Public job listing and search platform"
+    image:
+      repository: job-board
+      tag: "v1.2.0"
+    replicaCount: 3
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - jobs.grc-claw.local
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    config:
+      LOG_LEVEL: "info"
+      SEARCH_ENABLED: "true"
+      EMAIL_NOTIFICATIONS: "true"
+
+  - name: applicant-tracker
+    displayName: "Applicant Tracking System"
+    description: "End-to-end applicant tracking and pipeline management"
+    image:
+      repository: applicant-tracker
+      tag: "v1.1.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - ats.grc-claw.local
+    config:
+      PIPELINE_STAGES: "screening,interview,offer,hired"
+      AUTO_ADVANCE: "false"
+
+  - name: candidate-sourcing
+    displayName: "Candidate Sourcing"
+    description: "AI-powered candidate discovery and outreach"
+    image:
+      repository: candidate-sourcing
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - sourcing.grc-claw.local
+    config:
+      AI_MATCHING_ENABLED: "true"
+      OUTREACH_TEMPLATES: "5"
+
+  - name: interview-scheduler
+    displayName: "Interview Scheduler"
+    description: "Automated interview scheduling and calendar sync"
+    image:
+      repository: interview-scheduler
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - interviews.grc-claw.local
+    config:
+      CALENDAR_PROVIDERS: "google,outlook"
+      TIMEZONE_DETECTION: "true"
+
+  - name: recruitment-analytics
+    displayName: "Recruitment Analytics"
+    description: "Recruitment metrics, dashboards, and reporting"
+    image:
+      repository: recruitment-analytics
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - analytics.grc-claw.local
+    config:
+      DASHBOARD_REFRESH: "30"
+      EXPORT_FORMATS: "csv,pdf"
+
+  - name: resume-parser
+    displayName: "Resume Parser"
+    description: "AI resume parsing and skill extraction"
+    image:
+      repository: resume-parser
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: false
+    config:
+      SUPPORTED_FORMATS: "pdf,docx,txt"
+      SKILL_EXTRACTION: "true"
+
+  - name: offer-management
+    displayName: "Offer Management"
+    description: "Offer letter generation and approval workflow"
+    image:
+      repository: offer-management
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - offers.grc-claw.local
+    config:
+      APPROVAL_CHAIN: "hiring-manager,hr-director"
+      E_SIGNATURE: "true"
+
+  - name: onboarding-portal
+    displayName: "Onboarding Portal"
+    description: "New hire onboarding and document management"
+    image:
+      repository: onboarding-portal
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - onboarding.grc-claw.local
+    config:
+      DOCUMENT_TEMPLATES: "10"
+      TASK_AUTOMATION: "true"
+
+  - name: referral-engine
+    displayName: "Referral Engine"
+    description: "Employee referral tracking and rewards"
+    image:
+      repository: referral-engine
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - referrals.grc-claw.local
+    config:
+      REWARD_CALCULATION: "automatic"
+    FRAUD_DETECTION: "true"
+
+  - name: compliance-checker
+    displayName: "Compliance Checker"
+    description: "Background checks and compliance verification"
+    image:
+      repository: compliance-checker
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - compliance.grc-claw.local
+    config:
+      CHECK_TYPES: "background,education,employment"
+      GDPR_COMPLIANT: "true"

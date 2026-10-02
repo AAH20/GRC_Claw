@@ -1,0 +1,12 @@
+# Kubernetes ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: creator-analytics-config
+  namespace: creator-analytics
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  WORKERS: "4"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"

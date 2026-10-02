@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: moderation-analytics-config
+  namespace: moderation-analytics
+data:
+  moderation-api-url: ""
+  analytics-db-url: ""
+  langchain-model: "gpt-4o-mini"
+  default-time-window-days: "30"

@@ -1,0 +1,532 @@
+openapi: 3.1.0
+info:
+  title: Resume Parser API
+  version: 1.0.0
+  description: Extract structured data from resumes and CVs in multiple formats.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Resume Parsing
+    description: Parse and extract structured data from resumes
+paths:
+  /resumes/parse:
+    post:
+      tags: [Resume Parsing]
+      summary: Parse a resume file
+      description: Upload and parse a resume in PDF, DOCX, or TXT format.
+      operationId: parseResume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Resume file to parse
+                language:
+                  type: string
+                  default: en
+                  description: ISO 639-1 language code
+                extract_skills:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Successfully parsed resume
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsedResume'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /resumes/batch:
+    post:
+      tags: [Resume Parsing]
+      summary: Batch parse multiple resumes
+      description: Upload and parse up to 50 resumes in a single request.
+      operationId: batchParseResumes
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 50
+                language:
+                  type: string
+                  default: en
+      responses:
+        '200':
+          description: Batch parse results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ParsedResume'
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ParseError'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /resumes/{resumeId}:
+    get:
+      tags: [Resume Parsing]
+      summary: Get parsed resume by ID
+      operationId: getResume
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Parsed resume data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsedResume'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Resume Parsing]
+      summary: Delete a parsed resume
+      operationId: deleteResume
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Resume deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resumes/{resumeId}/skills:
+    get:
+      tags: [Resume Parsing]
+      summary: Get extracted skills from a resume
+      operationId: getResumeSkills
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of extracted skills
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Skill'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resumes/{resumeId}/experience:
+    get:
+      tags: [Resume Parsing]
+      summary: Get work experience from a resume
+      operationId: getResumeExperience
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Work experience entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experiences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experience'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resumes/{resumeId}/education:
+    get:
+      tags: [Resume Parsing]
+      summary: Get education history from a resume
+      operationId: getResumeEducation
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Education entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  education:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Education'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resumes/search:
+    post:
+      tags: [Resume Parsing]
+      summary: Search parsed resumes
+      description: Search across all parsed resumes using keywords and filters.
+      operationId: searchResumes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                skills:
+                  type: array
+                  items:
+                    type: string
+                min_experience_years:
+                  type: integer
+                max_experience_years:
+                  type: integer
+                location:
+                  type: string
+                page:
+                  type: integer
+                  default: 1
+                per_page:
+                  type: integer
+                  default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeSearchResults'
+  /resumes/{resumeId}/export:
+    get:
+      tags: [Resume Parsing]
+      summary: Export parsed resume as JSON
+      operationId: exportResume
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, yaml]
+            default: json
+      responses:
+        '200':
+          description: Exported resume data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsedResume'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resumes/validate:
+    post:
+      tags: [Resume Parsing]
+      summary: Validate resume data completeness
+      description: Check if a parsed resume has all required fields.
+      operationId: validateResume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParsedResume'
+      responses:
+        '200':
+          description: Validation results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  missing_fields:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+  /resumes/{resumeId}/summary:
+    get:
+      tags: [Resume Parsing]
+      summary: Get AI-generated resume summary
+      operationId: getResumeSummary
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI-generated summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                  key_strengths:
+                    type: array
+                    items:
+                      type: string
+                  career_level:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resumes/languages:
+    get:
+      tags: [Resume Parsing]
+      summary: Get supported languages
+      operationId: getSupportedLanguages
+      responses:
+        '200':
+          description: List of supported languages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  languages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+  /resumes/formats:
+    get:
+      tags: [Resume Parsing]
+      summary: Get supported file formats
+      operationId: getSupportedFormats
+      responses:
+        '200':
+          description: List of supported file formats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  formats:
+                    type: array
+                    items:
+                      type: string
+                      enum: [pdf, docx, txt, rtf, odt]
+components:
+  schemas:
+    ParsedResume:
+      type: object
+      properties:
+        id:
+          type: string
+        personal_info:
+          $ref: '#/components/schemas/PersonalInfo'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        experience:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experience'
+        education:
+          type: array
+          items:
+            $ref: '#/components/schemas/Education'
+        certifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Certification'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+        raw_text:
+          type: string
+        parsed_at:
+          type: string
+          format: date-time
+    PersonalInfo:
+      type: object
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        linkedin:
+          type: string
+        github:
+          type: string
+        website:
+          type: string
+    Skill:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        proficiency:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+        years_experience:
+          type: number
+    Experience:
+      type: object
+      properties:
+        company:
+          type: string
+        title:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        current:
+          type: boolean
+        description:
+          type: string
+        skills_used:
+          type: array
+          items:
+            type: string
+    Education:
+      type: object
+      properties:
+        institution:
+          type: string
+        degree:
+          type: string
+        field_of_study:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        gpa:
+          type: number
+    Certification:
+      type: object
+      properties:
+        name:
+          type: string
+        issuer:
+          type: string
+        date_obtained:
+          type: string
+          format: date
+        expiry_date:
+          type: string
+          format: date
+    Language:
+      type: object
+      properties:
+        name:
+          type: string
+        proficiency:
+          type: string
+          enum: [basic, conversational, fluent, native]
+    ParseError:
+      type: object
+      properties:
+        file_name:
+          type: string
+        error:
+          type: string
+    ResumeSearchResults:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParsedResume'
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Unprocessable entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

@@ -1,0 +1,27 @@
+apiVersion: v2
+name: shared
+description: >
+  Shared infrastructure Helm chart for GRC_Claw.
+  Provides common services used across all domains including
+  ingress controller, cert-manager, monitoring stack,
+  service mesh, and shared utilities.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - shared
+  - infrastructure
+  - monitoring
+  - ingress
+  - service-mesh
+  - grc-claw
+home: https://github.com/ahmedhassan/GRC_Claw
+sources:
+  - https://github.com/ahmedhassan/GRC_Claw
+maintainers:
+  - name: Ahmed Hassan
+    email: ahmed@example.com
+annotations:
+  category: Infrastructure
+  grc-claw/domain: shared
+dependencies: []

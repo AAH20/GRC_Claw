@@ -1,0 +1,19 @@
+# Kubernetes ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: member-verification-config
+  namespace: member-verification
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  APP_NAME: "member-verification"
+  APP_VERSION: "0.1.0"
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  WORKERS: "1"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  MIN_TRUST_SCORE: "0.3"
+  MAX_FRAUD_RISK: "0.7"
+  VERIFICATION_TIMEOUT: "30"

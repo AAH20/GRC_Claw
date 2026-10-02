@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moderation-analytics
+  namespace: moderation-analytics
+  labels:
+    app: moderation-analytics
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: moderation-analytics
+  template:
+    metadata:
+      labels:
+        app: moderation-analytics
+    spec:
+      containers:
+        - name: moderation-analytics
+          image: moderation-analytics:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: moderation-analytics-secrets
+                  key: openai-api-key
+                  optional: true
+            - name: MODERATION_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: moderation-analytics-config
+                  key: moderation-api-url
+                  optional: true
+            - name: MODERATION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: moderation-analytics-secrets
+                  key: moderation-api-key
+                  optional: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

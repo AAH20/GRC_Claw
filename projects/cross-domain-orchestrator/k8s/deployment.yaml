@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cross-domain-orchestrator
+  labels:
+    app: cross-domain-orchestrator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cross-domain-orchestrator
+  template:
+    metadata:
+      labels:
+        app: cross-domain-orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: cross-domain-orchestrator:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: orchestrator-config
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

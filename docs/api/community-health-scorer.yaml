@@ -1,0 +1,699 @@
+openapi: 3.1.0
+info:
+  title: Community Health Scorer API
+  version: 1.0.0
+  description: Score and monitor community health metrics and engagement.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Community Health
+    description: Score community health
+paths:
+  /health/score:
+    post:
+      tags: [Community Health]
+      summary: Score community health
+      description: Get a comprehensive health score for a community.
+      operationId: scoreCommunity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [community_id]
+              properties:
+                community_id:
+                  type: string
+                metrics:
+                  type: array
+                  items:
+                    type: string
+                time_range:
+                  type: string
+                  enum: [day, week, month, quarter, year]
+                  default: month
+      responses:
+        '200':
+          description: Health score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthScore'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /health/metrics:
+    get:
+      tags: [Community Health]
+      summary: Get health metrics
+      operationId: getMetrics
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthMetrics'
+  /health/dimensions:
+    get:
+      tags: [Community Health]
+      summary: Get health dimensions
+      operationId: getDimensions
+      responses:
+        '200':
+          description: Dimensions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dimensions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthDimension'
+  /health/trends:
+    get:
+      tags: [Community Health]
+      summary: Get health trends
+      operationId: getTrends
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Trends
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trends:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        score:
+                          type: number
+  /health/engagement:
+    get:
+      tags: [Community Health]
+      summary: Get engagement metrics
+      operationId: getEngagement
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Engagement metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementMetrics'
+  /health/retention:
+    get:
+      tags: [Community Health]
+      summary: Get retention metrics
+      operationId: getRetention
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Retention metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionMetrics'
+  /health/sentiment:
+    get:
+      tags: [Community Health]
+      summary: Get community sentiment
+      operationId: getSentiment
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Sentiment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunitySentiment'
+  /health/activity:
+    get:
+      tags: [Community Health]
+      summary: Get activity metrics
+      operationId: getActivity
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Activity metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityMetrics'
+  /health/members:
+    get:
+      tags: [Community Health]
+      summary: Get member health metrics
+      operationId: getMemberHealth
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Member health
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MemberHealth'
+  /health/alerts:
+    get:
+      tags: [Community Health]
+      summary: Get health alerts
+      operationId: getAlerts
+      parameters:
+        - name: community_id
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        '200':
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthAlert'
+    post:
+      tags: [Community Health]
+      summary: Create health alert
+      operationId: createAlert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthAlert'
+      responses:
+        '201':
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthAlert'
+  /health/reports:
+    post:
+      tags: [Community Health]
+      summary: Generate health report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [community_id, start_date, end_date]
+              properties:
+                community_id:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                format:
+                  type: string
+                  enum: [json, pdf, csv]
+                  default: json
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /health/benchmarks:
+    get:
+      tags: [Community Health]
+      summary: Get health benchmarks
+      operationId: getBenchmarks
+      parameters:
+        - name: community_type
+          in: query
+          schema:
+            type: string
+        - name: size_range
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Benchmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  benchmarks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthBenchmark'
+  /health/recommendations:
+    get:
+      tags: [Community Health]
+      summary: Get health recommendations
+      description: Get AI-powered recommendations to improve community health.
+      operationId: getRecommendations
+      parameters:
+        - name: community_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthRecommendation'
+  /health/compare:
+    post:
+      tags: [Community Health]
+      summary: Compare communities
+      description: Compare health scores across multiple communities.
+      operationId: compareCommunities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [community_ids]
+              properties:
+                community_ids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 2
+                  maxItems: 10
+                metrics:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Comparison
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityComparison'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    HealthScore:
+      type: object
+      properties:
+        community_id:
+          type: string
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        grade:
+          type: string
+          enum: [A, B, C, D, F]
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionScore'
+        scored_at:
+          type: string
+          format: date-time
+    DimensionScore:
+      type: object
+      properties:
+        dimension:
+          type: string
+        score:
+          type: number
+        weight:
+          type: number
+        trend:
+          type: string
+          enum: [improving, stable, declining]
+    HealthMetrics:
+      type: object
+      properties:
+        community_id:
+          type: string
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        engagement:
+          $ref: '#/components/schemas/EngagementMetrics'
+        retention:
+          $ref: '#/components/schemas/RetentionMetrics'
+        sentiment:
+          $ref: '#/components/schemas/CommunitySentiment'
+        activity:
+          $ref: '#/components/schemas/ActivityMetrics'
+    HealthDimension:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        weight:
+          type: number
+        metrics:
+          type: array
+          items:
+            type: string
+    EngagementMetrics:
+      type: object
+      properties:
+        daily_active_users:
+          type: integer
+        weekly_active_users:
+          type: integer
+        monthly_active_users:
+          type: integer
+        posts_per_day:
+          type: number
+        comments_per_day:
+          type: number
+        reactions_per_day:
+          type: number
+        engagement_rate:
+          type: number
+    RetentionMetrics:
+      type: object
+      properties:
+        day_1:
+          type: number
+        day_7:
+          type: number
+        day_30:
+          type: number
+        day_90:
+          type: number
+        churn_rate:
+          type: number
+    CommunitySentiment:
+      type: object
+      properties:
+        overall:
+          type: string
+          enum: [positive, neutral, negative]
+        score:
+          type: number
+        positive_ratio:
+          type: number
+        negative_ratio:
+          type: number
+    ActivityMetrics:
+      type: object
+      properties:
+        total_posts:
+          type: integer
+        total_comments:
+          type: integer
+        total_reactions:
+          type: integer
+        new_members:
+          type: integer
+        active_members:
+          type: integer
+    MemberHealth:
+      type: object
+      properties:
+        user_id:
+          type: string
+        health_score:
+          type: number
+        engagement_level:
+          type: string
+          enum: [high, medium, low, inactive]
+        last_active:
+          type: string
+          format: date-time
+        risk_level:
+          type: string
+          enum: [low, medium, high]
+    HealthAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        community_id:
+          type: string
+        type:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        message:
+          type: string
+        metric:
+          type: string
+        threshold:
+          type: number
+        current_value:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    HealthReport:
+      type: object
+      properties:
+        community_id:
+          type: string
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        summary:
+          type: object
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthScore'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthRecommendation'
+    HealthBenchmark:
+      type: object
+      properties:
+        community_type:
+          type: string
+        size_range:
+          type: string
+        p25:
+          type: number
+        p50:
+          type: number
+        p75:
+          type: number
+        p90:
+          type: number
+    HealthRecommendation:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        expected_impact:
+          type: number
+    CommunityComparison:
+      type: object
+      properties:
+        communities:
+          type: array
+          items:
+            type: object
+            properties:
+              community_id:
+                type: string
+              name:
+                type: string
+              score:
+                type: number
+        metrics:
+          type: array
+          items:
+            type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

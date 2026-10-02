@@ -1,0 +1,556 @@
+openapi: 3.1.0
+info:
+  title: Candidate Matcher API
+  version: 1.0.0
+  description: Match candidates to job requirements using AI-powered scoring.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Candidate Matching
+    description: Match candidates to job postings
+paths:
+  /matches:
+    post:
+      tags: [Candidate Matching]
+      summary: Match candidates to a job
+      description: Score and rank candidates against a job description.
+      operationId: matchCandidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [job_id, candidate_ids]
+              properties:
+                job_id:
+                  type: string
+                candidate_ids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 100
+                weights:
+                  $ref: '#/components/schemas/MatchWeights'
+                min_score:
+                  type: number
+                  default: 0.0
+                  minimum: 0
+                  maximum: 1
+      responses:
+        '200':
+          description: Match results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResults'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/{matchId}:
+    get:
+      tags: [Candidate Matching]
+      summary: Get match result by ID
+      operationId: getMatch
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/batch:
+    post:
+      tags: [Candidate Matching]
+      summary: Batch match candidates across multiple jobs
+      operationId: batchMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [job_ids, candidate_ids]
+              properties:
+                job_ids:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 20
+                candidate_ids:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 100
+                weights:
+                  $ref: '#/components/schemas/MatchWeights'
+      responses:
+        '200':
+          description: Batch match results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MatchResults'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /matches/{matchId}/explanation:
+    get:
+      tags: [Candidate Matching]
+      summary: Get match explanation
+      description: Get detailed explanation of why a candidate matched or did not match.
+      operationId: getMatchExplanation
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match explanation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchExplanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/{matchId}/compare:
+    get:
+      tags: [Candidate Matching]
+      summary: Compare candidates side by side
+      operationId: compareCandidates
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Side-by-side comparison
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateComparison'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/history:
+    get:
+      tags: [Candidate Matching]
+      summary: Get match history
+      operationId: getMatchHistory
+      parameters:
+        - name: job_id
+          in: query
+          schema:
+            type: string
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Match history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MatchResult'
+  /matches/recalculate:
+    post:
+      tags: [Candidate Matching]
+      summary: Recalculate match scores
+      description: Recalculate match scores with updated weights or criteria.
+      operationId: recalculateMatches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [match_ids]
+              properties:
+                match_ids:
+                  type: array
+                  items:
+                    type: string
+                weights:
+                  $ref: '#/components/schemas/MatchWeights'
+      responses:
+        '200':
+          description: Recalculated results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MatchResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /matches/{matchId}/feedback:
+    post:
+      tags: [Candidate Matching]
+      summary: Submit feedback on a match
+      description: Provide feedback to improve future matching accuracy.
+      operationId: submitMatchFeedback
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comments:
+                  type: string
+                accurate:
+                  type: boolean
+      responses:
+        '201':
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/top-candidates:
+    get:
+      tags: [Candidate Matching]
+      summary: Get top candidates for a job
+      operationId: getTopCandidates
+      parameters:
+        - name: job_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: min_score
+          in: query
+          schema:
+            type: number
+            default: 0.7
+      responses:
+        '200':
+          description: Top candidates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  candidates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MatchResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/skills-gap:
+    post:
+      tags: [Candidate Matching]
+      summary: Analyze skills gap
+      description: Identify skills gaps between a candidate and job requirements.
+      operationId: analyzeSkillsGap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidate_id, job_id]
+              properties:
+                candidate_id:
+                  type: string
+                job_id:
+                  type: string
+      responses:
+        '200':
+          description: Skills gap analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillsGapAnalysis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/similar-jobs:
+    get:
+      tags: [Candidate Matching]
+      summary: Find similar jobs for a candidate
+      operationId: findSimilarJobs
+      parameters:
+        - name: candidate_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Similar jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobMatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /matches/weights/defaults:
+    get:
+      tags: [Candidate Matching]
+      summary: Get default match weights
+      operationId: getDefaultWeights
+      responses:
+        '200':
+          description: Default weights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchWeights'
+  /matches/weights:
+    put:
+      tags: [Candidate Matching]
+      summary: Update match weights
+      operationId: updateWeights
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchWeights'
+      responses:
+        '200':
+          description: Updated weights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchWeights'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    MatchWeights:
+      type: object
+      properties:
+        skills:
+          type: number
+          default: 0.4
+        experience:
+          type: number
+          default: 0.3
+        education:
+          type: number
+          default: 0.15
+        location:
+          type: number
+          default: 0.1
+        culture_fit:
+          type: number
+          default: 0.05
+    MatchResults:
+      type: object
+      properties:
+        job_id:
+          type: string
+        total_candidates:
+          type: integer
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResult'
+    MatchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        candidate_id:
+          type: string
+        job_id:
+          type: string
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        skill_score:
+          type: number
+        experience_score:
+          type: number
+        education_score:
+          type: number
+        location_score:
+          type: number
+        culture_fit_score:
+          type: number
+        matched_skills:
+          type: array
+          items:
+            type: string
+        missing_skills:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    MatchExplanation:
+      type: object
+      properties:
+        match_id:
+          type: string
+        summary:
+          type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+    CandidateComparison:
+      type: object
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResult'
+        comparison_matrix:
+          type: object
+          additionalProperties:
+            type: number
+    SkillsGapAnalysis:
+      type: object
+      properties:
+        candidate_id:
+          type: string
+        job_id:
+          type: string
+        matching_skills:
+          type: array
+          items:
+            type: string
+        missing_skills:
+          type: array
+          items:
+            type: string
+        skill_gaps:
+          type: array
+          items:
+            type: object
+            properties:
+              skill:
+                type: string
+              required_level:
+                type: string
+              candidate_level:
+                type: string
+              gap:
+                type: string
+        overall_readiness:
+          type: number
+    JobMatch:
+      type: object
+      properties:
+        job_id:
+          type: string
+        title:
+          type: string
+        match_score:
+          type: number
+        matching_skills:
+          type: array
+          items:
+            type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

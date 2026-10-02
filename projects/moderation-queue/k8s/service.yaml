@@ -1,0 +1,19 @@
+# Kubernetes Service for Moderation Queue API
+apiVersion: v1
+kind: Service
+metadata:
+  name: moderation-queue-service
+  namespace: moderation-queue
+  labels:
+    app: moderation-queue
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: moderation-queue
+    component: api

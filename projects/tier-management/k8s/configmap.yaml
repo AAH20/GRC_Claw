@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tier-management-config
+  namespace: grc-claw
+data:
+  environment: "production"
+  log_level: "INFO"
+  max_tier_levels: "10"
+  evaluation_timeout_seconds: "30"
+  upgrade_cooldown_hours: "24"
+  analytics_retention_days: "90"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tier-management-secrets
+  namespace: grc-claw
+type: Opaque
+stringData:
+  openai-api-key: "replace-with-actual-key"
+  database-url: "postgresql://postgres:postgres@localhost:5432/tier_management"
+  redis-url: "redis://localhost:6379/0"

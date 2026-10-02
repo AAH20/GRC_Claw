@@ -1,0 +1,838 @@
+openapi: 3.1.0
+info:
+  title: Recruitment Analytics API
+  version: 1.0.0
+  description: Analytics and reporting for recruitment processes and metrics.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Recruitment Analytics
+    description: Recruitment metrics and analytics
+paths:
+  /analytics/dashboard:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get recruitment dashboard
+      description: Get an overview of key recruitment metrics.
+      operationId: getDashboard
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+  /analytics/time-to-hire:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get time-to-hire metrics
+      operationId: getTimeToHire
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: job_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Time-to-hire metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeToHireMetrics'
+  /analytics/source-effectiveness:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get source effectiveness metrics
+      operationId: getSourceEffectiveness
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Source effectiveness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceEffectiveness'
+  /analytics/funnel:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get recruitment funnel data
+      operationId: getFunnel
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: job_id
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Funnel data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FunnelData'
+  /analytics/candidate-pipeline:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get candidate pipeline metrics
+      operationId: getPipeline
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Pipeline metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineMetrics'
+  /analytics/cost-per-hire:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get cost-per-hire metrics
+      operationId: getCostPerHire
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cost-per-hire metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostPerHire'
+  /analytics/quality-of-hire:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get quality-of-hire metrics
+      operationId: getQualityOfHire
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Quality-of-hire metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityOfHire'
+  /analytics/diversity:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get diversity metrics
+      operationId: getDiversity
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Diversity metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiversityMetrics'
+  /analytics/interviewer-performance:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get interviewer performance metrics
+      operationId: getInterviewerPerformance
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: interviewer_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interviewer performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewerPerformance'
+  /analytics/offers:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get offer metrics
+      operationId: getOffers
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Offer metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferMetrics'
+  /analytics/reports:
+    post:
+      tags: [Recruitment Analytics]
+      summary: Generate custom report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '200':
+          description: Generated report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Recruitment Analytics]
+      summary: List saved reports
+      operationId: listReports
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Saved reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+  /analytics/reports/{reportId}:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get report by ID
+      operationId: getReport
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Recruitment Analytics]
+      summary: Delete a report
+      operationId: deleteReport
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Report deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /analytics/export:
+    post:
+      tags: [Recruitment Analytics]
+      summary: Export analytics data
+      operationId: exportData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metrics, format]
+              properties:
+                metrics:
+                  type: array
+                  items:
+                    type: string
+                format:
+                  type: string
+                  enum: [csv, xlsx, json, pdf]
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Export result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /analytics/benchmarks:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get industry benchmarks
+      operationId: getBenchmarks
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+        - name: industry
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Benchmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  benchmarks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Benchmark'
+  /analytics/alerts:
+    get:
+      tags: [Recruitment Analytics]
+      summary: Get analytics alerts
+      operationId: getAlerts
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, resolved, all]
+            default: active
+      responses:
+        '200':
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+    post:
+      tags: [Recruitment Analytics]
+      summary: Create analytics alert
+      operationId: createAlert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Alert'
+      responses:
+        '201':
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+  /analytics/forecasting:
+    post:
+      tags: [Recruitment Analytics]
+      summary: Get hiring forecast
+      description: Get AI-powered hiring forecast based on historical data.
+      operationId: getForecast
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [horizon_months]
+              properties:
+                horizon_months:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                department:
+                  type: string
+                job_family:
+                  type: string
+      responses:
+        '200':
+          description: Forecast data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forecast'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    Dashboard:
+      type: object
+      properties:
+        open_positions:
+          type: integer
+        active_candidates:
+          type: integer
+        interviews_scheduled:
+          type: integer
+        offers_pending:
+          type: integer
+        hires_this_month:
+          type: integer
+        time_to_hire_avg:
+          type: number
+        cost_per_hire_avg:
+          type: number
+        offer_acceptance_rate:
+          type: number
+        top_sources:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              hires:
+                type: integer
+        recent_activity:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+    TimeToHireMetrics:
+      type: object
+      properties:
+        average_days:
+          type: number
+        median_days:
+          type: number
+        p90_days:
+          type: number
+        by_department:
+          type: object
+          additionalProperties:
+            type: number
+        by_job_family:
+          type: object
+          additionalProperties:
+            type: number
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              avg_days:
+                type: number
+    SourceEffectiveness:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              candidates:
+                type: integer
+              hires:
+                type: integer
+              conversion_rate:
+                type: number
+              cost_per_hire:
+                type: number
+              quality_score:
+                type: number
+    FunnelData:
+      type: object
+      properties:
+        stages:
+          type: array
+          items:
+            type: object
+            properties:
+              stage:
+                type: string
+              count:
+                type: integer
+              conversion_rate:
+                type: number
+              dropoff_rate:
+                type: number
+        overall_conversion:
+          type: number
+    PipelineMetrics:
+      type: object
+      properties:
+        total_candidates:
+          type: integer
+        by_stage:
+          type: object
+          additionalProperties:
+            type: integer
+        by_source:
+          type: object
+          additionalProperties:
+            type: integer
+        velocity:
+          type: number
+        bottleneck_stage:
+          type: string
+    CostPerHire:
+      type: object
+      properties:
+        total_cost:
+          type: number
+        hires:
+          type: integer
+        cost_per_hire:
+          type: number
+        breakdown:
+          type: object
+          additionalProperties:
+            type: number
+        by_department:
+          type: object
+          additionalProperties:
+            type: number
+    QualityOfHire:
+      type: object
+      properties:
+        retention_rate_90d:
+          type: number
+        retention_rate_1y:
+          type: number
+        performance_rating_avg:
+          type: number
+        hiring_manager_satisfaction:
+          type: number
+        by_source:
+          type: object
+          additionalProperties:
+            type: number
+    DiversityMetrics:
+      type: object
+      properties:
+        gender_distribution:
+          type: object
+          additionalProperties:
+            type: number
+        ethnicity_distribution:
+          type: object
+          additionalProperties:
+            type: number
+        age_distribution:
+          type: object
+          additionalProperties:
+            type: number
+        diversity_index:
+          type: number
+        by_department:
+          type: object
+          additionalProperties:
+            type: object
+    InterviewerPerformance:
+      type: object
+      properties:
+        interviewers:
+          type: array
+          items:
+            type: object
+            properties:
+              interviewer_id:
+                type: string
+              interviews_conducted:
+                type: integer
+              avg_rating:
+                type: number
+              hire_rate:
+                type: number
+              feedback_quality:
+                type: number
+    OfferMetrics:
+      type: object
+      properties:
+        total_offers:
+          type: integer
+        accepted:
+          type: integer
+        declined:
+          type: integer
+        acceptance_rate:
+          type: number
+        avg_time_to_accept_days:
+          type: number
+        by_department:
+          type: object
+          additionalProperties:
+            type: object
+    ReportRequest:
+      type: object
+      required: [name, metrics]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        metrics:
+          type: array
+          items:
+            type: string
+        filters:
+          type: object
+        group_by:
+          type: array
+          items:
+            type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        metrics:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    Benchmark:
+      type: object
+      properties:
+        metric:
+          type: string
+        industry:
+          type: string
+        p25:
+          type: number
+        p50:
+          type: number
+        p75:
+          type: number
+        p90:
+          type: number
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        metric:
+          type: string
+        condition:
+          type: string
+        threshold:
+          type: number
+        status:
+          type: string
+          enum: [active, resolved]
+        triggered_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+    Forecast:
+      type: object
+      properties:
+        horizon_months:
+          type: integer
+        predictions:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              predicted_hires:
+                type: integer
+              confidence_interval:
+                type: object
+                properties:
+                  lower:
+                    type: integer
+                  upper:
+                    type: integer
+        factors:
+          type: array
+          items:
+            type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

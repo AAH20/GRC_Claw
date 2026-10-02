@@ -1,0 +1,293 @@
+# Default values for gated-communities.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings shared across all gated community projects
+global:
+  imageRegistry: "ghcr.io/ahmedhassan/grc-claw"
+  imagePullSecrets: []
+  storageClass: "standard"
+  environment: production
+  domain: "communities.grc-claw.local"
+
+# Number of gated community projects to deploy
+projectCount: 10
+
+# Default configuration for each gated community project
+defaults:
+  image:
+    repository: gated-communities
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    tls:
+      enabled: true
+      secretName: communities-tls
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  serviceAccount:
+    create: true
+    annotations: {}
+
+  networkPolicy:
+    enabled: true
+
+  config:
+    LOG_LEVEL: "info"
+    DB_POOL_SIZE: "20"
+    REDIS_POOL_SIZE: "10"
+    CORS_ORIGINS: "*"
+    METRICS_ENABLED: "true"
+    TRACING_ENABLED: "true"
+    ACCESS_CONTROL: "rbac"
+    INVITE_ONLY: "true"
+    CONTENT_PROTECTION: "true"
+
+  secrets:
+    DB_PASSWORD: ""
+    REDIS_PASSWORD: ""
+    JWT_SECRET: ""
+    API_KEY: ""
+    ENCRYPTION_KEY: ""
+
+  persistence:
+    enabled: false
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 30
+
+# Individual project overrides
+projects:
+  - name: access-control
+    displayName: "Access Control"
+    description: "Role-based access control and permissions management"
+    image:
+      repository: access-control
+      tag: "v1.2.0"
+    replicaCount: 3
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - access.grc-claw.local
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    config:
+      RBAC_ENABLED: "true"
+      PERMISSION_CACHE_TTL: "300"
+      AUDIT_LOGGING: "true"
+
+  - name: membership-manager
+    displayName: "Membership Manager"
+    description: "Community membership lifecycle and tier management"
+    image:
+      repository: membership-manager
+      tag: "v1.1.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - membership.grc-claw.local
+    config:
+      MEMBERSHIP_TIERS: "free,premium,enterprise"
+      AUTO_RENEWAL: "true"
+      GRACE_PERIOD: "7"
+
+  - name: community-forums
+    displayName: "Community Forums"
+    description: "Discussion forums with moderation and threading"
+    image:
+      repository: community-forums
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - forums.grc-claw.local
+    config:
+      THREADING_DEPTH: "10"
+      MODERATION_QUEUE: "true"
+      RICH_TEXT_EDITOR: "true"
+
+  - name: exclusive-content
+    displayName: "Exclusive Content"
+    description: "Gated content delivery and digital rights management"
+    image:
+      repository: exclusive-content
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - content.grc-claw.local
+    config:
+      CONTENT_TYPES: "video,audio,document,download"
+      DRM_PROTECTION: "true"
+      WATERMARKING: "true"
+
+  - name: community-analytics
+    displayName: "Community Analytics"
+    description: "Community engagement metrics and insights"
+    image:
+      repository: community-analytics
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - analytics.grc-claw.local
+    config:
+      ENGAGEMENT_METRICS: "active,contributing,lurking"
+      RETENTION_TRACKING: "true"
+      EXPORT_FORMATS: "csv,pdf"
+
+  - name: invite-system
+    displayName: "Invite System"
+    description: "Invitation management and referral tracking"
+    image:
+      repository: invite-system
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - invites.grc-claw.local
+    config:
+      INVITE_EXPIRY: "7"
+      MAX_INVITES_PER_USER: "10"
+      REFERRAL_REWARDS: "true"
+
+  - name: payment-gateway
+    displayName: "Payment Gateway"
+    description: "Subscription payments and billing management"
+    image:
+      repository: payment-gateway
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - payments.grc-claw.local
+    config:
+      PAYMENT_PROVIDERS: "stripe,paypal"
+      CURRENCY: "USD"
+      PRORATION: "true"
+
+  - name: moderation-tools
+    displayName: "Moderation Tools"
+    description: "Community moderation and content flagging"
+    image:
+      repository: moderation-tools
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: false
+    config:
+      AUTO_MODERATION: "ai-assisted"
+      FLAG_CATEGORIES: "spam,harassment,illegal"
+      ESCALATION_WORKFLOW: "true"
+
+  - name: event-manager
+    displayName: "Event Manager"
+    description: "Community events, webinars, and meetups"
+    image:
+      repository: event-manager
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - events.grc-claw.local
+    config:
+      EVENT_TYPES: "webinar,meetup,conference,workshop"
+      RSVP_MANAGEMENT: "true"
+      CALENDAR_SYNC: "true"
+
+  - name: notification-service
+    displayName: "Notification Service"
+    description: "Community notifications and announcements"
+    image:
+      repository: notification-service
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: false
+    config:
+      CHANNELS: "email,push,in-app,sms"
+      DIGEST_FREQUENCY: "daily"
+      ANNOUNCEMENT_SYSTEM: "true"

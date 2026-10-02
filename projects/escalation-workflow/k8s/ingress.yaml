@@ -1,0 +1,29 @@
+# Kubernetes Ingress for escalation workflow API
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: escalation-workflow-ingress
+  namespace: escalation-workflow
+  labels:
+    app: escalation-workflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+    - hosts:
+        - escalation-workflow.example.com
+      secretName: escalation-workflow-tls
+  rules:
+    - host: escalation-workflow.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: escalation-workflow-api
+                port:
+                  number: 80

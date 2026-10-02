@@ -1,0 +1,796 @@
+openapi: 3.1.0
+info:
+  title: Fraud Detection API
+  version: 1.0.0
+  description: Detect and prevent fraudulent activities across the platform.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Fraud Detection
+    description: Detect and prevent fraud
+paths:
+  /fraud/analyze:
+    post:
+      tags: [Fraud Detection]
+      summary: Analyze transaction for fraud
+      description: Analyze a transaction or activity for potential fraud indicators.
+      operationId: analyzeTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudAnalysisRequest'
+      responses:
+        '200':
+          description: Fraud analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudAnalysisResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /fraud/score:
+    post:
+      tags: [Fraud Detection]
+      summary: Get fraud risk score
+      description: Get a fraud risk score for a user, transaction, or entity.
+      operationId: getFraudScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity_type, entity_id]
+              properties:
+                entity_type:
+                  type: string
+                  enum: [user, transaction, account, device, ip]
+                entity_id:
+                  type: string
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Fraud risk score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudRiskScore'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /fraud/alerts:
+    get:
+      tags: [Fraud Detection]
+      summary: Get fraud alerts
+      operationId: getAlerts
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, investigating, resolved, false_positive]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Fraud alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FraudAlert'
+    post:
+      tags: [Fraud Detection]
+      summary: Create fraud alert
+      operationId: createAlert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudAlert'
+      responses:
+        '201':
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudAlert'
+  /fraud/alerts/{alertId}:
+    get:
+      tags: [Fraud Detection]
+      summary: Get fraud alert by ID
+      operationId: getAlert
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudAlert'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Fraud Detection]
+      summary: Update fraud alert
+      operationId: updateAlert
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [new, investigating, resolved, false_positive]
+                notes:
+                  type: string
+                assigned_to:
+                  type: string
+      responses:
+        '200':
+          description: Updated alert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudAlert'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /fraud/rules:
+    get:
+      tags: [Fraud Detection]
+      summary: Get fraud detection rules
+      operationId: getRules
+      responses:
+        '200':
+          description: Rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FraudRule'
+    post:
+      tags: [Fraud Detection]
+      summary: Create fraud detection rule
+      operationId: createRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudRule'
+      responses:
+        '201':
+          description: Rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudRule'
+  /fraud/rules/{ruleId}:
+    get:
+      tags: [Fraud Detection]
+      summary: Get rule by ID
+      operationId: getRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudRule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Fraud Detection]
+      summary: Update rule
+      operationId: updateRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudRule'
+      responses:
+        '200':
+          description: Updated rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudRule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Fraud Detection]
+      summary: Delete rule
+      operationId: deleteRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Rule deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /fraud/blacklist:
+    post:
+      tags: [Fraud Detection]
+      summary: Add to blacklist
+      operationId: addToBlacklist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity_type, entity_id, reason]
+              properties:
+                entity_type:
+                  type: string
+                  enum: [user, email, ip, device, phone, payment_method]
+                entity_id:
+                  type: string
+                reason:
+                  type: string
+                expires_at:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Added to blacklist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlacklistEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Fraud Detection]
+      summary: List blacklist
+      operationId: listBlacklist
+      parameters:
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Blacklist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BlacklistEntry'
+  /fraud/blacklist/{entryId}:
+    delete:
+      tags: [Fraud Detection]
+      summary: Remove from blacklist
+      operationId: removeFromBlacklist
+      parameters:
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Removed from blacklist
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /fraud/analytics:
+    get:
+      tags: [Fraud Detection]
+      summary: Get fraud analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Fraud analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudAnalytics'
+  /fraud/investigations:
+    post:
+      tags: [Fraud Detection]
+      summary: Create investigation
+      operationId: createInvestigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Investigation'
+      responses:
+        '201':
+          description: Investigation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Investigation'
+    get:
+      tags: [Fraud Detection]
+      summary: List investigations
+      operationId: listInvestigations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, pending, closed, escalated]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Investigations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Investigation'
+  /fraud/investigations/{investigationId}:
+    get:
+      tags: [Fraud Detection]
+      summary: Get investigation by ID
+      operationId: getInvestigation
+      parameters:
+        - name: investigationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Investigation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Investigation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Fraud Detection]
+      summary: Update investigation
+      operationId: updateInvestigation
+      parameters:
+        - name: investigationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Investigation'
+      responses:
+        '200':
+          description: Updated investigation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Investigation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /fraud/verify-identity:
+    post:
+      tags: [Fraud Detection]
+      summary: Verify identity
+      description: Verify user identity to prevent account takeover and impersonation.
+      operationId: verifyIdentity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, method]
+              properties:
+                user_id:
+                  type: string
+                method:
+                  type: string
+                  enum: [email, phone, document, biometric, knowledge]
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                  confidence:
+                    type: number
+                  method:
+                    type: string
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /fraud/patterns:
+    get:
+      tags: [Fraud Detection]
+      summary: Get detected fraud patterns
+      operationId: getPatterns
+      parameters:
+        - name: pattern_type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Patterns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FraudPattern'
+components:
+  schemas:
+    FraudAnalysisRequest:
+      type: object
+      required: [transaction_id, amount, user_id]
+      properties:
+        transaction_id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        user_id:
+          type: string
+        payment_method:
+          type: string
+        ip_address:
+          type: string
+        device_fingerprint:
+          type: string
+        metadata:
+          type: object
+    FraudAnalysisResult:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        flags:
+          type: array
+          items:
+            type: string
+        recommendation:
+          type: string
+          enum: [allow, review, block]
+        analyzed_at:
+          type: string
+          format: date-time
+    FraudRiskScore:
+      type: object
+      properties:
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              factor:
+                type: string
+              impact:
+                type: number
+              description:
+                type: string
+    FraudAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        alert_type:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, investigating, resolved, false_positive]
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        description:
+          type: string
+        evidence:
+          type: object
+        assigned_to:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+    FraudRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        condition:
+          type: string
+        action:
+          type: string
+          enum: [flag, block, review, notify]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    BlacklistEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        reason:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+    FraudAnalytics:
+      type: object
+      properties:
+        total_transactions:
+          type: integer
+        flagged_transactions:
+          type: integer
+        blocked_transactions:
+          type: integer
+        fraud_rate:
+          type: number
+        false_positive_rate:
+          type: number
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        by_severity:
+          type: object
+          additionalProperties:
+            type: integer
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+    Investigation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, pending, closed, escalated]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        assigned_to:
+          type: string
+        related_alerts:
+          type: array
+          items:
+            type: string
+        findings:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    FraudPattern:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        pattern_type:
+          type: string
+        frequency:
+          type: integer
+        confidence:
+          type: number
+        first_seen:
+          type: string
+          format: date-time
+        last_seen:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

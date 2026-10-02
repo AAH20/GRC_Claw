@@ -1,0 +1,839 @@
+openapi: 3.1.0
+info:
+  title: Access Control API
+  version: 1.0.0
+  description: Manage access control, permissions, and authorization policies.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Access Control
+    description: Manage access and permissions
+paths:
+  /access/policies:
+    post:
+      tags: [Access Control]
+      summary: Create access policy
+      operationId: createPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessPolicy'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Access Control]
+      summary: List access policies
+      operationId: listPolicies
+      parameters:
+        - name: resource_type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, draft]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccessPolicy'
+  /access/policies/{policyId}:
+    get:
+      tags: [Access Control]
+      summary: Get policy by ID
+      operationId: getPolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Access Control]
+      summary: Update policy
+      operationId: updatePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessPolicy'
+      responses:
+        '200':
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Access Control]
+      summary: Delete policy
+      operationId: deletePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/roles:
+    post:
+      tags: [Access Control]
+      summary: Create role
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+    get:
+      tags: [Access Control]
+      summary: List roles
+      operationId: listRoles
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+  /access/roles/{roleId}:
+    get:
+      tags: [Access Control]
+      summary: Get role by ID
+      operationId: getRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Access Control]
+      summary: Update role
+      operationId: updateRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '200':
+          description: Updated role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Access Control]
+      summary: Delete role
+      operationId: deleteRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Role deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/roles/{roleId}/permissions:
+    get:
+      tags: [Access Control]
+      summary: Get role permissions
+      operationId: getRolePermissions
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Access Control]
+      summary: Grant permission to role
+      operationId: grantPermission
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Permission'
+      responses:
+        '201':
+          description: Permission granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/roles/{roleId}/permissions/{permissionId}:
+    delete:
+      tags: [Access Control]
+      summary: Revoke permission from role
+      operationId: revokePermission
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Permission revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/check:
+    post:
+      tags: [Access Control]
+      summary: Check access
+      description: Check if a user has access to a resource.
+      operationId: checkAccess
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, resource, action]
+              properties:
+                user_id:
+                  type: string
+                resource:
+                  type: string
+                action:
+                  type: string
+                  enum: [create, read, update, delete, execute, manage]
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Access check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allowed:
+                    type: boolean
+                  reason:
+                    type: string
+                  policy_id:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /access/audit:
+    get:
+      tags: [Access Control]
+      summary: Get access audit log
+      operationId: getAuditLog
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: resource
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+  /access/sessions:
+    get:
+      tags: [Access Control]
+      summary: List active sessions
+      operationId: listSessions
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+  /access/sessions/{sessionId}:
+    delete:
+      tags: [Access Control]
+      summary: Revoke session
+      operationId: revokeSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Session revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/groups:
+    post:
+      tags: [Access Control]
+      summary: Create access group
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessGroup'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGroup'
+    get:
+      tags: [Access Control]
+      summary: List access groups
+      operationId: listGroups
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccessGroup'
+  /access/groups/{groupId}:
+    get:
+      tags: [Access Control]
+      summary: Get group by ID
+      operationId: getGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGroup'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Access Control]
+      summary: Update group
+      operationId: updateGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessGroup'
+      responses:
+        '200':
+          description: Updated group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGroup'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Access Control]
+      summary: Delete group
+      operationId: deleteGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Group deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/groups/{groupId}/members:
+    post:
+      tags: [Access Control]
+      summary: Add member to group
+      operationId: addMember
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: string
+                role:
+                  type: string
+                  default: member
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Access Control]
+      summary: Get group members
+      operationId: getMembers
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/groups/{groupId}/members/{userId}:
+    delete:
+      tags: [Access Control]
+      summary: Remove member from group
+      operationId: removeMember
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /access/analytics:
+    get:
+      tags: [Access Control]
+      summary: Get access control analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessAnalytics'
+components:
+  schemas:
+    AccessPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        resource_type:
+          type: string
+        rules:
+          type: array
+          items:
+            type: object
+            properties:
+              effect:
+                type: string
+                enum: [allow, deny]
+              actions:
+                type: array
+                items:
+                  type: string
+              conditions:
+                type: object
+        status:
+          type: string
+          enum: [active, inactive, draft]
+        created_at:
+          type: string
+          format: date-time
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        user_count:
+          type: integer
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        resource:
+          type: string
+        action:
+          type: string
+          enum: [create, read, update, delete, execute, manage]
+        conditions:
+          type: object
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        resource:
+          type: string
+        action:
+          type: string
+        result:
+          type: string
+          enum: [allowed, denied]
+        reason:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+    AccessGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        member_count:
+          type: integer
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    GroupMember:
+      type: object
+      properties:
+        user_id:
+          type: string
+        role:
+          type: string
+        added_at:
+          type: string
+          format: date-time
+    AccessAnalytics:
+      type: object
+      properties:
+        total_policies:
+          type: integer
+        total_roles:
+          type: integer
+        total_groups:
+          type: integer
+        access_checks:
+          type: integer
+        denied_attempts:
+          type: integer
+        by_action:
+          type: object
+          additionalProperties:
+            type: integer
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

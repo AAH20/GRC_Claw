@@ -1,0 +1,577 @@
+openapi: 3.1.0
+info:
+  title: Quality Scoring API
+  version: 1.0.0
+  description: Score and evaluate content quality across multiple dimensions.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Quality Scoring
+    description: Score content quality
+paths:
+  /quality/score:
+    post:
+      tags: [Quality Scoring]
+      summary: Score content quality
+      description: Get a comprehensive quality score for content.
+      operationId: scoreContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualityRequest'
+      responses:
+        '200':
+          description: Quality score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityScore'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /quality/batch:
+    post:
+      tags: [Quality Scoring]
+      summary: Batch score content
+      description: Score multiple content items in a single request.
+      operationId: batchScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QualityRequest'
+                  maxItems: 100
+      responses:
+        '200':
+          description: Batch scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QualityScore'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /quality/dimensions:
+    get:
+      tags: [Quality Scoring]
+      summary: Get quality dimensions
+      operationId: getDimensions
+      responses:
+        '200':
+          description: Quality dimensions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dimensions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QualityDimension'
+  /quality/criteria:
+    get:
+      tags: [Quality Scoring]
+      summary: Get scoring criteria
+      operationId: getCriteria
+      parameters:
+        - name: dimension
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  criteria:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScoringCriterion'
+  /quality/benchmarks:
+    get:
+      tags: [Quality Scoring]
+      summary: Get quality benchmarks
+      operationId: getBenchmarks
+      parameters:
+        - name: content_type
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Benchmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  benchmarks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Benchmark'
+  /quality/history:
+    get:
+      tags: [Quality Scoring]
+      summary: Get scoring history
+      operationId: getHistory
+      parameters:
+        - name: content_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Scoring history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QualityScore'
+  /quality/compare:
+    post:
+      tags: [Quality Scoring]
+      summary: Compare content quality
+      description: Compare quality scores of multiple content items.
+      operationId: compareQuality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_ids]
+              properties:
+                content_ids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 2
+                  maxItems: 10
+      responses:
+        '200':
+          description: Comparison results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityComparison'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /quality/improve:
+    post:
+      tags: [Quality Scoring]
+      summary: Get improvement suggestions
+      description: Get AI-powered suggestions to improve content quality.
+      operationId: getImprovements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id]
+              properties:
+                content_id:
+                  type: string
+                target_dimensions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Improvement suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImprovementSuggestions'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /quality/weights:
+    get:
+      tags: [Quality Scoring]
+      summary: Get scoring weights
+      operationId: getWeights
+      responses:
+        '200':
+          description: Weights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weights:
+                    type: object
+                    additionalProperties:
+                      type: number
+    put:
+      tags: [Quality Scoring]
+      summary: Update scoring weights
+      operationId: updateWeights
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weights:
+                  type: object
+                  additionalProperties:
+                    type: number
+      responses:
+        '200':
+          description: Updated weights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weights:
+                    type: object
+                    additionalProperties:
+                      type: number
+  /quality/reports:
+    post:
+      tags: [Quality Scoring]
+      summary: Generate quality report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_ids]
+              properties:
+                content_ids:
+                  type: array
+                  items:
+                    type: string
+                format:
+                  type: string
+                  enum: [json, pdf, csv]
+                  default: json
+                include_suggestions:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /quality/trends:
+    get:
+      tags: [Quality Scoring]
+      summary: Get quality trends
+      description: Get quality score trends over time.
+      operationId: getTrends
+      parameters:
+        - name: content_id
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Trends
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trends:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        score:
+                          type: number
+  /quality/thresholds:
+    get:
+      tags: [Quality Scoring]
+      summary: Get quality thresholds
+      operationId: getThresholds
+      responses:
+        '200':
+          description: Thresholds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thresholds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QualityThreshold'
+    put:
+      tags: [Quality Scoring]
+      summary: Update quality thresholds
+      operationId: updateThresholds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                thresholds:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QualityThreshold'
+      responses:
+        '200':
+          description: Updated thresholds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thresholds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QualityThreshold'
+components:
+  schemas:
+    QualityRequest:
+      type: object
+      required: [content_id, content_type]
+      properties:
+        content_id:
+          type: string
+        content_type:
+          type: string
+          enum: [article, video, podcast, image, product]
+        content:
+          type: string
+        metadata:
+          type: object
+    QualityScore:
+      type: object
+      properties:
+        content_id:
+          type: string
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionScore'
+        grade:
+          type: string
+          enum: [A, B, C, D, F]
+        scored_at:
+          type: string
+          format: date-time
+    DimensionScore:
+      type: object
+      properties:
+        dimension:
+          type: string
+        score:
+          type: number
+        weight:
+          type: number
+        details:
+          type: string
+    QualityDimension:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        weight:
+          type: number
+        criteria:
+          type: array
+          items:
+            type: string
+    ScoringCriterion:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        dimension:
+          type: string
+        weight:
+          type: number
+        scale:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+    Benchmark:
+      type: object
+      properties:
+        content_type:
+          type: string
+        category:
+          type: string
+        p25:
+          type: number
+        p50:
+          type: number
+        p75:
+          type: number
+        p90:
+          type: number
+    QualityComparison:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityScore'
+        ranking:
+          type: array
+          items:
+            type: object
+            properties:
+              content_id:
+                type: string
+              rank:
+                type: integer
+              score:
+                type: number
+    ImprovementSuggestions:
+      type: object
+      properties:
+        content_id:
+          type: string
+        current_score:
+          type: number
+        potential_score:
+          type: number
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              dimension:
+                type: string
+                current:
+                type: number
+                target:
+                type: number
+                suggestion:
+                type: string
+                impact:
+                  type: number
+    QualityReport:
+      type: object
+      properties:
+        content_ids:
+          type: array
+          items:
+            type: string
+        summary:
+          type: object
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityScore'
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImprovementSuggestions'
+        generated_at:
+          type: string
+          format: date-time
+    QualityThreshold:
+      type: object
+      properties:
+        name:
+          type: string
+        min_score:
+          type: number
+        max_score:
+          type: number
+        action:
+          type: string
+          enum: [flag, promote, demote, reject]
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

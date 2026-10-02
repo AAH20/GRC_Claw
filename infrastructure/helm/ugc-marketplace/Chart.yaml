@@ -1,0 +1,29 @@
+apiVersion: v2
+name: ugc-marketplace
+description: >
+  Helm chart for GRC_Claw UGC marketplace projects.
+  Manages 10 user-generated content marketplace services including
+  content platforms, review systems, creator monetization,
+  and marketplace analytics.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ugc
+  - marketplace
+  - content
+  - reviews
+  - creators
+  - monetization
+  - grc-claw
+home: https://github.com/ahmedhassan/GRC_Claw
+sources:
+  - https://github.com/ahmedhassan/GRC_Claw
+maintainers:
+  - name: Ahmed Hassan
+    email: ahmed@example.com
+annotations:
+  category: UGC
+  grc-claw/domain: ugc-marketplace
+  grc-claw/project-count: "10"
+dependencies: []

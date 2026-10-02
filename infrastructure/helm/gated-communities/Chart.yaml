@@ -1,0 +1,29 @@
+apiVersion: v2
+name: gated-communities
+description: >
+  Helm chart for GRC_Claw gated community projects.
+  Manages 10 gated community services including access control,
+  membership management, community forums, exclusive content,
+  and community analytics.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - gated
+  - communities
+  - membership
+  - access-control
+  - exclusive
+  - forums
+  - grc-claw
+home: https://github.com/ahmedhassan/GRC_Claw
+sources:
+  - https://github.com/ahmedhassan/GRC_Claw
+maintainers:
+  - name: Ahmed Hassan
+    email: ahmed@example.com
+annotations:
+  category: Communities
+  grc-claw/domain: gated-communities
+  grc-claw/project-count: "10"
+dependencies: []

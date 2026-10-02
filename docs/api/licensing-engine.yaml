@@ -1,0 +1,796 @@
+openapi: 3.1.0
+info:
+  title: Licensing Engine API
+  version: 1.0.0
+  description: Automate and manage content licensing agreements and terms.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Licensing Engine
+    description: Manage content licensing
+paths:
+  /licensing/agreements:
+    post:
+      tags: [Licensing Engine]
+      summary: Create licensing agreement
+      operationId: createAgreement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensingAgreement'
+      responses:
+        '201':
+          description: Agreement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicensingAgreement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Licensing Engine]
+      summary: List agreements
+      operationId: listAgreements
+      parameters:
+        - name: licensor_id
+          in: query
+          schema:
+            type: string
+        - name: licensee_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending, active, expired, terminated]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Agreements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LicensingAgreement'
+  /licensing/agreements/{agreementId}:
+    get:
+      tags: [Licensing Engine]
+      summary: Get agreement by ID
+      operationId: getAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agreement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicensingAgreement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Licensing Engine]
+      summary: Update agreement
+      operationId: updateAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensingAgreement'
+      responses:
+        '200':
+          description: Updated agreement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicensingAgreement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Licensing Engine]
+      summary: Terminate agreement
+      operationId: terminateAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Agreement terminated
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /licensing/agreements/{agreementId}/activate:
+    post:
+      tags: [Licensing Engine]
+      summary: Activate agreement
+      operationId: activateAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agreement activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicensingAgreement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /licensing/agreements/{agreementId}/renew:
+    post:
+      tags: [Licensing Engine]
+      summary: Renew agreement
+      operationId: renewAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [end_date]
+              properties:
+                end_date:
+                  type: string
+                  format: date-time
+                modifications:
+                  type: object
+      responses:
+        '200':
+          description: Agreement renewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicensingAgreement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /licensing/templates:
+    post:
+      tags: [Licensing Engine]
+      summary: Create license template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseTemplate'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTemplate'
+    get:
+      tags: [Licensing Engine]
+      summary: List license templates
+      operationId: listTemplates
+      parameters:
+        - name: license_type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LicenseTemplate'
+  /licensing/templates/{templateId}:
+    get:
+      tags: [Licensing Engine]
+      summary: Get template by ID
+      operationId: getTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Licensing Engine]
+      summary: Update template
+      operationId: updateTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseTemplate'
+      responses:
+        '200':
+          description: Updated template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Licensing Engine]
+      summary: Delete template
+      operationId: deleteTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /licensing/compliance:
+    get:
+      tags: [Licensing Engine]
+      summary: Get compliance status
+      description: Check compliance status across all active licenses.
+      operationId: getCompliance
+      parameters:
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+            enum: [licensor, licensee, content]
+      responses:
+        '200':
+          description: Compliance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceStatus'
+  /licensing/compliance/check:
+    post:
+      tags: [Licensing Engine]
+      summary: Check license compliance
+      description: Check if a specific usage complies with license terms.
+      operationId: checkCompliance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id, usage_type, context]
+              properties:
+                content_id:
+                  type: string
+                usage_type:
+                  type: string
+                  enum: [view, share, modify, distribute, commercial, derivative]
+                context:
+                  type: object
+                licensee_id:
+                  type: string
+      responses:
+        '200':
+          description: Compliance check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  compliant:
+                    type: boolean
+                  violations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rule:
+                          type: string
+                        description:
+                          type: string
+                        severity:
+                          type: string
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /licensing/royalties:
+    post:
+      tags: [Licensing Engine]
+      summary: Calculate royalties
+      description: Calculate royalty payments based on usage and terms.
+      operationId: calculateRoyalties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agreement_id, usage_data]
+              properties:
+                agreement_id:
+                  type: string
+                usage_data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      content_id:
+                        type: string
+                      usage_type:
+                        type: string
+                      quantity:
+                        type: number
+                      revenue:
+                        type: number
+      responses:
+        '200':
+          description: Royalty calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoyaltyCalculation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /licensing/royalties/{agreementId}:
+    get:
+      tags: [Licensing Engine]
+      summary: Get royalty history
+      operationId: getRoyalties
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Royalty history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoyaltyRecord'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /licensing/audit:
+    get:
+      tags: [Licensing Engine]
+      summary: Get licensing audit log
+      operationId: getAuditLog
+      parameters:
+        - name: agreement_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+  /licensing/analytics:
+    get:
+      tags: [Licensing Engine]
+      summary: Get licensing analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicensingAnalytics'
+  /licensing/expire:
+    post:
+      tags: [Licensing Engine]
+      summary: Process expiring licenses
+      description: Find and process licenses that are expiring soon.
+      operationId: processExpiring
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                days_threshold:
+                  type: integer
+                  default: 30
+                auto_renew:
+                  type: boolean
+                  default: false
+                notify:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Processing result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiring_count:
+                    type: integer
+                  renewed_count:
+                    type: integer
+                  notified_count:
+                    type: integer
+  /licensing/validate:
+    post:
+      tags: [Licensing Engine]
+      summary: Validate license terms
+      description: Validate if proposed license terms are acceptable.
+      operationId: validateTerms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [terms]
+              properties:
+                terms:
+                  type: object
+                content_type:
+                  type: string
+                market:
+                  type: string
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+                        severity:
+                          type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    LicensingAgreement:
+      type: object
+      properties:
+        id:
+          type: string
+        licensor_id:
+          type: string
+        licensee_id:
+          type: string
+        content_ids:
+          type: array
+          items:
+            type: string
+        license_type:
+          type: string
+          enum: [exclusive, non_exclusive, sole, cross, per_use, subscription]
+        terms:
+          type: object
+          properties:
+            usage_rights:
+              type: array
+              items:
+                type: string
+            territory:
+              type: string
+            exclusivity:
+              type: boolean
+            sublicensable:
+              type: boolean
+            modification_allowed:
+              type: boolean
+            attribution_required:
+              type: boolean
+        fee_structure:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [flat, revenue_share, per_use, hybrid]
+            amount:
+              type: number
+            currency:
+              type: string
+            revenue_share_percentage:
+              type: number
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [draft, pending, active, expired, terminated]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    LicenseTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        license_type:
+          type: string
+        default_terms:
+          type: object
+        fee_structure:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    ComplianceStatus:
+      type: object
+      properties:
+        total_licenses:
+          type: integer
+        compliant:
+          type: integer
+        non_compliant:
+          type: integer
+        pending_review:
+          type: integer
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              license_id:
+                type: string
+              violation:
+                type: string
+              severity:
+                type: string
+    RoyaltyCalculation:
+      type: object
+      properties:
+        agreement_id:
+          type: string
+        total_royalty:
+          type: number
+        currency:
+          type: string
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              content_id:
+                type: string
+              usage_type:
+                type: string
+              quantity:
+                type: number
+              rate:
+                type: number
+              amount:
+                type: number
+    RoyaltyRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        agreement_id:
+          type: string
+        period:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, paid, disputed]
+        created_at:
+          type: string
+          format: date-time
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        agreement_id:
+          type: string
+        action:
+          type: string
+        user_id:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+    LicensingAnalytics:
+      type: object
+      properties:
+        total_agreements:
+          type: integer
+        active_agreements:
+          type: integer
+        total_royalties:
+          type: number
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        expiring_soon:
+          type: integer
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,752 @@
+openapi: 3.1.0
+info:
+  title: Escalation Workflow API
+  version: 1.0.0
+  description: Manage escalation workflows, routing, and resolution processes.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Escalation Workflow
+    description: Manage escalation processes
+paths:
+  /escalation/workflows:
+    post:
+      tags: [Escalation Workflow]
+      summary: Create escalation workflow
+      operationId: createWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationWorkflow'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationWorkflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Escalation Workflow]
+      summary: List workflows
+      operationId: listWorkflows
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, draft]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Workflows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EscalationWorkflow'
+  /escalation/workflows/{workflowId}:
+    get:
+      tags: [Escalation Workflow]
+      summary: Get workflow by ID
+      operationId: getWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationWorkflow'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Escalation Workflow]
+      summary: Update workflow
+      operationId: updateWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationWorkflow'
+      responses:
+        '200':
+          description: Updated workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationWorkflow'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Escalation Workflow]
+      summary: Delete workflow
+      operationId: deleteWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Workflow deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/cases:
+    post:
+      tags: [Escalation Workflow]
+      summary: Create escalation case
+      operationId: createCase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationCase'
+      responses:
+        '201':
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationCase'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Escalation Workflow]
+      summary: List escalation cases
+      operationId: listCases
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, in_progress, pending, resolved, closed, escalated]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: assignee_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Cases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EscalationCase'
+  /escalation/cases/{caseId}:
+    get:
+      tags: [Escalation Workflow]
+      summary: Get case by ID
+      operationId: getCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Escalation Workflow]
+      summary: Update case
+      operationId: updateCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationCase'
+      responses:
+        '200':
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/cases/{caseId}/assign:
+    post:
+      tags: [Escalation Workflow]
+      summary: Assign case
+      operationId: assignCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assignee_id]
+              properties:
+                assignee_id:
+                  type: string
+                notify:
+                  type: boolean
+                  default: true
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Case assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/cases/{caseId}/escalate:
+    post:
+      tags: [Escalation Workflow]
+      summary: Escalate case
+      operationId: escalateCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                target_level:
+                  type: integer
+                notify:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Case escalated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/cases/{caseId}/resolve:
+    post:
+      tags: [Escalation Workflow]
+      summary: Resolve case
+      operationId: resolveCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution:
+                  type: string
+                notes:
+                  type: string
+                satisfaction:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        '200':
+          description: Case resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/cases/{caseId}/comments:
+    post:
+      tags: [Escalation Workflow]
+      summary: Add comment to case
+      operationId: addComment
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                is_internal:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseComment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Escalation Workflow]
+      summary: Get case comments
+      operationId: getComments
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CaseComment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/cases/{caseId}/timeline:
+    get:
+      tags: [Escalation Workflow]
+      summary: Get case timeline
+      operationId: getTimeline
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimelineEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/rules:
+    post:
+      tags: [Escalation Workflow]
+      summary: Create escalation rule
+      operationId: createRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationRule'
+      responses:
+        '201':
+          description: Rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationRule'
+    get:
+      tags: [Escalation Workflow]
+      summary: List escalation rules
+      operationId: listRules
+      responses:
+        '200':
+          description: Rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EscalationRule'
+  /escalation/rules/{ruleId}:
+    put:
+      tags: [Escalation Workflow]
+      summary: Update rule
+      operationId: updateRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationRule'
+      responses:
+        '200':
+          description: Updated rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationRule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Escalation Workflow]
+      summary: Delete rule
+      operationId: deleteRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Rule deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /escalation/analytics:
+    get:
+      tags: [Escalation Workflow]
+      summary: Get escalation analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationAnalytics'
+  /escalation/sla:
+    get:
+      tags: [Escalation Workflow]
+      summary: Get SLA status
+      operationId: getSLA
+      parameters:
+        - name: workflow_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SLA status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAStatus'
+    put:
+      tags: [Escalation Workflow]
+      summary: Update SLA targets
+      operationId: updateSLA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SLATarget'
+      responses:
+        '200':
+          description: Updated SLA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLATarget'
+components:
+  schemas:
+    EscalationWorkflow:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
+        status:
+          type: string
+          enum: [active, inactive, draft]
+        created_at:
+          type: string
+          format: date-time
+    WorkflowStep:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        order:
+          type: integer
+        assignee_role:
+          type: string
+        sla_hours:
+          type: integer
+        escalation_target:
+          type: string
+        auto_assign:
+          type: boolean
+    EscalationCase:
+      type: object
+      properties:
+        id:
+          type: string
+        workflow_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, pending, resolved, closed, escalated]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        assignee_id:
+          type: string
+        reporter_id:
+          type: string
+        current_step:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+    CaseComment:
+      type: object
+      properties:
+        id:
+          type: string
+        case_id:
+          type: string
+        author_id:
+          type: string
+        content:
+          type: string
+        is_internal:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    TimelineEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        case_id:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        actor_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    EscalationRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        condition:
+          type: string
+        action:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        enabled:
+          type: boolean
+    EscalationAnalytics:
+      type: object
+      properties:
+        total_cases:
+          type: integer
+        open_cases:
+          type: integer
+        resolved_cases:
+          type: integer
+        average_resolution_time_hours:
+          type: number
+        by_priority:
+          type: object
+          additionalProperties:
+            type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        sla_compliance_rate:
+          type: number
+    SLAStatus:
+      type: object
+      properties:
+        workflow_id:
+          type: string
+        total_cases:
+          type: integer
+        within_sla:
+          type: integer
+        breached_sla:
+          type: integer
+        compliance_rate:
+          type: number
+        average_response_time_hours:
+          type: number
+        average_resolution_time_hours:
+          type: number
+    SLATarget:
+      type: object
+      properties:
+        workflow_id:
+          type: string
+        response_time_hours:
+          type: integer
+        resolution_time_hours:
+          type: integer
+        escalation_time_hours:
+          type: integer
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

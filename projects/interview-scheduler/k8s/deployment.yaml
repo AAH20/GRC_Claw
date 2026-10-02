@@ -1,0 +1,190 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: interview-scheduler
+  labels:
+    app: interview-scheduler
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: interview-scheduler-config
+  namespace: interview-scheduler
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  DEFAULT_TIMEZONE: "UTC"
+  DEFAULT_SLOT_DURATION_MINUTES: "60"
+  MIN_SCHEDULING_NOTICE_HOURS: "24"
+  MAX_SCHEDULING_HORIZON_DAYS: "30"
+  BUSINESS_HOURS_START: "9"
+  BUSINESS_HOURS_END: "17"
+  ENABLE_METRICS: "true"
+  METRICS_PORT: "9090"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: interview-scheduler-secrets
+  namespace: interview-scheduler
+type: Opaque
+stringData:
+  OPENAI_API_KEY: ""
+  LANGCHAIN_API_KEY: ""
+  GOOGLE_CREDENTIALS_JSON: ""
+  OUTLOOK_CLIENT_ID: ""
+  OUTLOOK_CLIENT_SECRET: ""
+  OUTLOOK_TENANT_ID: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interview-scheduler
+  namespace: interview-scheduler
+  labels:
+    app: interview-scheduler
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: interview-scheduler
+  template:
+    metadata:
+      labels:
+        app: interview-scheduler
+    spec:
+      containers:
+        - name: api
+          image: interview-scheduler:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 9090
+              name: metrics
+          envFrom:
+            - configMapRef:
+                name: interview-scheduler-config
+            - secretRef:
+                name: interview-scheduler-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: interview-scheduler
+  namespace: interview-scheduler
+  labels:
+    app: interview-scheduler
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+      name: metrics
+  selector:
+    app: interview-scheduler
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: interview-scheduler
+  namespace: interview-scheduler
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - interview-scheduler.example.com
+      secretName: interview-scheduler-tls
+  rules:
+    - host: interview-scheduler.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: interview-scheduler
+                port:
+                  number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: interview-scheduler
+  namespace: interview-scheduler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: interview-scheduler
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: interview-scheduler
+  namespace: interview-scheduler
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: interview-scheduler

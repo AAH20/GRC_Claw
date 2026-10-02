@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: access-control-config
+  namespace: access-control
+  labels:
+    app.kubernetes.io/name: access-control
+    app.kubernetes.io/component: config
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "info"
+  LLM_MODEL: "gpt-4o-mini"
+  LLM_TEMPERATURE: "0.1"
+  LLM_MAX_TOKENS: "2048"
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRATION_MINUTES: "30"
+  BCRYPT_ROUNDS: "12"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW_SECONDS: "60"
+  AUDIT_RETENTION_DAYS: "365"
+  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@access-control-db:5432/access_control"
+  REDIS_URL: "redis://access-control-redis:6379/0"

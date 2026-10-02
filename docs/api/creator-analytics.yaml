@@ -1,0 +1,688 @@
+openapi: 3.1.0
+info:
+  title: Creator Analytics API
+  version: 1.0.0
+  description: Analytics and insights for content creators.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Creator Analytics
+    description: Creator performance analytics
+paths:
+  /creator/analytics/{creatorId}:
+    get:
+      tags: [Creator Analytics]
+      summary: Get creator analytics
+      description: Get comprehensive analytics for a creator.
+      operationId: getCreatorAnalytics
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Creator analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatorAnalytics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/overview:
+    get:
+      tags: [Creator Analytics]
+      summary: Get creator overview
+      operationId: getOverview
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatorOverview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/audience:
+    get:
+      tags: [Creator Analytics]
+      summary: Get audience analytics
+      operationId: getAudience
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Audience analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceAnalytics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/content:
+    get:
+      tags: [Creator Analytics]
+      summary: Get content performance
+      operationId: getContentPerformance
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Content performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentPerformance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/revenue:
+    get:
+      tags: [Creator Analytics]
+      summary: Get revenue analytics
+      operationId: getRevenue
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Revenue analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueAnalytics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/growth:
+    get:
+      tags: [Creator Analytics]
+      summary: Get growth metrics
+      operationId: getGrowth
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Growth metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthMetrics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/engagement:
+    get:
+      tags: [Creator Analytics]
+      summary: Get engagement metrics
+      operationId: getEngagement
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Engagement metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementMetrics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/demographics:
+    get:
+      tags: [Creator Analytics]
+      summary: Get audience demographics
+      operationId: getDemographics
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Demographics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Demographics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/top-content:
+    get:
+      tags: [Creator Analytics]
+      summary: Get top performing content
+      operationId: getTopContent
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [views, likes, shares, comments, revenue]
+            default: views
+      responses:
+        '200':
+          description: Top content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentPerformanceItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/compare:
+    get:
+      tags: [Creator Analytics]
+      summary: Compare with other creators
+      operationId: compareCreators
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: compare_with
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Comparison
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatorComparison'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/export:
+    get:
+      tags: [Creator Analytics]
+      summary: Export analytics data
+      operationId: exportAnalytics
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json, pdf]
+            default: json
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Export
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/{creatorId}/reports:
+    post:
+      tags: [Creator Analytics]
+      summary: Generate custom report
+      operationId: generateReport
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metrics]
+              properties:
+                metrics:
+                  type: array
+                  items:
+                    type: string
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                format:
+                  type: string
+                  enum: [json, csv, pdf]
+                  default: json
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatorReport'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /creator/analytics/benchmarks:
+    get:
+      tags: [Creator Analytics]
+      summary: Get creator benchmarks
+      operationId: getBenchmarks
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: follower_range
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Benchmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  benchmarks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CreatorBenchmark'
+components:
+  schemas:
+    CreatorAnalytics:
+      type: object
+      properties:
+        creator_id:
+          type: string
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        overview:
+          $ref: '#/components/schemas/CreatorOverview'
+        audience:
+          $ref: '#/components/schemas/AudienceAnalytics'
+        content:
+          $ref: '#/components/schemas/ContentPerformance'
+        revenue:
+          $ref: '#/components/schemas/RevenueAnalytics'
+        growth:
+          $ref: '#/components/schemas/GrowthMetrics'
+        engagement:
+          $ref: '#/components/schemas/EngagementMetrics'
+    CreatorOverview:
+      type: object
+      properties:
+        total_followers:
+          type: integer
+        total_content:
+          type: integer
+        total_views:
+          type: integer
+        total_likes:
+          type: integer
+        total_shares:
+          type: integer
+        total_comments:
+          type: integer
+        total_revenue:
+          type: number
+        follower_growth_rate:
+          type: number
+        engagement_rate:
+          type: number
+    AudienceAnalytics:
+      type: object
+      properties:
+        total_audience:
+          type: integer
+        new_followers:
+          type: integer
+        unfollows:
+          type: integer
+        net_growth:
+          type: integer
+        demographics:
+          $ref: '#/components/schemas/Demographics'
+        top_locations:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: string
+              count:
+                type: integer
+        active_hours:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: integer
+              activity:
+                type: number
+    ContentPerformance:
+      type: object
+      properties:
+        total_content:
+          type: integer
+        total_views:
+          type: integer
+        total_likes:
+          type: integer
+        total_shares:
+          type: integer
+        total_comments:
+          type: integer
+        average_views:
+          type: number
+        average_engagement_rate:
+          type: number
+        top_performing:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentPerformanceItem'
+        by_type:
+          type: object
+          additionalProperties:
+            type: object
+    ContentPerformanceItem:
+      type: object
+      properties:
+        content_id:
+          type: string
+        title:
+          type: string
+        content_type:
+          type: string
+        views:
+          type: integer
+        likes:
+          type: integer
+        shares:
+          type: integer
+        comments:
+          type: integer
+        engagement_rate:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    RevenueAnalytics:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+        by_source:
+          type: object
+          additionalProperties:
+            type: number
+        by_month:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              amount:
+                type: number
+        mrr:
+          type: number
+        arr:
+          type: number
+    GrowthMetrics:
+      type: object
+      properties:
+        follower_growth:
+          type: number
+        view_growth:
+          type: number
+        engagement_growth:
+          type: number
+        revenue_growth:
+          type: number
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              followers:
+                type: integer
+              views:
+                type: integer
+    EngagementMetrics:
+      type: object
+      properties:
+        total_engagements:
+          type: integer
+        engagement_rate:
+          type: number
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        by_content_type:
+          type: object
+          additionalProperties:
+            type: number
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              rate:
+                type: number
+    Demographics:
+      type: object
+      properties:
+        age_distribution:
+          type: object
+          additionalProperties:
+            type: number
+        gender_distribution:
+          type: object
+          additionalProperties:
+            type: number
+        location_distribution:
+          type: object
+          additionalProperties:
+            type: number
+        language_distribution:
+          type: object
+          additionalProperties:
+            type: number
+    CreatorComparison:
+      type: object
+      properties:
+        creators:
+          type: array
+          items:
+            type: object
+            properties:
+              creator_id:
+                type: string
+              name:
+                type: string
+              followers:
+                type: integer
+              engagement_rate:
+                type: number
+              content_count:
+                type: integer
+        metrics:
+          type: array
+          items:
+            type: string
+    CreatorReport:
+      type: object
+      properties:
+        creator_id:
+          type: string
+        metrics:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+        generated_at:
+          type: string
+          format: date-time
+    CreatorBenchmark:
+      type: object
+      properties:
+        category:
+          type: string
+        follower_range:
+          type: string
+        p25:
+          type: number
+        p50:
+          type: number
+        p75:
+          type: number
+        p90:
+          type: number
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

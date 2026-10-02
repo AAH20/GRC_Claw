@@ -1,0 +1,61 @@
+app:
+  name: creator-monetization
+  version: "0.1.0"
+  debug: false
+  log_level: INFO
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+
+database:
+  url: postgresql://postgres:postgres@localhost:5432/creator_monetization
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+redis:
+  url: redis://localhost:6379/0
+  max_connections: 50
+
+agents:
+  revenue_optimizer:
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 2048
+  payout_manager:
+    model: gpt-4
+    temperature: 0.1
+    max_tokens: 1024
+  tier_recommender:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 2048
+  subscription:
+    model: gpt-4
+    temperature: 0.5
+    max_tokens: 2048
+  analytics:
+    model: gpt-4
+    temperature: 0.3
+    max_tokens: 2048
+
+integrations:
+  stripe:
+    enabled: true
+    api_endpoint: https://api.stripe.com
+    timeout: 30
+  paypal:
+    enabled: true
+    api_endpoint: https://api.paypal.com
+    timeout: 30
+  patreon:
+    enabled: true
+    api_endpoint: https://www.patreon.com/api
+    timeout: 30
+
+monitoring:
+  prometheus_enabled: true
+  sentry_enabled: false
+  sentry_dsn: ""

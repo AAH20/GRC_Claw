@@ -159,3 +159,159 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
+
+  # ── Recruitment Platforms (10) ────────────────────────────────────
+  - job_name: talent-finder
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["talent-finder:8080"]
+        labels: {domain: recruitment, project: talent-finder}
+  - job_name: job-board-pro
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["job-board-pro:8080"]
+        labels: {domain: recruitment, project: job-board-pro}
+  - job_name: career-hub
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["career-hub:8080"]
+        labels: {domain: recruitment, project: career-hub}
+  - job_name: hire-flow
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["hire-flow:8080"]
+        labels: {domain: recruitment, project: hire-flow}
+  - job_name: recruiter-connect
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["recruiter-connect:8080"]
+        labels: {domain: recruitment, project: recruiter-connect}
+  - job_name: talent-pool
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["talent-pool:8080"]
+        labels: {domain: recruitment, project: talent-pool}
+  - job_name: job-match
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["job-match:8080"]
+        labels: {domain: recruitment, project: job-match}
+  - job_name: career-launch
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["career-launch:8080"]
+        labels: {domain: recruitment, project: career-launch}
+  - job_name: hire-smart
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["hire-smart:8080"]
+        labels: {domain: recruitment, project: hire-smart}
+  - job_name: talent-link
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["talent-link:8080"]
+        labels: {domain: recruitment, project: talent-link}
+
+  # ── UGC Marketplaces (10) ─────────────────────────────────────────
+  - job_name: content-bazaar
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["content-bazaar:8080"]
+        labels: {domain: ugc, project: content-bazaar}
+  - job_name: creator-hub
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["creator-hub:8080"]
+        labels: {domain: ugc, project: creator-hub}
+  - job_name: media-market
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["media-market:8080"]
+        labels: {domain: ugc, project: media-market}
+  - job_name: ugc-exchange
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ugc-exchange:8080"]
+        labels: {domain: ugc, project: ugc-exchange}
+  - job_name: content-craft
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["content-craft:8080"]
+        labels: {domain: ugc, project: content-craft}
+  - job_name: creator-space
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["creator-space:8080"]
+        labels: {domain: ugc, project: creator-space}
+  - job_name: media-hub
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["media-hub:8080"]
+        labels: {domain: ugc, project: media-hub}
+  - job_name: ugc-store
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ugc-store:8080"]
+        labels: {domain: ugc, project: ugc-store}
+  - job_name: content-vault
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["content-vault:8080"]
+        labels: {domain: ugc, project: content-vault}
+  - job_name: creator-market
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["creator-market:8080"]
+        labels: {domain: ugc, project: creator-market}
+
+  # ── Gated Communities (10) ───────────────────────────────────────
+  - job_name: exclusive-club
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["exclusive-club:8080"]
+        labels: {domain: gated-communities, project: exclusive-club}
+  - job_name: private-circle
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["private-circle:8080"]
+        labels: {domain: gated-communities, project: private-circle}
+  - job_name: vip-lounge
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["vip-lounge:8080"]
+        labels: {domain: gated-communities, project: vip-lounge}
+  - job_name: members-only
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["members-only:8080"]
+        labels: {domain: gated-communities, project: members-only}
+  - job_name: inner-circle
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["inner-circle:8080"]
+        labels: {domain: gated-communities, project: inner-circle}
+  - job_name: elite-network
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["elite-network:8080"]
+        labels: {domain: gated-communities, project: elite-network}
+  - job_name: gated-garden
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["gated-garden:8080"]
+        labels: {domain: gated-communities, project: gated-garden}
+  - job_name: private-haven
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["private-haven:8080"]
+        labels: {domain: gated-communities, project: private-haven}
+  - job_name: exclusive-access
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["exclusive-access:8080"]
+        labels: {domain: gated-communities, project: exclusive-access}
+  - job_name: members-guild
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["members-guild:8080"]
+        labels: {domain: gated-communities, project: members-guild}

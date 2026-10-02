@@ -1,0 +1,304 @@
+# Default values for ugc-marketplace.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings shared across all UGC marketplace projects
+global:
+  imageRegistry: "ghcr.io/ahmedhassan/grc-claw"
+  imagePullSecrets: []
+  storageClass: "standard"
+  environment: production
+  domain: "ugc.grc-claw.local"
+
+# Number of UGC marketplace projects to deploy
+projectCount: 10
+
+# Default configuration for each UGC marketplace project
+defaults:
+  image:
+    repository: ugc-marketplace
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    tls:
+      enabled: true
+      secretName: ugc-tls
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  serviceAccount:
+    create: true
+    annotations: {}
+
+  networkPolicy:
+    enabled: true
+
+  config:
+    LOG_LEVEL: "info"
+    DB_POOL_SIZE: "20"
+    REDIS_POOL_SIZE: "10"
+    CORS_ORIGINS: "*"
+    METRICS_ENABLED: "true"
+    TRACING_ENABLED: "true"
+    UPLOAD_MAX_SIZE: "50MB"
+    RATE_LIMIT_RPS: "100"
+
+  secrets:
+    DB_PASSWORD: ""
+    REDIS_PASSWORD: ""
+    JWT_SECRET: ""
+    API_KEY: ""
+    CDN_API_KEY: ""
+
+  persistence:
+    enabled: false
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 30
+
+# Individual project overrides
+projects:
+  - name: content-platform
+    displayName: "Content Platform"
+    description: "User-generated content publishing and discovery"
+    image:
+      repository: content-platform
+      tag: "v1.2.0"
+    replicaCount: 3
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - content.grc-claw.local
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    config:
+      CONTENT_TYPES: "article,video,image,audio"
+      MODERATION_ENABLED: "true"
+      SEARCH_ENABLED: "true"
+
+  - name: review-system
+    displayName: "Review System"
+    description: "Product and service review management"
+    image:
+      repository: review-system
+      tag: "v1.1.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - reviews.grc-claw.local
+    config:
+      REVIEW_MODERATION: "ai-assisted"
+      RATING_SCALE: "5"
+      PHOTO_REVIEWS: "true"
+
+  - name: creator-monetization
+    displayName: "Creator Monetization"
+    description: "Creator earnings, payouts, and subscription management"
+    image:
+      repository: creator-monetization
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - monetization.grc-claw.local
+    config:
+      PAYOUT_SCHEDULE: "weekly"
+      SUBSCRIPTION_TIERS: "3"
+      REVENUE_SHARE: "70"
+
+  - name: marketplace-analytics
+    displayName: "Marketplace Analytics"
+    description: "Marketplace metrics, insights, and reporting"
+    image:
+      repository: marketplace-analytics
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - analytics.grc-claw.local
+    config:
+      DASHBOARD_REFRESH: "30"
+      EXPORT_FORMATS: "csv,pdf"
+      REAL_TIME_METRICS: "true"
+
+  - name: media-processor
+    displayName: "Media Processor"
+    description: "Image, video, and audio processing pipeline"
+    image:
+      repository: media-processor
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: false
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+    config:
+      MAX_FILE_SIZE: "500MB"
+      SUPPORTED_FORMATS: "jpg,png,gif,mp4,mp3,wav"
+      THUMBNAIL_SIZES: "150,300,600"
+
+  - name: content-moderation
+    displayName: "Content Moderation"
+    description: "AI-powered content moderation and compliance"
+    image:
+      repository: content-moderation
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: false
+    config:
+      AI_MODERATION: "true"
+      HUMAN_REVIEW_THRESHOLD: "0.7"
+      AUTO_ACTIONS: "flag,block,escalate"
+
+  - name: creator-dashboard
+    displayName: "Creator Dashboard"
+    description: "Creator analytics, content management, and earnings"
+    image:
+      repository: creator-dashboard
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - creators.grc-claw.local
+    config:
+      ANALYTICS_RETENTION: "90"
+      CONTENT_SCHEDULING: "true"
+
+  - name: subscription-manager
+    displayName: "Subscription Manager"
+    description: "Subscription plans, billing, and access control"
+    image:
+      repository: subscription-manager
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - subscriptions.grc-claw.local
+    config:
+      BILLING_CYCLE: "monthly"
+      TRIAL_PERIOD: "14"
+      GRACE_PERIOD: "3"
+
+  - name: notification-hub
+    displayName: "Notification Hub"
+    description: "Multi-channel notification delivery system"
+    image:
+      repository: notification-hub
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: false
+    config:
+      CHANNELS: "email,push,sms,in-app"
+      TEMPLATE_ENGINE: "handlebars"
+      BATCH_SIZE: "1000"
+
+  - name: search-discovery
+    displayName: "Search and Discovery"
+    description: "Content search, recommendations, and discovery"
+    image:
+      repository: search-discovery
+      tag: "v1.0.0"
+    replicaCount: 2
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      hosts:
+        - search.grc-claw.local
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    config:
+      SEARCH_ENGINE: "elasticsearch"
+      RECOMMENDATION_ALGO: "collaborative-filtering"
+      INDEX_REFRESH: "5"

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moderation-api
+  namespace: content-moderation
+  labels:
+    app: moderation-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: moderation-api
+  template:
+    metadata:
+      labels:
+        app: moderation-api
+    spec:
+      containers:
+        - name: api
+          image: content-moderation-pipeline:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: moderation-config
+            - secretRef:
+                name: moderation-secrets
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

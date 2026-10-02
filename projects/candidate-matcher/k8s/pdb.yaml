@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: candidate-matcher-pdb
+  namespace: candidate-matcher
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: candidate-matcher
+      component: api

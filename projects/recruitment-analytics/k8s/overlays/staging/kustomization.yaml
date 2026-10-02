@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: recruitment-analytics-staging
+
+resources:
+  - ../../base
+
+configMapGenerator:
+  - name: recruitment-analytics-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=INFO
+
+replicas:
+  - name: recruitment-analytics
+    count: 2

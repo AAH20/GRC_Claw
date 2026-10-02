@@ -1,0 +1,841 @@
+openapi: 3.1.0
+info:
+  title: Content Marketplace API
+  version: 1.0.0
+  description: Buy, sell, and trade digital content in a marketplace.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Content Marketplace
+    description: Trade digital content
+paths:
+  /marketplace/listings:
+    post:
+      tags: [Content Marketplace]
+      summary: Create listing
+      operationId: createListing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Listing'
+      responses:
+        '201':
+          description: Listing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Content Marketplace]
+      summary: List marketplace listings
+      operationId: listListings
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: price_min
+          in: query
+          schema:
+            type: number
+        - name: price_max
+          in: query
+          schema:
+            type: number
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum: [article, video, music, image, template, software]
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [relevance, price_asc, price_desc, newest, popular]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+  /marketplace/listings/{listingId}:
+    get:
+      tags: [Content Marketplace]
+      summary: Get listing by ID
+      operationId: getListing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listing details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Content Marketplace]
+      summary: Update listing
+      operationId: updateListing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Listing'
+      responses:
+        '200':
+          description: Updated listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content Marketplace]
+      summary: Remove listing
+      operationId: removeListing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Listing removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/listings/{listingId}/purchase:
+    post:
+      tags: [Content Marketplace]
+      summary: Purchase listing
+      operationId: purchaseListing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [buyer_id, payment_method]
+              properties:
+                buyer_id:
+                  type: string
+                payment_method:
+                  type: string
+                  enum: [credit_card, paypal, balance, crypto]
+                license_type:
+                  type: string
+                  enum: [personal, commercial, extended]
+      responses:
+        '201':
+          description: Purchase completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/orders:
+    get:
+      tags: [Content Marketplace]
+      summary: List orders
+      operationId: listOrders
+      parameters:
+        - name: buyer_id
+          in: query
+          schema:
+            type: string
+        - name: seller_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, refunded, disputed]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+  /marketplace/orders/{orderId}:
+    get:
+      tags: [Content Marketplace]
+      summary: Get order by ID
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/orders/{orderId}/refund:
+    post:
+      tags: [Content Marketplace]
+      summary: Request refund
+      operationId: requestRefund
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                details:
+                  type: string
+      responses:
+        '200':
+          description: Refund requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/categories:
+    get:
+      tags: [Content Marketplace]
+      summary: Get marketplace categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketplaceCategory'
+    post:
+      tags: [Content Marketplace]
+      summary: Create category
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceCategory'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceCategory'
+  /marketplace/categories/{categoryId}:
+    put:
+      tags: [Content Marketplace]
+      summary: Update category
+      operationId: updateCategory
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceCategory'
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceCategory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content Marketplace]
+      summary: Delete category
+      operationId: deleteCategory
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/search:
+    post:
+      tags: [Content Marketplace]
+      summary: Search marketplace
+      operationId: searchMarketplace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                filters:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                    price_min:
+                      type: number
+                    price_max:
+                      type: number
+                    content_type:
+                      type: string
+                    rating_min:
+                      type: number
+                sort_by:
+                  type: string
+                  enum: [relevance, price_asc, price_desc, newest, popular]
+                page:
+                  type: integer
+                  default: 1
+                per_page:
+                  type: integer
+                  default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /marketplace/analytics:
+    get:
+      tags: [Content Marketplace]
+      summary: Get marketplace analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceAnalytics'
+  /marketplace/disputes:
+    post:
+      tags: [Content Marketplace]
+      summary: Open dispute
+      operationId: openDispute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dispute'
+      responses:
+        '201':
+          description: Dispute opened
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Content Marketplace]
+      summary: List disputes
+      operationId: listDisputes
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, pending, resolved, closed]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Disputes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dispute'
+  /marketplace/disputes/{disputeId}:
+    get:
+      tags: [Content Marketplace]
+      summary: Get dispute by ID
+      operationId: getDispute
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dispute details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Content Marketplace]
+      summary: Update dispute
+      operationId: updateDispute
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dispute'
+      responses:
+        '200':
+          description: Updated dispute
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/reviews:
+    post:
+      tags: [Content Marketplace]
+      summary: Create review
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Content Marketplace]
+      summary: List reviews
+      operationId: listReviews
+      parameters:
+        - name: listing_id
+          in: query
+          schema:
+            type: string
+        - name: seller_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+  /marketplace/reviews/{reviewId}:
+    put:
+      tags: [Content Marketplace]
+      summary: Update review
+      operationId: updateReview
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '200':
+          description: Updated review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content Marketplace]
+      summary: Delete review
+      operationId: deleteReview
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Review deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Listing:
+      type: object
+      properties:
+        id:
+          type: string
+        seller_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        content_type:
+          type: string
+          enum: [article, video, music, image, template, software]
+        category:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        license_types:
+          type: array
+          items:
+            type: string
+        preview_url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, active, sold, archived]
+        sales_count:
+          type: integer
+        rating:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    Purchase:
+      type: object
+      properties:
+        id:
+          type: string
+        listing_id:
+          type: string
+        buyer_id:
+          type: string
+        seller_id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        license_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, refunded, disputed]
+        created_at:
+          type: string
+          format: date-time
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        listing_id:
+          type: string
+        buyer_id:
+          type: string
+        seller_id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, refunded, disputed]
+        created_at:
+          type: string
+          format: date-time
+    Refund:
+      type: object
+      properties:
+        id:
+          type: string
+        order_id:
+          type: string
+        reason:
+          type: string
+        details:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, denied]
+        amount:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    MarketplaceCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        listing_count:
+          type: integer
+    MarketplaceAnalytics:
+      type: object
+      properties:
+        total_listings:
+          type: integer
+        total_sales:
+          type: integer
+        total_revenue:
+          type: number
+        average_price:
+          type: number
+        by_category:
+          type: object
+          additionalProperties:
+            type: object
+        top_sellers:
+          type: array
+          items:
+            type: object
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+        order_id:
+          type: string
+        opener_id:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, pending, resolved, closed]
+        resolution:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        listing_id:
+          type: string
+        reviewer_id:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

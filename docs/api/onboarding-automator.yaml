@@ -1,0 +1,825 @@
+openapi: 3.1.0
+info:
+  title: Onboarding Automator API
+  version: 1.0.0
+  description: Automate and manage employee onboarding workflows and tasks.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Onboarding Automation
+    description: Automate employee onboarding
+paths:
+  /onboarding/templates:
+    post:
+      tags: [Onboarding Automation]
+      summary: Create onboarding template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingTemplate'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Onboarding Automation]
+      summary: List onboarding templates
+      operationId: listTemplates
+      parameters:
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnboardingTemplate'
+  /onboarding/templates/{templateId}:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get template by ID
+      operationId: getTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Onboarding Automation]
+      summary: Update template
+      operationId: updateTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingTemplate'
+      responses:
+        '200':
+          description: Updated template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Onboarding Automation]
+      summary: Delete template
+      operationId: deleteTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/workflows:
+    post:
+      tags: [Onboarding Automation]
+      summary: Start onboarding workflow
+      operationId: startWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, template_id, start_date]
+              properties:
+                employee_id:
+                  type: string
+                template_id:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                manager_id:
+                  type: string
+                buddy_id:
+                  type: string
+                custom_tasks:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OnboardingTask'
+      responses:
+        '201':
+          description: Workflow started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingWorkflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Onboarding Automation]
+      summary: List onboarding workflows
+      operationId: listWorkflows
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, cancelled]
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnboardingWorkflow'
+  /onboarding/workflows/{workflowId}:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get workflow by ID
+      operationId: getWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingWorkflow'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Onboarding Automation]
+      summary: Update workflow
+      operationId: updateWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed, cancelled]
+                start_date:
+                  type: string
+                  format: date
+                manager_id:
+                  type: string
+                buddy_id:
+                  type: string
+      responses:
+        '200':
+          description: Updated workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingWorkflow'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/workflows/{workflowId}/tasks:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get workflow tasks
+      operationId: getWorkflowTasks
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, overdue]
+      responses:
+        '200':
+          description: Workflow tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnboardingTask'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Onboarding Automation]
+      summary: Add task to workflow
+      operationId: addTask
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingTask'
+      responses:
+        '201':
+          description: Task added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTask'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/workflows/{workflowId}/tasks/{taskId}:
+    put:
+      tags: [Onboarding Automation]
+      summary: Update workflow task
+      operationId: updateTask
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingTask'
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTask'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Onboarding Automation]
+      summary: Delete workflow task
+      operationId: deleteTask
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/workflows/{workflowId}/tasks/{taskId}/complete:
+    post:
+      tags: [Onboarding Automation]
+      summary: Mark task as complete
+      operationId: completeTask
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTask'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/workflows/{workflowId}/progress:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get workflow progress
+      operationId: getProgress
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_tasks:
+                    type: integer
+                  completed_tasks:
+                    type: integer
+                  progress_percentage:
+                    type: number
+                  overdue_tasks:
+                    type: integer
+                  days_remaining:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/documents:
+    post:
+      tags: [Onboarding Automation]
+      summary: Upload onboarding document
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, employee_id]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                employee_id:
+                  type: string
+                document_type:
+                  type: string
+                  enum: [contract, policy, handbook, tax_form, id_proof, other]
+                required:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Onboarding Automation]
+      summary: List onboarding documents
+      operationId: listDocuments
+      parameters:
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+        - name: document_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnboardingDocument'
+  /onboarding/documents/{documentId}:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get document by ID
+      operationId: getDocument
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingDocument'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Onboarding Automation]
+      summary: Delete document
+      operationId: deleteDocument
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Document deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/checklist:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get default onboarding checklist
+      operationId: getChecklist
+      responses:
+        '200':
+          description: Default checklist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChecklistItem'
+  /onboarding/reminders:
+    post:
+      tags: [Onboarding Automation]
+      summary: Send onboarding reminder
+      operationId: sendReminder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workflow_id, task_id]
+              properties:
+                workflow_id:
+                  type: string
+                task_id:
+                  type: string
+                message:
+                  type: string
+                channel:
+                  type: string
+                  enum: [email, sms, push]
+                  default: email
+      responses:
+        '200':
+          description: Reminder sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sent:
+                    type: boolean
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/analytics:
+    get:
+      tags: [Onboarding Automation]
+      summary: Get onboarding analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Onboarding analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingAnalytics'
+  /onboarding/workflows/{workflowId}/feedback:
+    post:
+      tags: [Onboarding Automation]
+      summary: Submit onboarding feedback
+      operationId: submitFeedback
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comments:
+                  type: string
+                would_recommend:
+                  type: boolean
+      responses:
+        '201':
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingFeedback'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /onboarding/workflows/{workflowId}/clone:
+    post:
+      tags: [Onboarding Automation]
+      summary: Clone workflow as template
+      operationId: cloneWorkflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Cloned template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    OnboardingTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        department:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnboardingTask'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    OnboardingWorkflow:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        template_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, cancelled]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        manager_id:
+          type: string
+        buddy_id:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnboardingTask'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    OnboardingTask:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [paperwork, it_setup, training, orientation, benefits, compliance, other]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, overdue]
+        due_date:
+          type: string
+          format: date
+        assigned_to:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+        required:
+          type: boolean
+          default: true
+        order:
+          type: integer
+    OnboardingDocument:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        file_name:
+          type: string
+        document_type:
+          type: string
+        required:
+          type: boolean
+        uploaded_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, signed, expired]
+    ChecklistItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        required:
+          type: boolean
+        order:
+          type: integer
+    OnboardingAnalytics:
+      type: object
+      properties:
+        total_onboardings:
+          type: integer
+        completed_onboardings:
+          type: integer
+        average_completion_days:
+          type: number
+        task_completion_rate:
+          type: number
+        overdue_task_rate:
+          type: number
+        satisfaction_score:
+          type: number
+        by_department:
+          type: object
+          additionalProperties:
+            type: object
+    OnboardingFeedback:
+      type: object
+      properties:
+        id:
+          type: string
+        workflow_id:
+          type: string
+        rating:
+          type: integer
+        comments:
+          type: string
+        would_recommend:
+          type: boolean
+        submitted_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jdo
+  labels:
+    name: jdo
+    app: job-description-optimizer

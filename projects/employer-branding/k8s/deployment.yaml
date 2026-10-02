@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employer-branding-api
+  labels:
+    app: employer-branding
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: employer-branding
+      component: api
+  template:
+    metadata:
+      labels:
+        app: employer-branding
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/your-org/employer-branding:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: employer-branding-config
+            - secretRef:
+                name: employer-branding-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

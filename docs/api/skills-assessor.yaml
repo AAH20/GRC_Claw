@@ -1,0 +1,703 @@
+openapi: 3.1.0
+info:
+  title: Skills Assessor API
+  version: 1.0.0
+  description: Assess and evaluate candidate skills through tests and challenges.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Skills Assessment
+    description: Assess candidate skills
+paths:
+  /assessments:
+    post:
+      tags: [Skills Assessment]
+      summary: Create a skills assessment
+      operationId: createAssessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentRequest'
+      responses:
+        '201':
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Skills Assessment]
+      summary: List assessments
+      operationId: listAssessments
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced, expert]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of assessments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Assessment'
+  /assessments/{assessmentId}:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment by ID
+      operationId: getAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Assessment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Skills Assessment]
+      summary: Update an assessment
+      operationId: updateAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentRequest'
+      responses:
+        '200':
+          description: Updated assessment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Skills Assessment]
+      summary: Delete an assessment
+      operationId: deleteAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Assessment deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/start:
+    post:
+      tags: [Skills Assessment]
+      summary: Start an assessment for a candidate
+      operationId: startAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidate_id]
+              properties:
+                candidate_id:
+                  type: string
+                expires_in_minutes:
+                  type: integer
+                  default: 60
+      responses:
+        '201':
+          description: Assessment started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/submit:
+    post:
+      tags: [Skills Assessment]
+      summary: Submit assessment answers
+      operationId: submitAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id, answers]
+              properties:
+                session_id:
+                  type: string
+                answers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AnswerSubmission'
+      responses:
+        '200':
+          description: Assessment submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/results:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment results
+      operationId: getAssessmentResults
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Assessment results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssessmentResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/questions:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment questions
+      operationId: getQuestions
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Assessment questions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Question'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Skills Assessment]
+      summary: Add question to assessment
+      operationId: addQuestion
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Question'
+      responses:
+        '201':
+          description: Question added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/questions/{questionId}:
+    put:
+      tags: [Skills Assessment]
+      summary: Update a question
+      operationId: updateQuestion
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Question'
+      responses:
+        '200':
+          description: Updated question
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Skills Assessment]
+      summary: Delete a question
+      operationId: deleteQuestion
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Question deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/categories:
+    get:
+      tags: [Skills Assessment]
+      summary: Get skill categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: List of skill categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SkillCategory'
+  /assessments/leaderboard:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment leaderboard
+      operationId: getLeaderboard
+      parameters:
+        - name: assessment_id
+          in: query
+          schema:
+            type: string
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+  /assessments/{assessmentId}/analytics:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment analytics
+      operationId: getAnalytics
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Assessment analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentAnalytics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/clone:
+    post:
+      tags: [Skills Assessment]
+      summary: Clone an assessment
+      operationId: cloneAssessment
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Cloned assessment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assessment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/sessions:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment sessions
+      operationId: getSessions
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, expired, abandoned]
+      responses:
+        '200':
+          description: Assessment sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssessmentSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /assessments/{assessmentId}/sessions/{sessionId}:
+    get:
+      tags: [Skills Assessment]
+      summary: Get assessment session by ID
+      operationId: getSession
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Skills Assessment]
+      summary: Abandon assessment session
+      operationId: abandonSession
+      parameters:
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Session abandoned
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    AssessmentRequest:
+      type: object
+      required: [title, skill, difficulty, questions]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        skill:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+        time_limit_minutes:
+          type: integer
+        passing_score:
+          type: number
+          default: 0.7
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    Assessment:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        skill:
+          type: string
+        difficulty:
+          type: string
+        time_limit_minutes:
+          type: integer
+        passing_score:
+          type: number
+        question_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        type:
+          type: string
+          enum: [multiple_choice, true_false, short_answer, coding, essay]
+        options:
+          type: array
+          items:
+            type: string
+        correct_answer:
+          type: string
+        points:
+          type: integer
+          default: 1
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+    AnswerSubmission:
+      type: object
+      required: [question_id, answer]
+      properties:
+        question_id:
+          type: string
+        answer:
+          type: string
+        time_spent_seconds:
+          type: integer
+    AssessmentSession:
+      type: object
+      properties:
+        id:
+          type: string
+        assessment_id:
+          type: string
+        candidate_id:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, expired, abandoned]
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        score:
+          type: number
+    AssessmentResult:
+      type: object
+      properties:
+        session_id:
+          type: string
+        assessment_id:
+          type: string
+        candidate_id:
+          type: string
+        score:
+          type: number
+        max_score:
+          type: number
+        percentage:
+          type: number
+        passed:
+          type: boolean
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              question_id:
+                type: string
+              correct:
+                type: boolean
+              points_earned:
+                type: number
+              points_possible:
+                type: number
+        completed_at:
+          type: string
+          format: date-time
+    SkillCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        candidate_id:
+          type: string
+        score:
+          type: number
+        percentage:
+          type: number
+        completed_at:
+          type: string
+          format: date-time
+    AssessmentAnalytics:
+      type: object
+      properties:
+        total_attempts:
+          type: integer
+        average_score:
+          type: number
+        pass_rate:
+          type: number
+        average_time_minutes:
+          type: number
+        question_stats:
+          type: array
+          items:
+            type: object
+            properties:
+              question_id:
+                type: string
+              correct_rate:
+                type: number
+              average_time_seconds:
+                type: number
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

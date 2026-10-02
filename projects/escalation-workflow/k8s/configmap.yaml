@@ -1,0 +1,25 @@
+# Kubernetes ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: escalation-workflow-config
+  namespace: escalation-workflow
+  labels:
+    app: escalation-workflow
+data:
+  ESCALATION_ENVIRONMENT: "production"
+  ESCALATION_HOST: "0.0.0.0"
+  ESCALATION_PORT: "8000"
+  ESCALATION_WORKERS: "2"
+  ESCALATION_LLM_MODEL: "gpt-4o-mini"
+  ESCALATION_LLM_TEMPERATURE: "0.1"
+  ESCALATION_DEFAULT_SLA_MINUTES: "60"
+  ESCALATION_CRITICAL_SLA_MINUTES: "15"
+  ESCALATION_HIGH_SLA_MINUTES: "30"
+  ESCALATION_MEDIUM_SLA_MINUTES: "120"
+  ESCALATION_LOW_SLA_MINUTES: "480"
+  ESCALATION_LOG_LEVEL: "INFO"
+  ESCALATION_ENABLE_METRICS: "true"
+  ESCALATION_METRICS_PORT: "9090"
+  ESCALATION_LANGCHAIN_PROJECT: "escalation-workflow"
+  ESCALATION_LANGCHAIN_TRACING_V2: "false"

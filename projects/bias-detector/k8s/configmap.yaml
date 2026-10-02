@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bias-detector-config
+  namespace: bias-detector
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  DEMOGRAPHIC_DISPARITY_THRESHOLD: "0.15"
+  LANGUAGE_BIAS_THRESHOLD: "0.3"
+  FAIRNESS_SCORE_THRESHOLD: "0.7"
+  PATTERN_CONFIDENCE_THRESHOLD: "0.6"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"

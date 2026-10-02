@@ -1,0 +1,22 @@
+# Kubernetes Kustomize overlay
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: escalation-workflow
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - ingress.yaml
+
+images:
+  - name: escalation-workflow
+    newTag: latest
+
+commonLabels:
+  app: escalation-workflow
+  managed-by: kustomize

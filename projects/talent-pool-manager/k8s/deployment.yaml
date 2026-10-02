@@ -1,0 +1,232 @@
+# Kubernetes manifests for talent pool manager
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+    app.kubernetes.io/managed-by: kustomize
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: talent-pool-config
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  OPENAI_MODEL: "gpt-4o"
+  DEFAULT_SEGMENT_COUNT: "5"
+  MAX_CANDIDATES_PER_POOL: "1000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: talent-pool-secrets
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+type: Opaque
+data:
+  # Base64-encoded values - replace with actual secrets
+  OPENAI_API_KEY: ""
+  LINKEDIN_API_KEY: ""
+  GITHUB_TOKEN: ""
+  SMTP_PASSWORD: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: talent-pool-api
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: talent-pool-manager
+      app.kubernetes.io/component: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: talent-pool-manager
+        app.kubernetes.io/component: api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+        - name: api
+          image: talent-pool-manager:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: talent-pool-config
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: talent-pool-secrets
+                  key: OPENAI_API_KEY
+            - name: LINKEDIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: talent-pool-secrets
+                  key: LINKEDIN_API_KEY
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: talent-pool-secrets
+                  key: GITHUB_TOKEN
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: talent-pool-secrets
+                  key: SMTP_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: talent-pool-api
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: talent-pool-manager
+    app.kubernetes.io/component: api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: talent-pool-ingress
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+    - hosts:
+        - api.talentpool.example.com
+      secretName: talent-pool-tls
+  rules:
+    - host: api.talentpool.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: talent-pool-api
+                port:
+                  number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: talent-pool-hpa
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: talent-pool-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: talent-pool-pdb
+  namespace: talent-pool-manager
+  labels:
+    app.kubernetes.io/name: talent-pool-manager
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: talent-pool-manager
+      app.kubernetes.io/component: api

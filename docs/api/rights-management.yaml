@@ -1,0 +1,806 @@
+openapi: 3.1.0
+info:
+  title: Rights Management API
+  version: 1.0.0
+  description: Manage content rights, licensing, and intellectual property.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Rights Management
+    description: Manage content rights and licensing
+paths:
+  /rights/contents:
+    post:
+      tags: [Rights Management]
+      summary: Register content rights
+      operationId: registerContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentRights'
+      responses:
+        '201':
+          description: Content registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentRights'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Rights Management]
+      summary: List content rights
+      operationId: listContent
+      parameters:
+        - name: owner_id
+          in: query
+          schema:
+            type: string
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum: [article, video, music, image, software]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Content rights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentRights'
+  /rights/contents/{contentId}:
+    get:
+      tags: [Rights Management]
+      summary: Get content rights by ID
+      operationId: getContent
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Content rights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentRights'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Rights Management]
+      summary: Update content rights
+      operationId: updateContent
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentRights'
+      responses:
+        '200':
+          description: Updated content rights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentRights'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Rights Management]
+      summary: Delete content rights
+      operationId: deleteContent
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Content rights deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /rights/licenses:
+    post:
+      tags: [Rights Management]
+      summary: Create license
+      operationId: createLicense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/License'
+      responses:
+        '201':
+          description: License created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/License'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Rights Management]
+      summary: List licenses
+      operationId: listLicenses
+      parameters:
+        - name: licensor_id
+          in: query
+          schema:
+            type: string
+        - name: licensee_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, revoked, pending]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Licenses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/License'
+  /rights/licenses/{licenseId}:
+    get:
+      tags: [Rights Management]
+      summary: Get license by ID
+      operationId: getLicense
+      parameters:
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: License details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/License'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Rights Management]
+      summary: Update license
+      operationId: updateLicense
+      parameters:
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/License'
+      responses:
+        '200':
+          description: Updated license
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/License'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Rights Management]
+      summary: Revoke license
+      operationId: revokeLicense
+      parameters:
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: License revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /rights/licenses/{licenseId}/renew:
+    post:
+      tags: [Rights Management]
+      summary: Renew license
+      operationId: renewLicense
+      parameters:
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [end_date]
+              properties:
+                end_date:
+                  type: string
+                  format: date-time
+                terms:
+                  type: object
+      responses:
+        '200':
+          description: License renewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/License'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /rights/infringements:
+    post:
+      tags: [Rights Management]
+      summary: Report infringement
+      operationId: reportInfringement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Infringement'
+      responses:
+        '201':
+          description: Infringement reported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Infringement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Rights Management]
+      summary: List infringements
+      operationId: listInfringements
+      parameters:
+        - name: content_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, verified, resolved, dismissed]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Infringements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Infringement'
+  /rights/infringements/{infringementId}:
+    get:
+      tags: [Rights Management]
+      summary: Get infringement by ID
+      operationId: getInfringement
+      parameters:
+        - name: infringementId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Infringement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Infringement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Rights Management]
+      summary: Update infringement status
+      operationId: updateInfringement
+      parameters:
+        - name: infringementId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, verified, resolved, dismissed]
+                notes:
+                  type: string
+                evidence_urls:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated infringement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Infringement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /rights/usage:
+    post:
+      tags: [Rights Management]
+      summary: Track content usage
+      description: Track how licensed content is being used.
+      operationId: trackUsage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsageRecord'
+      responses:
+        '201':
+          description: Usage tracked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Rights Management]
+      summary: Get usage records
+      operationId: getUsage
+      parameters:
+        - name: content_id
+          in: query
+          schema:
+            type: string
+        - name: license_id
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Usage records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UsageRecord'
+  /rights/audit:
+    get:
+      tags: [Rights Management]
+      summary: Get rights audit log
+      operationId: getAuditLog
+      parameters:
+        - name: content_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+  /rights/verify:
+    post:
+      tags: [Rights Management]
+      summary: Verify content rights
+      description: Verify if content usage is properly licensed.
+      operationId: verifyRights
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id, usage_type]
+              properties:
+                content_id:
+                  type: string
+                usage_type:
+                  type: string
+                  enum: [view, share, modify, distribute, commercial]
+                context:
+                  type: string
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  license_id:
+                    type: string
+                  restrictions:
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /rights/dmca:
+    post:
+      tags: [Rights Management]
+      summary: Submit DMCA takedown
+      operationId: submitDMCA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DMCANotice'
+      responses:
+        '201':
+          description: DMCA notice submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DMCANotice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /rights/dmca/{noticeId}:
+    get:
+      tags: [Rights Management]
+      summary: Get DMCA notice by ID
+      operationId: getDMCA
+      parameters:
+        - name: noticeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: DMCA notice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DMCANotice'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /rights/dmca/{noticeId}/counter:
+    post:
+      tags: [Rights Management]
+      summary: Submit counter-notice
+      operationId: submitCounterNotice
+      parameters:
+        - name: noticeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, consent]
+              properties:
+                reason:
+                  type: string
+                consent:
+                  type: boolean
+                evidence_urls:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Counter-notice submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    ContentRights:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        owner_id:
+          type: string
+        content_type:
+          type: string
+          enum: [article, video, music, image, software]
+        title:
+          type: string
+        description:
+          type: string
+        license_type:
+          type: string
+          enum: [copyright, creative_commons, public_domain, proprietary]
+        rights:
+          type: array
+          items:
+            type: string
+        restrictions:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    License:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        licensor_id:
+          type: string
+        licensee_id:
+          type: string
+        license_type:
+          type: string
+          enum: [exclusive, non_exclusive, sole, cross]
+        usage_rights:
+          type: array
+          items:
+            type: string
+        territory:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, expired, revoked, pending]
+        fee:
+          type: number
+        currency:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Infringement:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        reporter_id:
+          type: string
+        infringing_url:
+          type: string
+        description:
+          type: string
+        evidence_urls:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [pending, verified, resolved, dismissed]
+        reported_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+    UsageRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        license_id:
+          type: string
+        usage_type:
+          type: string
+        usage_count:
+          type: integer
+        context:
+          type: string
+        recorded_at:
+          type: string
+          format: date-time
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        action:
+          type: string
+        user_id:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+    DMCANotice:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        claimant_name:
+          type: string
+        claimant_email:
+          type: string
+        infringing_urls:
+          type: array
+          items:
+            type: string
+        original_work_description:
+          type: string
+        statement:
+          type: string
+        signature:
+          type: string
+        status:
+          type: string
+          enum: [pending, processed, counter_noticed, resolved]
+        submitted_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

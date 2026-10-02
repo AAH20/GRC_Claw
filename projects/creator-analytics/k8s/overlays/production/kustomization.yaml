@@ -1,0 +1,24 @@
+# Production overlay
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: creator-analytics
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+
+replicas:
+  - name: creator-analytics
+    count: 5
+
+images:
+  - name: creator-analytics
+    newTag: v0.1.0
+
+patchesStrategicMerge:
+  - deployment-patch.yaml

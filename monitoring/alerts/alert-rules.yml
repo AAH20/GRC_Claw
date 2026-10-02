@@ -1,0 +1,122 @@
+groups:
+  - name: grc-claw-critical
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.instance }}"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.job }}."
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.instance }}"
+          description: "95th percentile latency is {{ $value }}s for {{ $labels.job }}."
+
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for {{ $labels.job }}."
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / 1024 / 1024 > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}MB for {{ $labels.job }}."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 10% for {{ $labels.device }}."
+
+  - name: grc-claw-recruitment
+    rules:
+      - alert: RecruitmentJobFailure
+        expr: increase(job_posting_failures_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          domain: recruitment
+        annotations:
+          summary: "Job posting failures in {{ $labels.project }}"
+          description: "{{ $value }} job posting failures in the last hour."
+
+      - alert: RecruitmentSlowMatching
+        expr: histogram_quantile(0.95, rate(candidate_matching_duration_seconds_bucket[5m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          domain: recruitment
+        annotations:
+          summary: "Slow candidate matching in {{ $labels.project }}"
+          description: "95th percentile matching time is {{ $value }}s."
+
+  - name: grc-claw-ugc
+    rules:
+      - alert: UGCUploadFailure
+        expr: increase(content_upload_failures_total[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          domain: ugc
+        annotations:
+          summary: "Content upload failures in {{ $labels.project }}"
+          description: "{{ $value }} upload failures in the last hour."
+
+      - alert: UGCModerationBacklog
+        expr: content_moderation_queue_depth > 100
+        for: 10m
+        labels:
+          severity: warning
+          domain: ugc
+        annotations:
+          summary: "Moderation backlog in {{ $labels.project }}"
+          description: "{{ $value }} items pending moderation."
+
+  - name: grc-claw-gated-communities
+    rules:
+      - alert: GatedAccessFailures
+        expr: increase(access_request_failures_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          domain: gated-communities
+        annotations:
+          summary: "Access request failures in {{ $labels.project }}"
+          description: "{{ $value }} access failures in the last hour."
+
+      - alert: GatedPaymentFailures
+        expr: increase(payment_failures_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: critical
+          domain: gated-communities
+        annotations:
+          summary: "Payment failures in {{ $labels.project }}"
+          description: "{{ $value }} payment failures in the last hour."

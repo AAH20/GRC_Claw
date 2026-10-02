@@ -1,0 +1,660 @@
+openapi: 3.1.0
+info:
+  title: Tier Management API
+  version: 1.0.0
+  description: Manage membership tiers, subscriptions, and access levels.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Tier Management
+    description: Manage membership tiers
+paths:
+  /tiers:
+    post:
+      tags: [Tier Management]
+      summary: Create tier
+      operationId: createTier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tier'
+      responses:
+        '201':
+          description: Tier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Tier Management]
+      summary: List tiers
+      operationId: listTiers
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, archived]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Tiers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tier'
+  /tiers/{tierId}:
+    get:
+      tags: [Tier Management]
+      summary: Get tier by ID
+      operationId: getTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tier'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Tier Management]
+      summary: Update tier
+      operationId: updateTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tier'
+      responses:
+        '200':
+          description: Updated tier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tier'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Tier Management]
+      summary: Delete tier
+      operationId: deleteTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Tier deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tiers/{tierId}/features:
+    get:
+      tags: [Tier Management]
+      summary: Get tier features
+      operationId: getFeatures
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Features
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  features:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feature'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Tier Management]
+      summary: Add feature to tier
+      operationId: addFeature
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Feature'
+      responses:
+        '201':
+          description: Feature added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tiers/{tierId}/features/{featureId}:
+    put:
+      tags: [Tier Management]
+      summary: Update feature
+      operationId: updateFeature
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Feature'
+      responses:
+        '200':
+          description: Updated feature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Tier Management]
+      summary: Remove feature from tier
+      operationId: removeFeature
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Feature removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tiers/{tierId}/subscribers:
+    get:
+      tags: [Tier Management]
+      summary: Get tier subscribers
+      operationId: getSubscribers
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, cancelled]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Subscribers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subscriber'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tiers/{tierId}/upgrade:
+    post:
+      tags: [Tier Management]
+      summary: Upgrade subscriber tier
+      operationId: upgradeTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscriber_id, new_tier_id]
+              properties:
+                subscriber_id:
+                  type: string
+                new_tier_id:
+                  type: string
+                prorate:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Upgrade completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tiers/{tierId}/downgrade:
+    post:
+      tags: [Tier Management]
+      summary: Downgrade subscriber tier
+      operationId: downgradeTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscriber_id, new_tier_id]
+              properties:
+                subscriber_id:
+                  type: string
+                new_tier_id:
+                  type: string
+                effective_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Downgrade completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tiers/compare:
+    get:
+      tags: [Tier Management]
+      summary: Compare tiers
+      operationId: compareTiers
+      parameters:
+        - name: tier_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Comparison
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tiers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tier'
+                  comparison:
+                    type: object
+  /tiers/analytics:
+    get:
+      tags: [Tier Management]
+      summary: Get tier analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TierAnalytics'
+  /tiers/billing:
+    post:
+      tags: [Tier Management]
+      summary: Process tier billing
+      description: Process billing for all active subscriptions in a tier.
+      operationId: processBilling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tier_id, billing_period]
+              properties:
+                tier_id:
+                  type: string
+                billing_period:
+                  type: string
+                dry_run:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Billing result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  processed:
+                    type: integer
+                  failed:
+                    type: integer
+                  total_amount:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /tiers/limits:
+    get:
+      tags: [Tier Management]
+      summary: Get tier limits
+      operationId: getLimits
+      parameters:
+        - name: tier_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Limits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  limits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TierLimit'
+    put:
+      tags: [Tier Management]
+      summary: Update tier limits
+      operationId: updateLimits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limits:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TierLimit'
+      responses:
+        '200':
+          description: Updated limits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  limits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TierLimit'
+  /tiers/limits/check:
+    post:
+      tags: [Tier Management]
+      summary: Check tier limit
+      description: Check if a user has reached a tier limit.
+      operationId: checkLimit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tier_id, user_id, limit_type]
+              properties:
+                tier_id:
+                  type: string
+                user_id:
+                  type: string
+                limit_type:
+                  type: string
+                current_usage:
+                  type: number
+      responses:
+        '200':
+          description: Limit check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  limit_type:
+                    type: string
+                  limit:
+                    type: number
+                  current_usage:
+                    type: number
+                  remaining:
+                    type: number
+                  exceeded:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    Tier:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        level:
+          type: integer
+        price:
+          type: number
+        currency:
+          type: string
+        interval:
+          type: string
+          enum: [monthly, yearly, one_time]
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+        limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TierLimit'
+        status:
+          type: string
+          enum: [active, inactive, archived]
+        subscriber_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    Feature:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        value:
+          type: string
+    Subscriber:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        tier_id:
+          type: string
+        status:
+          type: string
+          enum: [active, expired, cancelled]
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        tier_id:
+          type: string
+        status:
+          type: string
+          enum: [active, expired, cancelled]
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        billing:
+          type: object
+    TierAnalytics:
+      type: object
+      properties:
+        total_tiers:
+          type: integer
+        total_subscribers:
+          type: integer
+        mrr:
+          type: number
+        arr:
+          type: number
+        churn_rate:
+          type: number
+        by_tier:
+          type: object
+          additionalProperties:
+            type: object
+    TierLimit:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: number
+        period:
+          type: string
+          enum: [daily, monthly, yearly, lifetime]
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

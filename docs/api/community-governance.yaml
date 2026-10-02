@@ -1,0 +1,857 @@
+openapi: 3.1.0
+info:
+  title: Community Governance API
+  version: 1.0.0
+  description: Manage community governance, voting, proposals, and decision-making.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Community Governance
+    description: Manage community governance
+paths:
+  /governance/proposals:
+    post:
+      tags: [Community Governance]
+      summary: Create proposal
+      operationId: createProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Proposal'
+      responses:
+        '201':
+          description: Proposal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Community Governance]
+      summary: List proposals
+      operationId: listProposals
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, open, voting, passed, rejected, implemented]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Proposals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Proposal'
+  /governance/proposals/{proposalId}:
+    get:
+      tags: [Community Governance]
+      summary: Get proposal by ID
+      operationId: getProposal
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proposal details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Community Governance]
+      summary: Update proposal
+      operationId: updateProposal
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Proposal'
+      responses:
+        '200':
+          description: Updated proposal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Governance]
+      summary: Delete proposal
+      operationId: deleteProposal
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Proposal deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/proposals/{proposalId}/vote:
+    post:
+      tags: [Community Governance]
+      summary: Vote on proposal
+      operationId: voteProposal
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [voter_id, vote]
+              properties:
+                voter_id:
+                  type: string
+                vote:
+                  type: string
+                  enum: [for, against, abstain]
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Vote recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/proposals/{proposalId}/votes:
+    get:
+      tags: [Community Governance]
+      summary: Get proposal votes
+      operationId: getVotes
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Votes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  for:
+                    type: integer
+                  against:
+                    type: integer
+                  abstain:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vote'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/polls:
+    post:
+      tags: [Community Governance]
+      summary: Create poll
+      operationId: createPoll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Poll'
+      responses:
+        '201':
+          description: Poll created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+    get:
+      tags: [Community Governance]
+      summary: List polls
+      operationId: listPolls
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, open, closed]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Polls
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Poll'
+  /governance/polls/{pollId}:
+    get:
+      tags: [Community Governance]
+      summary: Get poll by ID
+      operationId: getPoll
+      parameters:
+        - name: pollId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Poll details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Community Governance]
+      summary: Update poll
+      operationId: updatePoll
+      parameters:
+        - name: pollId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Poll'
+      responses:
+        '200':
+          description: Updated poll
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Governance]
+      summary: Delete poll
+      operationId: deletePoll
+      parameters:
+        - name: pollId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Poll deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/polls/{pollId}/respond:
+    post:
+      tags: [Community Governance]
+      summary: Respond to poll
+      operationId: respondPoll
+      parameters:
+        - name: pollId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [respondent_id, option_id]
+              properties:
+                respondent_id:
+                  type: string
+                option_id:
+                  type: string
+      responses:
+        '201':
+          description: Response recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/members:
+    get:
+      tags: [Community Governance]
+      summary: Get governance members
+      operationId: getMembers
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GovernanceMember'
+  /governance/members/{memberId}:
+    get:
+      tags: [Community Governance]
+      summary: Get member by ID
+      operationId: getMember
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Member details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Community Governance]
+      summary: Update member role
+      operationId: updateMember
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [member, moderator, admin, owner]
+                permissions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Governance]
+      summary: Remove member
+      operationId: removeMember
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/roles:
+    get:
+      tags: [Community Governance]
+      summary: Get governance roles
+      operationId: getRoles
+      responses:
+        '200':
+          description: Roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GovernanceRole'
+    post:
+      tags: [Community Governance]
+      summary: Create role
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovernanceRole'
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceRole'
+  /governance/roles/{roleId}:
+    put:
+      tags: [Community Governance]
+      summary: Update role
+      operationId: updateRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovernanceRole'
+      responses:
+        '200':
+          description: Updated role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceRole'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Governance]
+      summary: Delete role
+      operationId: deleteRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Role deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/policies:
+    post:
+      tags: [Community Governance]
+      summary: Create governance policy
+      operationId: createPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovernancePolicy'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernancePolicy'
+    get:
+      tags: [Community Governance]
+      summary: List governance policies
+      operationId: listPolicies
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GovernancePolicy'
+  /governance/policies/{policyId}:
+    put:
+      tags: [Community Governance]
+      summary: Update policy
+      operationId: updatePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovernancePolicy'
+      responses:
+        '200':
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernancePolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Governance]
+      summary: Delete policy
+      operationId: deletePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /governance/analytics:
+    get:
+      tags: [Community Governance]
+      summary: Get governance analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceAnalytics'
+  /governance/activity:
+    get:
+      tags: [Community Governance]
+      summary: Get governance activity log
+      operationId: getActivity
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Activity log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActivityEvent'
+components:
+  schemas:
+    Proposal:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        proposer_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, open, voting, passed, rejected, implemented]
+        votes_for:
+          type: integer
+        votes_against:
+          type: integer
+        votes_abstain:
+          type: integer
+        quorum:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        voting_ends_at:
+          type: string
+          format: date-time
+    Vote:
+      type: object
+      properties:
+        id:
+          type: string
+        proposal_id:
+          type: string
+        voter_id:
+          type: string
+        vote:
+          type: string
+          enum: [for, against, abstain]
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Poll:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              text:
+                type: string
+        status:
+          type: string
+          enum: [draft, open, closed]
+        created_at:
+          type: string
+          format: date-time
+        closes_at:
+          type: string
+          format: date-time
+    PollResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        poll_id:
+          type: string
+        respondent_id:
+          type: string
+        option_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    GovernanceMember:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [member, moderator, admin, owner]
+        permissions:
+          type: array
+          items:
+            type: string
+        joined_at:
+          type: string
+          format: date-time
+    GovernanceRole:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        member_count:
+          type: integer
+    GovernancePolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            type: object
+        status:
+          type: string
+          enum: [active, inactive, draft]
+    GovernanceAnalytics:
+      type: object
+      properties:
+        total_proposals:
+          type: integer
+        active_proposals:
+          type: integer
+        passed_proposals:
+          type: integer
+        total_votes:
+          type: integer
+        participation_rate:
+          type: number
+        total_members:
+          type: integer
+        active_members:
+          type: integer
+    ActivityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        actor_id:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

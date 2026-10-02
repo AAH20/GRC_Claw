@@ -1,0 +1,828 @@
+openapi: 3.1.0
+info:
+  title: Job Description Optimizer API
+  version: 1.0.0
+  description: Optimize job descriptions for better candidate attraction and SEO.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Job Description Optimization
+    description: Optimize job descriptions
+paths:
+  /jd/optimize:
+    post:
+      tags: [Job Description Optimization]
+      summary: Optimize a job description
+      description: Analyze and optimize a job description for better candidate attraction.
+      operationId: optimizeJD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                requirements:
+                  type: array
+                  items:
+                    type: string
+                responsibilities:
+                  type: array
+                  items:
+                    type: string
+                skills:
+                  type: array
+                  items:
+                    type: string
+                location:
+                  type: string
+                employment_type:
+                  type: string
+                  enum: [full_time, part_time, contract, internship, temporary]
+                salary_range:
+                  type: object
+                  properties:
+                    min:
+                      type: number
+                    max:
+                      type: number
+                    currency:
+                      type: string
+                      default: USD
+      responses:
+        '200':
+          description: Optimized job description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizedJD'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/analyze:
+    post:
+      tags: [Job Description Optimization]
+      summary: Analyze a job description
+      description: Analyze a job description for quality, bias, and SEO.
+      operationId: analyzeJD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                requirements:
+                  type: array
+                  items:
+                    type: string
+                responsibilities:
+                  type: array
+                  items:
+                    type: string
+                skills:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JDAnalysis'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/score:
+    post:
+      tags: [Job Description Optimization]
+      summary: Score a job description
+      description: Get a quality score for a job description.
+      operationId: scoreJD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                requirements:
+                  type: array
+                  items:
+                    type: string
+                responsibilities:
+                  type: array
+                  items:
+                    type: string
+                skills:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: JD score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JDScore'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/templates:
+    get:
+      tags: [Job Description Optimization]
+      summary: Get JD templates
+      operationId: getTemplates
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: JD templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JDTemplate'
+    post:
+      tags: [Job Description Optimization]
+      summary: Create JD template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JDTemplate'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JDTemplate'
+  /jd/templates/{templateId}:
+    get:
+      tags: [Job Description Optimization]
+      summary: Get JD template by ID
+      operationId: getTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JDTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Job Description Optimization]
+      summary: Update JD template
+      operationId: updateTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JDTemplate'
+      responses:
+        '200':
+          description: Updated template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JDTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Job Description Optimization]
+      summary: Delete JD template
+      operationId: deleteTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /jd/keywords:
+    post:
+      tags: [Job Description Optimization]
+      summary: Extract keywords
+      description: Extract relevant keywords from a job description.
+      operationId: extractKeywords
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                max_keywords:
+                  type: integer
+                  default: 20
+      responses:
+        '200':
+          description: Extracted keywords
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keywords:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Keyword'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/seo-suggestions:
+    post:
+      tags: [Job Description Optimization]
+      summary: Get SEO suggestions
+      description: Get SEO improvement suggestions for a job description.
+      operationId: getSEOSuggestions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                target_keywords:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: SEO suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SEOSuggestions'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/competitor-analysis:
+    post:
+      tags: [Job Description Optimization]
+      summary: Analyze competitor job descriptions
+      description: Compare your job description with competitor postings.
+      operationId: analyzeCompetitors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                competitors:
+                  type: array
+                  items:
+                    type: string
+                location:
+                  type: string
+      responses:
+        '200':
+          description: Competitor analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitorAnalysis'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/history:
+    get:
+      tags: [Job Description Optimization]
+      summary: Get optimization history
+      operationId: getHistory
+      parameters:
+        - name: job_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Optimization history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OptimizationRecord'
+  /jd/ab-test:
+    post:
+      tags: [Job Description Optimization]
+      summary: Create A/B test
+      description: Create an A/B test for job description variants.
+      operationId: createABTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [job_id, variants]
+              properties:
+                job_id:
+                  type: string
+                variants:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/JDVariant'
+                  minItems: 2
+                duration_days:
+                  type: integer
+                  default: 14
+                success_metric:
+                  type: string
+                  enum: [views, applications, qualified_applications, hires]
+                  default: applications
+      responses:
+        '201':
+          description: A/B test created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ABTest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /jd/ab-test/{testId}:
+    get:
+      tags: [Job Description Optimization]
+      summary: Get A/B test results
+      operationId: getABTest
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A/B test results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ABTestResults'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /jd/generate:
+    post:
+      tags: [Job Description Optimization]
+      summary: Generate job description
+      description: Generate a job description from a template and parameters.
+      operationId: generateJD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [template_id, title, company]
+              properties:
+                template_id:
+                  type: string
+                title:
+                  type: string
+                company:
+                  type: string
+                department:
+                  type: string
+                location:
+                  type: string
+                employment_type:
+                  type: string
+                  enum: [full_time, part_time, contract, internship, temporary]
+                skills:
+                  type: array
+                  items:
+                    type: string
+                responsibilities:
+                  type: array
+                  items:
+                    type: string
+                requirements:
+                  type: array
+                  items:
+                    type: string
+                salary_range:
+                  type: object
+                  properties:
+                    min:
+                      type: number
+                    max:
+                      type: number
+                    currency:
+                      type: string
+                      default: USD
+      responses:
+        '200':
+          description: Generated job description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedJD'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /jd/compare:
+    post:
+      tags: [Job Description Optimization]
+      summary: Compare job descriptions
+      description: Compare two job descriptions and get a similarity score.
+      operationId: compareJDs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jd1, jd2]
+              properties:
+                jd1:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    description:
+                      type: string
+                jd2:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    description:
+                      type: string
+      responses:
+        '200':
+          description: Comparison results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JDComparison'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    OptimizedJD:
+      type: object
+      properties:
+        original_title:
+          type: string
+        optimized_title:
+          type: string
+        original_description:
+          type: string
+        optimized_description:
+          type: string
+        improvements:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              original:
+                type: string
+              optimized:
+                type: string
+              reason:
+                type: string
+        score_before:
+          type: number
+        score_after:
+          type: number
+    JDAnalysis:
+      type: object
+      properties:
+        overall_score:
+          type: number
+        clarity_score:
+          type: number
+        inclusivity_score:
+          type: number
+        seo_score:
+          type: number
+        engagement_score:
+          type: number
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              severity:
+                type: string
+              message:
+                type: string
+              suggestion:
+                type: string
+    JDScore:
+      type: object
+      properties:
+        overall:
+          type: number
+        clarity:
+          type: number
+        inclusivity:
+          type: number
+        seo:
+          type: number
+        engagement:
+          type: number
+        completeness:
+          type: number
+    JDTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        title_template:
+          type: string
+        description_template:
+          type: string
+        required_fields:
+          type: array
+          items:
+            type: string
+    Keyword:
+      type: object
+      properties:
+        keyword:
+          type: string
+        relevance:
+          type: number
+        volume:
+          type: integer
+        competition:
+          type: string
+    SEOSuggestions:
+      type: object
+      properties:
+        title_suggestions:
+          type: array
+          items:
+            type: string
+        keyword_suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Keyword'
+        meta_description:
+          type: string
+        improvements:
+          type: array
+          items:
+            type: string
+    CompetitorAnalysis:
+      type: object
+      properties:
+        competitors:
+          type: array
+          items:
+            type: object
+            properties:
+              company:
+                type: string
+              title:
+                type: string
+              similarity_score:
+                type: number
+              strengths:
+                type: array
+                items:
+                  type: string
+              weaknesses:
+                type: array
+                items:
+                  type: string
+        market_position:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+    OptimizationRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        job_id:
+          type: string
+        original_score:
+          type: number
+        optimized_score:
+          type: number
+        changes_made:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    JDVariant:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+    ABTest:
+      type: object
+      properties:
+        id:
+          type: string
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, running, completed, cancelled]
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/JDVariant'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        success_metric:
+          type: string
+    ABTestResults:
+      type: object
+      properties:
+        test_id:
+          type: string
+        status:
+          type: string
+        winner:
+          type: string
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              variant_id:
+                type: string
+              views:
+                type: integer
+              applications:
+                type: integer
+              qualified_applications:
+                type: integer
+              hires:
+                type: integer
+              conversion_rate:
+                type: number
+        confidence:
+          type: number
+    GeneratedJD:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: array
+          items:
+            type: string
+        responsibilities:
+          type: array
+          items:
+            type: string
+        skills:
+          type: array
+          items:
+            type: string
+    JDComparison:
+      type: object
+      properties:
+        similarity_score:
+          type: number
+        common_keywords:
+          type: array
+          items:
+            type: string
+        unique_to_jd1:
+          type: array
+          items:
+            type: string
+        unique_to_jd2:
+          type: array
+          items:
+            type: string
+        structural_differences:
+          type: array
+          items:
+            type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rights-management-config
+data:
+  RIGHTS_DEBUG: "false"
+  RIGHTS_LOG_LEVEL: "INFO"
+  RIGHTS_LLM_MODEL: "gpt-4o-mini"

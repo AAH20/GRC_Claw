@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: content-discovery-config
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "info"
+  REDIS_URL: "redis://redis:6379/0"
+  MAX_SEARCH_RESULTS: "50"
+  DEFAULT_SEARCH_RESULTS: "10"
+  TREND_WINDOW_DAYS: "7"
+  PERSONALIZATION_TTL: "3600"
+  CACHE_TTL: "300"
+  RATE_LIMIT_PER_MINUTE: "60"
+  ENABLE_METRICS: "true"
+  VECTOR_STORE_URL: "http://vector-store:8080"
+  LLM_MODEL: "gpt-4o-mini"
+  LLM_TEMPERATURE: "0.7"
+  EMBEDDING_MODEL: "text-embedding-3-small"

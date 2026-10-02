@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: recruitment-analytics-config
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  PORT: "8000"
+  ATS_API_URL: "https://api.ats.example.com"
+  HRMS_API_URL: "https://api.hrms.example.com"
+  REDIS_URL: "redis://redis:6379/0"
+  DATABASE_URL: "postgresql://postgres:postgres@db:5432/recruitment_analytics"

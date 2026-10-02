@@ -1,0 +1,826 @@
+openapi: 3.1.0
+info:
+  title: Employer Branding API
+  version: 1.0.0
+  description: Manage and optimize employer brand presence across platforms.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Employer Branding
+    description: Manage employer brand
+paths:
+  /brand/profile:
+    get:
+      tags: [Employer Branding]
+      summary: Get employer brand profile
+      operationId: getBrandProfile
+      responses:
+        '200':
+          description: Brand profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandProfile'
+    put:
+      tags: [Employer Branding]
+      summary: Update employer brand profile
+      operationId: updateBrandProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandProfile'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandProfile'
+  /brand/posts:
+    post:
+      tags: [Employer Branding]
+      summary: Create a brand post
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandPost'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandPost'
+    get:
+      tags: [Employer Branding]
+      summary: List brand posts
+      operationId: listPosts
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+            enum: [linkedin, twitter, facebook, instagram, glassdoor, indeed]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, scheduled, published, archived]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BrandPost'
+  /brand/posts/{postId}:
+    get:
+      tags: [Employer Branding]
+      summary: Get post by ID
+      operationId: getPost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandPost'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Employer Branding]
+      summary: Update post
+      operationId: updatePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandPost'
+      responses:
+        '200':
+          description: Updated post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandPost'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Employer Branding]
+      summary: Delete post
+      operationId: deletePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Post deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /brand/posts/{postId}/publish:
+    post:
+      tags: [Employer Branding]
+      summary: Publish a post
+      operationId: publishPost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Post published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandPost'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /brand/analytics:
+    get:
+      tags: [Employer Branding]
+      summary: Get brand analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: platform
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Brand analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandAnalytics'
+  /brand/sentiment:
+    get:
+      tags: [Employer Branding]
+      summary: Get brand sentiment analysis
+      operationId: getSentiment
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Sentiment analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentimentAnalysis'
+  /brand/competitors:
+    get:
+      tags: [Employer Branding]
+      summary: Get competitor brand analysis
+      operationId: getCompetitors
+      responses:
+        '200':
+          description: Competitor analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  competitors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CompetitorBrand'
+  /brand/campaigns:
+    post:
+      tags: [Employer Branding]
+      summary: Create branding campaign
+      operationId: createCampaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandCampaign'
+      responses:
+        '201':
+          description: Campaign created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandCampaign'
+    get:
+      tags: [Employer Branding]
+      summary: List branding campaigns
+      operationId: listCampaigns
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, paused, completed]
+      responses:
+        '200':
+          description: Campaigns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BrandCampaign'
+  /brand/campaigns/{campaignId}:
+    get:
+      tags: [Employer Branding]
+      summary: Get campaign by ID
+      operationId: getCampaign
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandCampaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Employer Branding]
+      summary: Update campaign
+      operationId: updateCampaign
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandCampaign'
+      responses:
+        '200':
+          description: Updated campaign
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandCampaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Employer Branding]
+      summary: Delete campaign
+      operationId: deleteCampaign
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Campaign deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /brand/testimonials:
+    post:
+      tags: [Employer Branding]
+      summary: Add employee testimonial
+      operationId: addTestimonial
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Testimonial'
+      responses:
+        '201':
+          description: Testimonial added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Testimonial'
+    get:
+      tags: [Employer Branding]
+      list testimonials
+      operationId: listTestimonials
+      parameters:
+        - name: approved
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Testimonials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  testimonials:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Testimonial'
+  /brand/testimonials/{testimonialId}:
+    put:
+      tags: [Employer Branding]
+      summary: Update testimonial
+      operationId: updateTestimonial
+      parameters:
+        - name: testimonialId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Testimonial'
+      responses:
+        '200':
+          description: Updated testimonial
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Testimonial'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Employer Branding]
+      summary: Delete testimonial
+      operationId: deleteTestimonial
+      parameters:
+        - name: testimonialId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Testimonial deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /brand/evp:
+    get:
+      tags: [Employer Branding]
+      summary: Get employee value proposition
+      operationId: getEVP
+      responses:
+        '200':
+          description: EVP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EVP'
+    put:
+      tags: [Employer Branding]
+      summary: Update employee value proposition
+      operationId: updateEVP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EVP'
+      responses:
+        '200':
+          description: Updated EVP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EVP'
+  /brand/glassdoor:
+    get:
+      tags: [Employer Branding]
+      summary: Get Glassdoor integration data
+      operationId: getGlassdoor
+      responses:
+        '200':
+          description: Glassdoor data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlassdoorData'
+  /brand/reviews:
+    get:
+      tags: [Employer Branding]
+      summary: Get employer reviews
+      operationId: getReviews
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+            enum: [glassdoor, indeed, comparably]
+        - name: rating
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+  /brand/reviews/{reviewId}/respond:
+    post:
+      tags: [Employer Branding]
+      summary: Respond to a review
+      operationId: respondToReview
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response]
+              properties:
+                response:
+                  type: string
+                is_public:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Response submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    BrandProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        company_name:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        logo_url:
+          type: string
+        cover_image_url:
+          type: string
+        website:
+          type: string
+        industry:
+          type: string
+        size:
+          type: string
+        locations:
+          type: array
+          items:
+            type: string
+        social_links:
+          type: object
+          additionalProperties:
+            type: string
+        updated_at:
+          type: string
+          format: date-time
+    BrandPost:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        platform:
+          type: string
+          enum: [linkedin, twitter, facebook, instagram, glassdoor, indeed]
+        media_urls:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, scheduled, published, archived]
+        scheduled_at:
+          type: string
+          format: date-time
+        published_at:
+          type: string
+          format: date-time
+        engagement:
+          type: object
+          properties:
+            likes:
+              type: integer
+            shares:
+              type: integer
+            comments:
+              type: integer
+            views:
+              type: integer
+    BrandAnalytics:
+      type: object
+      properties:
+        total_posts:
+          type: integer
+        total_impressions:
+          type: integer
+        total_engagements:
+          type: integer
+        engagement_rate:
+          type: number
+        follower_growth:
+          type: integer
+        top_performing_posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrandPost'
+        by_platform:
+          type: object
+          additionalProperties:
+            type: object
+    SentimentAnalysis:
+      type: object
+      properties:
+        overall_sentiment:
+          type: string
+          enum: [positive, neutral, negative]
+        sentiment_score:
+          type: number
+        positive_mentions:
+          type: integer
+        neutral_mentions:
+          type: integer
+        negative_mentions:
+          type: integer
+        trending_topics:
+          type: array
+          items:
+            type: string
+    CompetitorBrand:
+      type: object
+      properties:
+        company_name:
+          type: string
+        rating:
+          type: number
+        review_count:
+          type: integer
+        follower_count:
+          type: integer
+        engagement_rate:
+          type: number
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+    BrandCampaign:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        budget:
+          type: number
+        target_audience:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrandPost'
+        metrics:
+          type: object
+    Testimonial:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_name:
+          type: string
+        role:
+          type: string
+        content:
+          type: string
+        rating:
+          type: integer
+        approved:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    EVP:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        pillars:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              icon:
+                type: string
+        benefits:
+          type: array
+          items:
+            type: string
+        culture_values:
+          type: array
+          items:
+            type: string
+    GlassdoorData:
+      type: object
+      properties:
+        rating:
+          type: number
+        review_count:
+          type: integer
+        recommend_to_friend:
+          type: number
+        ceo_approval:
+          type: number
+        culture_values:
+          type: number
+        work_life_balance:
+          type: number
+        senior_management:
+          type: number
+        compensation_benefits:
+          type: number
+        career_opportunities:
+          type: number
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        platform:
+          type: string
+        author:
+          type: string
+        rating:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        pros:
+          type: string
+        cons:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ReviewResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        review_id:
+          type: string
+        response:
+          type: string
+        is_public:
+          type: boolean
+        responded_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

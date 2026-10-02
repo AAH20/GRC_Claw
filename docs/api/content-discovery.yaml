@@ -1,0 +1,729 @@
+openapi: 3.1.0
+info:
+  title: Content Discovery API
+  version: 1.0.0
+  description: Discover, search, and recommend content across platforms.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Content Discovery
+    description: Discover and recommend content
+paths:
+  /discovery/search:
+    post:
+      tags: [Content Discovery]
+      summary: Search content
+      description: Search across all content using keywords and filters.
+      operationId: searchContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /discovery/recommendations:
+    get:
+      tags: [Content Discovery]
+      summary: Get content recommendations
+      description: Get personalized content recommendations for a user.
+      operationId: getRecommendations
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum: [article, video, podcast, image, all]
+      responses:
+        '200':
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recommendations'
+  /discovery/trending:
+    get:
+      tags: [Content Discovery]
+      summary: Get trending content
+      operationId: getTrending
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Trending content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendingContent'
+  /discovery/categories:
+    get:
+      tags: [Content Discovery]
+      summary: Get content categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+  /discovery/tags:
+    get:
+      tags: [Content Discovery]
+      summary: Get popular tags
+      operationId: getTags
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+  /discovery/creators:
+    get:
+      tags: [Content Discovery]
+      summary: Discover creators
+      operationId: discoverCreators
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: min_followers
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Creators
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Creator'
+  /discovery/creators/{creatorId}:
+    get:
+      tags: [Content Discovery]
+      summary: Get creator profile
+      operationId: getCreator
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Creator profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creator'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /discovery/creators/{creatorId}/content:
+    get:
+      tags: [Content Discovery]
+      summary: Get creator content
+      operationId: getCreatorContent
+      parameters:
+        - name: creatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Creator content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /discovery/similar:
+    post:
+      tags: [Content Discovery]
+      summary: Find similar content
+      description: Find content similar to a given item.
+      operationId: findSimilar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id]
+              properties:
+                content_id:
+                  type: string
+                limit:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          description: Similar content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /discovery/collections:
+    post:
+      tags: [Content Discovery]
+      summary: Create collection
+      operationId: createCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collection'
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+    get:
+      tags: [Content Discovery]
+      summary: List collections
+      operationId: listCollections
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Collection'
+  /discovery/collections/{collectionId}:
+    get:
+      tags: [Content Discovery]
+      summary: Get collection by ID
+      operationId: getCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Content Discovery]
+      summary: Update collection
+      operationId: updateCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collection'
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content Discovery]
+      summary: Delete collection
+      operationId: deleteCollection
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Collection deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /discovery/collections/{collectionId}/items:
+    post:
+      tags: [Content Discovery]
+      summary: Add item to collection
+      operationId: addItem
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id]
+              properties:
+                content_id:
+                  type: string
+                note:
+                  type: string
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Content Discovery]
+      summary: Get collection items
+      operationId: getCollectionItems
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CollectionItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /discovery/collections/{collectionId}/items/{itemId}:
+    delete:
+      tags: [Content Discovery]
+      summary: Remove item from collection
+      operationId: removeItem
+      parameters:
+        - name: collectionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Item removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /discovery/feed:
+    get:
+      tags: [Content Discovery]
+      summary: Get personalized feed
+      operationId: getFeed
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Feed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+  /discovery/explore:
+    get:
+      tags: [Content Discovery]
+      summary: Explore content
+      description: Get a curated mix of content for exploration.
+      operationId: explore
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Explore results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+components:
+  schemas:
+    SearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        filters:
+          type: object
+          properties:
+            content_type:
+              type: string
+              enum: [article, video, podcast, image, all]
+            category:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            date_from:
+              type: string
+              format: date
+            date_to:
+              type: string
+              format: date
+            creator_id:
+              type: string
+        sort_by:
+          type: string
+          enum: [relevance, date, popularity, rating]
+          default: relevance
+        page:
+          type: integer
+          default: 1
+        per_page:
+          type: integer
+          default: 20
+    SearchResults:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentItem'
+        facets:
+          type: object
+    Recommendations:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentItem'
+        reason:
+          type: string
+    TrendingContent:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentItem'
+        time_range:
+          type: string
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        content_count:
+          type: integer
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+    Creator:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        bio:
+          type: string
+        avatar_url:
+          type: string
+        follower_count:
+          type: integer
+        content_count:
+          type: integer
+        categories:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+    ContentItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        content_type:
+          type: string
+          enum: [article, video, podcast, image]
+        creator_id:
+          type: string
+        creator_name:
+          type: string
+        thumbnail_url:
+          type: string
+        url:
+          type: string
+        duration_seconds:
+          type: integer
+        view_count:
+          type: integer
+        like_count:
+          type: integer
+        share_count:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        is_public:
+          type: boolean
+        item_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CollectionItem:
+      type: object
+      properties:
+        id:
+          type: string
+        collection_id:
+          type: string
+        content_id:
+          type: string
+        content:
+          $ref: '#/components/schemas/ContentItem'
+        note:
+          type: string
+        added_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

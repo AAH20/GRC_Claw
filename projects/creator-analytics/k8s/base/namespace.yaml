@@ -1,0 +1,8 @@
+# Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: creator-analytics
+  labels:
+    app: creator-analytics
+    environment: production

@@ -1,0 +1,150 @@
+# Default values for shared infrastructure.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  environment: production
+  domain: "grc-claw.local"
+  imageRegistry: "ghcr.io/ahmedhassan/grc-claw"
+  imagePullSecrets: []
+  storageClass: "standard"
+
+# Ingress Controller Configuration
+ingressController:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  config:
+    use-forwarded-headers: "true"
+    compute-full-forwarded-for: "true"
+    use-proxy-protocol: "false"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Cert Manager Configuration
+certManager:
+  enabled: true
+  installCRDs: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Monitoring Stack
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    retention: "15d"
+    storage: "10Gi"
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  grafana:
+    enabled: true
+    adminPassword: "admin"
+    storage: "5Gi"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  alertmanager:
+    enabled: true
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+# Service Mesh
+serviceMesh:
+  enabled: false
+  type: istio
+  mtls: true
+
+# Shared Database
+database:
+  enabled: true
+  type: postgresql
+  version: "15"
+  storage: "20Gi"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  config:
+    maxConnections: "100"
+    sharedBuffers: "256MB"
+
+# Shared Cache
+cache:
+  enabled: true
+  type: redis
+  version: "7"
+  storage: "5Gi"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  config:
+    maxmemory: "256mb"
+    maxmemory-policy: "allkeys-lru"
+
+# Object Storage
+objectStorage:
+  enabled: true
+  type: minio
+  storage: "50Gi"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Log Aggregation
+logging:
+  enabled: true
+  type: loki
+  storage: "10Gi"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Secrets
+secrets:
+  DB_PASSWORD: ""
+  REDIS_PASSWORD: ""
+  MINIO_ACCESS_KEY: ""
+  MINIO_SECRET_KEY: ""
+  GRAFANA_ADMIN_PASSWORD: ""

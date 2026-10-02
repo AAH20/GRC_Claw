@@ -1,0 +1,17 @@
+# Kubernetes Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: creator-analytics
+  namespace: creator-analytics
+  labels:
+    app: creator-analytics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: creator-analytics

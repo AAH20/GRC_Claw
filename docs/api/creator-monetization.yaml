@@ -1,0 +1,797 @@
+openapi: 3.1.0
+info:
+  title: Creator Monetization API
+  version: 1.0.0
+  description: Manage creator monetization, revenue streams, and payouts.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Creator Monetization
+    description: Manage creator revenue
+paths:
+  /monetization/streams:
+    post:
+      tags: [Creator Monetization]
+      summary: Create monetization stream
+      operationId: createStream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonetizationStream'
+      responses:
+        '201':
+          description: Stream created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonetizationStream'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Creator Monetization]
+      summary: List monetization streams
+      operationId: listStreams
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, terminated]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Streams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonetizationStream'
+  /monetization/streams/{streamId}:
+    get:
+      tags: [Creator Monetization]
+      summary: Get stream by ID
+      operationId: getStream
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonetizationStream'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Creator Monetization]
+      summary: Update stream
+      operationId: updateStream
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonetizationStream'
+      responses:
+        '200':
+          description: Updated stream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonetizationStream'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Creator Monetization]
+      summary: Terminate stream
+      operationId: terminateStream
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Stream terminated
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /monetization/revenue:
+    get:
+      tags: [Creator Monetization]
+      summary: Get revenue data
+      operationId: getRevenue
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: stream_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revenue data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueData'
+  /monetization/payouts:
+    post:
+      tags: [Creator Monetization]
+      summary: Request payout
+      operationId: requestPayout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [creator_id, amount, method]
+              properties:
+                creator_id:
+                  type: string
+                amount:
+                  type: number
+                method:
+                  type: string
+                  enum: [bank_transfer, paypal, stripe, crypto]
+                currency:
+                  type: string
+                  default: USD
+      responses:
+        '201':
+          description: Payout requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Creator Monetization]
+      summary: List payouts
+      operationId: listPayouts
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Payouts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payout'
+  /monetization/payouts/{payoutId}:
+    get:
+      tags: [Creator Monetization]
+      summary: Get payout by ID
+      operationId: getPayout
+      parameters:
+        - name: payoutId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payout details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payout'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /monetization/tiers:
+    post:
+      tags: [Creator Monetization]
+      summary: Create subscription tier
+      operationId: createTier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionTier'
+      responses:
+        '201':
+          description: Tier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionTier'
+    get:
+      tags: [Creator Monetization]
+      summary: List subscription tiers
+      operationId: listTiers
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tiers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tiers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionTier'
+  /monetization/tiers/{tierId}:
+    get:
+      tags: [Creator Monetization]
+      summary: Get tier by ID
+      operationId: getTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionTier'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Creator Monetization]
+      summary: Update tier
+      operationId: updateTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionTier'
+      responses:
+        '200':
+          description: Updated tier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionTier'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Creator Monetization]
+      summary: Delete tier
+      operationId: deleteTier
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Tier deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /monetization/tips:
+    post:
+      tags: [Creator Monetization]
+      summary: Send tip
+      operationId: sendTip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [creator_id, amount, message]
+              properties:
+                creator_id:
+                  type: string
+                amount:
+                  type: number
+                message:
+                  type: string
+                currency:
+                  type: string
+                  default: USD
+                is_anonymous:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Tip sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tip'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /monetization/tips:
+    get:
+      tags: [Creator Monetization]
+      summary: List tips
+      operationId: listTips
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Tips
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tip'
+  /monetization/analytics:
+    get:
+      tags: [Creator Monetization]
+      summary: Get monetization analytics
+      operationId: getAnalytics
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonetizationAnalytics'
+  /monetization/thresholds:
+    get:
+      tags: [Creator Monetization]
+      summary: Get payout thresholds
+      operationId: getThresholds
+      responses:
+        '200':
+          description: Thresholds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thresholds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PayoutThreshold'
+    put:
+      tags: [Creator Monetization]
+      summary: Update payout thresholds
+      operationId: updateThresholds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                thresholds:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PayoutThreshold'
+      responses:
+        '200':
+          description: Updated thresholds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thresholds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PayoutThreshold'
+  /monetization/currencies:
+    get:
+      tags: [Creator Monetization]
+      summary: Get supported currencies
+      operationId: getCurrencies
+      responses:
+        '200':
+          description: Currencies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currencies:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        symbol:
+                          type: string
+  /monetization/transactions:
+    get:
+      tags: [Creator Monetization]
+      summary: Get transaction history
+      operationId: getTransactions
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [revenue, payout, tip, refund, fee]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+  /monetization/balances:
+    get:
+      tags: [Creator Monetization]
+      summary: Get creator balances
+      operationId: getBalances
+      parameters:
+        - name: creator_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Balances
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balances:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Balance'
+components:
+  schemas:
+    MonetizationStream:
+      type: object
+      properties:
+        id:
+          type: string
+        creator_id:
+          type: string
+        type:
+          type: string
+          enum: [subscription, ad_revenue, sponsorship, merchandise, tips, licensing]
+        status:
+          type: string
+          enum: [active, paused, terminated]
+        revenue_share:
+          type: number
+        settings:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    RevenueData:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+        by_stream:
+          type: object
+          additionalProperties:
+            type: number
+        by_month:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              amount:
+                type: number
+        growth_rate:
+          type: number
+    Payout:
+      type: object
+      properties:
+        id:
+          type: string
+        creator_id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        method:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failure]
+        requested_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        transaction_id:
+          type: string
+    SubscriptionTier:
+      type: object
+      properties:
+        id:
+          type: string
+        creator_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        interval:
+          type: string
+          enum: [monthly, yearly]
+        benefits:
+          type: array
+          items:
+            type: string
+        subscriber_count:
+          type: integer
+        active:
+          type: boolean
+    Tip:
+      type: object
+      properties:
+        id:
+          type: string
+        creator_id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        message:
+          type: string
+        is_anonymous:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    MonetizationAnalytics:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+        total_payouts:
+          type: number
+        net_revenue:
+          type: number
+        active_subscribers:
+          type: integer
+        mrr:
+          type: number
+        arr:
+          type: number
+        churn_rate:
+          type: number
+        ltv:
+          type: number
+        by_stream:
+          type: object
+          additionalProperties:
+            type: number
+    PayoutThreshold:
+      type: object
+      properties:
+        method:
+          type: string
+        minimum:
+          type: number
+        currency:
+          type: string
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        creator_id:
+          type: string
+        type:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Balance:
+      type: object
+      properties:
+        creator_id:
+          type: string
+        available:
+          type: number
+        pending:
+          type: number
+        currency:
+          type: string
+        last_updated:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

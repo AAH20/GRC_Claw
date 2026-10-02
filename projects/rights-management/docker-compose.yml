@@ -1,0 +1,15 @@
+services:
+  rights-management:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      RIGHTS_DEBUG: "false"
+      RIGHTS_LOG_LEVEL: "INFO"
+      RIGHTS_LLM_MODEL: "gpt-4o-mini"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped

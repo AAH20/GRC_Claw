@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: employer-branding-config
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  REDIS_URL: "redis://redis:6379/0"
+  MAX_CONTENT_LENGTH: "10485760"
+  RATE_LIMIT_PER_MINUTE: "100"

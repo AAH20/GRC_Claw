@@ -1,0 +1,682 @@
+openapi: 3.1.0
+info:
+  title: Community Curation API
+  version: 1.0.0
+  description: Curate and manage community content, discussions, and engagement.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Community Curation
+    description: Curate community content
+paths:
+  /curation/queue:
+    get:
+      tags: [Community Curation]
+      summary: Get curation queue
+      description: Get content items pending curation review.
+      operationId: getQueue
+      parameters:
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Curation queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CurationItem'
+  /curation/queue/{itemId}/review:
+    post:
+      tags: [Community Curation]
+      summary: Review curation item
+      description: Approve, reject, or escalate a curation item.
+      operationId: reviewItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject, escalate, feature]
+                reason:
+                  type: string
+                notes:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Review completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /curation/featured:
+    get:
+      tags: [Community Curation]
+      summary: Get featured content
+      operationId: getFeatured
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Featured content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeaturedItem'
+    post:
+      tags: [Community Curation]
+      summary: Feature content
+      operationId: featureContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id]
+              properties:
+                content_id:
+                  type: string
+                category:
+                  type: string
+                priority:
+                  type: integer
+                  default: 1
+                expires_at:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Content featured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeaturedItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /curation/featured/{itemId}:
+    delete:
+      tags: [Community Curation]
+      summary: Remove featured content
+      operationId: removeFeatured
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Removed from featured
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /curation/categories:
+    get:
+      tags: [Community Curation]
+      summary: Get curation categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CurationCategory'
+    post:
+      tags: [Community Curation]
+      summary: Create curation category
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurationCategory'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationCategory'
+  /curation/categories/{categoryId}:
+    put:
+      tags: [Community Curation]
+      summary: Update category
+      operationId: updateCategory
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurationCategory'
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationCategory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Curation]
+      summary: Delete category
+      operationId: deleteCategory
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /curation/tags:
+    get:
+      tags: [Community Curation]
+      summary: Get curation tags
+      operationId: getTags
+      responses:
+        '200':
+          description: Tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CurationTag'
+    post:
+      tags: [Community Curation]
+      summary: Create curation tag
+      operationId: createTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurationTag'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationTag'
+  /curation/tags/{tagId}:
+    put:
+      tags: [Community Curation]
+      summary: Update tag
+      operationId: updateTag
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurationTag'
+      responses:
+        '200':
+          description: Updated tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationTag'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Curation]
+      summary: Delete tag
+      operationId: deleteTag
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Tag deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /curation/metrics:
+    get:
+      tags: [Community Curation]
+      summary: Get curation metrics
+      operationId: getMetrics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationMetrics'
+  /curation/reports:
+    post:
+      tags: [Community Curation]
+      summary: Generate curation report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_date, end_date]
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                format:
+                  type: string
+                  enum: [json, csv, pdf]
+                  default: json
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /curation/policies:
+    get:
+      tags: [Community Curation]
+      summary: Get curation policies
+      operationId: getPolicies
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CurationPolicy'
+    post:
+      tags: [Community Curation]
+      summary: Create curation policy
+      operationId: createPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurationPolicy'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationPolicy'
+  /curation/policies/{policyId}:
+    put:
+      tags: [Community Curation]
+      summary: Update policy
+      operationId: updatePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurationPolicy'
+      responses:
+        '200':
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Community Curation]
+      summary: Delete policy
+      operationId: deletePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /curation/analytics:
+    get:
+      tags: [Community Curation]
+      summary: Get curation analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurationAnalytics'
+  /curation/recommendations:
+    get:
+      tags: [Community Curation]
+      summary: Get curation recommendations
+      description: Get AI-powered recommendations for content curation.
+      operationId: getRecommendations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CurationRecommendation'
+components:
+  schemas:
+    CurationItem:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        content_type:
+          type: string
+        title:
+          type: string
+        author_id:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        category:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        auto_score:
+          type: number
+    CurationResult:
+      type: object
+      properties:
+        item_id:
+          type: string
+        action:
+          type: string
+        status:
+          type: string
+        reviewed_at:
+          type: string
+          format: date-time
+    FeaturedItem:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        title:
+          type: string
+        category:
+          type: string
+        priority:
+          type: integer
+        featured_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    CurationCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        item_count:
+          type: integer
+    CurationTag:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+    CurationMetrics:
+      type: object
+      properties:
+        total_items:
+          type: integer
+        reviewed_items:
+          type: integer
+        approved_items:
+          type: integer
+        rejected_items:
+          type: integer
+        average_review_time_hours:
+          type: number
+        by_category:
+          type: object
+          additionalProperties:
+            type: integer
+    CurationReport:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        summary:
+          type: object
+        details:
+          type: array
+          items:
+            type: object
+    CurationPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            type: object
+        enabled:
+          type: boolean
+    CurationAnalytics:
+      type: object
+      properties:
+        total_curated:
+          type: integer
+        approval_rate:
+          type: number
+        average_review_time:
+          type: number
+        by_category:
+          type: object
+          additionalProperties:
+            type: object
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+    CurationRecommendation:
+      type: object
+      properties:
+        content_id:
+          type: string
+        title:
+          type: string
+        reason:
+          type: string
+        confidence:
+          type: number
+        suggested_action:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

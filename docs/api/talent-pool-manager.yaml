@@ -1,0 +1,717 @@
+openapi: 3.1.0
+info:
+  title: Talent Pool Manager API
+  version: 1.0.0
+  description: Manage talent pools, candidate pipelines, and talent communities.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Talent Pool Management
+    description: Manage talent pools and candidate pipelines
+paths:
+  /talent-pools:
+    post:
+      tags: [Talent Pool Management]
+      summary: Create a talent pool
+      operationId: createTalentPool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentPoolRequest'
+      responses:
+        '201':
+          description: Talent pool created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Talent Pool Management]
+      summary: List talent pools
+      operationId: listTalentPools
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, archived]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of talent pools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TalentPool'
+  /talent-pools/{poolId}:
+    get:
+      tags: [Talent Pool Management]
+      summary: Get talent pool by ID
+      operationId: getTalentPool
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Talent pool details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPool'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Talent Pool Management]
+      summary: Update a talent pool
+      operationId: updateTalentPool
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentPoolRequest'
+      responses:
+        '200':
+          description: Updated talent pool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentPool'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Talent Pool Management]
+      summary: Delete a talent pool
+      operationId: deleteTalentPool
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Talent pool deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/candidates:
+    post:
+      tags: [Talent Pool Management]
+      summary: Add candidate to pool
+      operationId: addCandidate
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidate_id]
+              properties:
+                candidate_id:
+                  type: string
+                notes:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Candidate added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCandidate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Talent Pool Management]
+      summary: List candidates in pool
+      operationId: listPoolCandidates
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, contacted, engaged, placed, archived]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Pool candidates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PoolCandidate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/candidates/{candidateId}:
+    get:
+      tags: [Talent Pool Management]
+      summary: Get candidate in pool
+      operationId: getPoolCandidate
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pool candidate details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCandidate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Talent Pool Management]
+      summary: Update candidate in pool
+      operationId: updatePoolCandidate
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [new, contacted, engaged, placed, archived]
+                notes:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated pool candidate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCandidate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Talent Pool Management]
+      summary: Remove candidate from pool
+      operationId: removeCandidate
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Candidate removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/search:
+    post:
+      tags: [Talent Pool Management]
+      summary: Search within talent pool
+      description: Search for candidates within a specific talent pool.
+      operationId: searchPool
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                skills:
+                  type: array
+                  items:
+                    type: string
+                min_experience_years:
+                  type: integer
+                location:
+                  type: string
+                status:
+                  type: string
+                  enum: [new, contacted, engaged, placed, archived]
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PoolCandidate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/analytics:
+    get:
+      tags: [Talent Pool Management]
+      summary: Get talent pool analytics
+      operationId: getPoolAnalytics
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pool analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolAnalytics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/export:
+    get:
+      tags: [Talent Pool Management]
+      summary: Export talent pool
+      operationId: exportPool
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json, xlsx]
+            default: csv
+      responses:
+        '200':
+          description: Exported data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/merge:
+    post:
+      tags: [Talent Pool Management]
+      summary: Merge talent pools
+      description: Merge another talent pool into this one.
+      operationId: mergePools
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_pool_id]
+              properties:
+                source_pool_id:
+                  type: string
+                remove_source:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Merge result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  merged_count:
+                    type: integer
+                  duplicates_skipped:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/{poolId}/tags:
+    get:
+      tags: [Talent Pool Management]
+      summary: Get all tags in pool
+      operationId: getPoolTags
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /talent-pools/recommendations:
+    get:
+      tags: [Talent Pool Management]
+      summary: Get talent pool recommendations
+      description: Get AI-powered recommendations for talent pool improvements.
+      operationId: getRecommendations
+      parameters:
+        - name: pool_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PoolRecommendation'
+  /talent-pools/{poolId}/campaigns:
+    post:
+      tags: [Talent Pool Management]
+      summary: Create outreach campaign
+      description: Create a campaign to reach out to candidates in the pool.
+      operationId: createCampaign
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CampaignRequest'
+      responses:
+        '201':
+          description: Campaign created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Talent Pool Management]
+      summary: List campaigns for pool
+      operationId: listCampaigns
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaigns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Campaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    TalentPoolRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive, archived]
+          default: active
+        tags:
+          type: array
+          items:
+            type: string
+    TalentPool:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        candidate_count:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PoolCandidate:
+      type: object
+      properties:
+        id:
+          type: string
+        pool_id:
+          type: string
+        candidate_id:
+          type: string
+        candidate_name:
+          type: string
+        status:
+          type: string
+          enum: [new, contacted, engaged, placed, archived]
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        added_at:
+          type: string
+          format: date-time
+        last_contacted:
+          type: string
+          format: date-time
+    PoolAnalytics:
+      type: object
+      properties:
+        total_candidates:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        by_skill:
+          type: object
+          additionalProperties:
+            type: integer
+        engagement_rate:
+          type: number
+        placement_rate:
+          type: number
+        average_time_to_placement_days:
+          type: number
+        top_skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill:
+                type: string
+              count:
+                type: integer
+    PoolRecommendation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [expand, diversify, engage, archive]
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        actionable:
+          type: boolean
+    CampaignRequest:
+      type: object
+      required: [name, subject, template]
+      properties:
+        name:
+          type: string
+        subject:
+          type: string
+        template:
+          type: string
+        target_status:
+          type: string
+          enum: [new, contacted, engaged, placed, archived]
+        scheduled_at:
+          type: string
+          format: date-time
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+        pool_id:
+          type: string
+        name:
+          type: string
+        subject:
+          type: string
+        status:
+          type: string
+          enum: [draft, scheduled, sent, cancelled]
+        target_count:
+          type: integer
+        sent_count:
+          type: integer
+        opened_count:
+          type: integer
+        responded_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

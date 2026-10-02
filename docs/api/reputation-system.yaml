@@ -1,0 +1,697 @@
+openapi: 3.1.0
+info:
+  title: Reputation System API
+  version: 1.0.0
+  description: Manage user reputation scores, badges, and trust metrics.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Reputation System
+    description: Manage user reputation
+paths:
+  /reputation/scores:
+    get:
+      tags: [Reputation System]
+      summary: Get reputation scores
+      operationId: getScores
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReputationScore'
+  /reputation/scores/{userId}:
+    get:
+      tags: [Reputation System]
+      summary: Get reputation score by user ID
+      operationId: getScore
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reputation score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationScore'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Reputation System]
+      summary: Update reputation score
+      operationId: updateScore
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, points]
+              properties:
+                action:
+                  type: string
+                  enum: [award, deduct, reset, adjust]
+                points:
+                  type: integer
+                reason:
+                  type: string
+                reference_id:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Updated score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationScore'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reputation/badges:
+    post:
+      tags: [Reputation System]
+      summary: Create badge
+      operationId: createBadge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Badge'
+      responses:
+        '201':
+          description: Badge created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Badge'
+    get:
+      tags: [Reputation System]
+      summary: List badges
+      operationId: listBadges
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Badges
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Badge'
+  /reputation/badges/{badgeId}:
+    get:
+      tags: [Reputation System]
+      summary: Get badge by ID
+      operationId: getBadge
+      parameters:
+        - name: badgeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Badge details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Badge'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Reputation System]
+      summary: Update badge
+      operationId: updateBadge
+      parameters:
+        - name: badgeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Badge'
+      responses:
+        '200':
+          description: Updated badge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Badge'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Reputation System]
+      summary: Delete badge
+      operationId: deleteBadge
+      parameters:
+        - name: badgeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Badge deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reputation/badges/{badgeId}/award:
+    post:
+      tags: [Reputation System]
+      summary: Award badge to user
+      operationId: awardBadge
+      parameters:
+        - name: badgeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: string
+                reason:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Badge awarded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBadge'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reputation/badges/{badgeId}/revoke:
+    post:
+      tags: [Reputation System]
+      summary: Revoke badge from user
+      operationId: revokeBadge
+      parameters:
+        - name: badgeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, reason]
+              properties:
+                user_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Badge revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBadge'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reputation/history:
+    get:
+      tags: [Reputation System]
+      summary: Get reputation history
+      operationId: getHistory
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: History
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReputationEvent'
+  /reputation/leaderboard:
+    get:
+      tags: [Reputation System]
+      summary: Get reputation leaderboard
+      operationId: getLeaderboard
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, all_time]
+            default: monthly
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+  /reputation/levels:
+    get:
+      tags: [Reputation System]
+      summary: Get reputation levels
+      operationId: getLevels
+      responses:
+        '200':
+          description: Levels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  levels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReputationLevel'
+  /reputation/analytics:
+    get:
+      tags: [Reputation System]
+      summary: Get reputation analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationAnalytics'
+  /reputation/reviews:
+    post:
+      tags: [Reputation System]
+      summary: Submit reputation review
+      operationId: submitReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReputationReview'
+      responses:
+        '201':
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationReview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Reputation System]
+      summary: Get reputation reviews
+      operationId: getReviews
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: reviewer_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReputationReview'
+  /reputation/reviews/{reviewId}:
+    put:
+      tags: [Reputation System]
+      summary: Update review
+      operationId: updateReview
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReputationReview'
+      responses:
+        '200':
+          description: Updated review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationReview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Reputation System]
+      summary: Delete review
+      operationId: deleteReview
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Review deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reputation/calculate:
+    post:
+      tags: [Reputation System]
+      summary: Calculate reputation score
+      description: Recalculate reputation score based on current data.
+      operationId: calculateScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: string
+                force:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Calculated score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationScore'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    ReputationScore:
+      type: object
+      properties:
+        user_id:
+          type: string
+        score:
+          type: integer
+        level:
+          type: string
+        rank:
+          type: integer
+        percentile:
+          type: number
+        breakdown:
+          type: object
+          additionalProperties:
+            type: number
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBadge'
+        updated_at:
+          type: string
+          format: date-time
+    Badge:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon_url:
+          type: string
+        criteria:
+          type: string
+        points:
+          type: integer
+        tier:
+          type: string
+          enum: [bronze, silver, gold, platinum, diamond]
+    UserBadge:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        badge_id:
+          type: string
+        badge_name:
+          type: string
+        awarded_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+    ReputationEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        type:
+          type: string
+        points:
+          type: integer
+        reason:
+          type: string
+        reference_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer
+        level:
+          type: string
+        badges:
+          type: integer
+    ReputationLevel:
+      type: object
+      properties:
+        level:
+          type: string
+        min_score:
+          type: integer
+        max_score:
+          type: integer
+        benefits:
+          type: array
+          items:
+            type: string
+    ReputationAnalytics:
+      type: object
+      properties:
+        total_users:
+          type: integer
+        average_score:
+          type: number
+        total_badges_awarded:
+          type: integer
+        total_reviews:
+          type: integer
+        by_level:
+          type: object
+          additionalProperties:
+            type: integer
+    ReputationReview:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        reviewer_id:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

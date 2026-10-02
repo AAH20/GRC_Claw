@@ -1,0 +1,19 @@
+# Kubernetes Service for escalation workflow API
+apiVersion: v1
+kind: Service
+metadata:
+  name: escalation-workflow-api
+  namespace: escalation-workflow
+  labels:
+    app: escalation-workflow
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: escalation-workflow
+    component: api

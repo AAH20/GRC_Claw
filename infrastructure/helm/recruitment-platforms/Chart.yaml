@@ -1,0 +1,28 @@
+apiVersion: v2
+name: recruitment-platforms
+description: >
+  Helm chart for GRC_Claw recruitment platform projects.
+  Manages 10 recruitment-related microservices including job boards,
+  applicant tracking, candidate sourcing, interview scheduling,
+  and recruitment analytics.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - recruitment
+  - hiring
+  - ats
+  - jobs
+  - candidates
+  - grc-claw
+home: https://github.com/ahmedhassan/GRC_Claw
+sources:
+  - https://github.com/ahmedhassan/GRC_Claw
+maintainers:
+  - name: Ahmed Hassan
+    email: ahmed@example.com
+annotations:
+  category: Recruitment
+  grc-claw/domain: recruitment-platforms
+  grc-claw/project-count: "10"
+dependencies: []

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: moderation-config
+  namespace: content-moderation
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  MAX_CONTENT_SIZE_MB: "50"
+  ENABLE_METRICS: "true"

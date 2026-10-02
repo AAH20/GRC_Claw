@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: skills-assessor
+  labels:
+    app: skills-assessor
+    environment: production
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skills-assessor-config
+  namespace: skills-assessor
+data:
+  APP_NAME: "skills-assessor"
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  LLM_MODEL: "gpt-4o-mini"
+  LLM_TEMPERATURE: "0.1"
+  LLM_MAX_TOKENS: "4096"
+  DEEPAGENTS_MAX_ITERATIONS: "10"
+  DEEPAGENTS_TIMEOUT_SECONDS: "300"
+  DEFAULT_PROFICIENCY_THRESHOLD: "0.7"
+  MAX_SKILLS_PER_ASSESSMENT: "50"
+  MIN_CONFIDENCE_SCORE: "0.5"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: skills-assessor-secrets
+  namespace: skills-assessor
+type: Opaque
+stringData:
+  OPENAI_API_KEY: ""
+  LANGCHAIN_API_KEY: ""
+  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/skills_assessor"
+  REDIS_URL: "redis://redis:6379/0"

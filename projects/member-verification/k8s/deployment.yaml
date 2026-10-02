@@ -1,0 +1,77 @@
+# Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: member-verification-api
+  namespace: member-verification
+  labels:
+    app: member-verification
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: member-verification
+      component: api
+  template:
+    metadata:
+      labels:
+        app: member-verification
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: member-verification:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: member-verification-secrets
+                  key: redis-url
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: member-verification-secrets
+                  key: openai-api-key
+            - name: LANGCHAIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: member-verification-secrets
+                  key: langchain-api-key
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: member-verification-secrets
+                  key: secret-key
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false

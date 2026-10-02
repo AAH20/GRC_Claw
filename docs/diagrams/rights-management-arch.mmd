@@ -1,0 +1,192 @@
+%% { init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#06b6d4', 'primaryTextColor': '#fff', 'primaryBorderColor': '#06b6d4', 'lineColor': '#888', 'secondaryColor': '#a855f7', 'tertiaryColor': '#10b981', 'background': '#07090e' } } }%%
+%% Rights Management - System Architecture Diagram
+%% Agentic AI rights and permissions management system
+
+%% ============================================================
+%% 1. SYSTEM CONTEXT VIEW
+%% ============================================================
+flowchart TB
+    subgraph External["External Systems"]
+        E0["Content DB"]
+        E1["Legal Systems"]
+        E2["Licensing Partners"]
+    end
+
+    subgraph System["Rights Management System"]
+        API["FastAPI Gateway"]
+        subgraph Agents["AI Agent Layer"]
+            A0["Rights Validator"]
+            A1["Permission Manager"]
+            A2["Compliance Checker"]
+            A3["Usage Tracker"]
+            A4["Enforcement"]
+        end
+        subgraph Data["Data Layer"]
+            D0[("PostgreSQL")]
+            D1[("Redis")]
+            D2[("S3")]
+        end
+        subgraph Integrations["Integration Layer"]
+            I0["Creative Commons"]
+            I1["RightsLink"]
+            I2["Copyright Clearance"]
+        end
+    end
+
+    External <-->|data exchange| System
+
+%% ============================================================
+%% 2. COMPONENT VIEW
+%% ============================================================
+flowchart LR
+    subgraph Core["Core Components"]
+        API["FastAPI Gateway"]
+        subgraph AgentLayer["Agent Orchestration"]
+            A0["Rights Validator"]
+            A1["Permission Manager"]
+            A2["Compliance Checker"]
+            A3["Usage Tracker"]
+            A4["Enforcement"]
+        end
+        subgraph DataLayer["Data Services"]
+            D0[("PostgreSQL")]
+            D1[("Redis")]
+            D2[("S3")]
+        end
+        subgraph IntegrationLayer["External Integrations"]
+            I0["Creative Commons"]
+            I1["RightsLink"]
+            I2["Copyright Clearance"]
+        end
+    end
+
+    API -->|routes| AgentLayer
+    AgentLayer -->|persists| DataLayer
+    AgentLayer -->|calls| IntegrationLayer
+
+%% ============================================================
+%% 3. DATA FLOW VIEW
+%% ============================================================
+flowchart TD
+    subgraph Input["Input Sources"]
+        E0["Content DB"]
+        E1["Legal Systems"]
+    end
+
+    subgraph Processing["Processing Layer"]
+        A0["Rights Validator"]
+        A1["Permission Manager"]
+        A2["Compliance Checker"]
+        A3["Usage Tracker"]
+        A4["Enforcement"]
+    end
+
+    subgraph Storage["Storage Layer"]
+        D0[("PostgreSQL")]
+        D1[("Redis")]
+        D2[("S3")]
+    end
+
+    subgraph Output["Output/Integrations"]
+        I0["Creative Commons"]
+        I1["RightsLink"]
+        I2["Copyright Clearance"]
+    end
+
+    Input -->|rights data| Processing
+    Processing -->|permissions| Storage
+    Processing -->|enforcement| Output
+    Storage <-->|query/update| Processing
+
+%% ============================================================
+%% 4. DEPLOYMENT VIEW
+%% ============================================================
+flowchart TB
+    subgraph Client["Client Layer"]
+        Web["Web Dashboard"]
+        APIClient["API Clients"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        LB["Load Balancer"]
+        CDN["CDN"]
+    end
+
+    subgraph App["Application Layer"]
+        subgraph FastAPI["FastAPI Instances"]
+            API1["API Instance 1"]
+            API2["API Instance 2"]
+        end
+        subgraph Worker["Worker Layer"]
+            W1["Celery Worker 1"]
+            W2["Celery Worker 2"]
+        end
+    end
+
+    subgraph DataLayer["Data Layer"]
+        PG[("PostgreSQL")]
+        RD[("Redis")]
+        S3["Object Storage"]
+    end
+
+    subgraph Monitoring["Monitoring"]
+        Prom["Prometheus"]
+        Graf["Grafana"]
+    end
+
+    Client -->|HTTPS| Edge
+    Edge -->|routes| App
+    App -->|reads/writes| DataLayer
+    App -->|metrics| Monitoring
+    Worker -->|processes| DataLayer
+
+%% ============================================================
+%% 5. AGENT INTERACTION VIEW
+%% ============================================================
+flowchart LR
+    subgraph Orchestrator["Orchestrator"]
+        O["Agent Orchestrator"]
+    end
+
+    subgraph AgentPool["Agent Pool"]
+        A0["Rights Validator"]
+        A1["Permission Manager"]
+        A2["Compliance Checker"]
+        A3["Usage Tracker"]
+        A4["Enforcement"]
+    end
+
+    subgraph Shared["Shared Services"]
+        G["GRC_Claw Governance"]
+        L["LangChain DeepAgents"]
+        C["grc-marketing-core"]
+    end
+
+    O -->|dispatches| AgentPool
+    AgentPool -->|uses| Shared
+    Shared -->|enforces| AgentPool
+
+%% ============================================================
+%% 6. SECURITY VIEW
+%% ============================================================
+flowchart TB
+    subgraph Security["Security Layer"]
+        Auth["Authentication"]
+        AuthZ["Authorization"]
+        Audit["Audit Logging"]
+        Encrypt["Encryption"]
+    end
+
+    subgraph AppLayer["Application"]
+        API["API Gateway"]
+        Agents["Agents"]
+    end
+
+    subgraph DataStore["Data Stores"]
+        DB[("Databases")]
+        Cache[("Cache")]
+    end
+
+    Security -->|protects| AppLayer
+    AppLayer -->|accesses| DataStore
+    Security -->|monitors| DataStore

@@ -1,0 +1,653 @@
+openapi: 3.1.0
+info:
+  title: Member Verification API
+  version: 1.0.0
+  description: Verify member identities, credentials, and trustworthiness.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Member Verification
+    description: Verify member identities
+paths:
+  /verification/requests:
+    post:
+      tags: [Member Verification]
+      summary: Submit verification request
+      operationId: submitRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequest'
+      responses:
+        '201':
+          description: Request submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Member Verification]
+      summary: List verification requests
+      operationId: listRequests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_review, verified, rejected, expired]
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VerificationRequest'
+  /verification/requests/{requestId}:
+    get:
+      tags: [Member Verification]
+      summary: Get request by ID
+      operationId: getRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Member Verification]
+      summary: Update request
+      operationId: updateRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequest'
+      responses:
+        '200':
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Member Verification]
+      summary: Cancel request
+      operationId: cancelRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Request cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /verification/requests/{requestId}/review:
+    post:
+      tags: [Member Verification]
+      summary: Review verification request
+      operationId: reviewRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [verify, reject, request_more_info]
+                reason:
+                  type: string
+                notes:
+                  type: string
+                verified_attributes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Review completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /verification/status:
+    get:
+      tags: [Member Verification]
+      summary: Get verification status
+      operationId: getStatus
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatus'
+  /verification/documents:
+    post:
+      tags: [Member Verification]
+      summary: Upload verification document
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [user_id, document_type, file]
+              properties:
+                user_id:
+                  type: string
+                document_type:
+                  type: string
+                  enum: [id_card, passport, drivers_license, utility_bill, bank_statement, selfie]
+                file:
+                  type: string
+                  format: binary
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /verification/documents/{documentId}:
+    get:
+      tags: [Member Verification]
+      summary: Get document by ID
+      operationId: getDocument
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationDocument'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Member Verification]
+      summary: Delete document
+      operationId: deleteDocument
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Document deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /verification/biometric:
+    post:
+      tags: [Member Verification]
+      summary: Submit biometric verification
+      operationId: submitBiometric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, biometric_type, data]
+              properties:
+                user_id:
+                  type: string
+                biometric_type:
+                  type: string
+                  enum: [fingerprint, face, voice, iris]
+                data:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Biometric submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiometricResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /verification/social:
+    post:
+      tags: [Member Verification]
+      summary: Verify social account
+      operationId: verifySocial
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, platform, handle]
+              properties:
+                user_id:
+                  type: string
+                platform:
+                  type: string
+                  enum: [twitter, facebook, instagram, linkedin, github]
+                handle:
+                  type: string
+                verification_code:
+                  type: string
+      responses:
+        '200':
+          description: Social verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialVerification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /verification/trust-score:
+    get:
+      tags: [Member Verification]
+      summary: Get trust score
+      operationId: getTrustScore
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trust score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustScore'
+  /verification/levels:
+    get:
+      tags: [Member Verification]
+      summary: Get verification levels
+      operationId: getLevels
+      responses:
+        '200':
+          description: Levels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  levels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VerificationLevel'
+  /verification/analytics:
+    get:
+      tags: [Member Verification]
+      summary: Get verification analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationAnalytics'
+  /verification/audit:
+    get:
+      tags: [Member Verification]
+      summary: Get verification audit log
+      operationId: getAuditLog
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+  /verification/revoke:
+    post:
+      tags: [Member Verification]
+      summary: Revoke verification
+      operationId: revokeVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, reason]
+              properties:
+                user_id:
+                  type: string
+                reason:
+                  type: string
+                notify_user:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Verification revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    VerificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        type:
+          type: string
+          enum: [identity, email, phone, address, employment, education, social, biometric]
+        status:
+          type: string
+          enum: [pending, in_review, verified, rejected, expired]
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerificationDocument'
+        submitted_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    VerificationResult:
+      type: object
+      properties:
+        request_id:
+          type: string
+        user_id:
+          type: string
+        decision:
+          type: string
+          enum: [verified, rejected, pending]
+        verified_attributes:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+        reviewed_by:
+          type: string
+        reviewed_at:
+          type: string
+          format: date-time
+    VerificationStatus:
+      type: object
+      properties:
+        user_id:
+          type: string
+        verified:
+          type: boolean
+        level:
+          type: string
+        verified_attributes:
+          type: array
+          items:
+            type: string
+        trust_score:
+          type: number
+        last_verified_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    VerificationDocument:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        document_type:
+          type: string
+        file_url:
+          type: string
+        status:
+          type: string
+          enum: [pending, verified, rejected]
+        uploaded_at:
+          type: string
+          format: date-time
+    BiometricResult:
+      type: object
+      properties:
+        user_id:
+          type: string
+        biometric_type:
+          type: string
+        verified:
+          type: boolean
+        confidence:
+          type: number
+        processed_at:
+          type: string
+          format: date-time
+    SocialVerification:
+      type: object
+      properties:
+        user_id:
+          type: string
+        platform:
+          type: string
+        handle:
+          type: string
+        verified:
+          type: boolean
+        followers:
+          type: integer
+        verified_at:
+          type: string
+          format: date-time
+    TrustScore:
+      type: object
+      properties:
+        user_id:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        level:
+          type: string
+          enum: [untrusted, low, medium, high, verified]
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              factor:
+                type: string
+              impact:
+                type: number
+        updated_at:
+          type: string
+          format: date-time
+    VerificationLevel:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: array
+          items:
+            type: string
+        trust_score_min:
+          type: number
+    VerificationAnalytics:
+      type: object
+      properties:
+        total_requests:
+          type: integer
+        verified:
+          type: integer
+        rejected:
+          type: integer
+        pending:
+          type: integer
+        average_review_time_hours:
+          type: number
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        action:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

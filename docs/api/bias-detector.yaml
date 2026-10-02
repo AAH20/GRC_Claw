@@ -1,0 +1,650 @@
+openapi: 3.1.0
+info:
+  title: Bias Detector API
+  version: 1.0.0
+  description: Detect and mitigate bias in job descriptions, resumes, and hiring decisions.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Bias Detection
+    description: Detect and mitigate bias in hiring
+paths:
+  /bias/analyze-text:
+    post:
+      tags: [Bias Detection]
+      summary: Analyze text for bias
+      description: Analyze job descriptions, resumes, or other text for potential bias.
+      operationId: analyzeText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                context:
+                  type: string
+                  enum: [job_description, resume, email, feedback, general]
+                  default: general
+                language:
+                  type: string
+                  default: en
+      responses:
+        '200':
+          description: Bias analysis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasAnalysis'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /bias/analyze-job/{jobId}:
+    get:
+      tags: [Bias Detection]
+      summary: Analyze a job description for bias
+      operationId: analyzeJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bias analysis for job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasAnalysis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /bias/analyze-resume/{resumeId}:
+    get:
+      tags: [Bias Detection]
+      summary: Analyze a resume for bias
+      operationId: analyzeResume
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bias analysis for resume
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasAnalysis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /bias/suggest-improvements:
+    post:
+      tags: [Bias Detection]
+      summary: Suggest bias-free alternatives
+      description: Get suggestions to make text more inclusive and unbiased.
+      operationId: suggestImprovements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                context:
+                  type: string
+                  enum: [job_description, resume, email, feedback, general]
+                  default: general
+      responses:
+        '200':
+          description: Suggested improvements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImprovementSuggestions'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /bias/report:
+    post:
+      tags: [Bias Detection]
+      summary: Generate bias report
+      description: Generate a comprehensive bias report for a set of hiring decisions.
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_date, end_date]
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                department:
+                  type: string
+                job_id:
+                  type: string
+      responses:
+        '200':
+          description: Bias report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /bias/metrics:
+    get:
+      tags: [Bias Detection]
+      summary: Get bias metrics
+      description: Get aggregate bias metrics over time.
+      operationId: getMetrics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bias metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasMetrics'
+  /bias/categories:
+    get:
+      tags: [Bias Detection]
+      summary: Get bias categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: List of bias categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BiasCategory'
+  /bias/flagged-content:
+    get:
+      tags: [Bias Detection]
+      summary: Get flagged content
+      description: Get content that has been flagged for potential bias.
+      operationId: getFlaggedContent
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, reviewed, resolved, dismissed]
+            default: pending
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Flagged content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FlaggedContent'
+  /bias/flagged-content/{flagId}:
+    get:
+      tags: [Bias Detection]
+      summary: Get flagged content by ID
+      operationId: getFlaggedContentById
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flagged content details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlaggedContent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Bias Detection]
+      summary: Update flagged content status
+      operationId: updateFlaggedContent
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, reviewed, resolved, dismissed]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Updated flagged content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlaggedContent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /bias/training-data:
+    get:
+      tags: [Bias Detection]
+      summary: Get bias training data
+      operationId: getTrainingData
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Training data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrainingExample'
+    post:
+      tags: [Bias Detection]
+      summary: Add training data
+      operationId: addTrainingData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingExample'
+      responses:
+        '201':
+          description: Training data added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingExample'
+  /bias/settings:
+    get:
+      tags: [Bias Detection]
+      summary: Get bias detection settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasSettings'
+    put:
+      tags: [Bias Detection]
+      summary: Update bias detection settings
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BiasSettings'
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BiasSettings'
+  /bias/audit-log:
+    get:
+      tags: [Bias Detection]
+      summary: Get bias audit log
+      operationId: getAuditLog
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+components:
+  schemas:
+    BiasAnalysis:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        bias_detected:
+          type: boolean
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/BiasCategoryResult'
+        flagged_phrases:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlaggedPhrase'
+        suggestions:
+          type: array
+          items:
+            type: string
+    BiasCategoryResult:
+      type: object
+      properties:
+        category:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        instances:
+          type: integer
+    FlaggedPhrase:
+      type: object
+      properties:
+        phrase:
+          type: string
+        category:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        suggestion:
+          type: string
+    ImprovementSuggestions:
+      type: object
+      properties:
+        original_text:
+          type: string
+        improved_text:
+          type: string
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              original:
+                type: string
+              replacement:
+                type: string
+              reason:
+                type: string
+              category:
+                type: string
+    BiasReport:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        total_analyzed:
+          type: integer
+        total_flagged:
+          type: integer
+        bias_rate:
+          type: number
+        category_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/BiasCategoryResult'
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              score:
+                type: number
+    BiasMetrics:
+      type: object
+      properties:
+        overall_bias_score:
+          type: number
+        total_analyzed:
+          type: integer
+        total_flagged:
+          type: integer
+        category_scores:
+          type: object
+          additionalProperties:
+            type: number
+        trend:
+          type: string
+          enum: [improving, stable, worsening]
+    BiasCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        examples:
+          type: array
+          items:
+            type: string
+    FlaggedContent:
+      type: object
+      properties:
+        id:
+          type: string
+        content_type:
+          type: string
+          enum: [job_description, resume, email, feedback]
+        content_id:
+          type: string
+        text:
+          type: string
+        category:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [pending, reviewed, resolved, dismissed]
+        flagged_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+    TrainingExample:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        category:
+          type: string
+        is_biased:
+          type: boolean
+        bias_type:
+          type: string
+        notes:
+          type: string
+    BiasSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        sensitivity:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+        auto_flag:
+          type: boolean
+          default: true
+        categories:
+          type: array
+          items:
+            type: string
+        excluded_terms:
+          type: array
+          items:
+            type: string
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        user_id:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

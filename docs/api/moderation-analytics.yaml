@@ -1,0 +1,646 @@
+openapi: 3.1.0
+info:
+  title: Moderation Analytics API
+  version: 1.0.0
+  description: Analytics and insights for content moderation operations.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Moderation Analytics
+    description: Moderation metrics and analytics
+paths:
+  /moderation-analytics/dashboard:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get moderation dashboard
+      description: Get an overview of key moderation metrics.
+      operationId: getDashboard
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationDashboard'
+  /moderation-analytics/volume:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get moderation volume metrics
+      operationId: getVolume
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Volume metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolumeMetrics'
+  /moderation-analytics/performance:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get moderator performance metrics
+      operationId: getPerformance
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: moderator_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModeratorPerformance'
+  /moderation-analytics/accuracy:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get moderation accuracy metrics
+      operationId: getAccuracy
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Accuracy metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccuracyMetrics'
+  /moderation-analytics/categories:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get category breakdown
+      operationId: getCategories
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CategoryMetrics'
+  /moderation-analytics/trends:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get moderation trends
+      operationId: getTrends
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [volume, accuracy, response_time, appeals]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Trends
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trends:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        value:
+                          type: number
+  /moderation-analytics/queue-health:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get queue health metrics
+      operationId: getQueueHealth
+      parameters:
+        - name: queue_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueHealth'
+  /moderation-analytics/appeals:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get appeal metrics
+      operationId: getAppeals
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Appeal metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppealMetrics'
+  /moderation-analytics/sla:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get SLA metrics
+      operationId: getSLA
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: SLA metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAMetrics'
+  /moderation-analytics/reports:
+    post:
+      tags: [Moderation Analytics]
+      summary: Generate moderation report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_date, end_date]
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                metrics:
+                  type: array
+                  items:
+                    type: string
+                format:
+                  type: string
+                  enum: [json, csv, pdf]
+                  default: json
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /moderation-analytics/export:
+    post:
+      tags: [Moderation Analytics]
+      summary: Export analytics data
+      operationId: exportData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metrics, format]
+              properties:
+                metrics:
+                  type: array
+                  items:
+                    type: string
+                format:
+                  type: string
+                  enum: [csv, xlsx, json]
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Export
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /moderation-analytics/alerts:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get analytics alerts
+      operationId: getAlerts
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, resolved, all]
+            default: active
+      responses:
+        '200':
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AnalyticsAlert'
+    post:
+      tags: [Moderation Analytics]
+      summary: Create analytics alert
+      operationId: createAlert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsAlert'
+      responses:
+        '201':
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsAlert'
+  /moderation-analytics/benchmarks:
+    get:
+      tags: [Moderation Analytics]
+      summary: Get industry benchmarks
+      operationId: getBenchmarks
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Benchmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  benchmarks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Benchmark'
+  /moderation-analytics/forecasting:
+    post:
+      tags: [Moderation Analytics]
+      summary: Get moderation forecast
+      description: Get AI-powered forecast for moderation volume and staffing needs.
+      operationId: getForecast
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [horizon_days]
+              properties:
+                horizon_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 90
+                queue_id:
+                  type: string
+      responses:
+        '200':
+          description: Forecast
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationForecast'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    ModerationDashboard:
+      type: object
+      properties:
+        total_items:
+          type: integer
+        pending_items:
+          type: integer
+        reviewed_items:
+          type: integer
+        approved_items:
+          type: integer
+        rejected_items:
+          type: integer
+        escalated_items:
+          type: integer
+        average_review_time_minutes:
+          type: number
+        accuracy_rate:
+          type: number
+        active_moderators:
+          type: integer
+        queue_backlog:
+          type: integer
+    VolumeMetrics:
+      type: object
+      properties:
+        total_submitted:
+          type: integer
+        total_reviewed:
+          type: integer
+        by_period:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              submitted:
+                type: integer
+              reviewed:
+                type: integer
+    ModeratorPerformance:
+      type: object
+      properties:
+        moderators:
+          type: array
+          items:
+            type: object
+            properties:
+              moderator_id:
+                type: string
+              items_reviewed:
+                type: integer
+              accuracy_rate:
+                type: number
+              average_review_time_seconds:
+                type: number
+              appeals_received:
+                type: integer
+              appeals_upheld:
+                type: integer
+    AccuracyMetrics:
+      type: object
+      properties:
+        overall_accuracy:
+          type: number
+        false_positive_rate:
+          type: number
+        false_negative_rate:
+          type: number
+        by_category:
+          type: object
+          additionalProperties:
+            type: number
+        by_moderator:
+          type: object
+          additionalProperties:
+            type: number
+    CategoryMetrics:
+      type: object
+      properties:
+        category:
+          type: string
+        total_items:
+          type: integer
+        approved:
+          type: integer
+        rejected:
+          type: integer
+        escalated:
+          type: integer
+        average_review_time_seconds:
+          type: number
+    QueueHealth:
+      type: object
+      properties:
+        queue_id:
+          type: string
+        total_items:
+          type: integer
+        pending:
+          type: integer
+        in_review:
+          type: integer
+        oldest_item_age_hours:
+          type: number
+        average_wait_time_hours:
+          type: number
+        moderator_count:
+          type: integer
+        health_status:
+          type: string
+          enum: [healthy, warning, critical]
+    AppealMetrics:
+      type: object
+      properties:
+        total_appeals:
+          type: integer
+        upheld:
+          type: integer
+        overturned:
+          type: integer
+        pending:
+          type: integer
+        average_resolution_time_hours:
+          type: number
+        overturn_rate:
+          type: number
+    SLAMetrics:
+      type: object
+      properties:
+        response_sla_compliance:
+          type: number
+        resolution_sla_compliance:
+          type: number
+        average_response_time_minutes:
+          type: number
+        average_resolution_time_hours:
+          type: number
+        breaches:
+          type: integer
+    ModerationReport:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        summary:
+          type: object
+        metrics:
+          type: array
+          items:
+            type: object
+    AnalyticsAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        metric:
+          type: string
+        condition:
+          type: string
+        threshold:
+          type: number
+        status:
+          type: string
+          enum: [active, resolved]
+        triggered_at:
+          type: string
+          format: date-time
+    Benchmark:
+      type: object
+      properties:
+        metric:
+          type: string
+        p25:
+          type: number
+        p50:
+          type: number
+        p75:
+          type: number
+        p90:
+          type: number
+    ModerationForecast:
+      type: object
+      properties:
+        horizon_days:
+          type: integer
+        predictions:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              predicted_volume:
+                type: integer
+              confidence_interval:
+                type: object
+                properties:
+                  lower:
+                    type: integer
+                  upper:
+                    type: integer
+        recommended_moderators:
+          type: integer
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

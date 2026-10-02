@@ -1,0 +1,665 @@
+openapi: 3.1.0
+info:
+  title: Content Moderation Pipeline API
+  version: 1.0.0
+  description: Moderate user-generated content through automated and manual review pipelines.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Content Moderation
+    description: Moderate user-generated content
+paths:
+  /moderation/submit:
+    post:
+      tags: [Content Moderation]
+      summary: Submit content for moderation
+      description: Submit user-generated content for automated and manual review.
+      operationId: submitContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentSubmission'
+      responses:
+        '201':
+          description: Content submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /moderation/results/{contentId}:
+    get:
+      tags: [Content Moderation]
+      summary: Get moderation result
+      operationId: getResult
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Moderation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/batch:
+    post:
+      tags: [Content Moderation]
+      summary: Batch moderate content
+      description: Submit multiple content items for moderation in a single request.
+      operationId: batchModerate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ContentSubmission'
+                  maxItems: 100
+      responses:
+        '200':
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationResult'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /moderation/queue:
+    get:
+      tags: [Content Moderation]
+      summary: Get moderation queue
+      description: Get content items pending manual review.
+      operationId: getQueue
+      parameters:
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Moderation queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QueueItem'
+  /moderation/queue/{itemId}/review:
+    post:
+      tags: [Content Moderation]
+      summary: Review queued content
+      description: Approve or reject content in the moderation queue.
+      operationId: reviewContent
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject, escalate]
+                reason:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Review completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/policies:
+    get:
+      tags: [Content Moderation]
+      summary: Get moderation policies
+      operationId: getPolicies
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationPolicy'
+    post:
+      tags: [Content Moderation]
+      summary: Create moderation policy
+      operationId: createPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationPolicy'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationPolicy'
+  /moderation/policies/{policyId}:
+    get:
+      tags: [Content Moderation]
+      summary: Get policy by ID
+      operationId: getPolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Content Moderation]
+      summary: Update policy
+      operationId: updatePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationPolicy'
+      responses:
+        '200':
+          description: Updated policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationPolicy'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content Moderation]
+      summary: Delete policy
+      operationId: deletePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/categories:
+    get:
+      tags: [Content Moderation]
+      summary: Get moderation categories
+      operationId: getCategories
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationCategory'
+  /moderation/analytics:
+    get:
+      tags: [Content Moderation]
+      summary: Get moderation analytics
+      operationId: getAnalytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationAnalytics'
+  /moderation/appeals:
+    post:
+      tags: [Content Moderation]
+      summary: Submit appeal
+      description: Appeal a moderation decision.
+      operationId: submitAppeal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id, reason]
+              properties:
+                content_id:
+                  type: string
+                reason:
+                  type: string
+                additional_info:
+                  type: string
+      responses:
+        '201':
+          description: Appeal submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appeal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /moderation/appeals/{appealId}:
+    get:
+      tags: [Content Moderation]
+      summary: Get appeal by ID
+      operationId: getAppeal
+      parameters:
+        - name: appealId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appeal details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appeal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/appeals/{appealId}/resolve:
+    post:
+      tags: [Content Moderation]
+      summary: Resolve appeal
+      operationId: resolveAppeal
+      parameters:
+        - name: appealId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [uphold, overturn]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Appeal resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appeal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/auto-moderation:
+    get:
+      tags: [Content Moderation]
+      summary: Get auto-moderation settings
+      operationId: getAutoModeration
+      responses:
+        '200':
+          description: Auto-moderation settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoModerationSettings'
+    put:
+      tags: [Content Moderation]
+      summary: Update auto-moderation settings
+      operationId: updateAutoModeration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutoModerationSettings'
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoModerationSettings'
+  /moderation/reports:
+    post:
+      tags: [Content Moderation]
+      summary: Generate moderation report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_date, end_date]
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                format:
+                  type: string
+                  enum: [json, csv, pdf]
+                  default: json
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    ContentSubmission:
+      type: object
+      required: [content_type, content, author_id]
+      properties:
+        content_type:
+          type: string
+          enum: [text, image, video, audio, link]
+        content:
+          type: string
+        author_id:
+          type: string
+        metadata:
+          type: object
+        context:
+          type: string
+    ModerationResult:
+      type: object
+      properties:
+        content_id:
+          type: string
+        status:
+          type: string
+          enum: [approved, rejected, pending_review, escalated]
+        confidence:
+          type: number
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryResult'
+        flags:
+          type: array
+          items:
+            type: string
+        reviewed_at:
+          type: string
+          format: date-time
+        reviewed_by:
+          type: string
+    CategoryResult:
+      type: object
+      properties:
+        category:
+          type: string
+        score:
+          type: number
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+    QueueItem:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        content_type:
+          type: string
+        content:
+          type: string
+        author_id:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        category:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        auto_moderation_result:
+          $ref: '#/components/schemas/ModerationResult'
+    ModerationPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            type: object
+            properties:
+              condition:
+                type: string
+              action:
+                type: string
+              severity:
+                type: string
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ModerationCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        severity_levels:
+          type: array
+          items:
+            type: string
+    ModerationAnalytics:
+      type: object
+      properties:
+        total_submitted:
+          type: integer
+        total_approved:
+          type: integer
+        total_rejected:
+          type: integer
+        total_pending:
+          type: integer
+        approval_rate:
+          type: number
+        average_review_time_seconds:
+          type: number
+        by_category:
+          type: object
+          additionalProperties:
+            type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+    Appeal:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        reason:
+          type: string
+        additional_info:
+          type: string
+        status:
+          type: string
+          enum: [pending, upheld, overturned]
+        submitted_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        resolution_notes:
+          type: string
+    AutoModerationSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        auto_approve_threshold:
+          type: number
+        auto_reject_threshold:
+          type: number
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              enabled:
+                type: boolean
+              threshold:
+                type: number
+    ModerationReport:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        summary:
+          type: object
+        details:
+          type: array
+          items:
+            type: object
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

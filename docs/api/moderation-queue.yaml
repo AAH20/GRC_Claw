@@ -1,0 +1,699 @@
+openapi: 3.1.0
+info:
+  title: Moderation Queue API
+  version: 1.0.0
+  description: Manage and process moderation queues for content review.
+servers:
+  - url: https://api.grcclaw.com/v1
+tags:
+  - name: Moderation Queue
+    description: Manage moderation queues
+paths:
+  /moderation/queues:
+    post:
+      tags: [Moderation Queue]
+      summary: Create moderation queue
+      operationId: createQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationQueue'
+      responses:
+        '201':
+          description: Queue created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationQueue'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Moderation Queue]
+      summary: List moderation queues
+      operationId: listQueues
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, archived]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Queues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationQueue'
+  /moderation/queues/{queueId}:
+    get:
+      tags: [Moderation Queue]
+      summary: Get queue by ID
+      operationId: getQueue
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationQueue'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Moderation Queue]
+      summary: Update queue
+      operationId: updateQueue
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationQueue'
+      responses:
+        '200':
+          description: Updated queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationQueue'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Moderation Queue]
+      summary: Delete queue
+      operationId: deleteQueue
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Queue deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/items:
+    get:
+      tags: [Moderation Queue]
+      summary: Get queue items
+      operationId: getQueueItems
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_review, approved, rejected, escalated]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Queue items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QueueItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Moderation Queue]
+      summary: Add item to queue
+      operationId: addItem
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueItem'
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/items/{itemId}:
+    get:
+      tags: [Moderation Queue]
+      summary: Get queue item by ID
+      operationId: getQueueItem
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Moderation Queue]
+      summary: Update queue item
+      operationId: updateQueueItem
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueItem'
+      responses:
+        '200':
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Moderation Queue]
+      summary: Remove item from queue
+      operationId: removeQueueItem
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Item removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/items/{itemId}/assign:
+    post:
+      tags: [Moderation Queue]
+      summary: Assign item to moderator
+      operationId: assignItem
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [moderator_id]
+              properties:
+                moderator_id:
+                  type: string
+                priority:
+                  type: string
+                  enum: [low, medium, high, critical]
+                due_at:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Item assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/items/{itemId}/review:
+    post:
+      tags: [Moderation Queue]
+      summary: Review queue item
+      operationId: reviewQueueItem
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject, escalate, request_info]
+                reason:
+                  type: string
+                notes:
+                  type: string
+                confidence:
+                  type: number
+      responses:
+        '200':
+          description: Review completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/stats:
+    get:
+      tags: [Moderation Queue]
+      summary: Get queue statistics
+      operationId: getQueueStats
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/assign:
+    post:
+      tags: [Moderation Queue]
+      summary: Auto-assign items
+      description: Automatically assign pending items to available moderators.
+      operationId: autoAssign
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                strategy:
+                  type: string
+                  enum: [round_robin, least_loaded, skill_based, priority]
+                  default: round_robin
+                max_items:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          description: Assignment result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assigned:
+                    type: integer
+                  failed:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/escalate:
+    post:
+      tags: [Moderation Queue]
+      summary: Escalate items
+      description: Escalate items that have been pending too long.
+      operationId: escalateItems
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                max_age_hours:
+                  type: integer
+                  default: 24
+                target_queue_id:
+                  type: string
+      responses:
+        '200':
+          description: Escalation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escalated:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/export:
+    get:
+      tags: [Moderation Queue]
+      summary: Export queue data
+      operationId: exportQueue
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json, xlsx]
+            default: json
+      responses:
+        '200':
+          description: Export
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/moderators:
+    get:
+      tags: [Moderation Queue]
+      summary: Get queue moderators
+      operationId: getModerators
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Moderators
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  moderators:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Moderator'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Moderation Queue]
+      summary: Add moderator to queue
+      operationId: addModerator
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [moderator_id]
+              properties:
+                moderator_id:
+                  type: string
+                role:
+                  type: string
+                  enum: [reviewer, senior, lead]
+                  default: reviewer
+                max_items:
+                  type: integer
+      responses:
+        '201':
+          description: Moderator added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Moderator'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /moderation/queues/{queueId}/moderators/{moderatorId}:
+    delete:
+      tags: [Moderation Queue]
+      summary: Remove moderator from queue
+      operationId: removeModerator
+      parameters:
+        - name: queueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: moderatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Moderator removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    ModerationQueue:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        content_types:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, paused, archived]
+        auto_assign:
+          type: boolean
+        escalation_threshold_hours:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    QueueItem:
+      type: object
+      properties:
+        id:
+          type: string
+        queue_id:
+          type: string
+        content_id:
+          type: string
+        content_type:
+          type: string
+        content:
+          type: string
+        author_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_review, approved, rejected, escalated]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        assigned_to:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+        auto_score:
+          type: number
+    ReviewResult:
+      type: object
+      properties:
+        item_id:
+          type: string
+        action:
+          type: string
+        status:
+          type: string
+        reviewed_by:
+          type: string
+        reviewed_at:
+          type: string
+          format: date-time
+    QueueStats:
+      type: object
+      properties:
+        total_items:
+          type: integer
+        pending:
+          type: integer
+        in_review:
+          type: integer
+        approved:
+          type: integer
+        rejected:
+          type: integer
+        escalated:
+          type: integer
+        average_review_time_minutes:
+          type: number
+        oldest_pending_hours:
+          type: number
+    Moderator:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [reviewer, senior, lead]
+        active_items:
+          type: integer
+        completed_items:
+          type: integer
+        average_review_time_minutes:
+          type: number
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

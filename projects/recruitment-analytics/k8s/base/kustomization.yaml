@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  - hpa.yaml
+
+commonLabels:
+  app: recruitment-analytics
+  managed-by: kustomize
+
+images:
+  - name: recruitment-analytics
+    newTag: latest

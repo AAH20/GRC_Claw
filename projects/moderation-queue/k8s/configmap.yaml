@@ -1,0 +1,17 @@
+# Kubernetes ConfigMap for Moderation Queue
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: moderation-queue-config
+  namespace: moderation-queue
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  AUTO_MODERATION_ENABLED: "true"
+  AUTO_MODERATION_THRESHOLD: "0.7"
+  ESCALATION_THRESHOLD: "0.9"
+  MAX_QUEUE_SIZE: "1000"
+  REVIEW_TIMEOUT_SECONDS: "3600"
+  METRICS_ENABLED: "true"
+  LANGCHAIN_MODEL: "gpt-4o-mini"
+  LANGCHAIN_TEMPERATURE: "0.1"
