@@ -222,8 +222,8 @@ class TestDataCollectionAgent:
         assert agent is not None
 
     @pytest.mark.asyncio
-    async def test_collect_from_platform(self, agent: DataCollectionAgent) -> None:
-        result = await agent.collect_from_platform(Platform.SHOPIFY)
+    async def test_collect_all(self, agent: DataCollectionAgent) -> None:
+        result = await agent.collect_all()
         assert hasattr(result, "products")
         assert hasattr(result, "behaviors")
         assert hasattr(result, "orders")

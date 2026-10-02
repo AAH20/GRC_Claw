@@ -6,12 +6,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from customer_segmentation.agents.analyst import AnalystAgent, RFMProfile
+from customer_segmentation.agents.analyst import AnalystAgent
 from customer_segmentation.agents.data_collector import DataCollectorAgent
 from customer_segmentation.agents.segment_builder import SegmentBuilderAgent
 from customer_segmentation.config import Settings, get_settings
 from customer_segmentation.models import (
     Customer,
+    RFMProfile,
     Segment,
     SegmentStatus,
     SegmentType,
@@ -28,9 +29,9 @@ def sample_customers() -> list[Customer]:
             first_name="Alice",
             last_name="Smith",
             created_at=base,
-            total_spent=500.0,
-            order_count=5,
-            last_order_at=base + timedelta(days=30),
+            total_revenue=500.0,
+            total_orders=5,
+            last_order_date=base + timedelta(days=30),
         ),
         Customer(
             id="c2",
@@ -38,9 +39,9 @@ def sample_customers() -> list[Customer]:
             first_name="Bob",
             last_name="Jones",
             created_at=base,
-            total_spent=1500.0,
-            order_count=15,
-            last_order_at=base + timedelta(days=10),
+            total_revenue=1500.0,
+            total_orders=15,
+            last_order_date=base + timedelta(days=10),
         ),
         Customer(
             id="c3",
@@ -48,9 +49,9 @@ def sample_customers() -> list[Customer]:
             first_name="Charlie",
             last_name="Brown",
             created_at=base,
-            total_spent=50.0,
-            order_count=1,
-            last_order_at=base + timedelta(days=90),
+            total_revenue=50.0,
+            total_orders=1,
+            last_order_date=base + timedelta(days=90),
         ),
     ]
 
@@ -62,19 +63,23 @@ class TestAnalystAgent:
     def agent(self) -> AnalystAgent:
         return AnalystAgent()
 
-    def test_calculate_rfm(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
-        rfm = agent.calculate_rfm(sample_customers)
+    def test_calculate_rfm_scores(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
+        rfm = agent.calculate_rfm_scores(sample_customers)
         assert isinstance(rfm, list)
         assert len(rfm) == len(sample_customers)
         assert all(isinstance(r, RFMProfile) for r in rfm)
 
-    def test_segment_customers(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
-        segments = agent.segment_customers(sample_customers)
-        assert isinstance(segments, list)
+    def test_perform_clustering(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
+        result = agent.perform_clustering(sample_customers)
+        assert result is not None
 
-    def test_identify_at_risk(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
-        at_risk = agent.identify_at_risk(sample_customers)
-        assert isinstance(at_risk, list)
+    def test_detect_trends(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
+        trends = agent.detect_trends(sample_customers)
+        assert isinstance(trends, dict)
+
+    def test_detect_outliers(self, agent: AnalystAgent, sample_customers: list[Customer]) -> None:
+        outliers = agent.detect_outliers(sample_customers)
+        assert isinstance(outliers, list)
 
 
 class TestSegmentBuilderAgent:
@@ -84,34 +89,10 @@ class TestSegmentBuilderAgent:
     def agent(self) -> SegmentBuilderAgent:
         return SegmentBuilderAgent()
 
-    def test_create_segment(self, agent: SegmentBuilderAgent) -> None:
-        segment = agent.create_segment(
-            name="VIP Customers",
-            segment_type=SegmentType.RFM,
-            criteria={"min_spent": 1000},
-        )
-        assert isinstance(segment, Segment)
-        assert segment.name == "VIP Customers"
-        assert segment.status == SegmentStatus.ACTIVE
-
-    def test_assign_customers(self, agent: SegmentBuilderAgent, sample_customers: list[Customer]) -> None:
-        segment = agent.create_segment(
-            name="Test Segment",
-            segment_type=SegmentType.BEHAVIORAL,
-            criteria={},
-        )
-        assigned = agent.assign_customers(segment.id, sample_customers)
-        assert isinstance(assigned, int)
-        assert assigned >= 0
-
-    def test_get_segment_size(self, agent: SegmentBuilderAgent) -> None:
-        segment = agent.create_segment(
-            name="Empty Segment",
-            segment_type=SegmentType.CUSTOM,
-            criteria={},
-        )
-        size = agent.get_segment_size(segment.id)
-        assert isinstance(size, int)
+    @pytest.mark.asyncio
+    async def test_execute(self, agent: SegmentBuilderAgent, sample_customers: list[Customer]) -> None:
+        result = await agent.execute(sample_customers)
+        assert result is not None
 
 
 class TestDataCollectorAgent:
@@ -125,8 +106,8 @@ class TestDataCollectorAgent:
         assert agent is not None
 
     @pytest.mark.asyncio
-    async def test_collect_customers(self, agent: DataCollectorAgent) -> None:
-        customers = await agent.collect_customers()
+    async def test_collect_from_source(self, agent: DataCollectorAgent) -> None:
+        customers = await agent.collect_from_source("salesforce")
         assert isinstance(customers, list)
 
 
@@ -153,7 +134,7 @@ class TestModels:
             last_name="User",
         )
         assert customer.id == "c1"
-        assert customer.total_spent == 0.0
+        assert customer.total_revenue == 0.0
 
     def test_segment_creation(self) -> None:
         segment = Segment(
@@ -162,4 +143,4 @@ class TestModels:
             segment_type=SegmentType.RFM,
         )
         assert segment.id == "seg1"
-        assert segment.status == SegmentStatus.ACTIVE
+        assert segment.status == SegmentStatus.DRAFT

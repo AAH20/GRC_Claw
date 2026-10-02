@@ -1,6 +1,7 @@
 """Core utilities and shared components."""
 
 from sales_forecaster.core.cache import SimpleCache, cached, get_redis_client
+from sales_forecaster.core.settings import Settings, get_settings, setup_logging
 from sales_forecaster.core.exceptions import (
     AnalysisError,
     AuthenticationError,
@@ -78,4 +79,7 @@ __all__ = [
     "record_pipeline_start",
     "track_forecast_request",
     "track_pipeline_stage",
+    "Settings",
+    "get_settings",
+    "setup_logging",
 ]

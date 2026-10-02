@@ -16,8 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Python dependencies
 COPY pyproject.toml README.md ./
 COPY src ./src
-COPY core/ ./core/
-RUN pip install --upgrade pip && pip install ./core && pip install .
+RUN pip install --upgrade pip && pip install .
 
 # Production stage
 FROM base AS production

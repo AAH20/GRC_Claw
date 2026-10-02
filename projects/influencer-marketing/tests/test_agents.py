@@ -1,7 +1,10 @@
 """Tests for influencer marketing agent implementations."""
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
+
+os.environ["OPENAI_API_KEY"] = "test-key-for-unit-tests"
 
 import pytest
 

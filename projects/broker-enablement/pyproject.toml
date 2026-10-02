@@ -23,6 +23,7 @@ dependencies = [
     "langgraph>=0.1.0",
     "python-dotenv>=1.0.1",
     "tenacity>=8.3.0",
+    "grc-marketing-core>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +39,9 @@ dev = [
 
 [project.scripts]
 broker-enablement = "broker_enablement.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/broker_enablement"]
 
 [tool.ruff]
 line-length = 100

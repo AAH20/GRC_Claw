@@ -119,7 +119,7 @@ class PredictiveAnalyticsAgent:
         confidence_intervals: list[tuple[float, float]] = []
         current_sequence = last_sequence.copy()
         for _ in range(self.forecast_horizon_days):
-            seq_flat = current_sequence.flatten().reshape(1, -1)
+            seq_flat = current_sequence[-1].reshape(1, -1)
             seq_scaled = scaler.transform(seq_flat)
             pred = float(model.predict(seq_scaled)[0])
             forecast_values.append(max(0, pred))

@@ -10,9 +10,6 @@ import structlog
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from customer_segmentation.config import get_settings
-from customer_segmentation.integrations.google_analytics import GoogleAnalyticsIntegration
-from customer_segmentation.integrations.hubspot import HubSpotIntegration
-from customer_segmentation.integrations.salesforce import SalesforceIntegration
 from customer_segmentation.models import Customer
 
 logger = structlog.get_logger(__name__)

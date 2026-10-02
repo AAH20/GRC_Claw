@@ -10,13 +10,14 @@ from typing import TYPE_CHECKING, Any
 import structlog
 from pydantic import BaseModel, Field
 
+from product_recommendations.agents.data_collection import (
+    CustomerBehavior,
+    Order,
+    Product,
+)
+
 if TYPE_CHECKING:
     from product_recommendations.agents.analysis import AnalysisResult
-    from product_recommendations.agents.data_collection import (
-        CustomerBehavior,
-        Order,
-        Product,
-    )
 
 logger = structlog.get_logger(__name__)
 

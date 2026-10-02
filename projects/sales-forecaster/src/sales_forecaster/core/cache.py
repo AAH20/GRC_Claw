@@ -8,7 +8,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar
 
-from sales_forecaster.core import get_settings
+from sales_forecaster.core.settings import get_settings
 
 F = TypeVar("F", bound=Callable[..., Any])
 
