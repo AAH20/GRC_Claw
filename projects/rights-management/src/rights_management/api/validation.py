@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from rights_management.agents.rights_validator import RightsValidatorAgent
 from rights_management.integrations.storage import InMemoryStorage
@@ -43,8 +40,8 @@ def get_agent(request: Request) -> RightsValidatorAgent:
 @router.post("", response_model=RightsValidation, status_code=201)
 async def validate_rights(
     payload: RightsValidationRequest,
-    storage: InMemoryStorage = Depends(get_storage),
-    agent: RightsValidatorAgent = Depends(get_agent),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
+    agent: RightsValidatorAgent = Depends(get_agent),  # noqa: B008
 ) -> RightsValidation:
     """Validate content usage against its license.
 
@@ -64,7 +61,7 @@ async def validate_rights(
 @router.get("/{validation_id}", response_model=RightsValidation)
 async def get_validation(
     validation_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> RightsValidation:
     """Retrieve a specific validation result.
 
@@ -87,7 +84,7 @@ async def get_validation(
 @router.get("/content/{content_id}", response_model=list[RightsValidation])
 async def list_validations(
     content_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> list[RightsValidation]:
     """List all validation results for a piece of content.
 

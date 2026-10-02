@@ -1,12 +1,14 @@
 """Revenue Tracker Agent using LangChain DeepAgents."""
 
+from datetime import datetime
 from typing import Any
+
 import structlog
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.tools import tool
 
 from creator_analytics.agents.base import BaseCreatorAgent
-from creator_analytics.models.revenue import RevenueReport, RevenueBreakdown, RevenueStream
+from creator_analytics.models.revenue import RevenueBreakdown, RevenueReport, RevenueStream
 
 logger = structlog.get_logger(__name__)
 
@@ -156,7 +158,7 @@ class RevenueTrackerAgent(BaseCreatorAgent):
             logger.info(f"Tracking revenue for creator {creator_id}")
 
             # Analyze revenue streams
-            analyzed_streams = analyze_revenue_streams(stream_data)
+            analyzed_streams = analyze_revenue_streams.invoke({"stream_data": stream_data})
 
             # Build breakdown
             breakdown = []
@@ -175,21 +177,23 @@ class RevenueTrackerAgent(BaseCreatorAgent):
                 ))
 
             # Calculate metrics
-            rev_per_follower = calculate_revenue_per_follower(total_revenue, total_followers)
+            rev_per_follower = calculate_revenue_per_follower.invoke({"total_revenue": total_revenue, "total_followers": total_followers})
             monthly_recurring = sum(
-                s.amount for s in breakdown if s.stream in [RevenueStream.SUBSCRIPTIONS, RevenueStream.MEMBERSHIPS]
+                s.amount
+                for s in breakdown
+                if s.stream in [RevenueStream.SUBSCRIPTIONS]
             )
             one_time = total_revenue - monthly_recurring
 
             # Project annual revenue
             avg_growth = sum(s.growth_rate for s in breakdown) / len(breakdown) if breakdown else 0
-            projected_annual = project_annual_revenue(total_revenue, avg_growth)
+            projected_annual = project_annual_revenue.invoke({"monthly_revenue": total_revenue, "growth_rate": avg_growth})
 
             # Identify opportunities
             current_streams = [s.get("stream", "") for s in stream_data]
-            opportunities = identify_revenue_opportunities(
-                current_streams, total_followers, engagement_rate
-            )
+            opportunities = identify_revenue_opportunities.invoke({
+                "current_streams": current_streams, "audience_size": total_followers, "engagement_rate": engagement_rate
+            })
 
             # Use DeepAgent for deeper analysis
             if self._agent:
@@ -200,16 +204,22 @@ class RevenueTrackerAgent(BaseCreatorAgent):
                     f"Opportunities: {opportunities}. "
                     f"Provide insights and recommendations."
                 )
-                insights = agent_result.get("insights", []) if isinstance(agent_result, dict) else []
-                recommendations = agent_result.get("recommendations", []) if isinstance(agent_result, dict) else []
+                insights = (
+                    agent_result.get("insights", []) if isinstance(agent_result, dict) else []
+                )
+                recommendations = (
+                    agent_result.get("recommendations", [])
+                    if isinstance(agent_result, dict)
+                    else []
+                )
             else:
                 insights = []
                 recommendations = opportunities
 
             report = RevenueReport(
                 creator_id=creator_id,
-                report_period_start=input_data.get("report_period_start", ""),
-                report_period_end=input_data.get("report_period_end", ""),
+                report_period_start=input_data.get("report_period_start") or datetime.utcnow(),
+                report_period_end=input_data.get("report_period_end") or datetime.utcnow(),
                 total_revenue=total_revenue,
                 currency="USD",
                 breakdown=breakdown,

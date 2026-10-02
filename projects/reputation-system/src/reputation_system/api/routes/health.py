@@ -1,4 +1,5 @@
 """Health check API routes."""
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -24,7 +25,7 @@ class ReadinessResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> HealthResponse:
     """Basic health check endpoint.
 
@@ -39,7 +40,7 @@ async def health_check(
 
 @router.get("/health/ready", response_model=ReadinessResponse)
 async def readiness_check(
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> ReadinessResponse:
     """Readiness check endpoint for Kubernetes.
 

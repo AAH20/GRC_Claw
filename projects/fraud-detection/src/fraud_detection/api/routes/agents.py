@@ -13,7 +13,7 @@ from fraud_detection.agents.risk_scorer import RiskScorerAgent
 from fraud_detection.agents.transaction_monitor import TransactionMonitorAgent
 from fraud_detection.api.dependencies import verify_api_key
 from fraud_detection.config.logging_config import get_logger
-from fraud_detection.models.schemas import AgentStatus, AgentsStatusResponse
+from fraud_detection.models.schemas import AgentsStatusResponse, AgentStatus
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/agents", tags=["agents"])

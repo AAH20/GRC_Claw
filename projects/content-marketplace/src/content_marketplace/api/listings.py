@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -15,15 +14,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+_listing_agent_instance: ListingManagerAgent | None = None
+
+
 def get_listing_agent() -> ListingManagerAgent:
-    """Dependency to get the listing manager agent."""
-    return ListingManagerAgent()
+    """Dependency to get the listing manager agent (singleton)."""
+    global _listing_agent_instance
+    if _listing_agent_instance is None:
+        _listing_agent_instance = ListingManagerAgent()
+    return _listing_agent_instance
 
 
 @router.post("", response_model=Listing, status_code=status.HTTP_201_CREATED)
 async def create_listing(
     data: ListingCreate,
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> Listing:
     """Create a new content listing."""
     try:
@@ -35,7 +40,7 @@ async def create_listing(
 @router.get("/{listing_id}", response_model=Listing)
 async def get_listing(
     listing_id: UUID,
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> Listing:
     """Get a listing by ID."""
     try:
@@ -48,7 +53,7 @@ async def get_listing(
 async def update_listing(
     listing_id: UUID,
     data: ListingUpdate,
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> Listing:
     """Update an existing listing."""
     try:
@@ -60,7 +65,7 @@ async def update_listing(
 @router.delete("/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_listing(
     listing_id: UUID,
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> None:
     """Delete a listing."""
     try:
@@ -71,12 +76,12 @@ async def delete_listing(
 
 @router.get("", response_model=list[Listing])
 async def list_listings(
-    seller_id: Optional[str] = Query(None),
-    status: Optional[ListingStatus] = Query(None),
-    category: Optional[str] = Query(None),
+    seller_id: str | None = Query(None),
+    status: ListingStatus | None = Query(None),
+    category: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> list[Listing]:
     """List listings with optional filters."""
     return await agent.list_listings(
@@ -87,7 +92,7 @@ async def list_listings(
 @router.post("/{listing_id}/categorize")
 async def categorize_listing(
     listing_id: UUID,
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> dict:
     """Auto-categorize a listing using AI."""
     try:
@@ -100,7 +105,7 @@ async def categorize_listing(
 @router.post("/{listing_id}/moderate")
 async def moderate_listing(
     listing_id: UUID,
-    agent: ListingManagerAgent = Depends(get_listing_agent),
+    agent: ListingManagerAgent = Depends(get_listing_agent),  # noqa: B008
 ) -> dict:
     """Moderate a listing using AI."""
     try:

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from langchain_core.language_models import BaseChatModel
@@ -14,7 +14,6 @@ from content_marketplace.models.transaction import (
     Transaction,
     TransactionCreate,
     TransactionStatus,
-    TransactionUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ class TransactionProcessorAgent:
     fraud detection, and transaction lifecycle management.
     """
 
-    def __init__(self, llm: Optional[BaseChatModel] = None) -> None:
+    def __init__(self, llm: BaseChatModel | None = None) -> None:
         """Initialize the TransactionProcessorAgent.
 
         Args:
@@ -134,8 +133,8 @@ class TransactionProcessorAgent:
 
         transaction = self._transactions[transaction_id]
         transaction.status = TransactionStatus.COMPLETED
-        transaction.completed_at = datetime.utcnow()
-        transaction.updated_at = datetime.utcnow()
+        transaction.completed_at = datetime.now(tz=UTC)
+        transaction.updated_at = datetime.now(tz=UTC)
         logger.info("Completed transaction %s", transaction_id)
         return transaction
 
@@ -157,7 +156,7 @@ class TransactionProcessorAgent:
 
         transaction = self._transactions[transaction_id]
         transaction.status = TransactionStatus.REFUNDED
-        transaction.updated_at = datetime.utcnow()
+        transaction.updated_at = datetime.now(tz=UTC)
         transaction.metadata["refund_reason"] = reason
         logger.info("Refunded transaction %s: %s", transaction_id, reason)
         return transaction
@@ -180,9 +179,9 @@ class TransactionProcessorAgent:
 
     async def list_transactions(
         self,
-        buyer_id: Optional[str] = None,
-        seller_id: Optional[str] = None,
-        status: Optional[TransactionStatus] = None,
+        buyer_id: str | None = None,
+        seller_id: str | None = None,
+        status: TransactionStatus | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[Transaction]:

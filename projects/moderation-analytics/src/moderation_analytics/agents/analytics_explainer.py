@@ -7,7 +7,7 @@ from typing import Any
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 
-from moderation_analytics.agents import BaseAgent
+from moderation_analytics.agents.base import BaseAgent
 
 
 class AnalyticsExplainerAgent(BaseAgent[str]):

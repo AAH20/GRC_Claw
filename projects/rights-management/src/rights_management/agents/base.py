@@ -26,11 +26,31 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
 
         Args:
             llm: Optional language model. If not provided, one is
-                created from the application settings.
+                created lazily from the application settings.
         """
         self._settings = get_settings()
-        self._llm = llm or self._create_llm()
-        self._agent = self._build_agent()
+        self._llm = llm
+        self._agent: Any = None
+
+    def _get_llm(self) -> BaseLanguageModel:
+        """Get or create the language model.
+
+        Returns:
+            The language model instance.
+        """
+        if self._llm is None:
+            self._llm = self._create_llm()
+        return self._llm
+
+    def _get_agent(self) -> Any:
+        """Get or create the underlying agent.
+
+        Returns:
+            The configured agent instance.
+        """
+        if self._agent is None:
+            self._agent = self._build_agent()
+        return self._agent
 
     def _create_llm(self) -> BaseLanguageModel:
         """Create a default language model from settings.

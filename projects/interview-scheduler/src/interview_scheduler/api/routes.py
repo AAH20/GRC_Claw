@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -46,7 +46,7 @@ async def list_interviews(
     status_filter: str | None = Query(None, alias="status"),
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> list[Interview]:
     """List interviews.
 
@@ -70,7 +70,7 @@ async def list_interviews(
 )
 async def create_interview(
     data: InterviewCreate,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Interview:
     """Create a new interview.
 
@@ -87,7 +87,7 @@ async def create_interview(
 @router.get("/api/v1/interviews/{interview_id}", response_model=Interview, tags=["interviews"])
 async def get_interview(
     interview_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Interview:
     """Get an interview by ID.
 
@@ -114,7 +114,7 @@ async def get_interview(
 async def update_interview(
     interview_id: str,
     data: InterviewUpdate,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Interview:
     """Update an interview.
 
@@ -145,7 +145,7 @@ async def update_interview(
 )
 async def delete_interview(
     interview_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> None:
     """Delete an interview.
 
@@ -168,7 +168,7 @@ async def delete_interview(
 async def list_schedules(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> list[Schedule]:
     """List schedules.
 
@@ -191,7 +191,7 @@ async def list_schedules(
 )
 async def create_schedule(
     data: ScheduleCreate,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Schedule:
     """Create a new schedule.
 
@@ -208,7 +208,7 @@ async def create_schedule(
 @router.get("/api/v1/schedules/{schedule_id}", response_model=Schedule, tags=["schedules"])
 async def get_schedule(
     schedule_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Schedule:
     """Get a schedule by ID.
 
@@ -235,7 +235,7 @@ async def get_schedule(
 async def update_schedule(
     schedule_id: str,
     data: ScheduleUpdate,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Schedule:
     """Update a schedule.
 
@@ -266,7 +266,7 @@ async def update_schedule(
 )
 async def delete_schedule(
     schedule_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> None:
     """Delete a schedule.
 
@@ -288,7 +288,7 @@ async def delete_schedule(
 @router.post("/api/v1/timeslots/find", response_model=TimeSlotResponse, tags=["timeslots"])
 async def find_time_slots(
     request: TimeSlotRequest,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> TimeSlotResponse:
     """Find available time slots.
 
@@ -309,7 +309,7 @@ async def list_conflicts(
     status_filter: str | None = Query(None, alias="status"),
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> list[Conflict]:
     """List conflicts.
 
@@ -336,7 +336,7 @@ async def list_conflicts(
 )
 async def detect_conflicts(
     interview_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> list[Conflict]:
     """Detect conflicts for an interview.
 
@@ -378,7 +378,7 @@ async def detect_conflicts(
 async def resolve_conflict(
     conflict_id: str,
     data: ConflictResolution,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Conflict:
     """Resolve a conflict.
 
@@ -409,7 +409,7 @@ async def list_reminders(
     status_filter: str | None = Query(None, alias="status"),
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> list[Reminder]:
     """List reminders.
 
@@ -436,7 +436,7 @@ async def list_reminders(
 )
 async def create_reminder(
     data: ReminderCreate,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Reminder:
     """Create a reminder.
 
@@ -453,7 +453,7 @@ async def create_reminder(
 @router.get("/api/v1/reminders/{reminder_id}", response_model=Reminder, tags=["reminders"])
 async def get_reminder(
     reminder_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Reminder:
     """Get a reminder by ID.
 
@@ -480,7 +480,7 @@ async def get_reminder(
 async def update_reminder(
     reminder_id: str,
     data: ReminderUpdate,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> Reminder:
     """Update a reminder.
 
@@ -511,7 +511,7 @@ async def update_reminder(
 )
 async def delete_reminder(
     reminder_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> None:
     """Delete a reminder.
 
@@ -538,7 +538,7 @@ async def delete_reminder(
 )
 async def run_scheduling_pipeline(
     interview_id: str,
-    service: InterviewService = Depends(get_interview_service),
+    service: Annotated[InterviewService, Depends(get_interview_service)] = None,
 ) -> dict[str, Any]:
     """Run the full scheduling pipeline for an interview.
 
@@ -553,11 +553,9 @@ async def run_scheduling_pipeline(
         HTTPException: If interview not found.
     """
     from interview_scheduler.agents.availability_optimizer import AvailabilityOptimizerAgent
-    from interview_scheduler.agents.calendar_sync import CalendarSyncAgent
     from interview_scheduler.agents.conflict_detector import ConflictDetectorAgent
     from interview_scheduler.agents.reminder import ReminderAgent
     from interview_scheduler.agents.timezone_resolver import TimezoneResolverAgent
-    from interview_scheduler.integrations.calendar import MockCalendarProvider
 
     interview = service.get_interview(interview_id)
     if not interview:
@@ -569,7 +567,6 @@ async def run_scheduling_pipeline(
     tz_agent = TimezoneResolverAgent()
     conflict_agent = ConflictDetectorAgent()
     optimizer_agent = AvailabilityOptimizerAgent()
-    calendar_agent = CalendarSyncAgent(MockCalendarProvider())
     reminder_agent = ReminderAgent()
 
     existing = service.get_all_interviews()

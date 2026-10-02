@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
 
 
-class Gender(str, Enum):
+class Gender(StrEnum):
     """Gender categories for demographic analysis."""
 
     MALE = "male"
@@ -24,7 +23,7 @@ class Gender(str, Enum):
     OTHER = "other"
 
 
-class Ethnicity(str, Enum):
+class Ethnicity(StrEnum):
     """Ethnicity categories for demographic analysis."""
 
     ASIAN = "asian"
@@ -38,7 +37,7 @@ class Ethnicity(str, Enum):
     PREFER_NOT_TO_SAY = "prefer_not_to_say"
 
 
-class DecisionOutcome(str, Enum):
+class DecisionOutcome(StrEnum):
     """Possible outcomes of a hiring decision."""
 
     HIRED = "hired"
@@ -48,7 +47,7 @@ class DecisionOutcome(str, Enum):
     WITHDRAWN = "withdrawn"
 
 
-class BiasSeverity(str, Enum):
+class BiasSeverity(StrEnum):
     """Severity levels for detected bias."""
 
     LOW = "low"
@@ -57,7 +56,7 @@ class BiasSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class BiasType(str, Enum):
+class BiasType(StrEnum):
     """Types of bias that can be detected."""
 
     GENDER = "gender"
@@ -71,7 +70,7 @@ class BiasType(str, Enum):
     SYSTEMIC = "systemic"
 
 
-class RecommendationPriority(str, Enum):
+class RecommendationPriority(StrEnum):
     """Priority levels for recommendations."""
 
     LOW = "low"

@@ -1,14 +1,14 @@
 """Pydantic models for reputation system entities."""
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class TrustTierLevel(str, Enum):
+class TrustTierLevel(StrEnum):
     """Trust tier levels."""
 
     BRONZE = "bronze"
@@ -18,7 +18,7 @@ class TrustTierLevel(str, Enum):
     DIAMOND = "diamond"
 
 
-class BadgeCategory(str, Enum):
+class BadgeCategory(StrEnum):
     """Badge categories."""
 
     CONTRIBUTION = "contribution"
@@ -41,10 +41,10 @@ class ReputationScore(BaseModel):
     total_contributions: int = Field(default=0, ge=0)
     positive_feedback: int = Field(default=0, ge=0)
     negative_feedback: int = Field(default=0, ge=0)
-    last_activity_at: Optional[datetime] = None
+    last_activity_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ReputationScoreCreate(BaseModel):
@@ -52,15 +52,15 @@ class ReputationScoreCreate(BaseModel):
 
     member_id: str = Field(..., min_length=1, max_length=255)
     initial_score: int = Field(default=100, ge=0, le=1000)
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class ReputationScoreUpdate(BaseModel):
     """Update reputation score request."""
 
-    score: Optional[int] = Field(None, ge=0, le=1000)
-    trust_tier: Optional[TrustTierLevel] = None
-    metadata: Optional[Dict[str, Any]] = None
+    score: int | None = Field(None, ge=0, le=1000)
+    trust_tier: TrustTierLevel | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class Badge(BaseModel):
@@ -72,8 +72,8 @@ class Badge(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: str = Field(..., max_length=1000)
     category: BadgeCategory = BadgeCategory.CONTRIBUTION
-    icon_url: Optional[str] = None
-    criteria: Dict[str, Any] = Field(default_factory=dict)
+    icon_url: str | None = None
+    criteria: dict[str, Any] = Field(default_factory=dict)
     points: int = Field(default=10, ge=0)
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -86,21 +86,21 @@ class BadgeCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: str = Field(..., max_length=1000)
     category: BadgeCategory = BadgeCategory.CONTRIBUTION
-    icon_url: Optional[str] = None
-    criteria: Optional[Dict[str, Any]] = None
+    icon_url: str | None = None
+    criteria: dict[str, Any] | None = None
     points: int = Field(default=10, ge=0)
 
 
 class BadgeUpdate(BaseModel):
     """Update badge request."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = Field(None, max_length=1000)
-    category: Optional[BadgeCategory] = None
-    icon_url: Optional[str] = None
-    criteria: Optional[Dict[str, Any]] = None
-    points: Optional[int] = Field(None, ge=0)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=1000)
+    category: BadgeCategory | None = None
+    icon_url: str | None = None
+    criteria: dict[str, Any] | None = None
+    points: int | None = Field(None, ge=0)
+    is_active: bool | None = None
 
 
 class TrustTier(BaseModel):
@@ -114,8 +114,8 @@ class TrustTier(BaseModel):
     description: str = Field(..., max_length=1000)
     min_score: int = Field(..., ge=0)
     max_score: int = Field(..., ge=0)
-    benefits: List[str] = Field(default_factory=list)
-    requirements: Dict[str, Any] = Field(default_factory=dict)
+    benefits: list[str] = Field(default_factory=list)
+    requirements: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -128,19 +128,19 @@ class TrustTierCreate(BaseModel):
     description: str = Field(..., max_length=1000)
     min_score: int = Field(..., ge=0)
     max_score: int = Field(..., ge=0)
-    benefits: Optional[List[str]] = None
-    requirements: Optional[Dict[str, Any]] = None
+    benefits: list[str] | None = None
+    requirements: dict[str, Any] | None = None
 
 
 class TrustTierUpdate(BaseModel):
     """Update trust tier request."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = Field(None, max_length=1000)
-    min_score: Optional[int] = Field(None, ge=0)
-    max_score: Optional[int] = Field(None, ge=0)
-    benefits: Optional[List[str]] = None
-    requirements: Optional[Dict[str, Any]] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=1000)
+    min_score: int | None = Field(None, ge=0)
+    max_score: int | None = Field(None, ge=0)
+    benefits: list[str] | None = None
+    requirements: dict[str, Any] | None = None
 
 
 class ReputationHistory(BaseModel):
@@ -154,9 +154,9 @@ class ReputationHistory(BaseModel):
     score_change: int = Field(...)
     previous_score: int = Field(..., ge=0)
     new_score: int = Field(..., ge=0)
-    badge_id: Optional[UUID] = None
-    reason: Optional[str] = Field(None, max_length=1000)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    badge_id: UUID | None = None
+    reason: str | None = Field(None, max_length=1000)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -168,9 +168,9 @@ class ReputationHistoryCreate(BaseModel):
     score_change: int = Field(...)
     previous_score: int = Field(..., ge=0)
     new_score: int = Field(..., ge=0)
-    badge_id: Optional[UUID] = None
-    reason: Optional[str] = Field(None, max_length=1000)
-    metadata: Optional[Dict[str, Any]] = None
+    badge_id: UUID | None = None
+    reason: str | None = Field(None, max_length=1000)
+    metadata: dict[str, Any] | None = None
 
 
 class ReputationExplanation(BaseModel):
@@ -181,8 +181,8 @@ class ReputationExplanation(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     member_id: str = Field(..., min_length=1, max_length=255)
     explanation: str = Field(..., max_length=5000)
-    factors: List[Dict[str, Any]] = Field(default_factory=list)
-    recommendations: List[str] = Field(default_factory=list)
+    factors: list[dict[str, Any]] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -192,8 +192,8 @@ class ReputationExplanationCreate(BaseModel):
 
     member_id: str = Field(..., min_length=1, max_length=255)
     explanation: str = Field(..., max_length=5000)
-    factors: Optional[List[Dict[str, Any]]] = None
-    recommendations: Optional[List[str]] = None
+    factors: list[dict[str, Any]] | None = None
+    recommendations: list[str] | None = None
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
@@ -209,5 +209,5 @@ class ErrorResponse(BaseModel):
     """Error response model."""
 
     error: str
-    detail: Optional[str] = None
-    code: Optional[str] = None
+    detail: str | None = None
+    code: str | None = None

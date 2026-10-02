@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from community_governance.agents import (
+if TYPE_CHECKING:
+    from community_governance.agents import (
     DisputeResolverAgent,
     GovernanceAnalyticsAgent,
     GovernanceExplainerAgent,
     PolicyManagerAgent,
     RuleEnforcerAgent,
 )
+
 from community_governance.integrations import MetricsIntegration
 
 # Global agent instances (initialized in main.py)
@@ -98,6 +100,8 @@ def get_metrics() -> MetricsIntegration:
     Returns:
         The metrics integration instance.
     """
+    global _metrics
+
     if _metrics is None:
         _metrics = MetricsIntegration()
     return _metrics

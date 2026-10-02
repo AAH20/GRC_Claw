@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import structlog
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -47,7 +47,10 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="Escalation Workflow API",
-        description="Agentic AI escalation workflow management with priority routing, SLA tracking, and resolution optimization",
+        description=(
+            "Agentic AI escalation workflow management with priority routing, "
+            "SLA tracking, and resolution optimization"
+        ),
         version=settings.app_version,
         lifespan=lifespan,
         docs_url="/docs",

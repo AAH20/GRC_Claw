@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from creator_monetization.models.schemas import Payout, PayoutCreate, PayoutStatus
+from creator_monetization.models.schemas import PayoutCreate, PayoutStatus
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def _get_payout_or_404(payout_id: str) -> dict[str, Any]:
 
 
 @router.post("", response_model=PayoutResponse, status_code=status.HTTP_201_CREATED)
-async def create_payout(request: PayoutCreateRequest) -> PayoutResponse:
+async def create_payout(request: PayoutCreate) -> PayoutResponse:
     """Create a new payout."""
     payout_id = str(uuid.uuid4())
     now = datetime.now(UTC).isoformat()

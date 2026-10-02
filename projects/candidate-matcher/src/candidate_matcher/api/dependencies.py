@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING
 
-from fastapi import Request
+if TYPE_CHECKING:
+    from fastapi import Request
 
-from candidate_matcher.agents.bias_aware_ranker import BiasAwareRankerAgent
-from candidate_matcher.agents.culture_fit_assessor import CultureFitAssessorAgent
-from candidate_matcher.agents.match_explainer import MatchExplainerAgent
-from candidate_matcher.agents.semantic_matcher import SemanticMatcherAgent
-from candidate_matcher.agents.skills_gap_analyzer import SkillsGapAnalyzerAgent
-from candidate_matcher.integrations.embedding_client import BaseEmbeddingClient
-from candidate_matcher.integrations.llm_client import BaseLLMClient
-from candidate_matcher.integrations.vector_store import BaseVectorStore
+    from candidate_matcher.agents.bias_aware_ranker import BiasAwareRankerAgent
+    from candidate_matcher.agents.culture_fit_assessor import CultureFitAssessorAgent
+    from candidate_matcher.agents.match_explainer import MatchExplainerAgent
+    from candidate_matcher.agents.semantic_matcher import SemanticMatcherAgent
+    from candidate_matcher.agents.skills_gap_analyzer import SkillsGapAnalyzerAgent
+    from candidate_matcher.integrations.embedding_client import BaseEmbeddingClient
+    from candidate_matcher.integrations.llm_client import BaseLLMClient
+    from candidate_matcher.integrations.vector_store import BaseVectorStore
 
 
 async def get_llm_client(request: Request) -> BaseLLMClient:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -49,7 +49,7 @@ def get_agent(request: Request) -> InfringementDetectorAgent:
 @router.post("/report", response_model=InfringementReport, status_code=201)
 async def file_infringement_report(
     payload: InfringementReportCreate,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> InfringementReport:
     """File a new infringement report.
 
@@ -68,7 +68,7 @@ async def file_infringement_report(
         severity=payload.severity,
         status=InfringementStatus.OPEN,
         evidence_urls=payload.evidence_urls,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(tz=UTC),
         metadata=payload.metadata,
     )
     await storage.save_infringement_report(report)
@@ -78,7 +78,7 @@ async def file_infringement_report(
 @router.get("/reports/{content_id}", response_model=list[InfringementReport])
 async def list_infringement_reports(
     content_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> list[InfringementReport]:
     """List infringement reports for a piece of content.
 
@@ -95,7 +95,7 @@ async def list_infringement_reports(
 @router.post("/detect", response_model=InfringementDetectionResult)
 async def detect_infringement(
     payload: InfringementDetectionRequest,
-    agent: InfringementDetectorAgent = Depends(get_agent),
+    agent: InfringementDetectorAgent = Depends(get_agent),  # noqa: B008
 ) -> InfringementDetectionResult:
     """Run automated infringement detection on content.
 
@@ -113,7 +113,7 @@ async def detect_infringement(
 async def update_report_status(
     report_id: str,
     status: InfringementStatus,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> InfringementReport:
     """Update the status of an infringement report.
 
@@ -133,6 +133,6 @@ async def update_report_status(
         raise HTTPException(status_code=404, detail="Report not found")
     report.status = status
     if status == InfringementStatus.RESOLVED:
-        report.resolved_at = datetime.utcnow()
+        report.resolved_at = datetime.now(tz=UTC)
     await storage.save_infringement_report(report)
     return report

@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from resume_parser.agents import (
-    BaseAgent,
     ContactExtractorAgent,
     EducationExtractorAgent,
     ExperienceExtractorAgent,
@@ -13,8 +12,6 @@ from resume_parser.agents import (
     SkillsExtractorAgent,
 )
 from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
-from resume_parser.models import AgentResult
 from resume_parser.tests.conftest import MockLLMClient
 
 

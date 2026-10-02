@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from access_control.agents.permission_evaluator import (
     PermissionEvaluatorAgent,
-    PermissionEvaluatorInput,
 )
-from access_control.agents.policy_enforcer import PolicyEnforcerAgent, PolicyEnforcerInput
+from access_control.agents.policy_enforcer import PolicyEnforcerAgent
 from access_control.config import Settings
-from access_control.models.enums import AccessDecision, PolicyEffect
-from access_control.models.schemas import AccessRequest, AccessResult, Permission, Policy
+from access_control.models.enums import AccessDecision
+from access_control.models.schemas import AccessRequest, Permission, Policy
 
 
 @pytest.fixture
@@ -37,7 +36,7 @@ class TestAccessEvaluation:
     ) -> None:
         """Test evaluating an access request that should be allowed."""
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "allow", "reason": "User has permission", "confidence": 0.95}'
+        mock_response.content = '{"decision": "allow", "reason": "User has permission", "confidence": 0.95}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -62,7 +61,7 @@ class TestAccessEvaluation:
     ) -> None:
         """Test evaluating an access request that should be denied."""
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "deny", "reason": "Insufficient permissions", "confidence": 0.9}'
+        mock_response.content = '{"decision": "deny", "reason": "Insufficient permissions", "confidence": 0.9}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -84,7 +83,7 @@ class TestAccessEvaluation:
     ) -> None:
         """Test evaluating with policy context."""
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "allow", "reason": "Policy allows", "confidence": 0.85, "policy_ids": ["policy-1"]}'
+        mock_response.content = '{"decision": "allow", "reason": "Policy allows", "confidence": 0.85, "policy_ids": ["policy-1"]}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -114,7 +113,7 @@ class TestAccessEvaluation:
     ) -> None:
         """Test policy enforcement."""
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "allow", "enforced_policies": ["policy-1"], "violations": []}'
+        mock_response.content = '{"decision": "allow", "enforced_policies": ["policy-1"], "violations": []}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -143,7 +142,7 @@ class TestAccessEvaluation:
     ) -> None:
         """Test policy enforcement with violations."""
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "deny", "violations": ["Unauthorized access attempt"]}'
+        mock_response.content = '{"decision": "deny", "violations": ["Unauthorized access attempt"]}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -165,7 +164,7 @@ class TestAccessEvaluation:
     ) -> None:
         """Test conditional access decision."""
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "conditional", "reason": "MFA required", "obligations": ["mfa"], "confidence": 0.8}'
+        mock_response.content = '{"decision": "conditional", "reason": "MFA required", "obligations": ["mfa"], "confidence": 0.8}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 

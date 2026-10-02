@@ -8,13 +8,10 @@ from rights_management.integrations.storage import InMemoryStorage
 from rights_management.models import (
     InfringementReport,
     InfringementSeverity,
-    InfringementStatus,
     License,
-    LicenseStatus,
     LicenseType,
     RightsValidation,
     TakedownRequest,
-    TakedownStatus,
     UsageRecord,
     UsageType,
     ValidationStatus,

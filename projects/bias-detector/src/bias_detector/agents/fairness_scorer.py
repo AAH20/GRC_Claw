@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from langchain_deepagents import create_deep_agent
+from deepagents import create_deep_agent
 
 from bias_detector.agents.base import BaseBiasAgent
 from bias_detector.config import get_settings
@@ -53,7 +53,6 @@ class FairnessScorerAgent(BaseBiasAgent[dict[str, Any]]):
         """
         return create_deep_agent(
             name=self.name,
-            description=self.description,
             system_prompt=self._get_system_prompt(),
         )
 
@@ -100,7 +99,9 @@ class FairnessScorerAgent(BaseBiasAgent[dict[str, Any]]):
             overall_score=overall,
             dimensions=dimensions,
             confidence=confidence,
-            methodology="Weighted multi-dimension fairness scoring with entropy-based diversity metrics",
+            methodology=(
+                "Weighted multi-dimension fairness scoring with entropy-based diversity metrics"
+            ),
         )
 
         logger.info("Fairness scoring complete: overall=%.2f, confidence=%.2f", overall, confidence)
@@ -177,7 +178,9 @@ class FairnessScorerAgent(BaseBiasAgent[dict[str, Any]]):
                 group_key = f"{key}:{value}"
                 if group_key not in interview_rates:
                     interview_rates[group_key] = []
-                interview_rates[group_key].append(decision.decision.value in ("interviewed", "hired"))
+                interview_rates[group_key].append(
+                    decision.decision.value in ("interviewed", "hired")
+                )
 
         if len(interview_rates) < 2:
             return FairnessDimension(

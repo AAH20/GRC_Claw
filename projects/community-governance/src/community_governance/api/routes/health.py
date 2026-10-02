@@ -22,7 +22,7 @@ class HealthResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    agents: dict = Depends(get_agents),
+    agents: dict = Depends(get_agents)  # noqa: B008,
 ) -> HealthResponse:
     """Health check endpoint.
 

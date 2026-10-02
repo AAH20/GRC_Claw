@@ -1,0 +1,142 @@
+{
+  "total_projects": 76,
+  "projects_with_gaps": 33,
+  "gaps": {
+    "access-control": [
+      "tests",
+      "config"
+    ],
+    "bias-detector": [
+      "tests",
+      "config"
+    ],
+    "candidate-matcher": [
+      "tests",
+      "config"
+    ],
+    "community-curation": [
+      "config"
+    ],
+    "community-governance": [
+      "config"
+    ],
+    "community-health-scorer": [
+      "Dockerfile",
+      "docker-compose.yml",
+      "tests",
+      "config"
+    ],
+    "compliance-monitor": [
+      "tests",
+      "config"
+    ],
+    "content-discovery": [
+      "tests",
+      "config"
+    ],
+    "content-marketplace": [
+      "README.md",
+      "tests",
+      "config"
+    ],
+    "content-moderation-pipeline": [
+      "tests",
+      "config"
+    ],
+    "creator-analytics": [
+      "tests",
+      "config"
+    ],
+    "cross-domain-orchestrator": [
+      "src",
+      "config"
+    ],
+    "employer-branding": [
+      "tests",
+      "config"
+    ],
+    "escalation-workflow": [
+      "tests",
+      "config"
+    ],
+    "fraud-detection": [
+      "tests",
+      "config"
+    ],
+    "governance-agent": [
+      "Dockerfile",
+      "docker-compose.yml",
+      "src",
+      "tests",
+      "config",
+      "k8s"
+    ],
+    "interview-scheduler": [
+      "config"
+    ],
+    "job-description-optimizer": [
+      "tests",
+      "config"
+    ],
+    "licensing-engine": [
+      "tests",
+      "config"
+    ],
+    "member-verification": [
+      "config"
+    ],
+    "moderation-analytics": [
+      "tests",
+      "config"
+    ],
+    "moderation-queue": [
+      "tests",
+      "config"
+    ],
+    "onboarding-automator": [
+      "tests",
+      "config"
+    ],
+    "quality-scoring": [
+      "config"
+    ],
+    "recruitment-analytics": [
+      "tests",
+      "config"
+    ],
+    "reputation-system": [
+      "tests",
+      "config"
+    ],
+    "resume-parser": [
+      "tests",
+      "config"
+    ],
+    "rights-management": [
+      "tests",
+      "config"
+    ],
+    "skills-assessor": [
+      "tests",
+      "config"
+    ],
+    "talent-pool-manager": [
+      "tests",
+      "config"
+    ],
+    "tier-management": [
+      "config"
+    ],
+    "unified-marketing-platform": [
+      "Dockerfile",
+      "docker-compose.yml",
+      "src",
+      "tests",
+      "config",
+      "k8s"
+    ],
+    "video-marketing": [
+      "docker-compose.yml"
+    ]
+  }
+}

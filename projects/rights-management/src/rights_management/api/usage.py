@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 
 from rights_management.agents.usage_tracker import UsageTrackerAgent
 from rights_management.integrations.storage import InMemoryStorage
@@ -43,8 +40,8 @@ def get_agent(request: Request) -> UsageTrackerAgent:
 @router.post("/record", response_model=UsageRecord, status_code=201)
 async def record_usage(
     payload: UsageRecordCreate,
-    storage: InMemoryStorage = Depends(get_storage),
-    agent: UsageTrackerAgent = Depends(get_agent),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
+    agent: UsageTrackerAgent = Depends(get_agent),  # noqa: B008
 ) -> UsageRecord:
     """Record a content usage event.
 
@@ -64,8 +61,8 @@ async def record_usage(
 @router.get("/summary/{content_id}", response_model=UsageSummary)
 async def get_usage_summary(
     content_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
-    agent: UsageTrackerAgent = Depends(get_agent),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
+    agent: UsageTrackerAgent = Depends(get_agent),  # noqa: B008
 ) -> UsageSummary:
     """Get usage statistics for a piece of content.
 
@@ -84,7 +81,7 @@ async def get_usage_summary(
 @router.get("/records/{content_id}", response_model=list[UsageRecord])
 async def list_usage_records(
     content_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> list[UsageRecord]:
     """List all usage records for a piece of content.
 

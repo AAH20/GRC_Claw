@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from access_control.agents.base import AgentContext, BaseAgent
-from access_control.config import Settings
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
 from access_control.models.enums import AccessDecision, AuditSeverity
 from access_control.models.schemas import AccessAudit, AccessRequest
 
@@ -18,7 +22,9 @@ from access_control.models.schemas import AccessAudit, AccessRequest
 class AccessAuditorInput(BaseModel):
     """Input for the access auditor agent."""
 
-    event_type: str = Field(..., description="Type of event: access_attempt, policy_violation, anomaly")
+    event_type: str = Field(
+        ..., description="Type of event: access_attempt, policy_violation, anomaly"
+    )
     audit_entry: dict[str, Any] = Field(default_factory=dict)
     historical_events: list[dict[str, Any]] = Field(default_factory=list)
     context: dict[str, Any] = Field(default_factory=dict)
@@ -56,7 +62,7 @@ class AccessAuditorAgent(BaseAgent[AccessAuditorInput, AccessAuditorOutput]):
 Analyze the given access event and historical context to detect anomalies and security issues.
 Consider factors like: unusual time patterns, privilege escalation attempts, access from new locations,
 brute force patterns, and policy violations.
-Respond with a JSON object containing: severity, flagged, anomaly_score, findings, recommended_actions."""
+Respond with a JSON object containing: severity, flagged, anomaly_score, findings, recommended_actions."""  # noqa: E501
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
@@ -91,10 +97,7 @@ Respond with a JSON object containing: severity, flagged, anomaly_score, finding
 
         response = await agent.ainvoke(input_data)
 
-        if hasattr(response, "content"):
-            content = response.content
-        else:
-            content = str(response)
+        content = response.content if hasattr(response, "content") else str(response)
 
         try:
             parsed = json.loads(content)

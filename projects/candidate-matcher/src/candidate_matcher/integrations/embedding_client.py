@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
-from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
 from candidate_matcher.config.exceptions import EmbeddingError
 from candidate_matcher.config.logging_config import get_logger
 from candidate_matcher.config.settings import Settings, get_settings
+
+if TYPE_CHECKING:
+    from langchain_core.embeddings import Embeddings
 
 logger = get_logger(__name__)
 
@@ -47,7 +49,7 @@ class BaseEmbeddingClient(ABC):
 class LangChainEmbeddingClient(BaseEmbeddingClient):
     """Embedding client backed by LangChain embeddings."""
 
-    def __init__(self, settings: Optional[Settings] = None) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
         """Initialize the embedding client.
 
         Args:
@@ -168,7 +170,7 @@ class MockEmbeddingClient(BaseEmbeddingClient):
         return self._generate_deterministic_embedding(text)
 
 
-def create_embedding_client(settings: Optional[Settings] = None) -> BaseEmbeddingClient:
+def create_embedding_client(settings: Settings | None = None) -> BaseEmbeddingClient:
     """Factory function to create an embedding client.
 
     Args:

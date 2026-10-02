@@ -1,6 +1,6 @@
 """OpenAI API client integration."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -25,7 +25,7 @@ class OpenAIClient:
         self.api_key = settings.openai_api_key
         self.model = settings.openai_model
         self.base_url = "https://api.openai.com/v1"
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create the HTTP client.
@@ -50,10 +50,10 @@ class OpenAIClient:
     )
     async def chat_completion(
         self,
-        messages: List[Dict[str, str]],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        messages: list[dict[str, str]],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> dict[str, Any]:
         """Send a chat completion request to OpenAI.
 
         Args:

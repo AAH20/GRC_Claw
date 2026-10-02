@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import logging
-from typing import Any, Optional
-
-import httpx
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +15,7 @@ class CacheService:
         self.redis_url = redis_url
         self._data: dict[str, Any] = {}
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get a value from cache."""
         return self._data.get(key)
 

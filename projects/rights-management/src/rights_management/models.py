@@ -199,7 +199,7 @@ class RightsValidation(BaseModel):
     id: str
     content_id: str
     usage_type: UsageType
-    license_id: str | None
+    license_id: str | None = None
     status: ValidationStatus
     reason: str | None = None
     validated_at: datetime = Field(default_factory=datetime.utcnow)

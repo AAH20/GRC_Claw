@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class PolicyStatus(str, Enum):
+class PolicyStatus(StrEnum):
     """Status of a governance policy."""
 
     DRAFT = "draft"
@@ -20,7 +20,7 @@ class PolicyStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class PolicyScope(str, Enum):
+class PolicyScope(StrEnum):
     """Scope of a governance policy."""
 
     GLOBAL = "global"

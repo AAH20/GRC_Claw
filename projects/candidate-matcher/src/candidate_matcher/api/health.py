@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse
 
 from candidate_matcher.config.settings import Settings, get_settings
 from candidate_matcher.models.schemas import HealthResponse, ReadinessResponse
@@ -16,7 +13,7 @@ router = APIRouter(tags=["health"])
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
     request: Request,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> HealthResponse:
     """Health check endpoint.
 

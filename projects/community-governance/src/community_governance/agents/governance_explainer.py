@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
-from typing import Any
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
-from community_governance.exceptions import AgentExecutionException
+from community_governance.exceptions import AgentExecutionError
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+
 
 logger = get_logger(__name__)
 
@@ -54,7 +56,7 @@ class GovernanceExplainerAgent(BaseAgent[dict[str, Any], dict[str, Any]]):
             A dictionary containing the explanation.
 
         Raises:
-            AgentExecutionException: If explanation generation fails.
+            AgentExecutionError: If explanation generation fails.
         """
         try:
             explanation_type = input_data.get("explanation_type", "action")
@@ -82,7 +84,7 @@ class GovernanceExplainerAgent(BaseAgent[dict[str, Any], dict[str, Any]]):
 
         except Exception as e:
             logger.error(f"Explanation generation failed: {e}", error=str(e))
-            raise AgentExecutionException(self.name, str(e)) from e
+            raise AgentExecutionError(self.name, str(e)) from e
 
     async def _explain_with_llm(
         self,

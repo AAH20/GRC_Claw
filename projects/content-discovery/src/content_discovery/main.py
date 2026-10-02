@@ -49,7 +49,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Agentic AI content discovery with semantic search, personalization, and trend detection",
+        description=(
+            "Agentic AI content discovery with semantic search, "
+            "personalization, and trend detection"
+        ),
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,
         lifespan=lifespan,

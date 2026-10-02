@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,7 +24,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development")
 
     # Server
-    host: str = Field(default="0.0.0.0")
+    host: str = Field(default="127.0.0.1")
     port: int = Field(default=8000)
     workers: int = Field(default=1)
 
@@ -79,7 +78,12 @@ class Settings(BaseSettings):
     @property
     def weights_sum(self) -> float:
         """Sum of all scoring weights."""
-        return self.engagement_weight + self.toxicity_weight + self.growth_weight + self.churn_weight
+        return (
+            self.engagement_weight
+            + self.toxicity_weight
+            + self.growth_weight
+            + self.churn_weight
+        )
 
 
 @lru_cache

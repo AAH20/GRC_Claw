@@ -99,10 +99,7 @@ class TimezoneResolverAgent:
         from_zone = pytz.timezone(from_timezone)
         to_zone = pytz.timezone(to_timezone)
 
-        if dt.tzinfo is None:
-            localized = from_zone.localize(dt)
-        else:
-            localized = dt.astimezone(from_zone)
+        localized = from_zone.localize(dt) if dt.tzinfo is None else dt.astimezone(from_zone)
         return localized.astimezone(to_zone)
 
     def resolve_participant_timezone(

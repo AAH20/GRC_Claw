@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import create_agent
 
 from rights_management.agents.base import BaseAgent
 from rights_management.models import InfringementDetectionRequest, InfringementDetectionResult
@@ -29,20 +28,18 @@ Return a JSON object with:
 class InfringementDetectorAgent(BaseAgent[InfringementDetectionRequest, InfringementDetectionResult]):
     """Agent that detects potential content infringements."""
 
-    def _build_agent(self) -> AgentExecutor:
-        """Build the LangChain ReAct agent for infringement detection.
+    def _build_agent(self):
+        """Build the LangChain agent for infringement detection.
 
         Returns:
-            Configured AgentExecutor instance.
+            Configured agent instance.
         """
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", _SYSTEM_PROMPT),
-                ("human", "{input}"),
-            ]
+        return create_agent(
+            model=self._get_llm(),
+            tools=[],
+            system_prompt=_SYSTEM_PROMPT,
+            debug=self._settings.debug,
         )
-        agent = create_react_agent(self._llm, tools=[], prompt=prompt)
-        return AgentExecutor(agent=agent, tools=[], verbose=self._settings.debug)
 
     async def run(self, payload: InfringementDetectionRequest) -> InfringementDetectionResult:
         """Detect potential infringements for the given content.
@@ -54,7 +51,7 @@ class InfringementDetectorAgent(BaseAgent[InfringementDetectionRequest, Infringe
             An InfringementDetectionResult with findings and risk score.
         """
         try:
-            result: dict[str, Any] = await self._agent.ainvoke(
+            result: dict[str, Any] = await self._get_agent().ainvoke(
                 {
                     "input": (
                         f"Content ID: {payload.content_id}\n"
@@ -71,7 +68,7 @@ class InfringementDetectorAgent(BaseAgent[InfringementDetectionRequest, Infringe
                 risk_score=0.0,
                 recommendations=[output] if output else [],
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return InfringementDetectionResult(
                 content_id=payload.content_id,
                 potential_infringements=[],

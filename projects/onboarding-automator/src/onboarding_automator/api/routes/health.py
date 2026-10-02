@@ -14,7 +14,7 @@ router = APIRouter()
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
     request: Request,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings)  # noqa: B008
 ) -> HealthResponse:
     """Check the health of the service.
 

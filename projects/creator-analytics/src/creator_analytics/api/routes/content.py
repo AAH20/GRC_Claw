@@ -1,8 +1,9 @@
 """Content performance API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Depends
 from typing import Any
+
 import structlog
+from fastapi import APIRouter, Depends, HTTPException
 
 from creator_analytics.agents import ContentPerformanceAgent
 
@@ -18,7 +19,7 @@ def get_content_agent() -> ContentPerformanceAgent:
 @router.post("/analyze", response_model=dict[str, Any])
 async def analyze_content(
     input_data: dict[str, Any],
-    agent: ContentPerformanceAgent = Depends(get_content_agent),
+    agent: ContentPerformanceAgent = Depends(get_content_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Analyze content performance.
 
@@ -34,13 +35,13 @@ async def analyze_content(
         return result
     except Exception as e:
         logger.error(f"Content analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{content_id}", response_model=dict[str, Any])
 async def get_content_performance(
     content_id: str,
-    agent: ContentPerformanceAgent = Depends(get_content_agent),
+    agent: ContentPerformanceAgent = Depends(get_content_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Get performance data for specific content.
 
@@ -56,13 +57,13 @@ async def get_content_performance(
         return result
     except Exception as e:
         logger.error(f"Failed to get content performance for {content_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/creator/{creator_id}", response_model=dict[str, Any])
 async def get_creator_content(
     creator_id: str,
-    agent: ContentPerformanceAgent = Depends(get_content_agent),
+    agent: ContentPerformanceAgent = Depends(get_content_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Get all content performance for a creator.
 
@@ -78,4 +79,4 @@ async def get_creator_content(
         return {"creator_id": creator_id, "content": result}
     except Exception as e:
         logger.error(f"Failed to get content for creator {creator_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

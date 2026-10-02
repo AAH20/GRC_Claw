@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
-from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from candidate_matcher.config.exceptions import AgentExecutionError
@@ -27,7 +26,7 @@ class BaseAgent(ABC, Generic[T]):
     def __init__(
         self,
         name: str,
-        llm_client: Optional[BaseLLMClient] = None,
+        llm_client: BaseLLMClient | None = None,
         system_prompt: str = "",
     ) -> None:
         """Initialize the base agent.

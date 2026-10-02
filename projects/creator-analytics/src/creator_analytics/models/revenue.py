@@ -1,11 +1,12 @@
 """Revenue tracking Pydantic models."""
 
-from pydantic import BaseModel, Field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
-class RevenueStream(str, Enum):
+class RevenueStream(StrEnum):
     """Types of revenue streams."""
 
     ADVERTISING = "advertising"

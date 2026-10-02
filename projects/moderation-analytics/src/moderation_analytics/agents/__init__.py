@@ -2,18 +2,32 @@
 
 from __future__ import annotations
 
-import structlog
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
+import structlog
 from langchain_core.language_models import BaseLanguageModel
 from langchain_openai import ChatOpenAI
 
+from moderation_analytics.agents.analytics_explainer import AnalyticsExplainerAgent
+from moderation_analytics.agents.moderation_predictor import ModerationPredictorAgent
+from moderation_analytics.agents.moderator_performance import ModeratorPerformanceAgent
+from moderation_analytics.agents.policy_effectiveness import PolicyEffectivenessAgent
+from moderation_analytics.agents.trend_analyzer import TrendAnalyzerAgent
 from moderation_analytics.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
 T = TypeVar("T")
+
+__all__ = [
+    "BaseAgent",
+    "AnalyticsExplainerAgent",
+    "ModerationPredictorAgent",
+    "ModeratorPerformanceAgent",
+    "PolicyEffectivenessAgent",
+    "TrendAnalyzerAgent",
+]
 
 
 class BaseAgent(ABC, Generic[T]):
@@ -79,7 +93,10 @@ class BaseAgent(ABC, Generic[T]):
         Args:
             result: Optional result summary.
         """
-        self.logger.info(f"Completed {self.name}", result_type=type(result).__name__ if result else None)
+        self.logger.info(
+            f"Completed {self.name}",
+            result_type=type(result).__name__ if result else None,
+        )
 
     def _log_error(self, error: Exception, **kwargs: Any) -> None:
         """Log agent execution error.

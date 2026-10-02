@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -77,7 +77,7 @@ Provide:
 4. Improvement recommendations
 """
         result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
-        return {"evaluation": result, "policy_id": str(policy_id), "timestamp": datetime.utcnow().isoformat()}
+        return {"evaluation": result, "policy_id": str(policy_id), "timestamp": datetime.now(tz=UTC).isoformat()}
 
     async def compute_trend(
         self,

@@ -11,7 +11,7 @@ async def test_health_check(client: AsyncClient) -> None:
     Args:
         client: Test client.
     """
-    response = await client.get("/health")
+    response = await client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
@@ -26,7 +26,7 @@ async def test_readiness_check(client: AsyncClient) -> None:
     Args:
         client: Test client.
     """
-    response = await client.get("/ready")
+    response = await client.get("/api/v1/ready")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ready"

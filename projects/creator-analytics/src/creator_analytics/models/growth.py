@@ -1,11 +1,12 @@
 """Growth prediction Pydantic models."""
 
-from pydantic import BaseModel, Field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
-class GrowthMetric(str, Enum):
+class GrowthMetric(StrEnum):
     """Types of growth metrics."""
 
     FOLLOWERS = "followers"
@@ -16,7 +17,7 @@ class GrowthMetric(str, Enum):
     CONVERSIONS = "conversions"
 
 
-class GrowthScenario(str, Enum):
+class GrowthScenario(StrEnum):
     """Growth prediction scenarios."""
 
     CONSERVATIVE = "conservative"

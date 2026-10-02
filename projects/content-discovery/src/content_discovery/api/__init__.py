@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import time
 import uuid
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from content_discovery.agents import (
     PersonalizationAgent,
@@ -24,7 +23,6 @@ from content_discovery.integrations import (
     VectorStoreClient,
 )
 from content_discovery.models import (
-    ErrorResponse,
     HealthResponse,
     RecommendationRequest,
     RecommendationResponse,
@@ -44,7 +42,7 @@ router = APIRouter()
 
 
 def get_vector_store(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> VectorStoreClient:
     """Get vector store client.
 
@@ -58,7 +56,7 @@ def get_vector_store(
 
 
 def get_user_profile(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> UserProfileClient:
     """Get user profile client.
 
@@ -72,7 +70,7 @@ def get_user_profile(
 
 
 def get_analytics(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> AnalyticsClient:
     """Get analytics client.
 
@@ -86,7 +84,7 @@ def get_analytics(
 
 
 def get_content_client(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> ContentClient:
     """Get content client.
 
@@ -100,7 +98,7 @@ def get_content_client(
 
 
 def get_semantic_search_agent(
-    vector_store: VectorStoreClient = Depends(get_vector_store),
+    vector_store: VectorStoreClient = Depends(get_vector_store),  # noqa: B008
 ) -> SemanticSearchAgent:
     """Get semantic search agent.
 
@@ -114,7 +112,7 @@ def get_semantic_search_agent(
 
 
 def get_personalization_agent(
-    user_profile: UserProfileClient = Depends(get_user_profile),
+    user_profile: UserProfileClient = Depends(get_user_profile),  # noqa: B008
 ) -> PersonalizationAgent:
     """Get personalization agent.
 
@@ -128,8 +126,8 @@ def get_personalization_agent(
 
 
 def get_recommendation_agent(
-    content_client: ContentClient = Depends(get_content_client),
-    user_profile: UserProfileClient = Depends(get_user_profile),
+    content_client: ContentClient = Depends(get_content_client),  # noqa: B008
+    user_profile: UserProfileClient = Depends(get_user_profile),  # noqa: B008
 ) -> RecommendationAgent:
     """Get recommendation agent.
 
@@ -147,7 +145,7 @@ def get_recommendation_agent(
 
 
 def get_trend_detector_agent(
-    analytics: AnalyticsClient = Depends(get_analytics),
+    analytics: AnalyticsClient = Depends(get_analytics),  # noqa: B008
 ) -> TrendDetectorAgent:
     """Get trend detector agent.
 
@@ -174,7 +172,7 @@ def get_search_explainer_agent() -> SearchExplainerAgent:
 
 @router.get("/health", response_model=HealthResponse, tags=["health"])
 async def health_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> HealthResponse:
     """Health check endpoint.
 
@@ -214,7 +212,7 @@ async def readiness_check() -> dict[str, str]:
 @router.post("/api/v1/search", response_model=SearchResponse, tags=["search"])
 async def search(
     request: SearchRequest,
-    agent: SemanticSearchAgent = Depends(get_semantic_search_agent),
+    agent: SemanticSearchAgent = Depends(get_semantic_search_agent),  # noqa: B008
 ) -> SearchResponse:
     """Perform semantic search.
 
@@ -256,8 +254,8 @@ async def search(
 @router.post("/api/v1/search/explain", response_model=SearchExplanation, tags=["search"])
 async def search_with_explanation(
     request: SearchRequest,
-    search_agent: SemanticSearchAgent = Depends(get_semantic_search_agent),
-    explainer_agent: SearchExplainerAgent = Depends(get_search_explainer_agent),
+    search_agent: SemanticSearchAgent = Depends(get_semantic_search_agent),  # noqa: B008
+    explainer_agent: SearchExplainerAgent = Depends(get_search_explainer_agent),  # noqa: B008
 ) -> SearchExplanation:
     """Perform search and return AI explanation.
 
@@ -292,7 +290,7 @@ async def search_with_explanation(
 async def search_suggestions(
     q: str = Query(..., min_length=1, max_length=200, description="Search query prefix"),
     limit: int = Query(default=5, ge=1, le=20),
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> dict[str, Any]:
     """Get search suggestions for autocomplete.
 
@@ -326,7 +324,7 @@ async def search_suggestions(
 )
 async def get_recommendations(
     request: RecommendationRequest,
-    agent: RecommendationAgent = Depends(get_recommendation_agent),
+    agent: RecommendationAgent = Depends(get_recommendation_agent),  # noqa: B008
 ) -> RecommendationResponse:
     """Get personalized content recommendations.
 
@@ -363,12 +361,16 @@ async def get_recommendations(
         ) from exc
 
 
-@router.get("/api/v1/recommendations/{user_id}", response_model=RecommendationResponse, tags=["recommendations"])
+@router.get(
+    "/api/v1/recommendations/{user_id}",
+    response_model=RecommendationResponse,
+    tags=["recommendations"],
+)
 async def get_user_recommendations(
     user_id: str,
     limit: int = Query(default=10, ge=1, le=50),
     context: str | None = Query(None),
-    agent: RecommendationAgent = Depends(get_recommendation_agent),
+    agent: RecommendationAgent = Depends(get_recommendation_agent),  # noqa: B008
 ) -> RecommendationResponse:
     """Get recommendations for a specific user.
 
@@ -395,7 +397,7 @@ async def get_user_recommendations(
 @router.post("/api/v1/trends", response_model=TrendResponse, tags=["trends"])
 async def detect_trends(
     request: TrendRequest,
-    agent: TrendDetectorAgent = Depends(get_trend_detector_agent),
+    agent: TrendDetectorAgent = Depends(get_trend_detector_agent),  # noqa: B008
 ) -> TrendResponse:
     """Detect trends from analytics data.
 
@@ -432,7 +434,7 @@ async def detect_trends(
 async def get_trends(
     window_days: int = Query(default=7, ge=1, le=30),
     limit: int = Query(default=10, ge=1, le=50),
-    agent: TrendDetectorAgent = Depends(get_trend_detector_agent),
+    agent: TrendDetectorAgent = Depends(get_trend_detector_agent),  # noqa: B008
 ) -> TrendResponse:
     """Get current trends.
 
@@ -458,7 +460,7 @@ async def get_trends(
 @router.get("/api/v1/users/{user_id}/profile", tags=["personalization"])
 async def get_user_profile(
     user_id: str,
-    user_profile: UserProfileClient = Depends(get_user_profile),
+    user_profile: UserProfileClient = Depends(get_user_profile),  # noqa: B008
 ) -> dict[str, Any]:
     """Get user profile and preferences.
 
@@ -476,7 +478,9 @@ async def get_user_profile(
             "history_count": len(history),
             "preferences": {
                 "topics": list(set(tag for item in history for tag in item.get("tags", [])))[:10],
-                "content_types": list(set(item.get("content_type", "article") for item in history))[:5],
+                "content_types": list(
+                    set(item.get("content_type", "article") for item in history)
+                )[:5],
             },
         }
     except Exception as exc:
@@ -491,7 +495,7 @@ async def get_user_profile(
 async def add_user_history(
     user_id: str,
     item: dict[str, Any],
-    user_profile: UserProfileClient = Depends(get_user_profile),
+    user_profile: UserProfileClient = Depends(get_user_profile),  # noqa: B008
 ) -> dict[str, str]:
     """Add an item to user's history.
 
@@ -526,7 +530,7 @@ async def add_user_history(
 
 @router.get("/metrics", tags=["metrics"])
 async def metrics(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> dict[str, Any]:
     """Get service metrics.
 

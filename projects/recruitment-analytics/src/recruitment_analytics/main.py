@@ -69,7 +69,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Recruitment Analytics API",
-        description="Agentic AI-powered recruitment analytics platform with funnel analysis, source tracking, and predictive hiring",
+        description=(
+            "Agentic AI-powered recruitment analytics platform with funnel analysis, "
+            "source tracking, and predictive hiring"
+        ),
         version=settings.app_version,
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,

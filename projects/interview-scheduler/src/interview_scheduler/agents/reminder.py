@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from interview_scheduler.models.interview import Interview
-from interview_scheduler.models.reminder import Reminder, ReminderCreate, ReminderType
+from interview_scheduler.models.reminder import Reminder, ReminderType
+
+if TYPE_CHECKING:
+    from interview_scheduler.models.interview import Interview
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,9 @@ class ReminderAgent:
                     ),
                 )
             except ImportError:
-                logger.warning("langchain-deepagents not available, using direct reminder management")
+                logger.warning(
+                    "langchain-deepagents not available, using direct reminder management"
+                )
                 self._agent = None
         return self._agent
 
@@ -98,8 +102,8 @@ class ReminderAgent:
             reminder_type=reminder_type,
             minutes_before=minutes_before,
             recipient=recipient,
-            subject=subject or f"Interview Reminder",
-            message=message or f"This is a reminder for your upcoming interview.",
+            subject=subject or "Interview Reminder",
+            message=message or "This is a reminder for your upcoming interview.",
             scheduled_at=scheduled_at or datetime.utcnow(),
         )
 

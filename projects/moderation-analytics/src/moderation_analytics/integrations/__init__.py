@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import httpx
-import structlog
 from abc import ABC, abstractmethod
 from typing import Any
+
+import httpx
+import structlog
 
 from moderation_analytics.config import get_settings
 from moderation_analytics.exceptions import IntegrationError
@@ -40,7 +41,9 @@ class BaseIntegration(ABC):
         return headers
 
     @abstractmethod
-    async def fetch_data(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def fetch_data(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Fetch data from the external service.
 
         Args:
@@ -156,7 +159,9 @@ class AnalyticsDatabaseIntegration(BaseIntegration):
             self.logger.error("Failed to fetch data from analytics DB", error=str(e))
             raise IntegrationError(f"Analytics DB error: {e}") from e
 
-    async def query_analytics(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    async def query_analytics(
+        self, query: str, params: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Execute analytics query.
 
         Args:

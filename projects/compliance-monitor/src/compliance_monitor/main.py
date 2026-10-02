@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
+import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import structlog
 
 from compliance_monitor.api.routes import audits, policies, remediation, scores, violations
 from compliance_monitor.config.settings import get_settings
@@ -31,8 +31,6 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI application instance.
     """
-    settings = get_settings()
-
     app = FastAPI(
         title="Compliance Monitor",
         description="Agentic AI compliance monitoring with policy tracking, violation detection, and audit reporting",

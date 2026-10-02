@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from quality_scoring.agents.base import AgentResult, BaseScoringAgent
 from quality_scoring.config.settings import Settings
@@ -150,10 +150,8 @@ class ReadabilityScorerAgent(BaseScoringAgent[DimensionScore]):
                 long_sentence_ratio=0.0,
             )
 
-        total_syllables = sum(self._count_syllables(w) for w in words)
         avg_sentence_length = len(words) / len(sentences)
         avg_word_length = sum(len(w) for w in words) / len(words)
-        avg_syllables_per_word = total_syllables / len(words)
 
         # Complex words: 3+ syllables
         complex_words = sum(1 for w in words if self._count_syllables(w) >= 3)

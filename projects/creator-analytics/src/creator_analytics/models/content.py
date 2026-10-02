@@ -1,12 +1,12 @@
 """Content performance Pydantic models."""
 
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     """Types of content."""
 
     VIDEO = "video"
@@ -49,7 +49,7 @@ class ContentPerformance(BaseModel):
     creator_id: str = Field(..., description="Creator identifier")
     content_type: ContentType = Field(..., description="Type of content")
     title: str = Field(..., description="Content title")
-    description: Optional[str] = Field(default=None, description="Content description")
+    description: str | None = Field(default=None, description="Content description")
     published_at: datetime = Field(..., description="Publication timestamp")
     metrics: ContentMetrics = Field(..., description="Content metrics")
     tags: list[str] = Field(default_factory=list, description="Content tags")

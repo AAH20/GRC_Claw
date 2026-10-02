@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from datetime import date
 
 from recruitment_analytics.integrations.base import BaseAPIClient
 

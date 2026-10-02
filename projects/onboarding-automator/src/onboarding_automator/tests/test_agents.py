@@ -25,7 +25,7 @@ from onboarding_automator.models import (
     Task,
     TaskStatus,
     WelcomeMessageCreate,
-)
+, DocumentCreate)
 
 
 @pytest.fixture

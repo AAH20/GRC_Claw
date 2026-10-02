@@ -3,8 +3,8 @@
 from fraud_detection.models.schemas import (
     AccountAnalysis,
     AccountProfile,
-    AgentStatus,
     AgentsStatusResponse,
+    AgentStatus,
     Anomaly,
     BatchAnalysisRequest,
     BatchAnalysisResponse,

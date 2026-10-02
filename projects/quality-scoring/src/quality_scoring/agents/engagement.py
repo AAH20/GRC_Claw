@@ -19,7 +19,9 @@ class EngagementScorerAgent(BaseScoringAgent[DimensionScore]):
     """Agent that scores content engagement using linguistic and structural analysis."""
 
     # Engagement indicators
-    QUESTION_PATTERN = r"\b(what|why|how|when|where|who|which|can|could|would|should|is|are|do|does|did)\b.*\?"
+    QUESTION_PATTERN = (
+        r"\b(what|why|how|when|where|who|which|can|could|would|should|is|are|do|does|did)\b[^.!?]*\?"
+    )
     POWER_WORDS = [
         "you", "your", "free", "new", "now", "today", "instantly",
         "exclusive", "proven", "guaranteed", "discover", "unlock",

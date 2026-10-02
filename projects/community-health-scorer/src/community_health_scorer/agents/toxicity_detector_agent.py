@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
-from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import Field
 
 from community_health_scorer.config import get_settings
 from community_health_scorer.models import ToxicityLevel, ToxicityReport
@@ -41,7 +38,7 @@ class ToxicityDetectorAgent:
                         """You are a community safety analyst specializing in toxicity detection.
                         Analyze the provided content and user behavior data to identify toxic patterns
                         including harassment, hate speech, spam, misinformation, and trolling.
-                        Provide a toxicity score from 0-100 (higher = more toxic) and classify the toxicity level.""",
+                        Provide a toxicity score from 0-100 (higher = more toxic) and classify the toxicity level."""  # noqa: E501,
                     ),
                     ("human", "{input}"),
                 ]
@@ -129,18 +126,16 @@ class ToxicityDetectorAgent:
         Returns:
             ToxicityReport with computed scores and classification.
         """
-        start_time = time.time()
-
         if self._agent is not None:
             try:
-                result = await self._agent.ainvoke(
+                await self._agent.ainvoke(
                     {
                         "input": f"Analyze toxicity for community {community_id}: {data}"
                     }
                 )
                 return self._heuristic_score(data)
             except Exception:
-                pass
+                return self._heuristic_score(data)
 
         return self._heuristic_score(data)
 

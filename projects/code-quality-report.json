@@ -1,0 +1,17 @@
+{
+  "analytics": {
+    "source_files": 12,
+    "issues_found": 0,
+    "issues": []
+  },
+  "bias-detector": {
+    "source_files": 21,
+    "issues_found": 0,
+    "issues": []
+  },
+  "brand-monitoring": {
+    "source_files": 7,
+    "issues_found": 0,
+    "issues": []
+  }
+}

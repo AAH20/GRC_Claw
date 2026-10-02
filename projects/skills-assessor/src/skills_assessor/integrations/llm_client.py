@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
-from skills_assessor.config.settings import Settings
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
+
+    from skills_assessor.config.settings import Settings
 
 
 class LLMClient:

@@ -1,7 +1,8 @@
 """Base agent class for all creator analytics agents."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
+
 import structlog
 from langchain_core.language_models import BaseLanguageModel
 
@@ -18,7 +19,7 @@ class BaseCreatorAgent(ABC):
 
     def __init__(
         self,
-        llm: Optional[BaseLanguageModel] = None,
+        llm: BaseLanguageModel | None = None,
         name: str = "base_agent",
     ) -> None:
         """Initialize the base agent.
@@ -29,7 +30,7 @@ class BaseCreatorAgent(ABC):
         """
         self.llm = llm
         self.name = name
-        self._agent: Optional[DeepAgent] = None
+        self._agent: DeepAgent | None = None
         self._initialize_agent()
 
     def _initialize_agent(self) -> None:

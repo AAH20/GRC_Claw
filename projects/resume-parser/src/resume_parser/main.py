@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING
 
-import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,6 +13,9 @@ from resume_parser.config import Settings, get_settings
 from resume_parser.integrations import create_llm_client
 from resume_parser.integrations.storage import create_storage
 from resume_parser.utils.logging_config import get_logger, setup_logging
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = get_logger(__name__)
 

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from interview_scheduler.integrations.calendar import CalendarProvider
-from interview_scheduler.models.interview import Interview
-from interview_scheduler.models.timeslot import TimeSlot
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from interview_scheduler.integrations.calendar import CalendarProvider
+    from interview_scheduler.models.interview import Interview
+    from interview_scheduler.models.timeslot import TimeSlot
 
 logger = logging.getLogger(__name__)
 

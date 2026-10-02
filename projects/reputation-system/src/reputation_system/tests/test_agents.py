@@ -2,7 +2,7 @@
 
 import pytest
 
-from reputation_system.agents.badge_manager import BadgeManagerAgent, BadgeEvaluationInput
+from reputation_system.agents.badge_manager import BadgeEvaluationInput, BadgeManagerAgent
 from reputation_system.agents.reputation_explainer import (
     ExplanationInput,
     ReputationExplainerAgent,

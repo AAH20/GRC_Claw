@@ -45,7 +45,9 @@ class LearningPathRecommenderAgent(BaseAgent[LearningPathRequest, LearningPathRe
         Returns:
             ChatPromptTemplate: Configured prompt template.
         """
-        system_message = """You are an expert learning path designer. Your task is to create personalized learning paths to help candidates close skill gaps.
+        system_message = (
+            "You are an expert learning path designer. Your task is to create "
+            "personalized learning paths to help candidates close skill gaps.\n"
 
 For the learning path, provide:
 - title: A descriptive title for the learning path

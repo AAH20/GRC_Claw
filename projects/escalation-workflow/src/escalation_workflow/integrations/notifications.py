@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import structlog
 from abc import ABC, abstractmethod
 from typing import Any
 
-import httpx
+import structlog
 
 from escalation_workflow.config import Settings
 

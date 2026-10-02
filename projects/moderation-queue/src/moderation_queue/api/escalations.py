@@ -5,7 +5,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import Escalation, PriorityLevel
@@ -42,7 +42,7 @@ class EscalationListResponse(BaseModel):
 )
 async def create_escalation(
     request: CreateEscalationRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> Escalation:
     """Create a new escalation.
 
@@ -73,8 +73,8 @@ async def create_escalation(
 )
 async def list_escalations(
     status_filter: str | None = Query(default=None, description="Filter by status"),
-    priority: PriorityLevel | None = Query(default=None, description="Filter by priority"),
-    logger=Depends(get_logger),
+    priority: PriorityLevel | None = Query(default=None, description="Filter by priority"),  # noqa: B008
+    logger=Depends(get_logger),  # noqa: B008
 ) -> EscalationListResponse:
     """List escalations with optional filters.
 
@@ -104,7 +104,7 @@ async def list_escalations(
 )
 async def get_escalation(
     escalation_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> Escalation:
     """Get an escalation by ID.
 
@@ -135,7 +135,7 @@ async def get_escalation(
 )
 async def resolve_escalation(
     escalation_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> Escalation:
     """Resolve an escalation.
 

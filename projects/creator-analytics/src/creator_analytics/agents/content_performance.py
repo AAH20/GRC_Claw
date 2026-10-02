@@ -1,12 +1,14 @@
 """Content Performance Agent using LangChain DeepAgents."""
 
+from datetime import datetime
 from typing import Any
+
 import structlog
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.tools import tool
 
 from creator_analytics.agents.base import BaseCreatorAgent
-from creator_analytics.models.content import ContentPerformance, ContentMetrics, ContentType
+from creator_analytics.models.content import ContentMetrics, ContentPerformance, ContentType
 
 logger = structlog.get_logger(__name__)
 
@@ -140,7 +142,12 @@ class ContentPerformanceAgent(BaseCreatorAgent):
 
     def _get_tools(self) -> list[Any]:
         """Get tools available to the content performance agent."""
-        return [calculate_performance_score, compare_to_benchmarks, extract_topics, analyze_sentiment]
+        return [
+            calculate_performance_score,
+            compare_to_benchmarks,
+            extract_topics,
+            analyze_sentiment,
+        ]
 
     async def run(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Run content performance analysis.
@@ -170,16 +177,16 @@ class ContentPerformanceAgent(BaseCreatorAgent):
             logger.info(f"Analyzing content performance for {content_id}")
 
             # Calculate performance score
-            perf_score = calculate_performance_score(metrics_data)
+            perf_score = calculate_performance_score.invoke({"metrics": metrics_data})
 
             # Compare to benchmarks
-            benchmark_comparison = compare_to_benchmarks(content_type, metrics_data, benchmarks)
+            benchmark_comparison = compare_to_benchmarks.invoke({"content_type": content_type, "metrics": metrics_data, "benchmarks": benchmarks})
 
             # Extract topics
-            topics = extract_topics(title, description)
+            topics = extract_topics.invoke({"title": title, "description": description})
 
             # Analyze sentiment
-            sentiment = analyze_sentiment(f"{title} {description}")
+            sentiment = analyze_sentiment.invoke({"text": f"{title} {description}"})
 
             # Build metrics
             metrics = ContentMetrics(
@@ -203,8 +210,14 @@ class ContentPerformanceAgent(BaseCreatorAgent):
                     f"Benchmark comparison: {benchmark_comparison}. "
                     f"Provide insights and recommendations."
                 )
-                insights = agent_result.get("insights", []) if isinstance(agent_result, dict) else []
-                recommendations = agent_result.get("recommendations", []) if isinstance(agent_result, dict) else []
+                insights = (
+                    agent_result.get("insights", []) if isinstance(agent_result, dict) else []
+                )
+                recommendations = (
+                    agent_result.get("recommendations", [])
+                    if isinstance(agent_result, dict)
+                    else []
+                )
             else:
                 insights = []
                 recommendations = []
@@ -215,7 +228,7 @@ class ContentPerformanceAgent(BaseCreatorAgent):
                 content_type=ContentType(content_type),
                 title=title,
                 description=description,
-                published_at=input_data.get("published_at", ""),
+                published_at=input_data.get("published_at") or datetime.utcnow(),
                 metrics=metrics,
                 tags=input_data.get("tags", []),
                 topics=topics,

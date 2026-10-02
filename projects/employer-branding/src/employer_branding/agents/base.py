@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import structlog
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
+import structlog
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 

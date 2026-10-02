@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from access_control.agents.base import AgentContext, BaseAgent
-from access_control.config import Settings
-from access_control.models.schemas import AccessRecommendation, AccessRequest
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
+from access_control.models.schemas import AccessRecommendation
 
 
 class AccessRecommenderInput(BaseModel):
@@ -53,7 +57,7 @@ class AccessRecommenderAgent(BaseAgent[AccessRecommenderInput, AccessRecommender
 Analyze the principal's access history, peer access patterns, and current roles to recommend access changes.
 Follow least-privilege principles: recommend revoking unused access, granting only necessary access,
 and flagging suspicious patterns for review.
-Respond with a JSON object containing: recommendations (list of {resource, action, recommendation, reason, confidence}), summary."""
+Respond with a JSON object containing: recommendations (list of {resource, action, recommendation, reason, confidence}), summary."""  # noqa: E501
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
@@ -89,10 +93,7 @@ Respond with a JSON object containing: recommendations (list of {resource, actio
 
         response = await agent.ainvoke(input_data)
 
-        if hasattr(response, "content"):
-            content = response.content
-        else:
-            content = str(response)
+        content = response.content if hasattr(response, "content") else str(response)
 
         try:
             parsed = json.loads(content)
@@ -142,6 +143,6 @@ Respond with a JSON object containing: recommendations (list of {resource, actio
                     )
                 )
             except Exception:
-                continue
+                continue  # noqa: B112
 
         return recommendations

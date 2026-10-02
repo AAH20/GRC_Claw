@@ -15,6 +15,7 @@ from interview_scheduler.models.interview import (
     InterviewCreate,
     InterviewStatus,
     InterviewType,
+    InterviewUpdate,
     Participant,
 )
 from interview_scheduler.models.reminder import ReminderCreate, ReminderType
@@ -31,9 +32,10 @@ def client() -> TestClient:
         TestClient instance.
     """
     app = create_app()
+    shared_service = InterviewService()
 
     def override_get_service() -> InterviewService:
-        return InterviewService()
+        return shared_service
 
     app.dependency_overrides[get_interview_service] = override_get_service
     return TestClient(app)
@@ -394,7 +396,7 @@ class TestInterviewService:
             ],
         )
         interview = service.create_interview(data)
-        service.update_interview(interview.id, {"status": InterviewStatus.SCHEDULED})
+        service.update_interview(interview.id, InterviewUpdate(status=InterviewStatus.SCHEDULED))
 
         pending = service.list_interviews(status="pending")
         scheduled = service.list_interviews(status="scheduled")

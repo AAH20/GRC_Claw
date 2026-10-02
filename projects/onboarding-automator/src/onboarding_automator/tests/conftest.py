@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
 from datetime import datetime, timedelta
-from typing import AsyncGenerator
 
 import pytest
 from fastapi.testclient import TestClient

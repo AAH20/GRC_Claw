@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -34,7 +33,7 @@ class TestSemanticSearchAgent:
             MagicMock: Mock vector store client.
         """
         store = MagicMock()
-        store.search = MagicMock(return_value=[
+        store.search = AsyncMock(return_value=[
             {
                 "id": "1",
                 "title": "Test Article",
@@ -131,7 +130,7 @@ class TestPersonalizationAgent:
             MagicMock: Mock user profile client.
         """
         profile = MagicMock()
-        profile.get_history = MagicMock(return_value=[
+        profile.get_history = AsyncMock(return_value=[
             {
                 "id": "1",
                 "title": "Python Tutorial",
@@ -140,7 +139,7 @@ class TestPersonalizationAgent:
                 "author": "John",
             },
         ])
-        profile.get_candidates = MagicMock(return_value=[
+        profile.get_candidates = AsyncMock(return_value=[
             {
                 "id": "2",
                 "title": "Advanced Python",
@@ -207,13 +206,13 @@ class TestTrendDetectorAgent:
             MagicMock: Mock analytics client.
         """
         analytics = MagicMock()
-        analytics.get_top_topics = MagicMock(return_value=["AI", "blockchain", "cloud"])
-        analytics.get_volume = MagicMock(return_value=[
+        analytics.get_top_topics = AsyncMock(return_value=["AI", "blockchain", "cloud"])
+        analytics.get_volume = AsyncMock(return_value=[
             {"date": "2024-01-01", "count": 100},
             {"date": "2024-01-02", "count": 150},
             {"date": "2024-01-03", "count": 200},
         ])
-        analytics.get_related_topics = MagicMock(return_value=["ML", "deep learning"])
+        analytics.get_related_topics = AsyncMock(return_value=["ML", "deep learning"])
         return analytics
 
     @pytest.fixture
@@ -272,12 +271,12 @@ class TestRecommendationAgent:
             MagicMock: Mock content client.
         """
         client = MagicMock()
-        client.get_features = MagicMock(return_value={
+        client.get_features = AsyncMock(return_value={
             "id": "1",
             "title": "Test Content",
             "tags": ["python"],
         })
-        client.get_by_tags = MagicMock(return_value=[
+        client.get_by_tags = AsyncMock(return_value=[
             {"id": "2", "title": "Related", "tags": ["python"]},
         ])
         return client
@@ -290,10 +289,10 @@ class TestRecommendationAgent:
             MagicMock: Mock user profile client.
         """
         profile = MagicMock()
-        profile.get_history = MagicMock(return_value=[
+        profile.get_history = AsyncMock(return_value=[
             {"id": "1", "title": "Python", "tags": ["python"]},
         ])
-        profile.get_similar_users = MagicMock(return_value=["user_2", "user_3"])
+        profile.get_similar_users = AsyncMock(return_value=["user_2", "user_3"])
         return profile
 
     @pytest.fixture

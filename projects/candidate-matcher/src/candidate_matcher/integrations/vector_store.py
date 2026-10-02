@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
-from uuid import UUID
+from typing import Any
 
 from candidate_matcher.config.exceptions import VectorStoreError
 from candidate_matcher.config.logging_config import get_logger
@@ -40,7 +39,7 @@ class BaseVectorStore(ABC):
         collection: str,
         query_vector: list[float],
         top_k: int = 10,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Search for similar vectors.
 
@@ -101,7 +100,7 @@ class InMemoryVectorStore(BaseVectorStore):
         collection: str,
         query_vector: list[float],
         top_k: int = 10,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Search for similar vectors using cosine similarity.
 
@@ -162,7 +161,7 @@ class InMemoryVectorStore(BaseVectorStore):
 class QdrantVectorStore(BaseVectorStore):
     """Qdrant vector store client."""
 
-    def __init__(self, settings: Optional[Settings] = None) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
         """Initialize the Qdrant client.
 
         Args:
@@ -219,7 +218,7 @@ class QdrantVectorStore(BaseVectorStore):
         collection: str,
         query_vector: list[float],
         top_k: int = 10,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Search for similar vectors in Qdrant.
 
@@ -267,7 +266,7 @@ class QdrantVectorStore(BaseVectorStore):
             raise VectorStoreError(f"Qdrant delete failed: {e}") from e
 
 
-def create_vector_store(settings: Optional[Settings] = None) -> BaseVectorStore:
+def create_vector_store(settings: Settings | None = None) -> BaseVectorStore:
     """Factory function to create a vector store client.
 
     Args:

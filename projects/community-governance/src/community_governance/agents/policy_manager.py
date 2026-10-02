@@ -4,20 +4,24 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any
-from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
 from community_governance.exceptions import (
-    AgentExecutionException,
-    PolicyEnforcementException,
-    PolicyNotFoundException,
+    AgentExecutionError,
+    PolicyEnforcementError,
+    PolicyNotFoundError,
 )
 from community_governance.models.policy import Policy, PolicyCreate, PolicyStatus, PolicyUpdate
-from community_governance.models.rule import Rule
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from langchain_core.language_models import BaseLanguageModel
+
+    from community_governance.models.rule import Rule
+
 
 logger = get_logger(__name__)
 
@@ -80,10 +84,10 @@ class PolicyManagerAgent(BaseAgent[dict[str, Any], Policy]):
             policy_id: The ID of the policy to remove.
 
         Raises:
-            PolicyNotFoundException: If the policy is not found.
+            PolicyNotFoundError: If the policy is not found.
         """
         if policy_id not in self._policy_index:
-            raise PolicyNotFoundException(str(policy_id))
+            raise PolicyNotFoundError(str(policy_id))
         self.policies = [p for p in self.policies if p.id != policy_id]
         del self._policy_index[policy_id]
 
@@ -104,9 +108,9 @@ class PolicyManagerAgent(BaseAgent[dict[str, Any], Policy]):
             The created, updated, or recommended policy.
 
         Raises:
-            PolicyNotFoundException: If the target policy is not found.
-            PolicyEnforcementException: If the operation fails.
-            AgentExecutionException: If the agent execution fails.
+            PolicyNotFoundError: If the target policy is not found.
+            PolicyEnforcementError: If the operation fails.
+            AgentExecutionError: If the agent execution fails.
         """
         try:
             operation = input_data.get("operation", "create")
@@ -121,11 +125,11 @@ class PolicyManagerAgent(BaseAgent[dict[str, Any], Policy]):
             else:
                 raise ValueError(f"Unknown policy operation: {operation}")
 
-        except (PolicyNotFoundException, PolicyEnforcementException):
+        except (PolicyNotFoundError, PolicyEnforcementError):
             raise
         except Exception as e:
             logger.error(f"Policy management failed: {e}", error=str(e))
-            raise AgentExecutionException(self.name, str(e)) from e
+            raise AgentExecutionError(self.name, str(e)) from e
 
     async def _create_policy(self, input_data: dict[str, Any]) -> Policy:
         """Create a new governance policy.
@@ -174,7 +178,7 @@ class PolicyManagerAgent(BaseAgent[dict[str, Any], Policy]):
             The updated policy.
 
         Raises:
-            PolicyNotFoundException: If the policy is not found.
+            PolicyNotFoundError: If the policy is not found.
         """
         policy_id = input_data.get("policy_id")
         if not policy_id:
@@ -182,7 +186,7 @@ class PolicyManagerAgent(BaseAgent[dict[str, Any], Policy]):
 
         policy = self._policy_index.get(policy_id)
         if not policy:
-            raise PolicyNotFoundException(str(policy_id))
+            raise PolicyNotFoundError(str(policy_id))
 
         update_data = input_data.get("policy_data", {})
         if isinstance(update_data, dict):

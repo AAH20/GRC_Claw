@@ -1,20 +1,19 @@
 """Reputation History Agent for tracking and analyzing reputation changes."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from reputation_system.agents.base import BaseAgent
-from reputation_system.models.schemas import ReputationHistory
 
 
 class HistoryQueryInput(BaseModel):
     """Input for reputation history queries."""
 
     member_id: str = Field(..., description="Member identifier")
-    start_date: Optional[str] = Field(None, description="Start date (ISO format)")
-    end_date: Optional[str] = Field(None, description="End date (ISO format)")
-    action_filter: Optional[str] = Field(None, description="Filter by action type")
+    start_date: str | None = Field(None, description="Start date (ISO format)")
+    end_date: str | None = Field(None, description="End date (ISO format)")
+    action_filter: str | None = Field(None, description="Filter by action type")
     limit: int = Field(default=50, ge=1, le=500, description="Maximum results")
 
 
@@ -22,7 +21,7 @@ class HistoryAnalysisInput(BaseModel):
     """Input for reputation history analysis."""
 
     member_id: str = Field(..., description="Member identifier")
-    history_entries: List[Dict[str, Any]] = Field(..., description="History entries to analyze")
+    history_entries: list[dict[str, Any]] = Field(..., description="History entries to analyze")
 
 
 class HistoryAnalysisOutput(BaseModel):
@@ -32,9 +31,9 @@ class HistoryAnalysisOutput(BaseModel):
     total_entries: int
     net_change: int
     average_change: float
-    most_common_action: Optional[str]
+    most_common_action: str | None
     trend: str
-    insights: List[str] = Field(default_factory=list)
+    insights: list[str] = Field(default_factory=list)
 
 
 class ReputationHistoryAgent(BaseAgent[HistoryAnalysisInput, HistoryAnalysisOutput]):
@@ -74,11 +73,13 @@ class ReputationHistoryAgent(BaseAgent[HistoryAnalysisInput, HistoryAnalysisOutp
         average_change = net_change / total_entries
 
         # Find most common action
-        action_counts: Dict[str, int] = {}
+        action_counts: dict[str, int] = {}
         for entry in entries:
             action = entry.get("action", "unknown")
             action_counts[action] = action_counts.get(action, 0) + 1
-        most_common_action = max(action_counts, key=lambda k: action_counts[k]) if action_counts else None
+        most_common_action = (
+            max(action_counts, key=lambda k: action_counts[k]) if action_counts else None
+        )
 
         # Determine trend
         if len(entries) >= 2:
@@ -110,8 +111,8 @@ class ReputationHistoryAgent(BaseAgent[HistoryAnalysisInput, HistoryAnalysisOutp
         )
 
     def _generate_insights(
-        self, entries: List[Dict[str, Any]], net_change: int, trend: str
-    ) -> List[str]:
+        self, entries: list[dict[str, Any]], net_change: int, trend: str
+    ) -> list[str]:
         """Generate insights from history data.
 
         Args:
@@ -122,7 +123,7 @@ class ReputationHistoryAgent(BaseAgent[HistoryAnalysisInput, HistoryAnalysisOutp
         Returns:
             List of insight strings.
         """
-        insights: List[str] = []
+        insights: list[str] = []
 
         if net_change > 0:
             insights.append(f"Net positive change of {net_change} points")

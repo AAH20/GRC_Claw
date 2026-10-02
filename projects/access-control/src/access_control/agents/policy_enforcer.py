@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from access_control.agents.base import AgentContext, BaseAgent
-from access_control.config import Settings
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
 from access_control.models.enums import AccessDecision, PolicyEffect
 from access_control.models.schemas import AccessRequest, AccessResult, Policy
 
@@ -45,7 +49,7 @@ class PolicyEnforcerAgent(BaseAgent[PolicyEnforcerInput, PolicyEnforcerOutput]):
             llm=llm,
             settings=settings,
             name="policy_enforcer",
-            description="Enforces access policies with real-time evaluation and violation detection",
+            description="Enforces access policies with real-time evaluation and violation detection",  # noqa: E501
         )
 
     def _build_agent(self) -> Any:
@@ -54,7 +58,8 @@ class PolicyEnforcerAgent(BaseAgent[PolicyEnforcerInput, PolicyEnforcerOutput]):
 Evaluate the given access request against the provided policies.
 Detect any policy violations and determine enforcement actions.
 Consider policy priority, deny-override semantics, and obligation requirements.
-Respond with a JSON object containing: decision, enforced_policies, violations, obligations, reason."""
+Respond with a JSON object containing: decision, enforced_policies, violations, obligations,
+        reason."""
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
@@ -88,10 +93,7 @@ Respond with a JSON object containing: decision, enforced_policies, violations, 
 
         response = await agent.ainvoke(input_data)
 
-        if hasattr(response, "content"):
-            content = response.content
-        else:
-            content = str(response)
+        content = response.content if hasattr(response, "content") else str(response)
 
         try:
             parsed = json.loads(content)

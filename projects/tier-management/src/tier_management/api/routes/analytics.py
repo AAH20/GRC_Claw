@@ -20,7 +20,7 @@ _analytics_store: dict[UUID, TierAnalytics] = {}
 @analytics_router.post("", response_model=TierAnalytics, status_code=status.HTTP_201_CREATED)
 async def generate_analytics(
     analytics_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> TierAnalytics:
     """Generate analytics for a tier.
 
@@ -42,13 +42,13 @@ async def generate_analytics(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
-        )
+        ) from e
 
 
 @analytics_router.get("/{analytics_id}", response_model=TierAnalytics)
 async def get_analytics(
     analytics_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> TierAnalytics:
     """Get a specific analytics record by ID.
 
@@ -74,7 +74,7 @@ async def get_analytics(
 @analytics_router.get("/tier/{tier_id}", response_model=list[TierAnalytics])
 async def get_tier_analytics(
     tier_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> list[TierAnalytics]:
     """Get all analytics for a specific tier.
 
@@ -94,7 +94,7 @@ async def get_tier_analytics(
 @analytics_router.get("/tier/{tier_id}/summary")
 async def get_tier_summary(
     tier_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> dict[str, Any]:
     """Get a summary of analytics for a tier.
 

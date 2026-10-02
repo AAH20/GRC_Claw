@@ -59,7 +59,7 @@ class VerificationExplainerAgent(BaseAgent):
 
             status = verification_result.get("status", "unknown")
             confidence = verification_result.get("confidence", 0.0)
-            checks = verification_result.get("checks_performed", [])
+            verification_result.get("checks_performed", [])
             failures = verification_result.get("failure_reasons", [])
 
             # Generate summary

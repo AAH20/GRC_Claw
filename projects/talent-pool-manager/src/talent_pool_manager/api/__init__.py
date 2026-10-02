@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -18,6 +18,8 @@ from talent_pool_manager.models import (
     DiscoveryResult,
     EngagementCreate,
     EngagementListResponse,
+    EngagementOptimizationRequest,
+    EngagementOptimizationResult,
     EngagementResponse,
     EngagementUpdate,
     OutreachCampaignCreate,
@@ -31,18 +33,21 @@ from talent_pool_manager.models import (
     OutreachTemplateUpdate,
     ScoringRequest,
     ScoringResult,
+    SegmentationRequest,
+    SegmentationResult,
     SegmentCreate,
     SegmentListResponse,
     SegmentResponse,
     SegmentUpdate,
-    SegmentationRequest,
-    SegmentationResult,
     TalentPoolCreate,
     TalentPoolListResponse,
     TalentPoolResponse,
     TalentPoolStats,
     TalentPoolUpdate,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 logger = get_logger(__name__)
 
@@ -94,7 +99,9 @@ async def api_info() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/pools", response_model=TalentPoolResponse, status_code=status.HTTP_201_CREATED, tags=["pools"])
+@router.post(
+    "/pools", response_model=TalentPoolResponse, status_code=status.HTTP_201_CREATED, tags=["pools"]
+)
 async def create_pool(pool: TalentPoolCreate) -> TalentPoolResponse:
     """Create a new talent pool."""
     from datetime import datetime
@@ -184,7 +191,9 @@ async def get_pool_stats(pool_id: UUID) -> TalentPoolStats:
 
     pool_candidates = [c for c in _candidates.values() if c.pool_id == pool_id]
     active = [c for c in pool_candidates if c.status.value not in ("rejected", "archived")]
-    avg_score = sum(c.score for c in pool_candidates) / len(pool_candidates) if pool_candidates else 0.0
+    avg_score = (
+        sum(c.score for c in pool_candidates) / len(pool_candidates) if pool_candidates else 0.0
+    )
 
     status_breakdown: dict[str, int] = {}
     for c in pool_candidates:
@@ -206,7 +215,12 @@ async def get_pool_stats(pool_id: UUID) -> TalentPoolStats:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/candidates", response_model=CandidateResponse, status_code=status.HTTP_201_CREATED, tags=["candidates"])
+@router.post(
+    "/candidates",
+    response_model=CandidateResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["candidates"],
+)
 async def create_candidate(candidate: CandidateCreate) -> CandidateResponse:
     """Add a candidate to a talent pool."""
     if candidate.pool_id not in _pools:
@@ -282,7 +296,9 @@ async def get_candidate(candidate_id: UUID) -> CandidateResponse:
 
 
 @router.put("/candidates/{candidate_id}", response_model=CandidateResponse, tags=["candidates"])
-async def update_candidate(candidate_id: UUID, candidate_update: CandidateUpdate) -> CandidateResponse:
+async def update_candidate(
+    candidate_id: UUID, candidate_update: CandidateUpdate
+) -> CandidateResponse:
     """Update a candidate."""
     if candidate_id not in _candidates:
         raise HTTPException(status_code=404, detail="Candidate not found")
@@ -295,7 +311,9 @@ async def update_candidate(candidate_id: UUID, candidate_update: CandidateUpdate
     return updated
 
 
-@router.delete("/candidates/{candidate_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["candidates"])
+@router.delete(
+    "/candidates/{candidate_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["candidates"]
+)
 async def delete_candidate(candidate_id: UUID) -> None:
     """Delete a candidate."""
     if candidate_id not in _candidates:
@@ -309,7 +327,12 @@ async def delete_candidate(candidate_id: UUID) -> None:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/segments", response_model=SegmentResponse, status_code=status.HTTP_201_CREATED, tags=["segments"])
+@router.post(
+    "/segments",
+    response_model=SegmentResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["segments"],
+)
 async def create_segment(segment: SegmentCreate) -> SegmentResponse:
     """Create a new segment within a talent pool."""
     if segment.pool_id not in _pools:
@@ -397,7 +420,12 @@ async def delete_segment(segment_id: UUID) -> None:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/engagements", response_model=EngagementResponse, status_code=status.HTTP_201_CREATED, tags=["engagements"])
+@router.post(
+    "/engagements",
+    response_model=EngagementResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["engagements"],
+)
 async def create_engagement(engagement: EngagementCreate) -> EngagementResponse:
     """Create a new engagement with a candidate."""
     if engagement.candidate_id not in _candidates:
@@ -462,7 +490,9 @@ async def get_engagement(engagement_id: UUID) -> EngagementResponse:
 
 
 @router.put("/engagements/{engagement_id}", response_model=EngagementResponse, tags=["engagements"])
-async def update_engagement(engagement_id: UUID, engagement_update: EngagementUpdate) -> EngagementResponse:
+async def update_engagement(
+    engagement_id: UUID, engagement_update: EngagementUpdate
+) -> EngagementResponse:
     """Update an engagement."""
     if engagement_id not in _engagements:
         raise HTTPException(status_code=404, detail="Engagement not found")
@@ -475,7 +505,9 @@ async def update_engagement(engagement_id: UUID, engagement_update: EngagementUp
     return updated
 
 
-@router.delete("/engagements/{engagement_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["engagements"])
+@router.delete(
+    "/engagements/{engagement_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["engagements"]
+)
 async def delete_engagement(engagement_id: UUID) -> None:
     """Delete an engagement."""
     if engagement_id not in _engagements:
@@ -489,7 +521,12 @@ async def delete_engagement(engagement_id: UUID) -> None:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/outreach/campaigns", response_model=OutreachCampaignResponse, status_code=status.HTTP_201_CREATED, tags=["outreach"])
+@router.post(
+    "/outreach/campaigns",
+    response_model=OutreachCampaignResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["outreach"],
+)
 async def create_outreach_campaign(campaign: OutreachCampaignCreate) -> OutreachCampaignResponse:
     """Create a new outreach campaign."""
     from datetime import datetime
@@ -539,7 +576,9 @@ async def list_outreach_campaigns(
     )
 
 
-@router.get("/outreach/campaigns/{campaign_id}", response_model=OutreachCampaignResponse, tags=["outreach"])
+@router.get(
+    "/outreach/campaigns/{campaign_id}", response_model=OutreachCampaignResponse, tags=["outreach"]
+)
 async def get_outreach_campaign(campaign_id: UUID) -> OutreachCampaignResponse:
     """Get a specific outreach campaign by ID."""
     if campaign_id not in _outreach_campaigns:
@@ -547,7 +586,9 @@ async def get_outreach_campaign(campaign_id: UUID) -> OutreachCampaignResponse:
     return _outreach_campaigns[campaign_id]
 
 
-@router.put("/outreach/campaigns/{campaign_id}", response_model=OutreachCampaignResponse, tags=["outreach"])
+@router.put(
+    "/outreach/campaigns/{campaign_id}", response_model=OutreachCampaignResponse, tags=["outreach"]
+)
 async def update_outreach_campaign(
     campaign_id: UUID, campaign_update: OutreachCampaignUpdate
 ) -> OutreachCampaignResponse:
@@ -563,7 +604,9 @@ async def update_outreach_campaign(
     return updated
 
 
-@router.delete("/outreach/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["outreach"])
+@router.delete(
+    "/outreach/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["outreach"]
+)
 async def delete_outreach_campaign(campaign_id: UUID) -> None:
     """Delete an outreach campaign."""
     if campaign_id not in _outreach_campaigns:
@@ -577,7 +620,12 @@ async def delete_outreach_campaign(campaign_id: UUID) -> None:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/outreach/templates", response_model=OutreachTemplateResponse, status_code=status.HTTP_201_CREATED, tags=["outreach"])
+@router.post(
+    "/outreach/templates",
+    response_model=OutreachTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["outreach"],
+)
 async def create_outreach_template(template: OutreachTemplateCreate) -> OutreachTemplateResponse:
     """Create a new outreach template."""
     from datetime import datetime
@@ -606,7 +654,9 @@ async def list_outreach_templates() -> list[OutreachTemplateResponse]:
     return list(_outreach_templates.values())
 
 
-@router.get("/outreach/templates/{template_id}", response_model=OutreachTemplateResponse, tags=["outreach"])
+@router.get(
+    "/outreach/templates/{template_id}", response_model=OutreachTemplateResponse, tags=["outreach"]
+)
 async def get_outreach_template(template_id: UUID) -> OutreachTemplateResponse:
     """Get a specific outreach template by ID."""
     if template_id not in _outreach_templates:
@@ -614,7 +664,9 @@ async def get_outreach_template(template_id: UUID) -> OutreachTemplateResponse:
     return _outreach_templates[template_id]
 
 
-@router.put("/outreach/templates/{template_id}", response_model=OutreachTemplateResponse, tags=["outreach"])
+@router.put(
+    "/outreach/templates/{template_id}", response_model=OutreachTemplateResponse, tags=["outreach"]
+)
 async def update_outreach_template(
     template_id: UUID, template_update: OutreachTemplateUpdate
 ) -> OutreachTemplateResponse:
@@ -630,7 +682,9 @@ async def update_outreach_template(
     return updated
 
 
-@router.delete("/outreach/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["outreach"])
+@router.delete(
+    "/outreach/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["outreach"]
+)
 async def delete_outreach_template(template_id: UUID) -> None:
     """Delete an outreach template."""
     if template_id not in _outreach_templates:
@@ -647,7 +701,7 @@ async def delete_outreach_template(template_id: UUID) -> None:
 @router.post("/agents/discover", response_model=DiscoveryResult, tags=["agents"])
 async def discover_candidates(
     request: DiscoveryRequest,
-    registry: AgentRegistry = Depends(get_agent_registry),
+    registry: Annotated[AgentRegistry, Depends(get_agent_registry)],
 ) -> DiscoveryResult:
     """Run candidate discovery agent."""
     agent = registry.discovery_agent
@@ -657,7 +711,7 @@ async def discover_candidates(
 @router.post("/agents/segment", response_model=SegmentationResult, tags=["agents"])
 async def segment_pool(
     request: SegmentationRequest,
-    registry: AgentRegistry = Depends(get_agent_registry),
+    registry: Annotated[AgentRegistry, Depends(get_agent_registry)],
 ) -> SegmentationResult:
     """Run pool segmentation agent."""
     agent = registry.segmentation_agent
@@ -667,7 +721,7 @@ async def segment_pool(
 @router.post("/agents/score", response_model=ScoringResult, tags=["agents"])
 async def score_candidates(
     request: ScoringRequest,
-    registry: AgentRegistry = Depends(get_agent_registry),
+    registry: Annotated[AgentRegistry, Depends(get_agent_registry)],
 ) -> ScoringResult:
     """Run talent scoring agent."""
     agent = registry.scoring_agent
@@ -677,17 +731,19 @@ async def score_candidates(
 @router.post("/agents/outreach", response_model=OutreachResult, tags=["agents"])
 async def run_outreach(
     request: OutreachRequest,
-    registry: AgentRegistry = Depends(get_agent_registry),
+    registry: Annotated[AgentRegistry, Depends(get_agent_registry)],
 ) -> OutreachResult:
     """Run outreach agent."""
     agent = registry.outreach_agent
     return await agent.run(request)
 
 
-@router.post("/agents/optimize-engagement", response_model=EngagementOptimizationResult, tags=["agents"])
+@router.post(
+    "/agents/optimize-engagement", response_model=EngagementOptimizationResult, tags=["agents"]
+)
 async def optimize_engagement(
     request: EngagementOptimizationRequest,
-    registry: AgentRegistry = Depends(get_agent_registry),
+    registry: Annotated[AgentRegistry, Depends(get_agent_registry)],
 ) -> EngagementOptimizationResult:
     """Run engagement optimizer agent."""
     agent = registry.engagement_agent

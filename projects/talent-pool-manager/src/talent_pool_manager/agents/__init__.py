@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from talent_pool_manager.config import get_settings
 from talent_pool_manager.config.logging_config import get_logger
 from talent_pool_manager.models import (
-    Candidate,
     CandidateResponse,
     DiscoveryRequest,
     DiscoveryResult,
@@ -23,11 +21,13 @@ from talent_pool_manager.models import (
     OutreachResult,
     ScoringRequest,
     ScoringResult,
-    Segment,
-    SegmentResponse,
     SegmentationRequest,
     SegmentationResult,
+    SegmentResponse,
 )
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
 
 logger = get_logger(__name__)
 
@@ -113,7 +113,9 @@ class CandidateDiscoveryAgent(BaseAgent[DiscoveryRequest]):
             Discovery result with found candidates and metadata.
         """
         start_time = time.time()
-        logger.info("Starting candidate discovery", pool_id=str(request.pool_id), query=request.query)
+        logger.info(
+            "Starting candidate discovery", pool_id=str(request.pool_id), query=request.query
+        )
 
         # Build the discovery prompt
         system_prompt = self._build_system_prompt()
@@ -174,7 +176,9 @@ Additional filters: {filters_str}
 Analyze the search results and return the most relevant candidates. For each candidate,
 explain why they match the search criteria and provide a relevance assessment."""
 
-    def _parse_candidates(self, response: str, request: DiscoveryRequest) -> list[CandidateResponse]:
+    def _parse_candidates(
+        self, response: str, request: DiscoveryRequest
+    ) -> list[CandidateResponse]:
         """Parse LLM response into candidate objects."""
         # In production, this would parse structured LLM output
         # For now, return empty list as the actual parsing depends on LLM output format
@@ -424,7 +428,7 @@ Provide a total score (0-100) with detailed factor breakdowns."""
         """Build the user prompt for the scoring request."""
         return f"""Score the following candidates:
 
-Candidate IDs: {[str(id) for id in request.candidate_ids]}
+Candidate IDs: {[str(candidate_id) for candidate_id in request.candidate_ids]}
 Scoring criteria: {request.criteria}
 Custom weights: {request.weights}
 
@@ -508,7 +512,7 @@ For each candidate, generate a personalized message."""
 
 Campaign ID: {request.campaign_id}
 Template ID: {request.template_id}
-Candidate IDs: {[str(id) for id in request.candidate_ids]}
+Candidate IDs: {[str(candidate_id) for candidate_id in request.candidate_ids]}
 Personalization level: {request.personalization_level}
 Send immediately: {request.send_immediately}
 

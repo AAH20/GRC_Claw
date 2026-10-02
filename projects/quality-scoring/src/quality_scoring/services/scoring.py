@@ -231,22 +231,190 @@ class BenchmarkService:
     # Simulated benchmark data (in production, load from database)
     BENCHMARKS: dict[ContentType, dict[ScoreDimension, dict[str, float]]] = {
         ContentType.ARTICLE: {
-            ScoreDimension.READABILITY: {"mean": 65.0, "median": 67.0, "p25": 50.0, "p75": 80.0, "p90": 90.0, "sample_size": 1000},
-            ScoreDimension.ORIGINALITY: {"mean": 70.0, "median": 72.0, "p25": 55.0, "p75": 85.0, "p90": 92.0, "sample_size": 1000},
-            ScoreDimension.ENGAGEMENT: {"mean": 60.0, "median": 62.0, "p25": 45.0, "p75": 75.0, "p90": 85.0, "sample_size": 1000},
-            ScoreDimension.SEO: {"mean": 55.0, "median": 57.0, "p25": 40.0, "p75": 70.0, "p90": 82.0, "sample_size": 1000},
+            ScoreDimension.READABILITY: {
+
+                "mean": 65.0,
+
+                "median": 67.0,
+
+                "p25": 50.0,
+
+                "p75": 80.0,
+
+                "p90": 90.0,
+
+                "sample_size": 1000,
+
+            },
+            ScoreDimension.ORIGINALITY: {
+
+                "mean": 70.0,
+
+                "median": 72.0,
+
+                "p25": 55.0,
+
+                "p75": 85.0,
+
+                "p90": 92.0,
+
+                "sample_size": 1000,
+
+            },
+            ScoreDimension.ENGAGEMENT: {
+
+                "mean": 60.0,
+
+                "median": 62.0,
+
+                "p25": 45.0,
+
+                "p75": 75.0,
+
+                "p90": 85.0,
+
+                "sample_size": 1000,
+
+            },
+            ScoreDimension.SEO: {
+
+                "mean": 55.0,
+
+                "median": 57.0,
+
+                "p25": 40.0,
+
+                "p75": 70.0,
+
+                "p90": 82.0,
+
+                "sample_size": 1000,
+
+            }
         },
         ContentType.BLOG_POST: {
-            ScoreDimension.READABILITY: {"mean": 68.0, "median": 70.0, "p25": 52.0, "p75": 82.0, "p90": 91.0, "sample_size": 800},
-            ScoreDimension.ORIGINALITY: {"mean": 72.0, "median": 74.0, "p25": 58.0, "p75": 86.0, "p90": 93.0, "sample_size": 800},
-            ScoreDimension.ENGAGEMENT: {"mean": 65.0, "median": 67.0, "p25": 50.0, "p75": 78.0, "p90": 88.0, "sample_size": 800},
-            ScoreDimension.SEO: {"mean": 58.0, "median": 60.0, "p25": 42.0, "p75": 72.0, "p90": 84.0, "sample_size": 800},
+            ScoreDimension.READABILITY: {
+
+                "mean": 68.0,
+
+                "median": 70.0,
+
+                "p25": 52.0,
+
+                "p75": 82.0,
+
+                "p90": 91.0,
+
+                "sample_size": 800,
+
+            },
+            ScoreDimension.ORIGINALITY: {
+
+                "mean": 72.0,
+
+                "median": 74.0,
+
+                "p25": 58.0,
+
+                "p75": 86.0,
+
+                "p90": 93.0,
+
+                "sample_size": 800,
+
+            },
+            ScoreDimension.ENGAGEMENT: {
+
+                "mean": 65.0,
+
+                "median": 67.0,
+
+                "p25": 50.0,
+
+                "p75": 78.0,
+
+                "p90": 88.0,
+
+                "sample_size": 800,
+
+            },
+            ScoreDimension.SEO: {
+
+                "mean": 58.0,
+
+                "median": 60.0,
+
+                "p25": 42.0,
+
+                "p75": 72.0,
+
+                "p90": 84.0,
+
+                "sample_size": 800,
+
+            }
         },
         ContentType.GENERAL: {
-            ScoreDimension.READABILITY: {"mean": 60.0, "median": 62.0, "p25": 45.0, "p75": 75.0, "p90": 85.0, "sample_size": 2000},
-            ScoreDimension.ORIGINALITY: {"mean": 65.0, "median": 67.0, "p25": 50.0, "p75": 80.0, "p90": 90.0, "sample_size": 2000},
-            ScoreDimension.ENGAGEMENT: {"mean": 55.0, "median": 57.0, "p25": 40.0, "p75": 70.0, "p90": 82.0, "sample_size": 2000},
-            ScoreDimension.SEO: {"mean": 50.0, "median": 52.0, "p25": 35.0, "p75": 65.0, "p90": 78.0, "sample_size": 2000},
+            ScoreDimension.READABILITY: {
+
+                "mean": 60.0,
+
+                "median": 62.0,
+
+                "p25": 45.0,
+
+                "p75": 75.0,
+
+                "p90": 85.0,
+
+                "sample_size": 2000,
+
+            },
+            ScoreDimension.ORIGINALITY: {
+
+                "mean": 65.0,
+
+                "median": 67.0,
+
+                "p25": 50.0,
+
+                "p75": 80.0,
+
+                "p90": 90.0,
+
+                "sample_size": 2000,
+
+            },
+            ScoreDimension.ENGAGEMENT: {
+
+                "mean": 55.0,
+
+                "median": 57.0,
+
+                "p25": 40.0,
+
+                "p75": 70.0,
+
+                "p90": 82.0,
+
+                "sample_size": 2000,
+
+            },
+            ScoreDimension.SEO: {
+
+                "mean": 50.0,
+
+                "median": 52.0,
+
+                "p25": 35.0,
+
+                "p75": 65.0,
+
+                "p90": 78.0,
+
+                "sample_size": 2000,
+
+            }
         },
     }
 
@@ -267,11 +435,17 @@ class BenchmarkService:
         if score <= benchmark["p25"]:
             return 25.0 * (score / benchmark["p25"]) if benchmark["p25"] > 0 else 0.0
         if score <= benchmark["median"]:
-            return 25.0 + 25.0 * ((score - benchmark["p25"]) / (benchmark["median"] - benchmark["p25"]))
+            return (
+        25.0 + 25.0 * ((score - benchmark["p25"]) / (benchmark["median"] - benchmark["p25"]))
+    )
         if score <= benchmark["p75"]:
-            return 50.0 + 25.0 * ((score - benchmark["median"]) / (benchmark["p75"] - benchmark["median"]))
+            return (
+        50.0 + 25.0 * ((score - benchmark["median"]) / (benchmark["p75"] - benchmark["median"]))
+    )
         if score <= benchmark["p90"]:
-            return 75.0 + 15.0 * ((score - benchmark["p75"]) / (benchmark["p90"] - benchmark["p75"]))
+            return (
+        75.0 + 15.0 * ((score - benchmark["p75"]) / (benchmark["p90"] - benchmark["p75"]))
+    )
         return min(99.0, 90.0 + 9.0 * ((score - benchmark["p90"]) / (100.0 - benchmark["p90"])))
 
     def compare(
@@ -297,7 +471,9 @@ class BenchmarkService:
         percentiles: list[float] = []
 
         for dim_score in dimension_scores:
-            bench = type_benchmarks.get(dim_score.dimension, type_benchmarks[ScoreDimension.READABILITY])
+            bench = (
+        type_benchmarks.get(dim_score.dimension, type_benchmarks[ScoreDimension.READABILITY])
+    )
             percentile = self._compute_percentile(dim_score.score, bench)
             percentiles.append(percentile)
 
@@ -318,13 +494,22 @@ class BenchmarkService:
 
         # Generate summary
         if overall_percentile >= 75:
-            summary = f"Content performs in the top {100 - overall_percentile:.0f}% for {content_type.value} content."
+            summary = (
+                f"Content performs in the top {100 - overall_percentile:.0f}% "
+                f"for {content_type.value} content."
+            )
         elif overall_percentile >= 50:
             summary = f"Content performs above average for {content_type.value} content."
         elif overall_percentile >= 25:
-            summary = f"Content performs below average for {content_type.value} content. Improvements recommended."
+            summary = (
+                f"Content performs below average for {content_type.value} content. "
+                f"Improvements recommended."
+            )
         else:
-            summary = f"Content performs in the bottom quartile for {content_type.value} content. Significant improvements needed."
+            summary = (
+                f"Content performs in the bottom quartile for {content_type.value} content. "
+                f"Significant improvements needed."
+            )
 
         from datetime import datetime
 

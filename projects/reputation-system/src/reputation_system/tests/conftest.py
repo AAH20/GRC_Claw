@@ -1,6 +1,6 @@
 """Test configuration and fixtures."""
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,7 +30,7 @@ def client(settings: Settings) -> TestClient:
 @pytest.fixture
 async def async_client(settings: Settings) -> AsyncGenerator:
     """Create async test client."""
-    from httpx import AsyncClient, ASGITransport
+    from httpx import ASGITransport, AsyncClient
 
     app = create_app(settings=settings)
     transport = ASGITransport(app=app)

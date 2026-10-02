@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from candidate_matcher.config.exceptions import LLMConnectionError
 from candidate_matcher.config.logging_config import get_logger
 from candidate_matcher.config.settings import Settings, get_settings
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
+    from langchain_core.messages import BaseMessage
 
 logger = get_logger(__name__)
 
@@ -23,8 +25,8 @@ class BaseLLMClient(ABC):
     async def generate(
         self,
         messages: list[BaseMessage],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> str:
         """Generate a response from the LLM.
 
@@ -59,7 +61,7 @@ class BaseLLMClient(ABC):
 class LangChainLLMClient(BaseLLMClient):
     """LLM client backed by LangChain chat models."""
 
-    def __init__(self, settings: Optional[Settings] = None) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
         """Initialize the LLM client.
 
         Args:
@@ -96,8 +98,8 @@ class LangChainLLMClient(BaseLLMClient):
     async def generate(
         self,
         messages: list[BaseMessage],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> str:
         """Generate a response from the LLM.
 
@@ -155,7 +157,7 @@ class LangChainLLMClient(BaseLLMClient):
 class MockLLMClient(BaseLLMClient):
     """Mock LLM client for testing and development."""
 
-    def __init__(self, responses: Optional[list[str]] = None) -> None:
+    def __init__(self, responses: list[str] | None = None) -> None:
         """Initialize the mock client.
 
         Args:
@@ -166,9 +168,9 @@ class MockLLMClient(BaseLLMClient):
 
     async def generate(
         self,
-        messages: list[BaseMessage],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+        messages: list[BaseMessage],  # noqa: ARG002
+        temperature: float | None = None,  # noqa: ARG002
+        max_tokens: int | None = None,  # noqa: ARG002
     ) -> str:
         """Return a mock response.
 
@@ -186,8 +188,8 @@ class MockLLMClient(BaseLLMClient):
 
     async def generate_structured(
         self,
-        messages: list[BaseMessage],
-        schema: dict[str, Any],
+        messages: list[BaseMessage],  # noqa: ARG002
+        schema: dict[str, Any],  # noqa: ARG002
     ) -> dict[str, Any]:
         """Return a mock structured response.
 
@@ -199,10 +201,17 @@ class MockLLMClient(BaseLLMClient):
             A mock structured response.
         """
         self._call_count += 1
-        return {"result": "mock", "confidence": 0.95}
+        return {
+            "summary": "Mock explanation summary",
+            "strengths": ["Mock strength 1", "Mock strength 2"],
+            "weaknesses": ["Mock weakness 1"],
+            "key_factors": [{"factor": "Mock factor", "impact": "Mock impact"}],
+            "suggestions": ["Mock suggestion 1"],
+            "confidence": 0.95,
+        }
 
 
-def create_llm_client(settings: Optional[Settings] = None) -> BaseLLMClient:
+def create_llm_client(settings: Settings | None = None) -> BaseLLMClient:
     """Factory function to create an LLM client.
 
     Args:

@@ -13,7 +13,15 @@ router = APIRouter()
 
 # In-memory appeal store (replace with database in production)
 _appeals: dict[UUID, Appeal] = {}
-_appeal_agent = AppealHandlerAgent()
+_appeal_agent: AppealHandlerAgent | None = None
+
+
+def _get_appeal_agent() -> AppealHandlerAgent:
+    """Lazy-initialize the appeal handler agent."""
+    global _appeal_agent
+    if _appeal_agent is None:
+        _appeal_agent = AppealHandlerAgent()
+    return _appeal_agent
 
 
 @router.post("/appeals", response_model=Appeal, status_code=status.HTTP_201_CREATED)
@@ -87,7 +95,7 @@ async def review_appeal(appeal_id: UUID, reviewer_notes: str = "") -> Appeal:
         "evidence": appeal.evidence,
     }
 
-    result = await _appeal_agent.moderate(appeal.reason, str(appeal_id), context)
+    result = await _get_appeal_agent().moderate(appeal.reason, str(appeal_id), context)
 
     # Map agent action to appeal status
     action_to_status = {

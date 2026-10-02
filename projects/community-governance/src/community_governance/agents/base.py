@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
-
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.messages import BaseMessage
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from community_governance.config.logging_config import get_logger
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+    from langchain_core.messages import BaseMessage
+
 
 logger = get_logger(__name__)
 

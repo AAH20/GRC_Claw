@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import Field
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 
 from moderation_queue.agents.auto_moderation import (
     AutoModerationAgent,
@@ -26,6 +26,9 @@ from moderation_queue.agents.queue_optimizer import (
 )
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import AgentResponse, ModerationItem
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -52,7 +55,9 @@ class RouteRequest(BaseModel):
     item_id: UUID = Field(..., description="Item to route")
     available_reviewers: list[dict] = Field(default_factory=list, description="Available reviewers")
     queue_info: dict = Field(default_factory=dict, description="Queue information")
-    reviewer_workloads: dict[str, int] = Field(default_factory=dict, description="Reviewer workloads")
+    reviewer_workloads: dict[str, int] = Field(
+        default_factory=dict, description="Reviewer workloads"
+    )
 
 
 class OptimizeRequest(BaseModel):
@@ -147,7 +152,7 @@ def _get_escalation() -> EscalationAgent:
 )
 async def score_priority(
     request: ScoreRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> AgentResponse:
     """Score a moderation item's priority using AI.
 
@@ -183,7 +188,7 @@ async def score_priority(
 )
 async def auto_moderate(
     request: AutoModerateRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> AgentResponse:
     """Auto-moderate a content item using AI.
 
@@ -218,7 +223,7 @@ async def auto_moderate(
 )
 async def route_to_human(
     request: RouteRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> AgentResponse:
     """Route an item to a human reviewer using AI.
 
@@ -254,7 +259,7 @@ async def route_to_human(
 )
 async def optimize_queues(
     request: OptimizeRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> AgentResponse:
     """Optimize moderation queues using AI.
 
@@ -285,7 +290,7 @@ async def optimize_queues(
 )
 async def escalate_item(
     request: EscalateRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> AgentResponse:
     """Escalate a moderation item using AI.
 

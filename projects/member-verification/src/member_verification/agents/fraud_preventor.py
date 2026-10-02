@@ -7,7 +7,7 @@ from typing import Any
 from langchain_core.language_models import BaseLanguageModel
 
 from member_verification.agents.base import AgentConfig, BaseAgent
-from member_verification.models.schemas import FraudReport, FraudType, RiskLevel
+from member_verification.models.schemas import RiskLevel
 
 
 class FraudPreventorAgent(BaseAgent):

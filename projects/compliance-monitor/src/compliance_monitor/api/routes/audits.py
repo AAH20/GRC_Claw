@@ -6,9 +6,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from compliance_monitor.agents import AuditReporterAgent
 from compliance_monitor.api.dependencies import get_audit_reporter
 from compliance_monitor.api.store import store
-from compliance_monitor.agents import AuditReporterAgent
 from compliance_monitor.models.schemas import AuditReport, AuditRequest
 
 router = APIRouter()
@@ -27,7 +27,7 @@ async def list_audits() -> list[AuditReport]:
 @router.post("", response_model=AuditReport, status_code=status.HTTP_201_CREATED)
 async def generate_audit(
     data: AuditRequest,
-    agent: AuditReporterAgent = Depends(get_audit_reporter),
+    agent: AuditReporterAgent = Depends(get_audit_reporter)  # noqa: B008,
 ) -> AuditReport:
     """Generate a new audit report.
 

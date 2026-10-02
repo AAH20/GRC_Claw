@@ -1,7 +1,8 @@
 """Base integration class for external platforms."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
+
 import httpx
 import structlog
 
@@ -20,7 +21,7 @@ class BaseIntegration(ABC):
         """
         self.api_key = api_key
         self.base_url = base_url
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client.

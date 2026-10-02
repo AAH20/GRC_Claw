@@ -13,7 +13,7 @@ health_router = APIRouter()
 
 @health_router.get("/health", response_model=HealthResponse)
 async def health_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> HealthResponse:
     """Health check endpoint.
 
@@ -32,7 +32,7 @@ async def health_check(
 
 @health_router.get("/ready")
 async def readiness_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> JSONResponse:
     """Readiness probe for Kubernetes.
 

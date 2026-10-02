@@ -6,9 +6,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from compliance_monitor.agents import PolicyTrackerAgent
 from compliance_monitor.api.dependencies import get_policy_tracker
 from compliance_monitor.api.store import store
-from compliance_monitor.agents import PolicyTrackerAgent
 from compliance_monitor.models.schemas import Policy, PolicyCreate
 
 router = APIRouter()
@@ -27,7 +27,7 @@ async def list_policies() -> list[Policy]:
 @router.post("", response_model=Policy, status_code=status.HTTP_201_CREATED)
 async def create_policy(
     data: PolicyCreate,
-    agent: PolicyTrackerAgent = Depends(get_policy_tracker),
+    agent: PolicyTrackerAgent = Depends(get_policy_tracker)  # noqa: B008,
 ) -> Policy:
     """Create a new compliance policy.
 

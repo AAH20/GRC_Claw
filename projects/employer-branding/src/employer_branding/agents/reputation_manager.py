@@ -13,7 +13,6 @@ from employer_branding.models import (
     ReputationAnalysisRequest,
     ReputationLevel,
     ReputationScore,
-    ReviewSource,
 )
 
 

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from candidate_matcher.agents.base import BaseAgent
 from candidate_matcher.config.logging_config import get_logger
-from candidate_matcher.models.schemas import Candidate, JobPosting
+
+if TYPE_CHECKING:
+    from candidate_matcher.models.schemas import Candidate, JobPosting
 
 logger = get_logger(__name__)
 
@@ -18,7 +20,7 @@ class CultureFitAssessorAgent(BaseAgent[dict[str, Any]]):
     a candidate and the company culture described in the job posting.
     """
 
-    def __init__(self, llm_client: Optional[Any] = None) -> None:
+    def __init__(self, llm_client: Any | None = None) -> None:
         """Initialize the culture fit assessor agent.
 
         Args:
@@ -118,7 +120,13 @@ Provide a JSON response with:
                         "work_style_compatibility": {"type": "string"},
                         "summary": {"type": "string"},
                     },
-                    "required": ["fit_score", "aligned_values", "potential_conflicts", "work_style_compatibility", "summary"],
+                    "required": [
+                        "fit_score",
+                        "aligned_values",
+                        "potential_conflicts",
+                        "work_style_compatibility",
+                        "summary",
+                    ],
                 },
             )
         except Exception as e:

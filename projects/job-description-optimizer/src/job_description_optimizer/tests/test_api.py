@@ -5,8 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from job_description_optimizer.models import JobDescription
-
 
 class TestHealthEndpoint:
     """Tests for health endpoint."""
@@ -139,7 +137,10 @@ class TestOptimizeEndpoints:
         """Test full optimization endpoint."""
         with patch("job_description_optimizer.api.routes.get_agents") as mock_get_agents:
             mock_agents = {}
-            for name in ["bias_remover", "seo_optimizer", "ats_compatibility", "tone_analyzer", "keyword_optimizer"]:
+            for name in [
+                "bias_remover", "seo_optimizer", "ats_compatibility",
+                "tone_analyzer", "keyword_optimizer",
+            ]:
                 mock_agent = MagicMock()
                 mock_agent.analyze = AsyncMock(return_value=MagicMock(
                     original_text=sample_jd["description"],

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from skills_assessor.config.settings import Settings
-from skills_assessor.models.schemas import Skill, SkillCategory
+from skills_assessor.models.schemas import Skill
 from skills_assessor.services.assessment_service import AssessmentService
 
 

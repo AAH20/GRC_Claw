@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.messages import BaseMessage
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+    from langchain_core.messages import BaseMessage
 
 from moderation_queue.config import Settings, get_settings
 
@@ -52,7 +53,7 @@ class LangChainIntegration:
 
         model = ChatOpenAI(
             model=model_name or self.settings.langchain_model,
-            temperature=temperature if temperature is not None else self.settings.langchain_temperature,
+            temperature=temperature if temperature is not None else self.settings.langchain_temperature,  # noqa: E501
             max_tokens=max_tokens,
             api_key=self.settings.openai_api_key,
         )

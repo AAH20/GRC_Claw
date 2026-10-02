@@ -1,10 +1,11 @@
 """Test configuration and fixtures."""
-
 from __future__ import annotations
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from community_governance.api.dependencies import set_agents, set_metrics
+from community_governance.integrations import MetricsIntegration
 from community_governance.main import create_app
 
 
@@ -12,6 +13,30 @@ from community_governance.main import create_app
 def app():
     """Create a test application instance."""
     return create_app()
+
+
+@pytest.fixture(autouse=True)
+async def setup_agents(app):
+    """Initialize agents and metrics for testing.
+
+    ASGITransport does not trigger lifespan events, so we must
+    manually initialize agents and metrics here.
+    """
+    from community_governance.main import create_agents
+
+    agents = create_agents()
+    for agent in agents.values():
+        await agent.initialize()
+    set_agents(agents)
+
+    metrics_integration = MetricsIntegration(enabled=False)
+    set_metrics(metrics_integration)
+
+    yield
+
+    # Cleanup
+    set_agents({})
+    set_metrics(None)
 
 
 @pytest.fixture

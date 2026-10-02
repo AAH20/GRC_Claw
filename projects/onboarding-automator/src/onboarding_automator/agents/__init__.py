@@ -8,14 +8,18 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from onboarding_automator.config.settings import Settings
+    from langchain_core.language_models import BaseChatModel
 from uuid import UUID
 
-from langchain_core.language_models import BaseChatModel
+
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from onboarding_automator.config.settings import Settings
+
 from onboarding_automator.models import (
     AgentResponse,
     ComplianceCheck,
@@ -28,7 +32,6 @@ from onboarding_automator.models import (
     OnboardingPlanCreate,
     OnboardingStatus,
     Progress,
-    ProgressUpdate,
     Task,
     TaskCreate,
     TaskStatus,
@@ -61,7 +64,7 @@ class BaseAgent(ABC):
             settings: Application configuration settings.
         """
         self.settings = settings
-        self._llm: Optional[BaseChatModel] = None
+        self._llm: BaseChatModel | None = None
 
     @property
     def llm(self) -> BaseChatModel:
@@ -136,8 +139,8 @@ Always respond in a structured, professional manner. Provide clear, actionable o
         start_time: float,
         success: bool,
         message: str,
-        data: Optional[dict[str, Any]] = None,
-        errors: Optional[list[str]] = None,
+        data: dict[str, Any] | None = None,
+        errors: list[str] | None = None,
     ) -> AgentResponse:
         """Build an AgentResponse with timing information.
 
@@ -173,7 +176,7 @@ class TaskGeneratorAgent(BaseAgent):
     async def execute(
         self,
         plan_create: OnboardingPlanCreate,
-        existing_tasks: Optional[list[Task]] = None,
+        existing_tasks: list[Task] | None = None,
     ) -> AgentResponse:
         """Generate onboarding tasks for a new employee.
 
@@ -218,7 +221,7 @@ Start Date: {employee.start_date.isoformat()}
 
 Provide the tasks in a structured format."""
 
-            response_text = await self._invoke_llm(system_prompt, user_message)
+            await self._invoke_llm(system_prompt, user_message)
 
             # Parse the LLM response into TaskCreate objects
             tasks = self._parse_tasks_from_response(response_text, plan_create)
@@ -311,7 +314,7 @@ class DocumentCollectorAgent(BaseAgent):
     async def execute(
         self,
         document_create: DocumentCreate,
-        file_content: Optional[bytes] = None,
+        file_content: bytes | None = None,
     ) -> AgentResponse:
         """Process a document submission.
 
@@ -342,7 +345,7 @@ Task ID: {document_create.task_id or 'N/A'}
 
 Validate the document and determine its status."""
 
-            response_text = await self._invoke_llm(system_prompt, user_message)
+            await self._invoke_llm(system_prompt, user_message)
 
             document = Document(
                 plan_id=document_create.plan_id,
@@ -427,7 +430,7 @@ class ProgressTrackerAgent(BaseAgent):
         self,
         plan: OnboardingPlan,
         tasks: list[Task],
-        progress: Optional[Progress] = None,
+        progress: Progress | None = None,
     ) -> AgentResponse:
         """Calculate and update onboarding progress.
 
@@ -575,7 +578,7 @@ class ComplianceCheckerAgent(BaseAgent):
         self,
         check_create: ComplianceCheckCreate,
         plan: OnboardingPlan,
-        documents: Optional[list[Document]] = None,
+        documents: list[Document] | None = None,
     ) -> AgentResponse:
         """Run a compliance check for an onboarding plan.
 
@@ -623,7 +626,7 @@ Employment Type: {plan.employee.employment_type}
 
 Determine compliance status and provide details."""
 
-            response_text = await self._invoke_llm(system_prompt, user_message)
+            await self._invoke_llm(system_prompt, user_message)
 
             # Determine status based on response content
             status = ComplianceStatus.PASS
@@ -713,7 +716,7 @@ class WelcomeAgent(BaseAgent):
         self,
         message_create: WelcomeMessageCreate,
         plan: OnboardingPlan,
-        tasks: Optional[list[Task]] = None,
+        tasks: list[Task] | None = None,
     ) -> AgentResponse:
         """Generate a welcome message for a new employee.
 
@@ -766,7 +769,11 @@ Write the complete welcome message with subject line."""
 
             # Extract subject and body from response
             lines = message_text.strip().split("\n", 1)
-            subject = lines[0].replace("Subject: ", "").strip() if lines else f"Welcome to the team, {plan.employee.full_name}!"
+            subject = (
+                lines[0].replace("Subject: ", "").strip()
+                if lines
+                else f"Welcome to the team, {plan.employee.full_name}!"
+            )
             body = lines[1].strip() if len(lines) > 1 else message_text
 
             welcome = WelcomeMessage(

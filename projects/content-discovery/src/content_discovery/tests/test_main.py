@@ -20,7 +20,7 @@ def test_create_app_with_custom_settings() -> None:
     """Test create_app with custom settings."""
     settings = Settings(
         app_name="custom-app",
-        version="1.2.3",
+        app_version="1.2.3",
         debug=True,
     )
     app = create_app(settings=settings)
@@ -31,7 +31,7 @@ def test_create_app_with_custom_settings() -> None:
 def test_app_has_routes() -> None:
     """Test that app has expected routes."""
     app = create_app()
-    routes = [route.path for route in app.routes]
+    routes = [route.path for route in app.routes if hasattr(route, "path")]
 
     assert "/health" in routes
     assert "/ready" in routes

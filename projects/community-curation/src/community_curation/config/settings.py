@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development", description="Deployment environment")
 
     # Server
-    host: str = Field(default="0.0.0.0", description="Server host")
+    host: str = Field(default="127.0.0.1", description="Server host")
     port: int = Field(default=8000, description="Server port")
     workers: int = Field(default=1, description="Number of worker processes")
 
@@ -53,7 +53,9 @@ class Settings(BaseSettings):
     hackernews_api_url: str = Field(
         default="https://hacker-news.firebaseio.com", description="Hacker News API base URL"
     )
-    twitter_api_url: str = Field(default="https://api.twitter.com", description="Twitter API base URL")
+    twitter_api_url: str = Field(
+        default="https://api.twitter.com", description="Twitter API base URL"
+    )
 
     # Rate limiting
     rate_limit_requests: int = Field(default=100, description="Requests per minute per client")

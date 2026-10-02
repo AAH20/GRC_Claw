@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from skills_assessor.agents.gap_analyzer import GapAnalyzerAgent
 from skills_assessor.agents.learning_path_recommender import LearningPathRecommenderAgent
 from skills_assessor.agents.proficiency_scorer import ProficiencyScorerAgent
 from skills_assessor.agents.skill_extractor import SkillExtractorAgent
 from skills_assessor.agents.skill_validator import SkillValidatorAgent
-from skills_assessor.config.settings import Settings
 from skills_assessor.models.schemas import (
     ExtractionRequest,
     ExtractionResponse,
@@ -22,9 +20,13 @@ from skills_assessor.models.schemas import (
     ScoringRequest,
     ScoringResponse,
     Skill,
-    SkillAssessment,
     SkillValidationResult,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from skills_assessor.config.settings import Settings
 
 
 class AssessmentService:

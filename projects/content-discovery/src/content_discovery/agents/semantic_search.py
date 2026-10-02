@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from langchain_core.tools import tool
 
 from content_discovery.agents.base import BaseAgent
-from content_discovery.integrations.vector_store import VectorStoreClient
 from content_discovery.models import SearchRequest, SearchResponse, SearchResult
+
+if TYPE_CHECKING:
+    from content_discovery.integrations.vector_store import VectorStoreClient
 
 logger = structlog.get_logger()
 
@@ -119,7 +121,7 @@ class SemanticSearchAgent(BaseAgent[SearchRequest, SearchResponse]):
             list[SearchResult]: Raw search results.
         """
         try:
-            raw = self.vector_store.search(
+            raw = await self.vector_store.search(
                 query=request.query,
                 limit=request.limit * 3,  # Fetch extra for re-ranking
                 filters=request.filters,

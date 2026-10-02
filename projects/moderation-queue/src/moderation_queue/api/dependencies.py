@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING
 
 import structlog
-from fastapi import Request
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from fastapi import Request
 
 from moderation_queue.config import Settings, get_settings
 

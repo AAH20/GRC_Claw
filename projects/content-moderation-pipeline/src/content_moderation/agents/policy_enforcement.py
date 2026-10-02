@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
-
-from langchain_core.messages import HumanMessage, SystemMessage
 
 from content_moderation.agents.base import BaseModerationAgent
 from content_moderation.models.schemas import ContentType, Policy, PolicyRule

@@ -3,22 +3,27 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from access_control.agents.base import AgentContext, BaseAgent
-from access_control.config import Settings
-from access_control.models.enums import RoleStatus
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
 from access_control.models.schemas import Permission, Role, RoleCreate, RoleUpdate
 
 
 class RoleManagerInput(BaseModel):
     """Input for the role manager agent."""
 
-    operation: str = Field(..., description="Operation to perform: create, update, delete, validate, suggest")
+    operation: str = Field(
+        ..., description="Operation to perform: create, update, delete, validate, suggest"
+    )
     role_data: dict[str, Any] = Field(default_factory=dict)
     existing_roles: list[dict[str, Any]] = Field(default_factory=list)
     context: dict[str, Any] = Field(default_factory=dict)
@@ -91,10 +96,7 @@ Respond with a JSON object containing: success, role, message, suggestions, vali
 
         response = await agent.ainvoke(input_data)
 
-        if hasattr(response, "content"):
-            content = response.content
-        else:
-            content = str(response)
+        content = response.content if hasattr(response, "content") else str(response)
 
         try:
             parsed = json.loads(content)

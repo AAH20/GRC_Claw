@@ -6,8 +6,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from interview_scheduler.models.interview import Interview
-from interview_scheduler.models.timeslot import TimeSlot, SlotStatus
+from interview_scheduler.models.timeslot import SlotStatus, TimeSlot
 
 logger = logging.getLogger(__name__)
 

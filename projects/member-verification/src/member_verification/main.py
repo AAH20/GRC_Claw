@@ -47,7 +47,10 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="Member Verification Service",
-        description="AI-powered community member verification with identity verification, trust scoring, and fraud prevention",
+        description=(
+            "AI-powered community member verification with identity verification, "
+            "trust scoring, and fraud prevention"
+        ),
         version=settings.app_version,
         debug=settings.debug,
         lifespan=lifespan,

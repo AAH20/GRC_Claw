@@ -69,7 +69,7 @@ class Storage:
         try:
             with open(file_path) as f:
                 return json.load(f)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.error("Failed to load data", collection=collection, error=str(exc))
             return None
 

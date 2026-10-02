@@ -47,7 +47,9 @@ class BaseIntegration(ABC):
         ...
 
     @abstractmethod
-    async def search(self, query: str, max_results: int = 50, **kwargs: Any) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, max_results: int = 50, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """Search for candidates on the external platform."""
         ...
 
@@ -71,7 +73,9 @@ class LinkedInIntegration(BaseIntegration):
         }
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
-    async def search(self, query: str, max_results: int = 50, **kwargs: Any) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, max_results: int = 50, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """Search for candidates on LinkedIn.
 
         Args:
@@ -129,7 +133,9 @@ class GitHubIntegration(BaseIntegration):
         }
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
-    async def search(self, query: str, max_results: int = 50, **kwargs: Any) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, max_results: int = 50, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """Search for developers on GitHub.
 
         Args:
@@ -189,7 +195,9 @@ class IndeedIntegration(BaseIntegration):
         }
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
-    async def search(self, query: str, max_results: int = 50, **kwargs: Any) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, max_results: int = 50, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """Search for job seekers on Indeed.
 
         Args:
@@ -285,7 +293,7 @@ class IntegrationManager:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         output: dict[str, list[dict[str, Any]]] = {}
-        for source, result in zip(source_names, results):
+        for source, result in zip(source_names, results, strict=False):
             if isinstance(result, Exception):
                 logger.error("Search failed", source=source, error=str(result))
                 output[source] = []

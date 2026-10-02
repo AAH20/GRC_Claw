@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import structlog
 from typing import Any
 
 import httpx
+import structlog
 
-from escalation_workflow.config import Settings
 from escalation_workflow.integrations.notifications import NotificationChannel
 
 logger = structlog.get_logger(__name__)

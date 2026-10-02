@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from candidate_matcher.agents.base import BaseAgent
 from candidate_matcher.config.logging_config import get_logger
@@ -24,7 +24,7 @@ class MatchExplainerAgent(BaseAgent[MatchExplanation]):
     a particular way, including strengths, weaknesses, and suggestions.
     """
 
-    def __init__(self, llm_client: Optional[Any] = None) -> None:
+    def __init__(self, llm_client: Any | None = None) -> None:
         """Initialize the match explainer agent.
 
         Args:
@@ -45,7 +45,7 @@ class MatchExplainerAgent(BaseAgent[MatchExplanation]):
         candidate: Candidate,
         job: JobPosting,
         match_result: MatchResult,
-        skills_gap: Optional[SkillsGap] = None,
+        skills_gap: SkillsGap | None = None,
     ) -> MatchExplanation:
         """Generate an explanation for a match result.
 
@@ -95,7 +95,14 @@ Provide a JSON response with:
                         "suggestions": {"type": "array", "items": {"type": "string"}},
                         "confidence": {"type": "number"},
                     },
-                    "required": ["summary", "strengths", "weaknesses", "key_factors", "suggestions", "confidence"],
+                    "required": [
+                        "summary",
+                        "strengths",
+                        "weaknesses",
+                        "key_factors",
+                        "suggestions",
+                        "confidence",
+                    ],
                 },
             )
         except Exception as e:
@@ -117,7 +124,7 @@ Provide a JSON response with:
         candidate: Candidate,
         job: JobPosting,
         match_result: MatchResult,
-        skills_gap: Optional[SkillsGap],
+        skills_gap: SkillsGap | None,
     ) -> str:
         """Build context string for the LLM prompt.
 
@@ -157,7 +164,7 @@ Provide a JSON response with:
     def _generate_fallback_explanation(
         self,
         match_result: MatchResult,
-        skills_gap: Optional[SkillsGap],
+        skills_gap: SkillsGap | None,
     ) -> dict[str, Any]:
         """Generate a fallback explanation when LLM fails.
 
@@ -198,7 +205,8 @@ Provide a JSON response with:
         if match_result.culture_score < 0.5:
             weaknesses.append("Potential cultural misalignment")
         if skills_gap and skills_gap.missing_skills:
-            weaknesses.append(f"Missing skills: {', '.join(s['skill_name'] for s in skills_gap.missing_skills[:3])}")
+            missing = ", ".join(s["skill_name"] for s in skills_gap.missing_skills[:3])
+            weaknesses.append(f"Missing skills: {missing}")
         if not weaknesses:
             weaknesses.append("Minor areas for development")
 
@@ -207,7 +215,10 @@ Provide a JSON response with:
             "strengths": strengths,
             "weaknesses": weaknesses,
             "key_factors": [
-                {"factor": "Semantic Similarity", "impact": f"Score: {match_result.semantic_score:.2f}"},
+                {
+                    "factor": "Semantic Similarity",
+                    "impact": f"Score: {match_result.semantic_score:.2f}",
+                },
                 {"factor": "Skills Match", "impact": f"Score: {match_result.skills_score:.2f}"},
                 {"factor": "Experience", "impact": f"Score: {match_result.experience_score:.2f}"},
                 {"factor": "Culture Fit", "impact": f"Score: {match_result.culture_score:.2f}"},

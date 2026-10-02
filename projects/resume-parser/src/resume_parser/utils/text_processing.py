@@ -5,11 +5,13 @@ from __future__ import annotations
 import hashlib
 import re
 import uuid
-from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = structlog.get_logger(__name__)
 

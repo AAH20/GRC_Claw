@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class SlotStatus(str, Enum):
+class SlotStatus(StrEnum):
     """Time slot availability status."""
 
     AVAILABLE = "available"

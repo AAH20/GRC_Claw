@@ -1,12 +1,14 @@
 """Engagement Analyzer Agent using LangChain DeepAgents."""
 
+from datetime import datetime
 from typing import Any
+
 import structlog
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.tools import tool
 
 from creator_analytics.agents.base import BaseCreatorAgent
-from creator_analytics.models.engagement import EngagementReport, EngagementMetrics, EngagementType
+from creator_analytics.models.engagement import EngagementMetrics, EngagementReport, EngagementType
 
 logger = structlog.get_logger(__name__)
 
@@ -234,37 +236,38 @@ class EngagementAnalyzerAgent(BaseCreatorAgent):
             logger.info(f"Analyzing engagement for creator {creator_id}")
 
             # Calculate engagement rate
-            engagement_rate = calculate_engagement_rate(
-                total_interactions, total_followers, content_count
-            )
+            engagement_rate = calculate_engagement_rate.invoke({
+                "total_interactions": total_interactions, "total_followers": total_followers, "content_count": content_count
+            })
 
             # Analyze by type
-            type_analysis = analyze_engagement_by_type(interactions_by_type)
+            # Analyze by type (result used implicitly)
+            analyze_engagement_by_type.invoke({"interactions": interactions_by_type})
 
             # Calculate loyalty score
-            loyalty_score = calculate_loyalty_score(
-                input_data.get("repeat_engagers", 0),
-                input_data.get("total_engagers", 0),
-                input_data.get("average_engagement_frequency", 0.0),
-            )
+            loyalty_score = calculate_loyalty_score.invoke({
+                "repeat_engagers": input_data.get("repeat_engagers", 0),
+                "total_engagers": input_data.get("total_engagers", 0),
+                "average_engagement_frequency": input_data.get("average_engagement_frequency", 0.0),
+            })
 
             # Identify peak times
-            peak_times = identify_peak_engagement_times(
-                input_data.get("hourly_engagement", {})
-            )
+            peak_times = identify_peak_engagement_times.invoke({
+                "hourly_engagement": input_data.get("hourly_engagement", {})
+            })
 
             # Analyze sentiment
-            sentiment_dist = analyze_sentiment_distribution(
-                input_data.get("sentiments", {})
-            )
+            sentiment_dist = analyze_sentiment_distribution.invoke({
+                "sentiments": input_data.get("sentiments", {})
+            })
 
             # Calculate community health
-            community_health = calculate_community_health(
-                engagement_rate,
-                input_data.get("response_rate", 0.0),
-                input_data.get("sentiment_score", 0.0),
-                input_data.get("growth_rate", 0.0),
-            )
+            community_health = calculate_community_health.invoke({
+                "engagement_rate": engagement_rate,
+                "response_rate": input_data.get("response_rate", 0.0),
+                "sentiment_score": input_data.get("sentiment_score", 0.0),
+                "growth_rate": input_data.get("growth_rate", 0.0),
+            })
 
             # Build metrics
             metrics = EngagementMetrics(
@@ -288,16 +291,22 @@ class EngagementAnalyzerAgent(BaseCreatorAgent):
                     f"Community health: {community_health}. "
                     f"Provide insights and recommendations."
                 )
-                insights = agent_result.get("insights", []) if isinstance(agent_result, dict) else []
-                recommendations = agent_result.get("recommendations", []) if isinstance(agent_result, dict) else []
+                insights = (
+                    agent_result.get("insights", []) if isinstance(agent_result, dict) else []
+                )
+                recommendations = (
+                    agent_result.get("recommendations", [])
+                    if isinstance(agent_result, dict)
+                    else []
+                )
             else:
                 insights = []
                 recommendations = []
 
             report = EngagementReport(
                 creator_id=creator_id,
-                report_period_start=input_data.get("report_period_start", ""),
-                report_period_end=input_data.get("report_period_end", ""),
+                report_period_start=input_data.get("report_period_start") or datetime.utcnow(),
+                report_period_end=input_data.get("report_period_end") or datetime.utcnow(),
                 metrics=metrics,
                 top_engaging_content=input_data.get("top_engaging_content", []),
                 audience_loyalty_score=loyalty_score,

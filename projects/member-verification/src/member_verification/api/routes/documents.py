@@ -10,7 +10,9 @@ from member_verification.models.schemas import DocumentVerificationResult, Docum
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 
-@router.post("/verify", response_model=DocumentVerificationResult, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/verify", response_model=DocumentVerificationResult, status_code=status.HTTP_201_CREATED
+)
 async def verify_document(
     request: DocumentVerifyRequest,
     api_key: str = Depends(verify_api_key),

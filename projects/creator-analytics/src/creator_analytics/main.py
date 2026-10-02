@@ -1,7 +1,7 @@
 """Main application entry point for Creator Analytics."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI
@@ -36,7 +36,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
-        description="Creator analytics platform with agentic AI for audience analysis, content performance, and revenue tracking",
+        description="Creator analytics platform with agentic AI for audience analysis, content performance, and revenue tracking",  # noqa: E501
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,

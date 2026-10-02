@@ -6,6 +6,7 @@ and engagement metrics to determine eligibility for tier upgrades.
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -97,7 +98,7 @@ class TierEvaluatorAgent(BaseAgent[dict[str, Any], TierEvaluation]):
         Returns:
             A TierEvaluation instance with results.
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
         from uuid import uuid4
 
         member_id = input_data["member_id"]
@@ -125,7 +126,7 @@ class TierEvaluatorAgent(BaseAgent[dict[str, Any], TierEvaluation]):
             criteria_results=metrics,
             gaps=gaps,
             recommendations=recommendations,
-            evaluated_at=datetime.now(timezone.utc),
+            evaluated_at=datetime.now(UTC),
             evaluated_by=self.name,
             confidence=0.85,
         )

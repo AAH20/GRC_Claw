@@ -1,15 +1,16 @@
 """Cost Analyzer Agent - analyzes recruitment costs and ROI."""
 
+from typing import TYPE_CHECKING
 from __future__ import annotations
 
 import uuid
-from datetime import date
 from decimal import Decimal
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from recruitment_analytics.agents.base import BaseAgent
-from recruitment_analytics.integrations.hrms_client import HRMSClient
+
+if TYPE_CHECKING:
+    from recruitment_analytics.integrations.hrms_client import HRMSClient
+
 from recruitment_analytics.models.schemas import (
     CostAnalysisRequest,
     CostAnalysisResponse,
@@ -100,7 +101,9 @@ class CostAnalyzerAgent(BaseAgent[CostAnalysisRequest, CostAnalysisResponse]):
                 CostBreakdown(
                     category=category,
                     amount=amount,
-                    percentage_of_total=round(float(amount / total_cost), 4) if total_cost > 0 else 0.0,
+                    percentage_of_total=(
+                        round(float(amount / total_cost), 4) if total_cost > 0 else 0.0
+                    ),
                     hires_attributed=hires,
                     cost_per_hire=round(amount / hires, 2) if hires > 0 else Decimal("0"),
                 )
@@ -120,7 +123,8 @@ class CostAnalyzerAgent(BaseAgent[CostAnalysisRequest, CostAnalysisResponse]):
         # Highest cost category
         highest = breakdown[0]
         insights.append(
-            f"Highest cost category: {highest.category.value} (${highest.amount:,.2f}, {highest.percentage_of_total:.1%})"
+            f"Highest cost category: {highest.category.value} "
+            f"(${highest.amount:,.2f}, {highest.percentage_of_total:.1%})"
         )
 
         # Cost per hire analysis
@@ -136,7 +140,10 @@ class CostAnalyzerAgent(BaseAgent[CostAnalysisRequest, CostAnalysisResponse]):
                 )
 
         # Efficiency analysis
-        efficient = [b for b in breakdown if b.cost_per_hire < Decimal("5000") and b.hires_attributed > 0]
+        efficient = [
+            b for b in breakdown
+            if b.cost_per_hire < Decimal("5000") and b.hires_attributed > 0
+        ]
         if efficient:
             insights.append(
                 f"{len(efficient)} categories have cost per hire below $5K"
@@ -154,11 +161,15 @@ class CostAnalyzerAgent(BaseAgent[CostAnalysisRequest, CostAnalysisResponse]):
         expensive = [b for b in breakdown if b.cost_per_hire > Decimal("8000")]
         for cat in expensive:
             recs.append(
-                f"Review {cat.category.value} spending - cost per hire (${cat.cost_per_hire:,.2f}) is high"
+                f"Review {cat.category.value} spending - cost per hire "
+                f"(${cat.cost_per_hire:,.2f}) is high"
             )
 
         # Find efficient categories to expand
-        efficient = [b for b in breakdown if b.cost_per_hire < Decimal("4000") and b.hires_attributed > 2]
+        efficient = [
+            b for b in breakdown
+            if b.cost_per_hire < Decimal("4000") and b.hires_attributed > 2
+        ]
         for cat in efficient:
             recs.append(
                 f"Consider increasing investment in {cat.category.value} - strong ROI"

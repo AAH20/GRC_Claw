@@ -1,11 +1,11 @@
 """Reputation Explainer Agent for generating human-readable reputation explanations."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from reputation_system.agents.base import BaseAgent
-from reputation_system.models.schemas import ReputationExplanation, TrustTierLevel
+from reputation_system.models.schemas import TrustTierLevel
 
 
 class ExplanationInput(BaseModel):
@@ -14,8 +14,8 @@ class ExplanationInput(BaseModel):
     member_id: str = Field(..., description="Member identifier")
     current_score: int = Field(..., ge=0, le=1000, description="Current reputation score")
     trust_tier: TrustTierLevel = Field(..., description="Current trust tier")
-    factors: List[Dict[str, Any]] = Field(..., description="Scoring factors")
-    recent_actions: List[Dict[str, Any]] = Field(default_factory=list, description="Recent actions")
+    factors: list[dict[str, Any]] = Field(..., description="Scoring factors")
+    recent_actions: list[dict[str, Any]] = Field(default_factory=list, description="Recent actions")
     badge_count: int = Field(default=0, description="Number of badges")
     account_age_days: int = Field(default=0, description="Account age in days")
 
@@ -25,8 +25,8 @@ class ExplanationOutput(BaseModel):
 
     member_id: str
     explanation: str = Field(..., max_length=5000)
-    factors: List[Dict[str, Any]] = Field(default_factory=list)
-    recommendations: List[str] = Field(default_factory=list)
+    factors: list[dict[str, Any]] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
@@ -70,7 +70,7 @@ class ReputationExplainerAgent(BaseAgent[ExplanationInput, ExplanationOutput]):
         Returns:
             Explanation text.
         """
-        parts: List[str] = []
+        parts: list[str] = []
 
         # Overview
         parts.append(
@@ -105,7 +105,7 @@ class ReputationExplainerAgent(BaseAgent[ExplanationInput, ExplanationOutput]):
 
         return "\n".join(parts)
 
-    def _generate_recommendations(self, data: ExplanationInput) -> List[str]:
+    def _generate_recommendations(self, data: ExplanationInput) -> list[str]:
         """Generate improvement recommendations.
 
         Args:
@@ -114,7 +114,7 @@ class ReputationExplainerAgent(BaseAgent[ExplanationInput, ExplanationOutput]):
         Returns:
             List of recommendations.
         """
-        recommendations: List[str] = []
+        recommendations: list[str] = []
 
         if data.current_score < 300:
             recommendations.append("Focus on increasing contributions to improve your score")

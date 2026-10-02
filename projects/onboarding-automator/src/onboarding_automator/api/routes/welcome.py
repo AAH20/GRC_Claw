@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from onboarding_automator.agents import WelcomeAgent
-from onboarding_automator.config.settings import Settings, get_settings
 from onboarding_automator.integrations.store import InMemoryStore
 from onboarding_automator.models import AgentResponse, WelcomeMessage, WelcomeMessageCreate
 
@@ -23,7 +22,7 @@ def get_store(request: Request) -> InMemoryStore:
 async def generate_welcome_message(
     message_data: WelcomeMessageCreate,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Generate a welcome message for a new employee.
 
@@ -54,7 +53,7 @@ async def send_welcome_message(
     message_id: UUID,
     recipient_email: str,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Send a previously generated welcome message.
 
@@ -83,7 +82,7 @@ async def send_welcome_message(
 @router.get("/{plan_id}", response_model=list[WelcomeMessage])
 async def list_welcome_messages(
     plan_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> list[WelcomeMessage]:
     """List all welcome messages for a plan.
 

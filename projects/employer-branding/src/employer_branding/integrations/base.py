@@ -30,7 +30,7 @@ class BaseReviewClient(ABC):
             headers={"Accept": "application/json"},
         )
 
-    async def __aenter__(self) -> "BaseReviewClient":
+    async def __aenter__(self) -> BaseReviewClient:
         """Async context manager entry."""
         return self
 

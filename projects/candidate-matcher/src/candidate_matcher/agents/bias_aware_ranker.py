@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from candidate_matcher.agents.base import BaseAgent
 from candidate_matcher.config.logging_config import get_logger
@@ -36,7 +36,7 @@ class BiasAwareRankerAgent(BaseAgent[dict[str, Any]]):
 
     def __init__(
         self,
-        llm_client: Optional[Any] = None,
+        llm_client: Any | None = None,
         bias_penalty_factor: float = 0.15,
     ) -> None:
         """Initialize the bias-aware ranker agent.
@@ -58,7 +58,7 @@ class BiasAwareRankerAgent(BaseAgent[dict[str, Any]]):
 
     def _detect_bias_indicators(
         self,
-        candidate: Candidate,
+        candidate: Candidate,  # noqa: ARG002
         job: JobPosting,
     ) -> list[str]:
         """Detect potential bias indicators in candidate/job data.
@@ -105,7 +105,7 @@ class BiasAwareRankerAgent(BaseAgent[dict[str, Any]]):
     def _compute_bias_score(
         self,
         candidate: Candidate,
-        job: JobPosting,
+        job: JobPosting,  # noqa: ARG002
         indicators: list[str],
     ) -> float:
         """Compute a bias score based on detected indicators.

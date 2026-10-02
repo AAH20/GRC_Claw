@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from fraud_detection.agents.anomaly_detector import AnomalyDetectorAgent
 from fraud_detection.agents.pattern_detector import PatternDetectorAgent
@@ -13,7 +13,6 @@ from fraud_detection.agents.risk_scorer import RiskScorerAgent
 from fraud_detection.api.dependencies import verify_api_key
 from fraud_detection.config.logging_config import get_logger
 from fraud_detection.models.schemas import (
-    AccountAnalysis,
     Anomaly,
     BatchAnalysisRequest,
     BatchAnalysisResponse,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -60,13 +60,17 @@ service level agreements and provide:
         elapsed = (now - input_data.started_at).total_seconds() / 60
 
         # Use LLM for risk assessment
-        risk_assessment = await self._assess_risk(input_data, response_remaining, resolution_remaining)
+        await self._assess_risk(input_data, response_remaining, resolution_remaining)
 
         return SLA(
             escalation_id=input_data.escalation_id,
             priority=input_data.priority,
-            response_time_minutes=int((input_data.response_deadline - input_data.started_at).total_seconds() / 60),
-            resolution_time_minutes=int((input_data.resolution_deadline - input_data.started_at).total_seconds() / 60),
+            response_time_minutes=int(
+                (input_data.response_deadline - input_data.started_at).total_seconds() / 60
+            ),
+            resolution_time_minutes=int(
+                (input_data.resolution_deadline - input_data.started_at).total_seconds() / 60
+            ),
             status=status,
             started_at=input_data.started_at,
             response_deadline=input_data.response_deadline,

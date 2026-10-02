@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
 from resume_parser.agents.base import BaseAgent
-from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
 from resume_parser.utils.text_processing import extract_emails, extract_phone_numbers, extract_urls
+
+if TYPE_CHECKING:
+    from resume_parser.config import Settings
+    from resume_parser.integrations import BaseLLMClient
 
 logger = structlog.get_logger(__name__)
 

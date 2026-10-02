@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import Field
+from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel, Field
 
 from moderation_queue.api.dependencies import get_logger
-from moderation_queue.models import ModerationStatus, ReviewDecision
+from moderation_queue.models import ModerationStatus
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -41,7 +41,7 @@ class ReviewResponse(BaseModel):
 )
 async def submit_review(
     request: SubmitReviewRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> ReviewResponse:
     """Submit a human review decision.
 
@@ -83,7 +83,7 @@ async def submit_review(
 )
 async def list_pending_reviews(
     reviewer_id: str | None = None,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> dict:
     """List items pending human review.
 

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-import structlog
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 
@@ -18,17 +17,14 @@ from resume_parser.agents import (
     ResumeParserAgent,
     SkillsExtractorAgent,
 )
-from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
 from resume_parser.integrations.file_parsers import get_file_parser_registry
-from resume_parser.integrations.storage import BaseStorage
 from resume_parser.models import (
     AgentResult,
     FileType,
     HealthResponse,
+    ParsedResume,
     ParseRequest,
     ParseResponse,
-    ParsedResume,
     ParsingStatus,
     StatsResponse,
 )
@@ -40,6 +36,11 @@ from resume_parser.utils import (
     sanitize_filename,
 )
 from resume_parser.utils.logging_config import get_logger
+
+if TYPE_CHECKING:
+    from resume_parser.config import Settings
+    from resume_parser.integrations import BaseLLMClient
+    from resume_parser.integrations.storage import BaseStorage
 
 logger = get_logger(__name__)
 

@@ -15,7 +15,7 @@ def test_settings() -> Settings:
     return Settings(
         environment="development",
         debug=True,
-        secret_key="test-secret-key-12345",
+        secret_key="test-secret-key-12345",  # noqa: S106
         openai_api_key="test-key",
     )
 

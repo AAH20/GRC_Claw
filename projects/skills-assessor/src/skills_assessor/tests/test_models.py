@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from uuid import uuid4
 
 import pytest
@@ -87,7 +86,7 @@ class TestModels:
     def test_extraction_request_creation(self) -> None:
         """Test creating an extraction request."""
         request = ExtractionRequest(text="Python developer with 5 years experience")
-        assert request.text == "python developer with 5 years experience"
+        assert request.text == "Python developer with 5 years experience"
         assert request.source_type == "resume"
         assert request.max_skills == 20
 

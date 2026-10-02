@@ -43,11 +43,9 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI application instance.
     """
-    settings = get_settings()
-
     app = FastAPI(
         title="Fraud Detection API",
-        description="Agentic AI fraud detection system with pattern detection, anomaly detection, and risk scoring",
+        description="Agentic AI fraud detection system with pattern detection, anomaly detection, and risk scoring",  # noqa: E501
         version="0.1.0",
         lifespan=lifespan,
         docs_url="/docs",

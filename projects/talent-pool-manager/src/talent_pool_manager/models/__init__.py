@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
-
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
 
 
-class CandidateStatus(str, Enum):
+class CandidateStatus(StrEnum):
     """Status of a candidate in the talent pool."""
 
     NEW = "new"
@@ -28,7 +27,7 @@ class CandidateStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class PoolVisibility(str, Enum):
+class PoolVisibility(StrEnum):
     """Visibility level of a talent pool."""
 
     PRIVATE = "private"
@@ -37,7 +36,7 @@ class PoolVisibility(str, Enum):
     PUBLIC = "public"
 
 
-class SegmentType(str, Enum):
+class SegmentType(StrEnum):
     """Type of talent pool segment."""
 
     SKILL_BASED = "skill_based"
@@ -46,7 +45,7 @@ class SegmentType(str, Enum):
     CUSTOM = "custom"
 
 
-class EngagementType(str, Enum):
+class EngagementType(StrEnum):
     """Type of engagement action."""
 
     EMAIL = "email"
@@ -56,7 +55,7 @@ class EngagementType(str, Enum):
     SOCIAL = "social"
 
 
-class EngagementStatus(str, Enum):
+class EngagementStatus(StrEnum):
     """Status of an engagement action."""
 
     PENDING = "pending"
@@ -68,7 +67,7 @@ class EngagementStatus(str, Enum):
     FAILED = "failed"
 
 
-class OutreachStatus(str, Enum):
+class OutreachStatus(StrEnum):
     """Status of an outreach campaign."""
 
     DRAFT = "draft"
@@ -79,7 +78,7 @@ class OutreachStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class OutreachChannel(str, Enum):
+class OutreachChannel(StrEnum):
     """Channel for outreach communication."""
 
     EMAIL = "email"
@@ -610,7 +609,9 @@ class EngagementOptimizationRequest(BaseSchema):
 
     pool_id: UUID
     segment_id: UUID | None = None
-    optimization_goal: Literal["response_rate", "open_rate", "conversion", "retention"] = "response_rate"
+    optimization_goal: Literal[
+        "response_rate", "open_rate", "conversion", "retention"
+    ] = "response_rate"
     constraints: dict[str, Any] = Field(default_factory=dict)
 
 

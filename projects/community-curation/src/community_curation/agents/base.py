@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import structlog
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
-from langchain_deepagents import DeepAgent
+import structlog
+from deepagents import create_deep_agent
 
 logger = structlog.get_logger(__name__)
 
@@ -34,10 +34,9 @@ class BaseCurationAgent(ABC, Generic[T, R]):
     def _initialize_agent(self) -> None:
         """Initialize the LangChain DeepAgent."""
         try:
-            self._agent = DeepAgent(
+            self._agent = create_deep_agent(
                 name=self.name,
-                description=self.description,
-                model=self.model,
+                system_prompt=self.description,
             )
             logger.info("agent_initialized", agent=self.name)
         except Exception as exc:

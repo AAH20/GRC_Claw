@@ -131,7 +131,8 @@ class GoogleCalendarProvider(CalendarProvider):
                     raise ValueError("Google credentials path is required")
             except ImportError as exc:
                 raise RuntimeError(
-                    "Google API client not installed. Install with: pip install google-api-python-client"
+                    "Google API client not installed. "
+                    "Install with: pip install google-api-python-client"
                 ) from exc
         return self._service
 
@@ -286,8 +287,12 @@ class OutlookCalendarProvider(CalendarProvider):
         for event in data.get("value", []):
             slots.append(
                 TimeSlot(
-                    start_time=datetime.fromisoformat(event["start"]["dateTime"].replace("Z", "+00:00")),
-                    end_time=datetime.fromisoformat(event["end"]["dateTime"].replace("Z", "+00:00")),
+                    start_time=datetime.fromisoformat(
+                        event["start"]["dateTime"].replace("Z", "+00:00")
+                    ),
+                    end_time=datetime.fromisoformat(
+                        event["end"]["dateTime"].replace("Z", "+00:00")
+                    ),
                     status="busy",
                     owner_id=user_id,
                     owner_type="outlook_calendar",

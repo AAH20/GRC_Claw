@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -48,8 +47,8 @@ def get_agent(request: Request) -> TakedownAgent:
 @router.post("/request", response_model=TakedownRequest, status_code=201)
 async def submit_takedown_request(
     payload: TakedownRequestCreate,
-    storage: InMemoryStorage = Depends(get_storage),
-    agent: TakedownAgent = Depends(get_agent),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
+    agent: TakedownAgent = Depends(get_agent),  # noqa: B008
 ) -> TakedownRequest:
     """Submit a new takedown request.
 
@@ -78,7 +77,7 @@ async def submit_takedown_request(
 @router.get("/{request_id}", response_model=TakedownRequest)
 async def get_takedown_request(
     request_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> TakedownRequest:
     """Retrieve a specific takedown request.
 
@@ -102,8 +101,8 @@ async def get_takedown_request(
 async def process_takedown_request(
     request_id: str,
     payload: TakedownProcessRequest,
-    storage: InMemoryStorage = Depends(get_storage),
-    agent: TakedownAgent = Depends(get_agent),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
+    agent: TakedownAgent = Depends(get_agent),  # noqa: B008
 ) -> TakedownRequest:
     """Process a takedown request with a decision.
 
@@ -131,7 +130,7 @@ async def process_takedown_request(
 async def list_takedown_requests(
     content_id: str | None = None,
     status: TakedownStatus | None = None,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> list[TakedownRequest]:
     """List takedown requests, optionally filtered.
 

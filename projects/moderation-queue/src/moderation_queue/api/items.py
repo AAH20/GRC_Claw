@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import ContentType, ModerationItem, ModerationStatus
@@ -55,7 +54,7 @@ class ItemListResponse(BaseModel):
 )
 async def create_item(
     request: CreateItemRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> ModerationItem:
     """Create a new moderation item.
 
@@ -85,12 +84,12 @@ async def create_item(
     description="Get a paginated list of moderation items",
 )
 async def list_items(
-    status_filter: ModerationStatus | None = Query(default=None, alias="status"),
-    content_type: ContentType | None = Query(default=None),
-    author_id: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
-    logger=Depends(get_logger),
+    status_filter: ModerationStatus | None = Query(default=None, alias="status"),  # noqa: B008
+    content_type: ContentType | None = Query(default=None),  # noqa: B008
+    author_id: str | None = Query(default=None),  # noqa: B008
+    page: int = Query(default=1, ge=1),  # noqa: B008
+    page_size: int = Query(default=20, ge=1, le=100),  # noqa: B008
+    logger=Depends(get_logger),  # noqa: B008
 ) -> ItemListResponse:
     """List moderation items with optional filters.
 
@@ -130,7 +129,7 @@ async def list_items(
 )
 async def get_item(
     item_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> ModerationItem:
     """Get a moderation item by ID.
 
@@ -162,7 +161,7 @@ async def get_item(
 async def update_item(
     item_id: UUID,
     request: UpdateItemRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> ModerationItem:
     """Update a moderation item.
 
@@ -211,7 +210,7 @@ async def update_item(
 )
 async def delete_item(
     item_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> None:
     """Delete a moderation item.
 

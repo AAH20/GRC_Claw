@@ -6,6 +6,7 @@ assigned to tiers, ensuring proper allocation and tracking.
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -86,7 +87,7 @@ class BenefitManagerAgent(BaseAgent[dict[str, Any], Benefit]):
         Returns:
             The created Benefit.
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
         from uuid import uuid4
 
         benefit_data = input_data.get("benefit_data", {})
@@ -99,7 +100,7 @@ class BenefitManagerAgent(BaseAgent[dict[str, Any], Benefit]):
             value=float(benefit_data.get("value", 0.0)),
             tier_ids=[UUID(str(t)) for t in benefit_data.get("tier_ids", [])],
             active=True,
-            start_date=datetime.now(timezone.utc),
+            start_date=datetime.now(UTC),
             usage_limit=benefit_data.get("usage_limit"),
             metadata=benefit_data.get("metadata", {}),
         )

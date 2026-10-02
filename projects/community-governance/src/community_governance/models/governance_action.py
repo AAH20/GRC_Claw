@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ActionType(str, Enum):
+class ActionType(StrEnum):
     """Types of governance actions."""
 
     CREATE = "create"
@@ -23,7 +23,7 @@ class ActionType(str, Enum):
     RESOLVE = "resolve"
 
 
-class ActionStatus(str, Enum):
+class ActionStatus(StrEnum):
     """Status of a governance action."""
 
     PENDING = "pending"

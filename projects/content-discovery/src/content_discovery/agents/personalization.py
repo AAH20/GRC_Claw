@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from langchain_core.tools import tool
 
 from content_discovery.agents.base import BaseAgent
-from content_discovery.integrations.user_profile import UserProfileClient
 from content_discovery.models import Recommendation, RecommendationRequest, RecommendationResponse
+
+if TYPE_CHECKING:
+    from content_discovery.integrations.user_profile import UserProfileClient
 
 logger = structlog.get_logger()
 
@@ -136,7 +138,7 @@ class PersonalizationAgent(BaseAgent[RecommendationRequest, RecommendationRespon
             dict[str, Any]: User preferences.
         """
         try:
-            history = self.user_profile.get_history(user_id=user_id, limit=50)
+            history = await self.user_profile.get_history(user_id=user_id, limit=50)
             return self._infer_preferences_from_history(history)
         except Exception as exc:
             logger.error("get_preferences_failed", user_id=user_id, error=str(exc))
@@ -185,7 +187,7 @@ class PersonalizationAgent(BaseAgent[RecommendationRequest, RecommendationRespon
             list[dict[str, Any]]: Candidate content items.
         """
         try:
-            return self.user_profile.get_candidates(
+            return await self.user_profile.get_candidates(
                 topics=preferences.get("topics", []),
                 content_types=request.content_types or preferences.get("content_types", []),
                 limit=request.limit * 3,

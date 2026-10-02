@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class ModerationAction(str, Enum):
+class ModerationAction(StrEnum):
     """Types of moderation actions."""
 
     APPROVE = "approve"
@@ -21,7 +21,7 @@ class ModerationAction(str, Enum):
     SHADOW_BAN = "shadow_ban"
 
 
-class SeverityLevel(str, Enum):
+class SeverityLevel(StrEnum):
     """Severity levels for moderation events."""
 
     LOW = "low"
@@ -30,7 +30,7 @@ class SeverityLevel(str, Enum):
     CRITICAL = "critical"
 
 
-class TrendDirection(str, Enum):
+class TrendDirection(StrEnum):
     """Direction of a trend."""
 
     INCREASING = "increasing"
@@ -95,7 +95,9 @@ class ModeratorPerformance(BaseModel):
     period_end: datetime = Field(..., description="End of evaluation period")
     strengths: list[str] = Field(default_factory=list, description="Identified strengths")
     weaknesses: list[str] = Field(default_factory=list, description="Identified weaknesses")
-    recommendations: list[str] = Field(default_factory=list, description="Improvement recommendations")
+    recommendations: list[str] = Field(
+        default_factory=list, description="Improvement recommendations"
+    )
 
 
 class PolicyEffectiveness(BaseModel):
@@ -114,7 +116,9 @@ class PolicyEffectiveness(BaseModel):
     period_start: datetime = Field(..., description="Start of evaluation period")
     period_end: datetime = Field(..., description="End of evaluation period")
     effectiveness_score: float = Field(..., ge=0.0, le=1.0, description="Overall effectiveness")
-    recommendations: list[str] = Field(default_factory=list, description="Policy improvement recommendations")
+    recommendations: list[str] = Field(
+        default_factory=list, description="Policy improvement recommendations"
+    )
 
 
 class ModerationPrediction(BaseModel):

@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class EscalationStatus(str, Enum):
+class EscalationStatus(StrEnum):
     """Status of an escalation."""
 
     PENDING = "pending"
@@ -31,7 +31,9 @@ class Escalation(BaseModel):
     title: str = Field(..., min_length=1, max_length=500, description="Escalation title")
     description: str = Field(..., min_length=1, max_length=5000, description="Detailed description")
     status: EscalationStatus = Field(default=EscalationStatus.PENDING)
-    priority: str = Field(default="medium", description="Priority level (critical, high, medium, low)")
+    priority: str = Field(
+        default="medium", description="Priority level (critical, high, medium, low)"
+    )
     category: str = Field(default="general", description="Escalation category")
     source: str = Field(default="api", description="Source of the escalation")
     assignee: str | None = Field(default=None, description="Assigned agent or team")

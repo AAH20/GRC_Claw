@@ -1,7 +1,7 @@
 """FastAPI application factory for the job description optimizer."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI, Request, status
@@ -52,7 +52,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Job Description Optimizer",
-        description="Agentic AI-powered job description optimizer with bias removal, SEO, and ATS compatibility",
+        description=(
+            "Agentic AI-powered job description optimizer with bias removal, "
+            "SEO, and ATS compatibility"
+        ),
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",

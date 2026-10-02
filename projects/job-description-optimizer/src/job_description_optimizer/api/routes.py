@@ -1,7 +1,7 @@
 """FastAPI routes for the job description optimizer."""
 
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from langchain_core.language_models import BaseLanguageModel
@@ -14,9 +14,9 @@ from job_description_optimizer.agents.seo_optimizer import SEOOptimizerAgent
 from job_description_optimizer.agents.tone_analyzer import ToneAnalyzerAgent
 from job_description_optimizer.config import Settings, get_settings
 from job_description_optimizer.models import (
-    ATSReport,
     AgentInfo,
     AnalysisRequest,
+    ATSReport,
     BiasReport,
     ErrorResponse,
     HealthResponse,
@@ -49,9 +49,9 @@ def get_llm(settings: Settings = Depends(get_settings)) -> BaseLanguageModel:
 
 
 def get_agents(
-    llm: BaseLanguageModel = Depends(get_llm),
-    settings: Settings = Depends(get_settings),
-) -> Dict[str, Any]:
+    llm: BaseLanguageModel = Depends(get_llm)  # noqa: B008
+    settings: Settings = Depends(get_settings)  # noqa: B008
+) -> dict[str, Any]:
     """Get all agent instances.
 
     Args:
@@ -81,7 +81,7 @@ async def health_check() -> HealthResponse:
 
 
 @router.get("/", tags=["system"])
-async def root() -> Dict[str, Any]:
+async def root() -> dict[str, Any]:
     """Root endpoint with service information.
 
     Returns:
@@ -106,10 +106,10 @@ async def root() -> Dict[str, Any]:
     }
 
 
-@router.get("/agents", response_model=List[AgentInfo], tags=["agents"])
+@router.get("/agents", response_model=list[AgentInfo], tags=["agents"])
 async def list_agents(
-    agents: Dict[str, Any] = Depends(get_agents),
-) -> List[AgentInfo]:
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
+) -> list[AgentInfo]:
     """List all available agents.
 
     Args:
@@ -132,7 +132,7 @@ async def list_agents(
 @router.get("/agents/{name}", response_model=AgentInfo, tags=["agents"])
 async def get_agent(
     name: str,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> AgentInfo:
     """Get information about a specific agent.
 
@@ -168,7 +168,7 @@ async def get_agent(
 )
 async def optimize(
     request: OptimizationRequest,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> OptimizedDescription:
     """Run full optimization pipeline on a job description.
 
@@ -206,7 +206,7 @@ async def optimize(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Optimization failed: {str(e)}",
+            detail=f"Optimization failed: {str(e) from e}",
         )
 
     # Determine best optimized text
@@ -253,7 +253,7 @@ async def optimize(
 )
 async def optimize_bias(
     job_description: JobDescription,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> BiasReport:
     """Run bias removal only.
 
@@ -272,7 +272,7 @@ async def optimize_bias(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Bias analysis failed: {str(e)}",
+            detail=f"Bias analysis failed: {str(e) from e}",
         )
 
 
@@ -284,7 +284,7 @@ async def optimize_bias(
 )
 async def optimize_seo(
     job_description: JobDescription,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> SEOReport:
     """Run SEO optimization only.
 
@@ -303,7 +303,7 @@ async def optimize_seo(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"SEO optimization failed: {str(e)}",
+            detail=f"SEO optimization failed: {str(e) from e}",
         )
 
 
@@ -315,7 +315,7 @@ async def optimize_seo(
 )
 async def optimize_ats(
     job_description: JobDescription,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> ATSReport:
     """Run ATS compatibility check only.
 
@@ -334,7 +334,7 @@ async def optimize_ats(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"ATS compatibility check failed: {str(e)}",
+            detail=f"ATS compatibility check failed: {str(e) from e}",
         )
 
 
@@ -346,7 +346,7 @@ async def optimize_ats(
 )
 async def optimize_tone(
     job_description: JobDescription,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> ToneReport:
     """Run tone analysis only.
 
@@ -365,7 +365,7 @@ async def optimize_tone(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Tone analysis failed: {str(e)}",
+            detail=f"Tone analysis failed: {str(e) from e}",
         )
 
 
@@ -377,7 +377,7 @@ async def optimize_tone(
 )
 async def optimize_keywords(
     job_description: JobDescription,
-    agents: Dict[str, Any] = Depends(get_agents),
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
 ) -> KeywordReport:
     """Run keyword optimization only.
 
@@ -396,20 +396,20 @@ async def optimize_keywords(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Keyword optimization failed: {str(e)}",
+            detail=f"Keyword optimization failed: {str(e) from e}",
         )
 
 
 @router.post(
     "/analyze",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
     tags=["analysis"],
     responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
 async def analyze(
     request: AnalysisRequest,
-    agents: Dict[str, Any] = Depends(get_agents),
-) -> Dict[str, Any]:
+    agents: dict[str, Any] = Depends(get_agents)  # noqa: B008
+) -> dict[str, Any]:
     """Run comprehensive analysis with selected agents.
 
     Args:
@@ -424,7 +424,7 @@ async def analyze(
     """
     jd = request.job_description
     analyses = request.analyses
-    results: Dict[str, Any] = {}
+    results: dict[str, Any] = {}
 
     agent_map = {
         "bias": "bias_remover",
@@ -442,7 +442,7 @@ async def analyze(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Analysis failed: {str(e)}",
+            detail=f"Analysis failed: {str(e) from e}",
         )
 
     return results

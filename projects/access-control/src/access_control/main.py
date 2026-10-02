@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="Access Control Service",
-        description="Agentic AI access control with permission evaluation, role management, and auditing",
+        description="Agentic AI access control with permission evaluation, role management, and auditing",  # noqa: E501
         version=__version__,
         lifespan=lifespan,
         docs_url="/docs" if settings.is_development else None,

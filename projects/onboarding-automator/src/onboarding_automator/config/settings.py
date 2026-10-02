@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import tempfile
 from functools import lru_cache
 
 from pydantic import Field, field_validator
@@ -26,12 +28,14 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "onboarding-automator"
-    environment: str = Field(default="development", pattern="^(development|staging|production|test)$")
+    environment: str = Field(
+        default="development", pattern="^(development|staging|production|test)$"
+    )
     debug: bool = False
     log_level: str = "INFO"
 
     # Server
-    host: str = "0.0.0.0"  # noqa: S104
+    host: str = "127.0.0.1"
     port: int = 8000
 
     # Security
@@ -57,7 +61,7 @@ class Settings(BaseSettings):
     document_allowed_types: list[str] = Field(
         default_factory=lambda: ["pdf", "doc", "docx", "txt", "rtf", "png", "jpg", "jpeg"]
     )
-    document_storage_path: str = "/tmp/onboarding-automator/documents"
+    document_storage_path: str = Field(default_factory=lambda: os.path.join(tempfile.gettempdir(), "onboarding-automator", "documents"))
 
     # Database
     database_url: str = "sqlite:///./onboarding.db"

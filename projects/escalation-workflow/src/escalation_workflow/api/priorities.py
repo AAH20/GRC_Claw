@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from escalation_workflow.agents.priority_router import PriorityRouterAgent, PriorityRouterInput
 from escalation_workflow.config import Settings, get_settings
-from escalation_workflow.models.escalation import Escalation
 from escalation_workflow.models.priority import Priority, PriorityAssessment, PriorityLevel
 
 router = APIRouter(prefix="/priorities", tags=["priorities"])
@@ -83,7 +82,7 @@ async def get_priority(level: PriorityLevel) -> Priority:
 @router.post("/assess", response_model=PriorityAssessment)
 async def assess_priority(
     escalation_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> PriorityAssessment:
     """Assess priority for an escalation.
 

@@ -18,7 +18,6 @@ from skills_assessor.models.schemas import (
     ProficiencyLevel,
     ScoringRequest,
     Skill,
-    SkillCategory,
 )
 
 
@@ -28,7 +27,7 @@ class TestSkillExtractorAgent:
     @pytest.fixture
     def agent(self) -> SkillExtractorAgent:
         """Create agent instance with mocked model."""
-        with patch("skills_assessor.agents.skill_extractor.ChatOpenAI"):
+        with patch("skills_assessor.agents.base.ChatOpenAI"):
             return SkillExtractorAgent()
 
     @pytest.mark.asyncio
@@ -91,7 +90,7 @@ class TestProficiencyScorerAgent:
     @pytest.fixture
     def agent(self) -> ProficiencyScorerAgent:
         """Create agent instance with mocked model."""
-        with patch("skills_assessor.agents.proficiency_scorer.ChatOpenAI"):
+        with patch("skills_assessor.agents.base.ChatOpenAI"):
             return ProficiencyScorerAgent()
 
     @pytest.mark.asyncio
@@ -145,7 +144,7 @@ class TestGapAnalyzerAgent:
     @pytest.fixture
     def agent(self) -> GapAnalyzerAgent:
         """Create agent instance with mocked model."""
-        with patch("skills_assessor.agents.gap_analyzer.ChatOpenAI"):
+        with patch("skills_assessor.agents.base.ChatOpenAI"):
             return GapAnalyzerAgent()
 
     @pytest.mark.asyncio
@@ -205,7 +204,7 @@ class TestSkillValidatorAgent:
     @pytest.fixture
     def agent(self) -> SkillValidatorAgent:
         """Create agent instance with mocked model."""
-        with patch("skills_assessor.agents.skill_validator.ChatOpenAI"):
+        with patch("skills_assessor.agents.base.ChatOpenAI"):
             return SkillValidatorAgent()
 
     @pytest.mark.asyncio
@@ -256,7 +255,7 @@ class TestLearningPathRecommenderAgent:
     @pytest.fixture
     def agent(self) -> LearningPathRecommenderAgent:
         """Create agent instance with mocked model."""
-        with patch("skills_assessor.agents.learning_path_recommender.ChatOpenAI"):
+        with patch("skills_assessor.agents.base.ChatOpenAI"):
             return LearningPathRecommenderAgent()
 
     @pytest.mark.asyncio

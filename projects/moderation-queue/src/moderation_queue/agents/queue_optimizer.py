@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from langchain_core.messages import AIMessage
 from pydantic import BaseModel, Field
 
 from moderation_queue.agents.base import AgentConfig, BaseAgent
-from moderation_queue.models import Queue, QueueMetrics
+
+if TYPE_CHECKING:
+    from moderation_queue.models import Queue, QueueMetrics
 
 
 class QueueOptimizerInput(BaseModel):
@@ -98,7 +100,8 @@ Pending Items: {json.dumps(input_data.pending_items)}
 Goals: {json.dumps(input_data.optimization_goals)}
 
 Provide:
-1. reassignments: list of {{"item_id": string, "from_queue": string, "to_queue": string, "reason": string}}
+1. reassignments: list of {{"item_id": string, "from_queue": string, "to_queue": string,
+"reason": string}}
 2. queue_adjustments: list of {{"queue_id": string, "action": string, "value": any}}
 3. priority_updates: list of {{"item_id": string, "new_priority": string, "reason": string}}
 4. reasoning: brief explanation

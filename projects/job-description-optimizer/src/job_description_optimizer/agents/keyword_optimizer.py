@@ -3,10 +3,7 @@
 import json
 from typing import Any
 
-from langchain_core.language_models import BaseLanguageModel
-
 from job_description_optimizer.agents import BaseAgent
-from job_description_optimizer.config import Settings
 from job_description_optimizer.models import JobDescription, KeywordReport
 
 

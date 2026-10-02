@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class AccessDecision(str, Enum):
+class AccessDecision(StrEnum):
     """Possible outcomes of an access evaluation."""
 
     ALLOW = "allow"
@@ -14,7 +14,7 @@ class AccessDecision(str, Enum):
     ABSTAIN = "abstain"
 
 
-class AuditSeverity(str, Enum):
+class AuditSeverity(StrEnum):
     """Severity levels for audit entries."""
 
     INFO = "info"
@@ -23,14 +23,14 @@ class AuditSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class PolicyEffect(str, Enum):
+class PolicyEffect(StrEnum):
     """Effect of a policy rule."""
 
     ALLOW = "allow"
     DENY = "deny"
 
 
-class RoleStatus(str, Enum):
+class RoleStatus(StrEnum):
     """Lifecycle status of a role."""
 
     ACTIVE = "active"

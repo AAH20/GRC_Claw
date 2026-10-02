@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import pytest
 from pydantic import ValidationError
 
@@ -14,9 +12,9 @@ from resume_parser.models import (
     Experience,
     FileType,
     HealthResponse,
+    ParsedResume,
     ParseRequest,
     ParseResponse,
-    ParsedResume,
     ParsingStatus,
     Resume,
     Skill,

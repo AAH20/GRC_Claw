@@ -8,9 +8,9 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from creator_monetization.models.schemas import Subscription, SubscriptionCreate, SubscriptionStatus
+from creator_monetization.models.schemas import SubscriptionCreate, SubscriptionStatus
 
 logger = logging.getLogger(__name__)
 

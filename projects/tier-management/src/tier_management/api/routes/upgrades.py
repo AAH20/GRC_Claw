@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -20,7 +21,7 @@ _upgrades_store: dict[UUID, UpgradeRequest] = {}
 @upgrades_router.post("", response_model=UpgradeRequest, status_code=status.HTTP_201_CREATED)
 async def create_upgrade_request(
     request_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> UpgradeRequest:
     """Create a new upgrade request.
 
@@ -42,13 +43,13 @@ async def create_upgrade_request(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
-        )
+        ) from e
 
 
 @upgrades_router.get("/{request_id}", response_model=UpgradeRequest)
 async def get_upgrade_request(
     request_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> UpgradeRequest:
     """Get a specific upgrade request by ID.
 
@@ -74,7 +75,7 @@ async def get_upgrade_request(
 @upgrades_router.get("/member/{member_id}", response_model=list[UpgradeRequest])
 async def get_member_upgrades(
     member_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> list[UpgradeRequest]:
     """Get all upgrade requests for a member.
 
@@ -94,7 +95,7 @@ async def get_member_upgrades(
 @upgrades_router.post("/{request_id}/approve", response_model=UpgradeRequest)
 async def approve_upgrade(
     request_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> UpgradeRequest:
     """Approve an upgrade request.
 
@@ -115,10 +116,10 @@ async def approve_upgrade(
             detail=f"Upgrade request '{request_id}' not found",
         )
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     request.status = "approved"
-    request.processed_at = datetime.now(timezone.utc)
+    request.processed_at = datetime.now(UTC)
     request.processed_by = "admin"
     _upgrades_store[request_id] = request
     return request
@@ -128,7 +129,7 @@ async def approve_upgrade(
 async def deny_upgrade(
     request_id: UUID,
     reason: str = "Does not meet requirements",
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> UpgradeRequest:
     """Deny an upgrade request.
 
@@ -150,10 +151,10 @@ async def deny_upgrade(
             detail=f"Upgrade request '{request_id}' not found",
         )
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     request.status = "denied"
-    request.processed_at = datetime.now(timezone.utc)
+    request.processed_at = datetime.now(UTC)
     request.processed_by = "admin"
     request.denial_reason = reason
     _upgrades_store[request_id] = request

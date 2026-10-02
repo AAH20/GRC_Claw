@@ -6,8 +6,8 @@ This module defines all request/response schemas used by the API.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Optional
+from enum import Enum, StrEnum
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -47,7 +47,7 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Possible statuses for an onboarding task."""
 
     PENDING = "pending"
@@ -57,7 +57,7 @@ class TaskStatus(str, Enum):
     SKIPPED = "skipped"
 
 
-class TaskPriority(str, Enum):
+class TaskPriority(StrEnum):
     """Priority levels for tasks."""
 
     LOW = "low"
@@ -66,7 +66,7 @@ class TaskPriority(str, Enum):
     CRITICAL = "critical"
 
 
-class TaskType(str, Enum):
+class TaskType(StrEnum):
     """Categories of onboarding tasks."""
 
     DOCUMENT_SUBMISSION = "document_submission"
@@ -78,7 +78,7 @@ class TaskType(str, Enum):
     CUSTOM = "custom"
 
 
-class OnboardingStatus(str, Enum):
+class OnboardingStatus(StrEnum):
     """Overall onboarding plan status."""
 
     NOT_STARTED = "not_started"
@@ -87,7 +87,7 @@ class OnboardingStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class DocumentStatus(str, Enum):
+class DocumentStatus(StrEnum):
     """Status of a submitted document."""
 
     PENDING = "pending"
@@ -97,10 +97,10 @@ class DocumentStatus(str, Enum):
     EXPIRED = "expired"
 
 
-class ComplianceStatus(str, Enum):
+class ComplianceStatus(StrEnum):
     """Result of a compliance check."""
 
-    PASS = "pass"
+    PASS = "pass"  # noqa: S105
     FAIL = "fail"
     WARNING = "warning"
     PENDING = "pending"
@@ -123,8 +123,8 @@ class EmployeeInfo(BaseModel):
     department: str = Field(..., description="Department name")
     role: str = Field(..., description="Job title / role")
     start_date: datetime = Field(..., description="Expected start date")
-    manager_id: Optional[str] = Field(None, description="Manager employee ID")
-    location: Optional[str] = Field(None, description="Office location or remote")
+    manager_id: str | None = Field(None, description="Manager employee ID")
+    location: str | None = Field(None, description="Office location or remote")
     employment_type: str = Field(default="full_time", description="Employment type")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
@@ -140,10 +140,10 @@ class OnboardingPlan(BaseModel):
     tasks: list[UUID] = Field(default_factory=list, description="Associated task IDs")
     documents: list[UUID] = Field(default_factory=list, description="Associated document IDs")
     compliance_checks: list[UUID] = Field(default_factory=list, description="Compliance check IDs")
-    progress: Optional[UUID] = Field(None, description="Progress tracker ID")
+    progress: UUID | None = Field(None, description="Progress tracker ID")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -151,15 +151,15 @@ class OnboardingPlanCreate(BaseModel):
     """Request body for creating an onboarding plan."""
 
     employee: EmployeeInfo
-    template_id: Optional[str] = Field(None, description="Onboarding template to base plan on")
+    template_id: str | None = Field(None, description="Onboarding template to base plan on")
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class OnboardingPlanUpdate(BaseModel):
     """Request body for updating an onboarding plan."""
 
-    status: Optional[OnboardingStatus] = None
-    metadata: Optional[dict[str, Any]] = None
+    status: OnboardingStatus | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class Task(BaseModel):
@@ -174,13 +174,13 @@ class Task(BaseModel):
     task_type: TaskType = Field(default=TaskType.CUSTOM)
     status: TaskStatus = Field(default=TaskStatus.PENDING)
     priority: TaskPriority = Field(default=TaskPriority.MEDIUM)
-    due_date: Optional[datetime] = None
-    assigned_to: Optional[str] = None
-    document_id: Optional[UUID] = None
+    due_date: datetime | None = None
+    assigned_to: str | None = None
+    document_id: UUID | None = None
     external_refs: dict[str, str] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -192,21 +192,21 @@ class TaskCreate(BaseModel):
     description: str = Field(default="", max_length=2000)
     task_type: TaskType = TaskType.CUSTOM
     priority: TaskPriority = TaskPriority.MEDIUM
-    due_date: Optional[datetime] = None
-    assigned_to: Optional[str] = None
+    due_date: datetime | None = None
+    assigned_to: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class TaskUpdate(BaseModel):
     """Request body for updating a task."""
 
-    title: Optional[str] = Field(None, min_length=1, max_length=300)
-    description: Optional[str] = Field(None, max_length=2000)
-    status: Optional[TaskStatus] = None
-    priority: Optional[TaskPriority] = None
-    due_date: Optional[datetime] = None
-    assigned_to: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    title: str | None = Field(None, min_length=1, max_length=300)
+    description: str | None = Field(None, max_length=2000)
+    status: TaskStatus | None = None
+    priority: TaskPriority | None = None
+    due_date: datetime | None = None
+    assigned_to: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class Document(BaseModel):
@@ -216,18 +216,18 @@ class Document(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     plan_id: UUID = Field(..., description="Parent onboarding plan ID")
-    task_id: Optional[UUID] = None
+    task_id: UUID | None = None
     name: str = Field(..., min_length=1, max_length=300)
     document_type: str = Field(..., description="Document type (e.g. 'id_proof', 'contract')")
     file_type: str = Field(..., description="MIME type or file extension")
     status: DocumentStatus = Field(default=DocumentStatus.PENDING)
-    storage_path: Optional[str] = None
-    file_size_bytes: Optional[int] = None
-    checksum: Optional[str] = None
-    rejection_reason: Optional[str] = None
+    storage_path: str | None = None
+    file_size_bytes: int | None = None
+    checksum: str | None = None
+    rejection_reason: str | None = None
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
-    verified_at: Optional[datetime] = None
-    expires_at: Optional[datetime] = None
+    verified_at: datetime | None = None
+    expires_at: datetime | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -237,16 +237,16 @@ class DocumentCreate(BaseModel):
     plan_id: UUID
     name: str = Field(..., min_length=1, max_length=300)
     document_type: str = Field(..., min_length=1)
-    task_id: Optional[UUID] = None
+    task_id: UUID | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class DocumentUpdate(BaseModel):
     """Request body for updating document status."""
 
-    status: Optional[DocumentStatus] = None
-    rejection_reason: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    status: DocumentStatus | None = None
+    rejection_reason: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class Progress(BaseModel):
@@ -263,8 +263,8 @@ class Progress(BaseModel):
     completion_percentage: float = Field(default=0.0, ge=0.0, le=100.0)
     overall_status: OnboardingStatus = OnboardingStatus.NOT_STARTED
     milestones: list[dict[str, Any]] = Field(default_factory=list)
-    risk_assessment: Optional[str] = None
-    estimated_completion: Optional[datetime] = None
+    risk_assessment: str | None = None
+    estimated_completion: datetime | None = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -272,12 +272,12 @@ class Progress(BaseModel):
 class ProgressUpdate(BaseModel):
     """Request body for updating progress."""
 
-    total_tasks: Optional[int] = Field(None, ge=0)
-    completed_tasks: Optional[int] = Field(None, ge=0)
-    blocked_tasks: Optional[int] = Field(None, ge=0)
-    pending_tasks: Optional[int] = Field(None, ge=0)
-    risk_assessment: Optional[str] = None
-    estimated_completion: Optional[datetime] = None
+    total_tasks: int | None = Field(None, ge=0)
+    completed_tasks: int | None = Field(None, ge=0)
+    blocked_tasks: int | None = Field(None, ge=0)
+    pending_tasks: int | None = Field(None, ge=0)
+    risk_assessment: str | None = None
+    estimated_completion: datetime | None = None
 
 
 class ComplianceCheck(BaseModel):
@@ -294,8 +294,8 @@ class ComplianceCheck(BaseModel):
     severity: TaskPriority = Field(default=TaskPriority.MEDIUM)
     details: str = Field(default="")
     remediation_steps: list[str] = Field(default_factory=list)
-    checked_at: Optional[datetime] = None
-    expires_at: Optional[datetime] = None
+    checked_at: datetime | None = None
+    expires_at: datetime | None = None
     evidence_refs: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -315,10 +315,10 @@ class ComplianceCheckCreate(BaseModel):
 class ComplianceCheckUpdate(BaseModel):
     """Request body for updating a compliance check."""
 
-    status: Optional[ComplianceStatus] = None
-    details: Optional[str] = None
-    remediation_steps: Optional[list[str]] = None
-    severity: Optional[TaskPriority] = None
+    status: ComplianceStatus | None = None
+    details: str | None = None
+    remediation_steps: list[str] | None = None
+    severity: TaskPriority | None = None
 
 
 class HealthResponse(BaseModel):
@@ -341,7 +341,7 @@ class WelcomeMessage(BaseModel):
     body: str = Field(..., min_length=1)
     channel: str = Field(default="email", description="Delivery channel")
     sent: bool = False
-    sent_at: Optional[datetime] = None
+    sent_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -359,10 +359,10 @@ class AgentResponse(BaseModel):
 
     success: bool
     message: str
-    data: Optional[dict[str, Any]] = None
+    data: dict[str, Any] | None = None
     errors: list[str] = Field(default_factory=list)
-    agent_name: Optional[str] = None
-    processing_time_ms: Optional[float] = None
+    agent_name: str | None = None
+    processing_time_ms: float | None = None
 
 
 class ErrorDetail(BaseModel):

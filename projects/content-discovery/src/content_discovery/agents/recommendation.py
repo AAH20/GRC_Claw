@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from langchain_core.tools import tool
 
 from content_discovery.agents.base import BaseAgent
-from content_discovery.integrations.content import ContentClient
-from content_discovery.integrations.user_profile import UserProfileClient
 from content_discovery.models import Recommendation, RecommendationRequest, RecommendationResponse
+
+if TYPE_CHECKING:
+    from content_discovery.integrations.content import ContentClient
+    from content_discovery.integrations.user_profile import UserProfileClient
 
 logger = structlog.get_logger()
 
@@ -123,7 +125,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
             list[Recommendation]: Content-based recommendations.
         """
         try:
-            history = self.user_profile.get_history(user_id=request.user_id, limit=50)
+            history = await self.user_profile.get_history(user_id=request.user_id, limit=50)
             if not history:
                 return []
 
@@ -134,7 +136,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
                     preferred_tags[tag] = preferred_tags.get(tag, 0) + 1
 
             # Find content with similar tags
-            candidates = self.content_client.get_by_tags(
+            candidates = await self.content_client.get_by_tags(
                 tags=list(preferred_tags.keys()),
                 limit=request.limit * 2,
             )
@@ -179,7 +181,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
             list[Recommendation]: Collaborative recommendations.
         """
         try:
-            similar_users = self.user_profile.get_similar_users(
+            similar_users = await self.user_profile.get_similar_users(
                 user_id=request.user_id, limit=10
             )
             if not similar_users:
@@ -188,7 +190,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
             # Get content consumed by similar users
             candidate_ids: set[str] = set()
             for sim_user in similar_users:
-                history = self.user_profile.get_history(user_id=sim_user, limit=20)
+                history = await self.user_profile.get_history(user_id=sim_user, limit=20)
                 for item in history:
                     candidate_ids.add(item["id"])
 
@@ -196,7 +198,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
             recommendations = []
             for cid in list(candidate_ids)[: request.limit * 2]:
                 try:
-                    features = self.content_client.get_features(content_id=cid)
+                    features = await self.content_client.get_features(content_id=cid)
                     recommendations.append(
                         Recommendation(
                             id=f"cf_{cid}",
@@ -208,7 +210,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
                         )
                     )
                 except Exception:
-                    continue
+                    pass
 
             return recommendations
         except Exception as exc:
@@ -228,7 +230,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
             return []
 
         try:
-            history = self.user_profile.get_history(user_id=request.user_id, limit=20)
+            history = await self.user_profile.get_history(user_id=request.user_id, limit=20)
             history_text = "\n".join(
                 f"- {h.get('title', 'Unknown')} (tags: {', '.join(h.get('tags', []))})"
                 for h in history
@@ -249,7 +251,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
             recommendations = []
             for cid in ids[:5]:
                 try:
-                    features = self.content_client.get_features(content_id=cid)
+                    features = await self.content_client.get_features(content_id=cid)
                     recommendations.append(
                         Recommendation(
                             id=f"llm_{cid}",
@@ -261,7 +263,7 @@ class RecommendationAgent(BaseAgent[RecommendationRequest, RecommendationRespons
                         )
                     )
                 except Exception:
-                    continue
+                    pass
 
             return recommendations
         except Exception as exc:

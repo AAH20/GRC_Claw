@@ -11,7 +11,12 @@ from pydantic import ValidationError
 
 from skills_assessor.agents.base import BaseAgent
 from skills_assessor.config.settings import get_settings
-from skills_assessor.models.schemas import ExtractionRequest, ExtractionResponse, Skill, SkillCategory
+from skills_assessor.models.schemas import (
+    ExtractionRequest,
+    ExtractionResponse,
+    Skill,
+    SkillCategory,
+)
 
 
 class SkillExtractorAgent(BaseAgent[ExtractionRequest, ExtractionResponse]):

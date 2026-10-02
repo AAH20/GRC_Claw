@@ -6,6 +6,7 @@ and generate actionable insights for community management.
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -94,7 +95,7 @@ class TierAnalyticsAgent(BaseAgent[dict[str, Any], TierAnalytics]):
         Returns:
             A TierAnalytics instance with computed metrics.
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
         from uuid import uuid4
 
         tier_id = input_data["tier_id"]
@@ -132,7 +133,7 @@ class TierAnalyticsAgent(BaseAgent[dict[str, Any], TierAnalytics]):
             revenue=revenue,
             metrics=metrics,
             insights=insights,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             generated_by=self.name,
         )
 
@@ -178,7 +179,9 @@ class TierAnalyticsAgent(BaseAgent[dict[str, Any], TierAnalytics]):
         if total_members > 0:
             churn_rate = churned_members / total_members
             if churn_rate > 0.1:
-                insights.append(f"High churn rate detected: {churn_rate:.1%}. Consider retention initiatives.")
+                insights.append(
+                    f"High churn rate detected: {churn_rate:.1%}. Consider retention initiatives."
+                )
             elif churn_rate < 0.02:
                 insights.append(f"Excellent retention: churn rate at {churn_rate:.1%}.")
 
@@ -186,7 +189,9 @@ class TierAnalyticsAgent(BaseAgent[dict[str, Any], TierAnalytics]):
         if total_members > 0:
             activity_rate = active_members / total_members
             if activity_rate < 0.3:
-                insights.append(f"Low activity rate: {activity_rate:.1%}. Consider engagement campaigns.")
+                insights.append(
+                    f"Low activity rate: {activity_rate:.1%}. Consider engagement campaigns."
+                )
             elif activity_rate > 0.7:
                 insights.append(f"Strong engagement: {activity_rate:.1%} activity rate.")
 

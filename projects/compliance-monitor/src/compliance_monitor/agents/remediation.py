@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from compliance_monitor.agents.base import BaseComplianceAgent
-from compliance_monitor.models.schemas import RemediationAction, RemediationRequest, RemediationStatus, Violation
+from compliance_monitor.models.schemas import (
+    RemediationAction,
+    RemediationRequest,
+    RemediationStatus,
+    Violation,
+)
 
 
 class RemediationAgent(BaseComplianceAgent[RemediationRequest, RemediationAction]):
@@ -76,13 +81,13 @@ Provide a prioritized list of remediation actions with:
             Updated action with execution results.
         """
         action.status = RemediationStatus.IN_PROGRESS
-        action.executed_at = datetime.utcnow()
+        action.executed_at = datetime.now(tz=UTC)
 
         try:
             # Simulate remediation execution
             action.status = RemediationStatus.COMPLETED
             action.result = f"Successfully executed {action.action_type}"
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             action.status = RemediationStatus.FAILED
             action.error_message = str(exc)
 

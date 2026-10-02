@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import create_agent
 
 from rights_management.agents.base import BaseAgent
 from rights_management.models import (
@@ -35,20 +35,18 @@ Return a JSON object with:
 class RightsValidatorAgent(BaseAgent[RightsValidationRequest, RightsValidation]):
     """Agent that validates content usage against its license."""
 
-    def _build_agent(self) -> AgentExecutor:
-        """Build the LangChain ReAct agent for rights validation.
+    def _build_agent(self):
+        """Build the LangChain agent for rights validation.
 
         Returns:
-            Configured AgentExecutor instance.
+            Configured agent instance.
         """
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", _SYSTEM_PROMPT),
-                ("human", "{input}"),
-            ]
+        return create_agent(
+            model=self._get_llm(),
+            tools=[],
+            system_prompt=_SYSTEM_PROMPT,
+            debug=self._settings.debug,
         )
-        agent = create_react_agent(self._llm, tools=[], prompt=prompt)
-        return AgentExecutor(agent=agent, tools=[], verbose=self._settings.debug)
 
     async def run(self, payload: RightsValidationRequest) -> RightsValidation:
         """Validate a content usage request against its license.
@@ -63,7 +61,7 @@ class RightsValidatorAgent(BaseAgent[RightsValidationRequest, RightsValidation])
         from datetime import datetime
 
         try:
-            result: dict[str, Any] = await self._agent.ainvoke(
+            result: dict[str, Any] = await self._get_agent().ainvoke(
                 {
                     "input": (
                         f"Content ID: {payload.content_id}\n"
@@ -81,9 +79,9 @@ class RightsValidatorAgent(BaseAgent[RightsValidationRequest, RightsValidation])
                 license_id=None,
                 status=ValidationStatus.UNKNOWN,
                 reason=output or "Validation completed",
-                validated_at=datetime.utcnow(),
+                validated_at=datetime.now(tz=UTC),
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return RightsValidation(
                 id=str(uuid.uuid4()),
                 content_id=payload.content_id,
@@ -91,5 +89,5 @@ class RightsValidatorAgent(BaseAgent[RightsValidationRequest, RightsValidation])
                 license_id=None,
                 status=ValidationStatus.UNKNOWN,
                 reason="Validation failed",
-                validated_at=datetime.utcnow(),
+                validated_at=datetime.now(tz=UTC),
             )

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import structlog
-from typing import Any
 
 from community_curation.agents.base import BaseCurationAgent
 from community_curation.config.settings import get_settings

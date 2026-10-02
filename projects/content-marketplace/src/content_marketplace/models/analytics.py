@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
+
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -22,7 +26,7 @@ class AnalyticsSummary(BaseModel):
     total_volume: float = 0.0
     average_transaction_value: float = 0.0
     conversion_rate: float = Field(default=0.0, ge=0.0, le=1.0)
-    top_categories: list[dict[str, float]] = Field(default_factory=list)
+    top_categories: list[dict[str, Any]] = Field(default_factory=list)
     revenue_trend: list[TimeSeriesData] = Field(default_factory=list)
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from langchain_deepagents import create_deep_agent
+from deepagents import create_deep_agent
 
 from bias_detector.agents.base import BaseBiasAgent
 from bias_detector.config import get_settings
@@ -51,7 +51,6 @@ class DemographicAnalyzerAgent(BaseBiasAgent[DemographicData]):
         """
         return create_deep_agent(
             name=self.name,
-            description=self.description,
             system_prompt=self._get_system_prompt(),
         )
 

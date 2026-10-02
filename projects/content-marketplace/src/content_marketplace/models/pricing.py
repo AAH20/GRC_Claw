@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -27,23 +26,23 @@ class PricingCreate(BaseModel):
     strategy: PricingStrategy = Field(default=PricingStrategy.FIXED)
     base_price: float = Field(..., gt=0, description="Base price")
     currency: str = Field(default="USD", min_length=3, max_length=3)
-    min_price: Optional[float] = Field(default=None, gt=0, description="Minimum acceptable price")
-    max_price: Optional[float] = Field(default=None, gt=0, description="Maximum price cap")
+    min_price: float | None = Field(default=None, gt=0, description="Minimum acceptable price")
+    max_price: float | None = Field(default=None, gt=0, description="Maximum price cap")
     demand_multiplier: float = Field(default=1.0, ge=0.1, le=10.0)
-    competitor_price: Optional[float] = Field(default=None, gt=0)
+    competitor_price: float | None = Field(default=None, gt=0)
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class PricingUpdate(BaseModel):
     """Schema for updating a pricing entry."""
 
-    strategy: Optional[PricingStrategy] = None
-    base_price: Optional[float] = Field(default=None, gt=0)
-    min_price: Optional[float] = Field(default=None, gt=0)
-    max_price: Optional[float] = Field(default=None, gt=0)
-    demand_multiplier: Optional[float] = Field(default=None, ge=0.1, le=10.0)
-    competitor_price: Optional[float] = Field(default=None, gt=0)
-    metadata: Optional[dict[str, str]] = None
+    strategy: PricingStrategy | None = None
+    base_price: float | None = Field(default=None, gt=0)
+    min_price: float | None = Field(default=None, gt=0)
+    max_price: float | None = Field(default=None, gt=0)
+    demand_multiplier: float | None = Field(default=None, ge=0.1, le=10.0)
+    competitor_price: float | None = Field(default=None, gt=0)
+    metadata: dict[str, str] | None = None
 
 
 class Pricing(BaseModel):
@@ -54,10 +53,10 @@ class Pricing(BaseModel):
     strategy: PricingStrategy = PricingStrategy.FIXED
     base_price: float
     currency: str = "USD"
-    min_price: Optional[float] = None
-    max_price: Optional[float] = None
+    min_price: float | None = None
+    max_price: float | None = None
     demand_multiplier: float = 1.0
-    competitor_price: Optional[float] = None
+    competitor_price: float | None = None
     final_price: float = Field(..., description="Computed final price after strategy")
     metadata: dict[str, str] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)

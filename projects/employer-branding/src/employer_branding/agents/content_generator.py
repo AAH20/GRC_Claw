@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from employer_branding.agents.base import BaseAgent
-from employer_branding.models import BrandAsset, ContentGenerationRequest, ContentTone, ContentType
+from employer_branding.models import BrandAsset, ContentGenerationRequest, ContentType
 
 
 class ContentGeneratorAgent(BaseAgent[BrandAsset]):

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,7 +16,9 @@ from candidate_matcher.config.settings import get_settings
 from candidate_matcher.integrations.embedding_client import create_embedding_client
 from candidate_matcher.integrations.llm_client import create_llm_client
 from candidate_matcher.integrations.vector_store import create_vector_store
-from candidate_matcher.models.schemas import Candidate, JobPosting, MatchResult
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = get_logger(__name__)
 

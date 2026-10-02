@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -28,6 +27,9 @@ from skills_assessor.models.schemas import (
     SkillAssessment,
     SkillValidationResult,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
@@ -452,7 +454,6 @@ async def get_assessment_summary(
             detail=f"Assessment {assessment_id} not found",
         )
 
-    from skills_assessor.models.schemas import ProficiencyLevel
 
     level_counts: dict[str, int] = {}
     for prof in assessment.skills:

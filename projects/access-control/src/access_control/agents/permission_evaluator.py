@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from access_control.agents.base import AgentContext, BaseAgent
-from access_control.config import Settings
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
 from access_control.models.enums import AccessDecision
 from access_control.models.schemas import AccessRequest, AccessResult
 
@@ -90,10 +94,7 @@ Decisions must be one of: allow, deny, conditional, abstain."""
         response = await agent.ainvoke(input_data)
 
         # Parse the LLM response
-        if hasattr(response, "content"):
-            content = response.content
-        else:
-            content = str(response)
+        content = response.content if hasattr(response, "content") else str(response)
 
         try:
             parsed = json.loads(content)

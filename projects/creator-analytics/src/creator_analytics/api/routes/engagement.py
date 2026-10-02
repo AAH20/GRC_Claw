@@ -1,8 +1,9 @@
 """Engagement analysis API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Depends
 from typing import Any
+
 import structlog
+from fastapi import APIRouter, Depends, HTTPException
 
 from creator_analytics.agents import EngagementAnalyzerAgent
 
@@ -18,7 +19,7 @@ def get_engagement_agent() -> EngagementAnalyzerAgent:
 @router.post("/report", response_model=dict[str, Any])
 async def generate_engagement_report(
     input_data: dict[str, Any],
-    agent: EngagementAnalyzerAgent = Depends(get_engagement_agent),
+    agent: EngagementAnalyzerAgent = Depends(get_engagement_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Generate engagement report for a creator.
 
@@ -34,13 +35,13 @@ async def generate_engagement_report(
         return result
     except Exception as e:
         logger.error(f"Engagement report generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{creator_id}", response_model=dict[str, Any])
 async def get_engagement_report(
     creator_id: str,
-    agent: EngagementAnalyzerAgent = Depends(get_engagement_agent),
+    agent: EngagementAnalyzerAgent = Depends(get_engagement_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Get engagement report for a creator.
 
@@ -56,13 +57,13 @@ async def get_engagement_report(
         return result
     except Exception as e:
         logger.error(f"Failed to get engagement report for {creator_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{creator_id}/metrics", response_model=dict[str, Any])
 async def get_engagement_metrics(
     creator_id: str,
-    agent: EngagementAnalyzerAgent = Depends(get_engagement_agent),
+    agent: EngagementAnalyzerAgent = Depends(get_engagement_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Get engagement metrics for a creator.
 
@@ -78,4 +79,4 @@ async def get_engagement_metrics(
         return {"creator_id": creator_id, "metrics": result.get("metrics", {})}
     except Exception as e:
         logger.error(f"Failed to get engagement metrics for {creator_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

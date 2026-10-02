@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     ANALYTICS_CACHE_TTL_SECONDS: int = 300
 
     # API
-    API_HOST: str = "0.0.0.0"
+    API_HOST: str = "127.0.0.1"
     API_PORT: int = 8000
     API_WORKERS: int = 4
 

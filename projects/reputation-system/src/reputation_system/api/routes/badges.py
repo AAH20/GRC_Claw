@@ -1,25 +1,24 @@
 """Badge API routes."""
-
-from typing import Dict, List
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from reputation_system.agents.badge_manager import BadgeManagerAgent, BadgeEvaluationInput
+from reputation_system.agents.badge_manager import BadgeEvaluationInput, BadgeManagerAgent
 from reputation_system.config.settings import Settings, get_settings
 from reputation_system.models.schemas import Badge, BadgeCreate, BadgeUpdate
 
 router = APIRouter(prefix="/badges", tags=["badges"])
 
 # In-memory store for demo purposes
-_badges: Dict[UUID, Badge] = {}
-_member_badges: Dict[str, List[str]] = {}
+_badges: dict[UUID, Badge] = {}
+_member_badges: dict[str, list[str]] = {}
 
 
 @router.post("", response_model=Badge, status_code=status.HTTP_201_CREATED)
 async def create_badge(
     data: BadgeCreate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> Badge:
     """Create a new badge.
 
@@ -30,7 +29,7 @@ async def create_badge(
     Returns:
         Created badge.
     """
-    badge = Badge(**data.model_dump())
+    badge = Badge(**data.model_dump(exclude_none=True))
     _badges[badge.id] = badge
     return badge
 
@@ -38,7 +37,7 @@ async def create_badge(
 @router.get("/{badge_id}", response_model=Badge)
 async def get_badge(
     badge_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> Badge:
     """Get a badge by ID.
 
@@ -60,20 +59,20 @@ async def get_badge(
     return _badges[badge_id]
 
 
-@router.get("", response_model=List[Badge])
+@router.get("", response_model=list[Badge])
 async def list_badges(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
-    category: str = Query(None),
-    settings: Settings = Depends(get_settings),
-) -> List[Badge]:
+    settings: Annotated[Settings, Depends(get_settings)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    category: Annotated[str | None, Query()] = None,
+) -> list[Badge]:
     """List all badges with pagination and filtering.
 
     Args:
+        settings: Application settings.
         skip: Number of records to skip.
         limit: Maximum number of records to return.
         category: Filter by category.
-        settings: Application settings.
 
     Returns:
         List of badges.
@@ -88,7 +87,7 @@ async def list_badges(
 async def update_badge(
     badge_id: UUID,
     data: BadgeUpdate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> Badge:
     """Update a badge.
 
@@ -119,7 +118,7 @@ async def update_badge(
 @router.delete("/{badge_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_badge(
     badge_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
     """Delete a badge.
 
@@ -141,10 +140,10 @@ async def delete_badge(
 @router.post("/evaluate/{member_id}")
 async def evaluate_member_badges(
     member_id: str,
-    badge_criteria: Dict,
-    member_stats: Dict,
-    settings: Settings = Depends(get_settings),
-) -> Dict:
+    badge_criteria: dict,
+    member_stats: dict,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict:
     """Evaluate badge eligibility for a member using the AI agent.
 
     Args:

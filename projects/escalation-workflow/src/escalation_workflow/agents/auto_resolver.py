@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from escalation_workflow.agents.base import BaseAgent
 from escalation_workflow.models.escalation import Escalation
-from escalation_workflow.models.resolution import Resolution, ResolutionCreate, ResolutionStatus
+from escalation_workflow.models.resolution import Resolution, ResolutionStatus
 
 
 class AutoResolverInput(BaseModel):

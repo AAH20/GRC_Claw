@@ -1,7 +1,5 @@
 """Reputation Score API routes."""
-
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -16,13 +14,13 @@ from reputation_system.models.schemas import (
 router = APIRouter(prefix="/reputation", tags=["reputation"])
 
 # In-memory store for demo purposes
-_scores: Dict[str, ReputationScore] = {}
+_scores: dict[str, ReputationScore] = {}
 
 
 @router.post("/scores", response_model=ReputationScore, status_code=status.HTTP_201_CREATED)
 async def create_reputation_score(
     data: ReputationScoreCreate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> ReputationScore:
     """Create a new reputation score for a member.
 
@@ -54,7 +52,7 @@ async def create_reputation_score(
 @router.get("/scores/{member_id}", response_model=ReputationScore)
 async def get_reputation_score(
     member_id: str,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> ReputationScore:
     """Get reputation score for a member.
 
@@ -80,7 +78,7 @@ async def get_reputation_score(
 async def update_reputation_score(
     member_id: str,
     data: ReputationScoreUpdate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> ReputationScore:
     """Update reputation score for a member.
 
@@ -114,7 +112,7 @@ async def update_reputation_score(
 @router.delete("/scores/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_reputation_score(
     member_id: str,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
     """Delete reputation score for a member.
 
@@ -133,18 +131,18 @@ async def delete_reputation_score(
     del _scores[member_id]
 
 
-@router.get("/scores", response_model=List[ReputationScore])
+@router.get("/scores", response_model=list[ReputationScore])
 async def list_reputation_scores(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
-    settings: Settings = Depends(get_settings),
-) -> List[ReputationScore]:
+    settings: Annotated[Settings, Depends(get_settings)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+) -> list[ReputationScore]:
     """List all reputation scores with pagination.
 
     Args:
+        settings: Application settings.
         skip: Number of records to skip.
         limit: Maximum number of records to return.
-        settings: Application settings.
 
     Returns:
         List of reputation scores.
@@ -153,22 +151,23 @@ async def list_reputation_scores(
     return scores[skip : skip + limit]
 
 
-@router.post("/scores/{member_id}/calculate", response_model=Dict[str, Any])
+@router.post("/scores/{member_id}/calculate", response_model=dict[str, Any])
 async def calculate_reputation_score(
     member_id: str,
-    contributions: int = Query(0, ge=0),
-    positive_feedback: int = Query(0, ge=0),
-    negative_feedback: int = Query(0, ge=0),
-    account_age_days: int = Query(0, ge=0),
-    badge_count: int = Query(0, ge=0),
-    recent_activity_score: float = Query(0.0, ge=0.0, le=1.0),
-    quality_score: float = Query(0.0, ge=0.0, le=1.0),
-    settings: Settings = Depends(get_settings),
-) -> Dict[str, Any]:
+    settings: Annotated[Settings, Depends(get_settings)],
+    contributions: Annotated[int, Query(ge=0)] = 0,
+    positive_feedback: Annotated[int, Query(ge=0)] = 0,
+    negative_feedback: Annotated[int, Query(ge=0)] = 0,
+    account_age_days: Annotated[int, Query(ge=0)] = 0,
+    badge_count: Annotated[int, Query(ge=0)] = 0,
+    recent_activity_score: Annotated[float, Query(ge=0.0, le=1.0)] = 0.0,
+    quality_score: Annotated[float, Query(ge=0.0, le=1.0)] = 0.0,
+) -> dict[str, Any]:
     """Calculate reputation score using the AI agent.
 
     Args:
         member_id: Member identifier.
+        settings: Application settings.
         contributions: Total contributions.
         positive_feedback: Positive feedback count.
         negative_feedback: Negative feedback count.
@@ -176,7 +175,6 @@ async def calculate_reputation_score(
         badge_count: Number of badges earned.
         recent_activity_score: Recent activity score (0-1).
         quality_score: Quality score (0-1).
-        settings: Application settings.
 
     Returns:
         Calculated score with factors and confidence.

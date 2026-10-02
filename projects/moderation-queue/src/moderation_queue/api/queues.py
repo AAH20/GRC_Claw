@@ -6,7 +6,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import ContentType, Queue, QueueMetrics
@@ -44,7 +44,7 @@ class QueueListResponse(BaseModel):
 )
 async def create_queue(
     request: CreateQueueRequest,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> Queue:
     """Create a new moderation queue.
 
@@ -75,8 +75,8 @@ async def create_queue(
     description="Get a list of all moderation queues",
 )
 async def list_queues(
-    active_only: bool = Query(default=False, description="Filter active queues only"),
-    logger=Depends(get_logger),
+    active_only: bool = Query(default=False, description="Filter active queues only"),  # noqa: B008
+    logger=Depends(get_logger),  # noqa: B008
 ) -> QueueListResponse:
     """List moderation queues.
 
@@ -101,7 +101,7 @@ async def list_queues(
 )
 async def get_queue(
     queue_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> Queue:
     """Get a queue by ID.
 
@@ -132,7 +132,7 @@ async def get_queue(
 )
 async def get_queue_metrics(
     queue_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> QueueMetrics:
     """Get metrics for a queue.
 
@@ -172,9 +172,9 @@ async def get_queue_metrics(
 async def update_queue(
     queue_id: UUID,
     name: str | None = Query(default=None),
-    is_active: bool | None = Query(default=None),
-    max_size: int | None = Query(default=None, ge=1),
-    logger=Depends(get_logger),
+    is_active: bool | None = Query(default=None),  # noqa: B008
+    max_size: int | None = Query(default=None, ge=1),  # noqa: B008
+    logger=Depends(get_logger),  # noqa: B008
 ) -> Queue:
     """Update a queue.
 
@@ -219,7 +219,7 @@ async def update_queue(
 )
 async def delete_queue(
     queue_id: UUID,
-    logger=Depends(get_logger),
+    logger=Depends(get_logger),  # noqa: B008
 ) -> None:
     """Delete a queue.
 

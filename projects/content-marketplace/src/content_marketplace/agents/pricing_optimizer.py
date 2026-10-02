@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import logging
-import math
-from typing import Any, Optional
 from uuid import UUID
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 
-from content_marketplace.models.pricing import Pricing, PricingCreate, PricingUpdate, PricingStrategy
+from content_marketplace.models.pricing import (
+    Pricing,
+    PricingCreate,
+    PricingStrategy,
+    PricingUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ class PricingOptimizerAgent:
     competitor pricing, and demand signals to recommend optimal prices.
     """
 
-    def __init__(self, llm: Optional[BaseChatModel] = None) -> None:
+    def __init__(self, llm: BaseChatModel | None = None) -> None:
         """Initialize the PricingOptimizerAgent.
 
         Args:
@@ -113,8 +116,8 @@ class PricingOptimizerAgent:
 
         pricing.final_price = self._compute_final_price(pricing)
 
-        from datetime import datetime
-        pricing.updated_at = datetime.utcnow()
+        from datetime import UTC, datetime
+        pricing.updated_at = datetime.now(tz=UTC)
         logger.info("Updated pricing %s", pricing_id)
         return pricing
 
@@ -175,11 +178,11 @@ class PricingOptimizerAgent:
             pricing.demand_multiplier = min(pricing.demand_multiplier * 1.05, 2.0)
             pricing.final_price = self._compute_final_price(pricing)
 
-        from datetime import datetime
-        pricing.updated_at = datetime.utcnow()
+        from datetime import UTC, datetime
+        pricing.updated_at = datetime.now(tz=UTC)
         return pricing
 
-    async def get_pricing_for_listing(self, listing_id: UUID) -> Optional[Pricing]:
+    async def get_pricing_for_listing(self, listing_id: UUID) -> Pricing | None:
         """Get the pricing entry for a specific listing.
 
         Args:
@@ -193,7 +196,7 @@ class PricingOptimizerAgent:
                 return pricing
         return None
 
-    async def bulk_optimize(self, category: Optional[str] = None) -> list[Pricing]:
+    async def bulk_optimize(self, category: str | None = None) -> list[Pricing]:
         """Optimize prices for multiple listings.
 
         Args:

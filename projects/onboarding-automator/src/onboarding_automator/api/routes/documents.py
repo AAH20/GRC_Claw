@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from onboarding_automator.agents import DocumentCollectorAgent
-from onboarding_automator.config.settings import Settings, get_settings
 from onboarding_automator.integrations.store import InMemoryStore
 from onboarding_automator.models import AgentResponse, Document, DocumentCreate, DocumentUpdate
 
@@ -22,7 +21,7 @@ def get_store(request: Request) -> InMemoryStore:
 @router.post("", response_model=Document, status_code=status.HTTP_201_CREATED)
 async def create_document(
     doc_data: DocumentCreate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Document:
     """Register a new document for an onboarding plan.
 
@@ -52,7 +51,7 @@ async def create_document(
 
 @router.get("", response_model=list[Document])
 async def list_documents(
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
     plan_id: UUID | None = None,
     status_filter: str | None = None,
     skip: int = 0,
@@ -78,7 +77,7 @@ async def list_documents(
 @router.get("/{document_id}", response_model=Document)
 async def get_document(
     document_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Document:
     """Get a specific document by ID.
 
@@ -104,7 +103,7 @@ async def get_document(
 async def update_document(
     document_id: UUID,
     update_data: DocumentUpdate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Document:
     """Update document status and metadata.
 
@@ -142,7 +141,7 @@ async def update_document(
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> None:
     """Delete a document.
 
@@ -164,7 +163,7 @@ async def delete_document(
 async def verify_document(
     document_id: UUID,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Trigger document verification via the DocumentCollectorAgent.
 

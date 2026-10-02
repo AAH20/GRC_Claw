@@ -1,24 +1,24 @@
 """Tests for Pydantic models."""
 
-import pytest
 from datetime import datetime
+
 from creator_analytics.models import (
+    AgeGroup,
     Audience,
     AudienceDemographics,
     AudienceSegment,
-    AgeGroup,
-    Gender,
-    ContentPerformance,
     ContentMetrics,
+    ContentPerformance,
     ContentType,
-    RevenueReport,
-    RevenueBreakdown,
-    RevenueStream,
+    EngagementMetrics,
+    EngagementReport,
+    EngagementType,
+    Gender,
     GrowthPrediction,
     GrowthScenario,
-    EngagementReport,
-    EngagementMetrics,
-    EngagementType,
+    RevenueBreakdown,
+    RevenueReport,
+    RevenueStream,
 )
 
 

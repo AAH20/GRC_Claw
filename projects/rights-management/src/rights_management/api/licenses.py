@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -49,7 +49,7 @@ def get_agent(request: Request) -> LicenseDetectorAgent:
 @router.post("", response_model=License, status_code=201)
 async def create_license(
     payload: LicenseCreate,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> License:
     """Create a new content license.
 
@@ -66,7 +66,7 @@ async def create_license(
         license_type=payload.license_type,
         holder=payload.holder,
         status=LicenseStatus.ACTIVE,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(tz=UTC),
         expires_at=payload.expires_at,
         terms=payload.terms,
         metadata=payload.metadata,
@@ -79,7 +79,7 @@ async def create_license(
 async def list_licenses(
     content_id: str | None = None,
     status: LicenseStatus | None = None,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> list[License]:
     """List all licenses, optionally filtered.
 
@@ -98,7 +98,7 @@ async def list_licenses(
 @router.get("/{license_id}", response_model=License)
 async def get_license(
     license_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> License:
     """Retrieve a specific license by ID.
 
@@ -121,7 +121,7 @@ async def get_license(
 @router.post("/detect", response_model=LicenseDetectionResult)
 async def detect_license(
     payload: LicenseDetectionRequest,
-    agent: LicenseDetectorAgent = Depends(get_agent),
+    agent: LicenseDetectorAgent = Depends(get_agent),  # noqa: B008
 ) -> LicenseDetectionResult:
     """Detect the license for a piece of content.
 
@@ -139,7 +139,7 @@ async def detect_license(
 @router.delete("/{license_id}", status_code=204)
 async def revoke_license(
     license_id: str,
-    storage: InMemoryStorage = Depends(get_storage),
+    storage: InMemoryStorage = Depends(get_storage),  # noqa: B008
 ) -> None:
     """Revoke a license.
 

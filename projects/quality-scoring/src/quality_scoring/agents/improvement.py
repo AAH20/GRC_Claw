@@ -63,7 +63,9 @@ class ImprovementSuggesterAgent(BaseScoringAgent[ImprovementPlan]):
                     priority="high",
                     title="Shorten Long Sentences",
                     description="Break down complex sentences into shorter, more digestible ones.",
-                    current_state=f"Average sentence length is {metrics['avg_sentence_length']:.1f} words",
+                    current_state=(
+                        f"Average sentence length is {metrics['avg_sentence_length']:.1f} words"
+                    ),
                     target_state="Average sentence length of 15-20 words",
                     expected_impact=15.0,
                     examples=[

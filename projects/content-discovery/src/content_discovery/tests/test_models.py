@@ -11,7 +11,6 @@ from content_discovery.models import (
     HealthResponse,
     Recommendation,
     RecommendationRequest,
-    RecommendationResponse,
     SearchExplanation,
     SearchRequest,
     SearchResponse,
@@ -19,7 +18,6 @@ from content_discovery.models import (
     Trend,
     TrendDirection,
     TrendRequest,
-    TrendResponse,
 )
 
 

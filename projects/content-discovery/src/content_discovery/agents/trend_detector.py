@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from langchain_core.tools import tool
 
 from content_discovery.agents.base import BaseAgent
-from content_discovery.integrations.analytics import AnalyticsClient
 from content_discovery.models import Trend, TrendDirection, TrendRequest, TrendResponse
+
+if TYPE_CHECKING:
+    from content_discovery.integrations.analytics import AnalyticsClient
 
 logger = structlog.get_logger()
 
@@ -109,7 +111,7 @@ class TrendDetectorAgent(BaseAgent[TrendRequest, TrendResponse]):
             list[str]: Discovered topic strings.
         """
         try:
-            return self.analytics.get_top_topics(days=window_days, limit=20)
+            return await self.analytics.get_top_topics(days=window_days, limit=20)
         except Exception as exc:
             logger.error("topic_discovery_failed", error=str(exc))
             return []
@@ -125,7 +127,7 @@ class TrendDetectorAgent(BaseAgent[TrendRequest, TrendResponse]):
             Trend | None: Detected trend or None if insufficient data.
         """
         try:
-            volume_data = self.analytics.get_volume(topic=topic, days=window_days)
+            volume_data = await self.analytics.get_volume(topic=topic, days=window_days)
             if not volume_data or len(volume_data) < 2:
                 return None
 
@@ -160,7 +162,7 @@ class TrendDetectorAgent(BaseAgent[TrendRequest, TrendResponse]):
             score = min(abs(change_percent) / 100, 1.0)
 
             # Get related topics
-            related = self.analytics.get_related_topics(topic=topic)
+            related = await self.analytics.get_related_topics(topic=topic)
 
             # Find peak
             peak_idx = volumes.index(max(volumes))

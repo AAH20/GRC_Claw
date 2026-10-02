@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -15,15 +15,9 @@ from access_control.agents import (
 )
 from access_control.agents.base import AgentContext
 from access_control.config import Settings
-from access_control.models.enums import AccessDecision, AuditSeverity, RoleStatus
+from access_control.models.enums import AccessDecision, AuditSeverity
 from access_control.models.schemas import (
-    AccessAudit,
-    AccessRecommendation,
     AccessRequest,
-    AccessResult,
-    Permission,
-    Role,
-    RoleCreate,
 )
 
 
@@ -203,7 +197,7 @@ class TestAgents:
     ) -> None:
         """Test access recommender agent run method."""
         mock_response = MagicMock()
-        mock_response.content = '{"recommendations": [{"resource": "docs", "action": "read", "recommendation": "grant"}], "summary": "Test"}'
+        mock_response.content = '{"recommendations": [{"resource": "docs", "action": "read", "recommendation": "grant"}], "summary": "Test"}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 

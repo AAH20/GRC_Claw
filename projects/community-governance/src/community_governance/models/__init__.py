@@ -1,19 +1,9 @@
 """Pydantic models for the community governance application."""
 
-from community_governance.models.governance_action import (
-    ActionStatus,
-    ActionType,
-    GovernanceAction,
-    GovernanceActionCreate,
-    GovernanceActionUpdate,
-)
-from community_governance.models.rule import (
-    Rule,
-    RuleCategory,
-    RuleCreate,
-    RuleEnforcementResult,
-    RuleSeverity,
-    RuleUpdate,
+from community_governance.models.analytics import (
+    GovernanceAnalytics,
+    GovernanceHealthScore,
+    GovernanceSummary,
 )
 from community_governance.models.dispute import (
     Dispute,
@@ -23,6 +13,13 @@ from community_governance.models.dispute import (
     DisputeStatus,
     DisputeUpdate,
 )
+from community_governance.models.governance_action import (
+    ActionStatus,
+    ActionType,
+    GovernanceAction,
+    GovernanceActionCreate,
+    GovernanceActionUpdate,
+)
 from community_governance.models.policy import (
     Policy,
     PolicyCreate,
@@ -30,10 +27,13 @@ from community_governance.models.policy import (
     PolicyStatus,
     PolicyUpdate,
 )
-from community_governance.models.analytics import (
-    GovernanceAnalytics,
-    GovernanceHealthScore,
-    GovernanceSummary,
+from community_governance.models.rule import (
+    Rule,
+    RuleCategory,
+    RuleCreate,
+    RuleEnforcementResult,
+    RuleSeverity,
+    RuleUpdate,
 )
 
 __all__ = [

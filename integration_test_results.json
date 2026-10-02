@@ -1,0 +1,619 @@
+{
+  "summary": {
+    "total_projects": 76,
+    "total_passed": 829,
+    "total_failed": 163,
+    "total_errors": 37,
+    "total_skipped": 0
+  },
+  "projects": {
+    "access-control": {
+      "status": "tested",
+      "passed": 40,
+      "failed": 15,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "account-based-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 2,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "affiliate-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "agency-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "analytics": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "bias-detector": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "brand-monitoring": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "broker-enablement": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "business-intelligence": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 2,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "campaign-optimizer": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "candidate-matcher": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "community-curation": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "community-governance": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "community-health-scorer": {
+      "status": "tested",
+      "passed": 46,
+      "failed": 6,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "compliance-monitor": {
+      "status": "tested",
+      "passed": 21,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "content-discovery": {
+      "status": "tested",
+      "passed": 54,
+      "failed": 4,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "content-generator": {
+      "status": "tested",
+      "passed": 8,
+      "failed": 24,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "content-marketplace": {
+      "status": "tested",
+      "passed": 17,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "content-moderation-pipeline": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "conversational-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "creator-analytics": {
+      "status": "tested",
+      "passed": 15,
+      "failed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "creator-monetization": {
+      "status": "tested",
+      "passed": 32,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "crm-enhancer": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 2,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "cross-domain-orchestrator": {
+      "status": "tested",
+      "passed": 81,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "cross-project-orchestrator": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "customer-retention": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "customer-segmentation": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "customer-service": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "ecommerce-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "email-marketing": {
+      "status": "tested",
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "employer-branding": {
+      "status": "tested",
+      "passed": 24,
+      "failed": 7,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "escalation-workflow": {
+      "status": "tested",
+      "passed": 40,
+      "failed": 3,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "event-management": {
+      "status": "tested",
+      "passed": 16,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "feedback-management": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "finance-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "fraud-detection": {
+      "status": "tested",
+      "passed": 9,
+      "failed": 6,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "governance-agent": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "healthcare-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "influencer-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "interview-scheduler": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "job-description-optimizer": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "journey-orchestrator": {
+      "status": "tested",
+      "passed": 80,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "lead-scorer": {
+      "status": "tested",
+      "passed": 111,
+      "failed": 17,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "licensing-engine": {
+      "status": "tested",
+      "passed": 21,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "market-research": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "marketing-attribution": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 2,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "marketing-compliance": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 2,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "marketing-personalization": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 2,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "member-verification": {
+      "status": "tested",
+      "passed": 32,
+      "failed": 9,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "moderation-analytics": {
+      "status": "tested",
+      "passed": 24,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "moderation-queue": {
+      "status": "tested",
+      "passed": 11,
+      "failed": 19,
+      "errors": 5,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "onboarding-automator": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "onboarding-training": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "partner-management": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "ppc-manager": {
+      "status": "tested",
+      "passed": 36,
+      "failed": 7,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "pricing-optimizer": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "product-recommendations": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "quality-scoring": {
+      "status": "tested",
+      "passed": 43,
+      "failed": 7,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "real-estate-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "recruitment-analytics": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "reputation-system": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "resume-parser": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "rights-management": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "saas-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 3,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "sales-automator": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "sales-forecaster": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "seo-optimizer": {
+      "status": "tested",
+      "passed": 24,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 0
+    },
+    "skills-assessor": {
+      "status": "tested",
+      "passed": 40,
+      "failed": 10,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 1
+    },
+    "smb-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "social-media-manager": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "talent-pool-manager": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "tier-management": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 4
+    },
+    "unified-marketing-platform": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "returncode": 5
+    },
+    "video-marketing": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 3,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "website-optimization": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 1,
+      "skipped": 0,
+      "returncode": 2
+    },
+    "workflow-automation": {
+      "status": "tested",
+      "passed": 0,
+      "failed": 0,
+      "errors": 3,
+      "skipped": 0,
+      "returncode": 2
+    }
+  }
+}

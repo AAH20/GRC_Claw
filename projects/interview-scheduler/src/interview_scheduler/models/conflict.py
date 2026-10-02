@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ConflictSeverity(str, Enum):
+class ConflictSeverity(StrEnum):
     """Conflict severity levels."""
 
     LOW = "low"
@@ -19,7 +19,7 @@ class ConflictSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class ConflictType(str, Enum):
+class ConflictType(StrEnum):
     """Types of scheduling conflicts."""
 
     DOUBLE_BOOKING = "double_booking"
@@ -30,7 +30,7 @@ class ConflictType(str, Enum):
     PARTICIPANT_UNAVAILABLE = "participant_unavailable"
 
 
-class ConflictStatus(str, Enum):
+class ConflictStatus(StrEnum):
     """Conflict resolution status."""
 
     OPEN = "open"

@@ -1,15 +1,15 @@
 """Source Tracker Agent - tracks and analyzes recruitment source effectiveness."""
 
+from typing import TYPE_CHECKING
 from __future__ import annotations
 
-import uuid
-from datetime import date
 from decimal import Decimal
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from recruitment_analytics.agents.base import BaseAgent
-from recruitment_analytics.integrations.ats_client import ATSClient
+
+if TYPE_CHECKING:
+    from recruitment_analytics.integrations.ats_client import ATSClient
+
 from recruitment_analytics.models.schemas import (
     SourceMetrics,
     SourceTrackingRequest,

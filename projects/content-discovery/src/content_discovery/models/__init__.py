@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from enum import Enum
-from typing import Any, Generic, TypeVar
+from enum import StrEnum
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
+
+from datetime import datetime
 
 
 class SearchRequest(BaseModel):
@@ -61,7 +62,7 @@ class Recommendation(BaseModel):
 class RecommendationRequest(BaseModel):
     """Request model for content recommendations."""
 
-    user_id: str = Field(..., description="User identifier")
+    user_id: str = Field(..., min_length=1, description="User identifier")
     context: str | None = Field(None, description="Current context or query")
     limit: int = Field(default=10, ge=1, le=50, description="Maximum recommendations")
     content_types: list[str] = Field(default_factory=list, description="Filter by content types")
@@ -75,7 +76,7 @@ class RecommendationResponse(BaseModel):
     took_ms: float = Field(..., description="Execution time in milliseconds")
 
 
-class TrendDirection(str, Enum):
+class TrendDirection(StrEnum):
     """Direction of a trend."""
 
     RISING = "rising"
@@ -121,7 +122,9 @@ class SearchExplanation(BaseModel):
     explanation: str = Field(..., description="Human-readable explanation")
     factors: list[str] = Field(default_factory=list, description="Key ranking factors")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Explanation confidence")
-    suggested_refinements: list[str] = Field(default_factory=list, description="Suggested query refinements")
+    suggested_refinements: list[str] = Field(
+        default_factory=list, description="Suggested query refinements"
+    )
 
 
 class HealthResponse(BaseModel):

@@ -16,4 +16,5 @@ def client() -> TestClient:
         A TestClient instance.
     """
     app = create_app()
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client

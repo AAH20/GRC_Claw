@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -106,10 +106,10 @@ class Violation(BaseModel):
     severity: ViolationSeverity = ViolationSeverity.MEDIUM
     status: ViolationStatus = ViolationStatus.OPEN
     detected_at: datetime = Field(default_factory=datetime.utcnow)
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
     evidence: list[str] = Field(default_factory=list)
     remediation_actions: list[UUID] = Field(default_factory=list)
-    assignee: Optional[str] = None
+    assignee: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -172,7 +172,7 @@ class ComplianceScore(BaseModel):
     factors: dict[str, float] = Field(default_factory=dict)
     computed_at: datetime = Field(default_factory=datetime.utcnow)
     trend: str = Field(default="stable", pattern=r"^(improving|declining|stable)$")
-    previous_score: Optional[float] = None
+    previous_score: float | None = None
 
 
 class ComplianceReport(BaseModel):
@@ -230,9 +230,9 @@ class RemediationAction(BaseModel):
     action_type: str = Field(..., min_length=1, max_length=100)
     description: str = Field(default="", max_length=2000)
     status: RemediationStatus = RemediationStatus.PENDING
-    executed_at: Optional[datetime] = None
-    result: Optional[str] = None
-    error_message: Optional[str] = None
+    executed_at: datetime | None = None
+    result: str | None = None
+    error_message: str | None = None
 
 
 class PolicyCreate(BaseModel):
@@ -242,7 +242,7 @@ class PolicyCreate(BaseModel):
     description: str = Field(default="", max_length=2000)
     category: str = Field(..., min_length=1, max_length=100)
     version: str = Field(default="1.0.0", pattern=r"^\d+\.\d+\.\d+$")
-    effective_date: Optional[datetime] = None
+    effective_date: datetime | None = None
     rules: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -255,7 +255,7 @@ class ViolationCreate(BaseModel):
     description: str = Field(default="", max_length=5000)
     severity: ViolationSeverity = ViolationSeverity.MEDIUM
     evidence: list[str] = Field(default_factory=list)
-    assignee: Optional[str] = None
+    assignee: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

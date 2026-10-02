@@ -1,7 +1,6 @@
 """Configuration management for the job description optimizer."""
 
 from functools import lru_cache
-from typing import List
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,7 +22,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
 
     # Server
-    host: str = Field(default="0.0.0.0")
+    host: str = Field(default="127.0.0.1")
     port: int = Field(default=8000)
     workers: int = Field(default=1)
 
@@ -48,13 +47,13 @@ class Settings(BaseSettings):
     rate_limit_burst: int = Field(default=10, ge=1, le=100)
 
     # CORS
-    cors_origins: List[str] = Field(
+    cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"]
     )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: object) -> List[str]:
+    def parse_cors_origins(cls, v: object) -> list[str]:
         """Parse CORS origins from string or list."""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]

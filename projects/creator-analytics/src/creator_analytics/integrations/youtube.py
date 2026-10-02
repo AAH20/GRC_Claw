@@ -1,6 +1,7 @@
 """YouTube platform integration."""
 
 from typing import Any
+
 import structlog
 
 from creator_analytics.integrations.base import BaseIntegration

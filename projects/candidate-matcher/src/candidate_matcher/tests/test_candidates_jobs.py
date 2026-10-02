@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 def test_create_candidate(test_client: TestClient, sample_candidate) -> None:
@@ -48,7 +51,7 @@ def test_get_candidate_not_found(test_client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_list_candidates(test_client: TestClient, sample_candidate) -> None:
+def test_list_candidates(test_client: TestClient, sample_candidate) -> None:  # noqa: ARG001
     """Test listing candidates.
 
     Args:

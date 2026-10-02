@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from onboarding_automator.agents import ComplianceCheckerAgent
-from onboarding_automator.config.settings import Settings, get_settings
 from onboarding_automator.integrations.store import InMemoryStore
 from onboarding_automator.models import (
     AgentResponse,
@@ -27,7 +26,7 @@ def get_store(request: Request) -> InMemoryStore:
 @router.post("", response_model=ComplianceCheck, status_code=status.HTTP_201_CREATED)
 async def create_compliance_check(
     check_data: ComplianceCheckCreate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> ComplianceCheck:
     """Create a new compliance check record.
 
@@ -57,7 +56,7 @@ async def create_compliance_check(
 
 @router.get("", response_model=list[ComplianceCheck])
 async def list_compliance_checks(
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
     plan_id: UUID | None = None,
     status_filter: str | None = None,
     skip: int = 0,
@@ -83,7 +82,7 @@ async def list_compliance_checks(
 @router.get("/{check_id}", response_model=ComplianceCheck)
 async def get_compliance_check(
     check_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> ComplianceCheck:
     """Get a specific compliance check by ID.
 
@@ -109,7 +108,7 @@ async def get_compliance_check(
 async def update_compliance_check(
     check_id: UUID,
     update_data: ComplianceCheckUpdate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> ComplianceCheck:
     """Update a compliance check.
 
@@ -149,7 +148,7 @@ async def update_compliance_check(
 @router.delete("/{check_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_compliance_check(
     check_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> None:
     """Delete a compliance check.
 
@@ -171,7 +170,7 @@ async def delete_compliance_check(
 async def run_all_compliance_checks(
     plan_id: UUID,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Run all applicable compliance checks for a plan.
 

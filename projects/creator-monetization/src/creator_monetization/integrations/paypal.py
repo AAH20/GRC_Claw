@@ -1,7 +1,6 @@
 """PayPal payment integration for creator monetization."""
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import structlog
@@ -69,7 +68,12 @@ class PayPalIntegration:
                     "tenure_type": "REGULAR",
                     "sequence": 1,
                     "total_cycles": 0,
-                    "pricing_scheme": {"fixed_price": {"value": str(amount), "currency_code": currency}},
+                    "pricing_scheme": {
+                        "fixed_price": {
+                            "value": str(amount),
+                            "currency_code": currency,
+                        }
+                    },
                 }
             ],
         }

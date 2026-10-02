@@ -6,7 +6,7 @@ import logging
 import re
 from typing import Any
 
-from langchain_deepagents import create_deep_agent
+from deepagents import create_deep_agent
 
 from bias_detector.agents.base import BaseBiasAgent
 from bias_detector.config import get_settings
@@ -83,7 +83,6 @@ class LanguageBiasDetectorAgent(BaseBiasAgent[str]):
         """
         return create_deep_agent(
             name=self.name,
-            description=self.description,
             system_prompt=self._get_system_prompt(),
         )
 
@@ -149,8 +148,16 @@ class LanguageBiasDetectorAgent(BaseBiasAgent[str]):
                     pattern_type="gendered_word",
                     text=match.group(),
                     position=match.start(),
-                    severity=BiasSeverity.HIGH if word in ("he", "she", "man", "woman") else BiasSeverity.MEDIUM,
-                    suggestion=f"Use '{replacement}' instead" if replacement else "Remove gendered term",
+                    severity=(
+                        BiasSeverity.HIGH
+                        if word in ("he", "she", "man", "woman")
+                        else BiasSeverity.MEDIUM
+                    ),
+                    suggestion=(
+                        f"Use '{replacement}' instead"
+                        if replacement
+                        else "Remove gendered term"
+                    ),
                     category="gender",
                 ))
 

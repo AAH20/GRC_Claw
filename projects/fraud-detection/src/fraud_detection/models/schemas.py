@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk level enumeration."""
 
     LOW = "low"
@@ -18,7 +18,7 @@ class RiskLevel(str, Enum):
     CRITICAL = "critical"
 
 
-class TransactionType(str, Enum):
+class TransactionType(StrEnum):
     """Transaction type enumeration."""
 
     CREDIT = "credit"
@@ -37,7 +37,9 @@ class Transaction(BaseModel):
     amount: float = Field(..., gt=0, description="Transaction amount")
     currency: str = Field(default="USD", description="Currency code")
     transaction_type: TransactionType = Field(..., description="Type of transaction")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Transaction timestamp")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Transaction timestamp"
+    )
     merchant_id: str | None = Field(default=None, description="Merchant identifier")
     merchant_category: str | None = Field(default=None, description="Merchant category code")
     location: str | None = Field(default=None, description="Transaction location")
@@ -56,8 +58,12 @@ class Pattern(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Detection confidence")
     severity: RiskLevel = Field(..., description="Pattern severity level")
     evidence: list[str] = Field(default_factory=list, description="Supporting evidence")
-    related_transactions: list[str] = Field(default_factory=list, description="Related transaction IDs")
-    detected_at: datetime = Field(default_factory=datetime.utcnow, description="Detection timestamp")
+    related_transactions: list[str] = Field(
+        default_factory=list, description="Related transaction IDs"
+    )
+    detected_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Detection timestamp"
+    )
 
 
 class Anomaly(BaseModel):
@@ -74,7 +80,9 @@ class Anomaly(BaseModel):
     )
     baseline_value: float | None = Field(default=None, description="Expected baseline value")
     observed_value: float | None = Field(default=None, description="Observed value")
-    detected_at: datetime = Field(default_factory=datetime.utcnow, description="Detection timestamp")
+    detected_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Detection timestamp"
+    )
 
 
 class RiskFactor(BaseModel):
@@ -100,7 +108,9 @@ class RiskScore(BaseModel):
     risk_level: RiskLevel = Field(..., description="Computed risk level")
     factors: list[RiskFactor] = Field(default_factory=list, description="Contributing risk factors")
     model_version: str = Field(default="1.0.0", description="Model version")
-    computed_at: datetime = Field(default_factory=datetime.utcnow, description="Computation timestamp")
+    computed_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Computation timestamp"
+    )
     explanation: str = Field(default="", description="Human-readable explanation")
 
 
@@ -109,7 +119,9 @@ class AccountProfile(BaseModel):
 
     account_id: str = Field(..., description="Account identifier")
     account_type: str = Field(default="personal", description="Account type")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Account creation date")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Account creation date"
+    )
     average_transaction_amount: float = Field(default=0.0, description="Average transaction amount")
     transaction_count_30d: int = Field(default=0, description="Transaction count in last 30 days")
     unique_merchants_30d: int = Field(default=0, description="Unique merchants in last 30 days")
@@ -145,7 +157,9 @@ class FraudReport(BaseModel):
         ..., description="Final fraud decision"
     )
     decision_reason: str = Field(..., description="Decision reasoning")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Report creation time")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Report creation time"
+    )
 
 
 class BatchAnalysisRequest(BaseModel):
@@ -162,7 +176,9 @@ class BatchAnalysisResponse(BaseModel):
     batch_id: str = Field(..., description="Batch identifier")
     reports: list[FraudReport] = Field(default_factory=list, description="Fraud reports")
     summary: dict[str, Any] = Field(default_factory=dict, description="Batch summary")
-    processed_at: datetime = Field(default_factory=datetime.utcnow, description="Processing timestamp")
+    processed_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Processing timestamp"
+    )
 
 
 class MonitoringSession(BaseModel):

@@ -48,7 +48,10 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="AI-powered interview scheduling with calendar integration, timezone handling, and conflict resolution",
+        description=(
+            "AI-powered interview scheduling with calendar integration, "
+            "timezone handling, and conflict resolution"
+        ),
         debug=settings.debug,
         lifespan=lifespan,
     )

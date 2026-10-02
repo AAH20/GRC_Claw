@@ -9,15 +9,25 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from escalation_workflow.agents.auto_resolver import AutoResolverAgent, AutoResolverInput
-from escalation_workflow.agents.escalation_analyzer import EscalationAnalyzerAgent, EscalationAnalyzerInput
+from escalation_workflow.agents.escalation_analyzer import (
+    EscalationAnalyzerAgent,
+    EscalationAnalyzerInput,
+)
 from escalation_workflow.agents.priority_router import PriorityRouterAgent, PriorityRouterInput
-from escalation_workflow.agents.resolution_optimizer import ResolutionOptimizerAgent, ResolutionOptimizerInput
-from escalation_workflow.agents.sla_tracker import SLATrackerAgent, SLATrackerInput
+from escalation_workflow.agents.resolution_optimizer import (
+    ResolutionOptimizerAgent,
+)
+from escalation_workflow.agents.sla_tracker import SLATrackerAgent
 from escalation_workflow.config import Settings, get_settings
 from escalation_workflow.models.analysis import EscalationAnalysis
-from escalation_workflow.models.escalation import Escalation, EscalationCreate, EscalationStatus, EscalationUpdate
+from escalation_workflow.models.escalation import (
+    Escalation,
+    EscalationCreate,
+    EscalationStatus,
+    EscalationUpdate,
+)
 from escalation_workflow.models.priority import PriorityAssessment
-from escalation_workflow.models.resolution import Resolution, ResolutionCreate
+from escalation_workflow.models.resolution import Resolution
 from escalation_workflow.models.sla import SLA
 
 router = APIRouter(prefix="/escalations", tags=["escalations"])
@@ -115,7 +125,7 @@ def _get_auto_resolver(settings: Settings) -> AutoResolverAgent:
 @router.post("", response_model=Escalation, status_code=status.HTTP_201_CREATED)
 async def create_escalation(
     data: EscalationCreate,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Escalation:
     """Create a new escalation.
 
@@ -133,7 +143,7 @@ async def create_escalation(
 
 @router.get("", response_model=EscalationListResponse)
 async def list_escalations(
-    status_filter: EscalationStatus | None = Query(default=None, alias="status"),
+    status_filter: EscalationStatus | None = Query(default=None, alias="status"),  # noqa: B008
     priority: str | None = None,
     category: str | None = None,
     page: int = Query(default=1, ge=1),
@@ -248,7 +258,7 @@ async def delete_escalation(escalation_id: UUID) -> None:
 @router.post("/{escalation_id}/route", response_model=PriorityAssessment)
 async def route_escalation(
     escalation_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> PriorityAssessment:
     """Route an escalation using the priority router agent.
 
@@ -282,7 +292,7 @@ async def route_escalation(
 @router.post("/{escalation_id}/analyze", response_model=EscalationAnalysis)
 async def analyze_escalation(
     escalation_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> EscalationAnalysis:
     """Analyze an escalation using the analyzer agent.
 
@@ -317,7 +327,7 @@ async def analyze_escalation(
 @router.post("/{escalation_id}/auto-resolve", response_model=EscalationActionResponse)
 async def auto_resolve_escalation(
     escalation_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> EscalationActionResponse:
     """Attempt to auto-resolve an escalation.
 

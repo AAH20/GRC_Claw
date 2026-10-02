@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from onboarding_automator.config.settings import Settings, get_settings
 from onboarding_automator.integrations.store import InMemoryStore
 from onboarding_automator.models import Task, TaskCreate, TaskUpdate
 
@@ -21,7 +20,7 @@ def get_store(request: Request) -> InMemoryStore:
 @router.post("", response_model=Task, status_code=status.HTTP_201_CREATED)
 async def create_task(
     task_data: TaskCreate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Task:
     """Create a new onboarding task.
 
@@ -54,7 +53,7 @@ async def create_task(
 
 @router.get("", response_model=list[Task])
 async def list_tasks(
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
     plan_id: UUID | None = None,
     status_filter: str | None = None,
     skip: int = 0,
@@ -80,7 +79,7 @@ async def list_tasks(
 @router.get("/{task_id}", response_model=Task)
 async def get_task(
     task_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Task:
     """Get a specific task by ID.
 
@@ -106,7 +105,7 @@ async def get_task(
 async def update_task(
     task_id: UUID,
     update_data: TaskUpdate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Task:
     """Update an existing task.
 
@@ -152,7 +151,7 @@ async def update_task(
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> None:
     """Delete a task.
 

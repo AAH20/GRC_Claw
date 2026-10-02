@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from creator_analytics.api.routes import audience, content, revenue, growth, engagement, health
+from creator_analytics.api.routes import audience, content, engagement, growth, health, revenue
 
 router = APIRouter()
 

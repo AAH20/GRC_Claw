@@ -18,7 +18,6 @@ from skills_assessor.models.schemas import (
     ProficiencyLevel,
     Skill,
     SkillGap,
-    SkillProficiency,
 )
 
 
@@ -45,44 +44,48 @@ class GapAnalyzerAgent(BaseAgent[GapAnalysisRequest, GapAnalysisResponse]):
         Returns:
             ChatPromptTemplate: Configured prompt template.
         """
-        system_message = """You are an expert skill gap analyst. Your task is to analyze the gap between a candidate's current skills and the requirements for a target role.
-
-For each skill gap, provide:
-- skill_name: The name of the skill
-- current_level: One of [novice, beginner, intermediate, advanced, expert] (or "none" if missing)
-- required_level: One of [novice, beginner, intermediate, advanced, expert]
-- gap_severity: One of [none, minor, moderate, major, critical]
-- priority: 1 (lowest) to 5 (highest)
-- estimated_hours_to_close: Estimated hours needed to reach required level
-
-Also provide:
-- overall_readiness: 0.0 to 1.0 score of candidate readiness for the role
-- recommendations: List of actionable recommendations
-
-Gap Severity Definitions:
-- none: No gap, meets or exceeds requirement
-- minor: Slight gap, minimal effort needed
-- moderate: Noticeable gap, moderate effort needed
-- major: Significant gap, substantial effort needed
-- critical: Critical gap, role cannot be performed effectively
-
-Output format:
-```json
-{
-  "gaps": [
-    {
-      "skill_name": "kubernetes",
-      "current_level": "beginner",
-      "required_level": "advanced",
-      "gap_severity": "major",
-      "priority": 4,
-      "estimated_hours_to_close": 120
-    }
-  ],
-  "overall_readiness": 0.65,
-  "recommendations": ["Complete CKA certification", "Practice with production clusters"]
-}
-```"""
+        system_message = (
+            "You are an expert skill gap analyst. Your task is to analyze the gap "
+            "between a candidate's current skills and the requirements for a target role.\n"
+            "\n"
+            "For each skill gap, provide:\n"
+            "- skill_name: The name of the skill\n"
+            "- current_level: One of [novice, beginner, intermediate, advanced, expert] "
+            '(or "none" if missing)\n'
+            "- required_level: One of [novice, beginner, intermediate, advanced, expert]\n"
+            "- gap_severity: One of [none, minor, moderate, major, critical]\n"
+            "- priority: 1 (lowest) to 5 (highest)\n"
+            "- estimated_hours_to_close: Estimated hours needed to reach required level\n"
+            "\n"
+            "Also provide:\n"
+            "- overall_readiness: 0.0 to 1.0 score of candidate readiness for the role\n"
+            "- recommendations: List of actionable recommendations\n"
+            "\n"
+            "Gap Severity Definitions:\n"
+            "- none: No gap, meets or exceeds requirement\n"
+            "- minor: Slight gap, minimal effort needed\n"
+            "- moderate: Noticeable gap, moderate effort needed\n"
+            "- major: Significant gap, substantial effort needed\n"
+            "- critical: Critical gap, role cannot be performed effectively\n"
+            "\n"
+            "Output format:\n"
+            "```json\n"
+            "{\n"
+            '  "gaps": [\n'
+            "    {\n"
+            '      "skill_name": "kubernetes",\n'
+            '      "current_level": "beginner",\n'
+            '      "required_level": "advanced",\n'
+            '      "gap_severity": "major",\n'
+            '      "priority": 4,\n'
+            '      "estimated_hours_to_close": 120\n'
+            "    }\n"
+            "  ],\n"
+            '  "overall_readiness": 0.65,\n'
+            '  "recommendations": ["Complete CKA certification", "Practice with production clusters"]\n'
+            "}\n"
+            "```"
+        )
 
         return ChatPromptTemplate.from_messages(
             [

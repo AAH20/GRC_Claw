@@ -6,10 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from access_control.agents.role_manager import RoleManagerAgent, RoleManagerInput
+from access_control.agents.role_manager import RoleManagerAgent
 from access_control.config import Settings
 from access_control.models.enums import RoleStatus
-from access_control.models.schemas import Permission, Role, RoleCreate
+from access_control.models.schemas import Permission, RoleCreate
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ class TestRoles:
     async def test_create_role(self, mock_llm: MagicMock, settings: Settings) -> None:
         """Test creating a role."""
         mock_response = MagicMock()
-        mock_response.content = '{"success": true, "role": {"name": "test-role", "status": "active"}, "message": "Created"}'
+        mock_response.content = '{"success": true, "role": {"name": "test-role", "status": "active"}, "message": "Created"}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -68,7 +68,7 @@ class TestRoles:
     async def test_update_role(self, mock_llm: MagicMock, settings: Settings) -> None:
         """Test updating a role."""
         mock_response = MagicMock()
-        mock_response.content = '{"success": true, "role": {"name": "updated-role", "status": "active"}, "message": "Updated"}'
+        mock_response.content = '{"success": true, "role": {"name": "updated-role", "status": "active"}, "message": "Updated"}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -102,7 +102,7 @@ class TestRoles:
     async def test_suggest_permissions(self, mock_llm: MagicMock, settings: Settings) -> None:
         """Test permission suggestions."""
         mock_response = MagicMock()
-        mock_response.content = '{"success": true, "role": {"permissions": [{"resource": "documents", "action": "read"}]}}'
+        mock_response.content = '{"success": true, "role": {"permissions": [{"resource": "documents", "action": "read"}]}}'  # noqa: E501
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 

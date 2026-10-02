@@ -32,7 +32,9 @@ def setup_logging() -> None:
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer() if settings.log_format == "json" else structlog.dev.ConsoleRenderer(),
+            structlog.processors.JSONRenderer()
+            if settings.log_format == "json"
+            else structlog.dev.ConsoleRenderer(),
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -51,7 +53,12 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     setup_logging()
     logger = logging.getLogger(__name__)
-    logger.info("Starting %s v%s in %s mode", settings.app_name, settings.app_version, settings.app_env)
+    logger.info(
+        "Starting %s v%s in %s mode",
+        settings.app_name,
+        settings.app_version,
+        settings.app_env,
+    )
     yield
     logger.info("Shutting down %s", settings.app_name)
 

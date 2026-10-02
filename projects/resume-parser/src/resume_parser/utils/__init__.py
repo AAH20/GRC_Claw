@@ -2,6 +2,19 @@
 
 from __future__ import annotations
 
+from resume_parser.utils.text_processing import (
+    clean_text as clean_text,
+)
+from resume_parser.utils.text_processing import (
+    detect_file_type as detect_file_type,
+)
+from resume_parser.utils.text_processing import (
+    generate_id as generate_id,
+)
+from resume_parser.utils.text_processing import (
+    sanitize_filename as sanitize_filename,
+)
+
 
 class ResumeParserError(Exception):
     """Base exception for resume parser errors."""

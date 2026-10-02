@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -40,7 +40,7 @@ class PolicyTrackerAgent(BaseComplianceAgent[PolicyCreate, Policy]):
             category=input_data.category,
             status=PolicyStatus.DRAFT,
             version=input_data.version,
-            effective_date=input_data.effective_date or datetime.utcnow(),
+            effective_date=input_data.effective_date or datetime.now(tz=UTC),
             rules=input_data.rules,
             metadata=input_data.metadata,
         )
@@ -66,7 +66,7 @@ class PolicyTrackerAgent(BaseComplianceAgent[PolicyCreate, Policy]):
         {document_text}
         """
         result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
-        return {"analysis": result, "timestamp": datetime.utcnow().isoformat()}
+        return {"analysis": result, "timestamp": datetime.now(tz=UTC).isoformat()}
 
     async def check_policy_expiry(self, policy: Policy) -> bool:
         """Check if a policy has expired or is nearing expiry.
@@ -79,7 +79,7 @@ class PolicyTrackerAgent(BaseComplianceAgent[PolicyCreate, Policy]):
         """
         from datetime import timedelta
 
-        now = datetime.utcnow()
+        now = datetime.now(tz=UTC)
         expiry_threshold = now + timedelta(days=30)
         return policy.effective_date < now or policy.effective_date <= expiry_threshold
 

@@ -130,12 +130,18 @@ async def score_content(
         if content_length < settings.min_content_length:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Content too short. Minimum {settings.min_content_length} characters required.",
+                detail=(
+                    f"Content too short. Minimum {settings.min_content_length} "
+                    "characters required."
+                ),
             )
         if content_length > settings.max_content_length:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Content too long. Maximum {settings.max_content_length} characters allowed.",
+                detail=(
+                    f"Content too long. Maximum {settings.max_content_length} "
+                    "characters allowed."
+                ),
             )
 
         # Score content

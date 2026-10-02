@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter, Depends, Query
 
 from community_governance.api.dependencies import get_governance_analytics
-from community_governance.agents import GovernanceAnalyticsAgent
 from community_governance.config.logging_config import get_logger
 from community_governance.models.analytics import GovernanceAnalytics, GovernanceSummary
+
+if TYPE_CHECKING:
+    from community_governance.agents import GovernanceAnalyticsAgent
+
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
@@ -16,8 +21,8 @@ router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 @router.get("", response_model=GovernanceAnalytics)
 async def get_analytics(
     period_days: int = Query(default=30, ge=1, le=365, description="Analytics period in days"),
-    focus_areas: list[str] | None = Query(default=None, description="Areas to focus on"),
-    agent: GovernanceAnalyticsAgent = Depends(get_governance_analytics),
+    focus_areas: list[str] | None = Query(default=None, description="Areas to focus on"),  # noqa: B008
+    agent: GovernanceAnalyticsAgent = Depends(get_governance_analytics),  # noqa: B008
 ) -> GovernanceAnalytics:
     """Get comprehensive governance analytics.
 
@@ -47,7 +52,7 @@ async def get_analytics(
 
 @router.get("/summary", response_model=GovernanceSummary)
 async def get_summary(
-    agent: GovernanceAnalyticsAgent = Depends(get_governance_analytics),
+    agent: GovernanceAnalyticsAgent = Depends(get_governance_analytics)  # noqa: B008
 ) -> GovernanceSummary:
     """Get a quick governance summary.
 

@@ -1,29 +1,28 @@
 """Badge Manager Agent for managing member badges."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from reputation_system.agents.base import BaseAgent
-from reputation_system.models.schemas import Badge, BadgeCategory
 
 
 class BadgeEvaluationInput(BaseModel):
     """Input for badge evaluation."""
 
     member_id: str = Field(..., description="Member identifier")
-    badge_criteria: Dict[str, Any] = Field(..., description="Badge criteria to evaluate")
-    member_stats: Dict[str, Any] = Field(..., description="Member statistics")
-    current_badges: List[str] = Field(default_factory=list, description="Current badge IDs")
+    badge_criteria: dict[str, Any] = Field(..., description="Badge criteria to evaluate")
+    member_stats: dict[str, Any] = Field(..., description="Member statistics")
+    current_badges: list[str] = Field(default_factory=list, description="Current badge IDs")
 
 
 class BadgeEvaluationOutput(BaseModel):
     """Output from badge evaluation."""
 
     member_id: str
-    eligible_badges: List[Dict[str, Any]] = Field(default_factory=list)
-    revoked_badges: List[str] = Field(default_factory=list)
-    recommendations: List[str] = Field(default_factory=list)
+    eligible_badges: list[dict[str, Any]] = Field(default_factory=list)
+    revoked_badges: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
 
 
 class BadgeManagerAgent(BaseAgent[BadgeEvaluationInput, BadgeEvaluationOutput]):
@@ -45,9 +44,9 @@ class BadgeManagerAgent(BaseAgent[BadgeEvaluationInput, BadgeEvaluationOutput]):
         Returns:
             Badge evaluation results with eligible and revoked badges.
         """
-        eligible_badges: List[Dict[str, Any]] = []
-        revoked_badges: List[str] = []
-        recommendations: List[str] = []
+        eligible_badges: list[dict[str, Any]] = []
+        revoked_badges: list[str] = []
+        recommendations: list[str] = []
 
         for criterion_name, criterion in input_data.badge_criteria.items():
             is_eligible = self._evaluate_criterion(criterion, input_data.member_stats)
@@ -75,7 +74,7 @@ class BadgeManagerAgent(BaseAgent[BadgeEvaluationInput, BadgeEvaluationOutput]):
         )
 
     def _evaluate_criterion(
-        self, criterion: Dict[str, Any], stats: Dict[str, Any]
+        self, criterion: dict[str, Any], stats: dict[str, Any]
     ) -> bool:
         """Evaluate if a member meets a badge criterion.
 
@@ -96,8 +95,8 @@ class BadgeManagerAgent(BaseAgent[BadgeEvaluationInput, BadgeEvaluationOutput]):
         return value >= threshold
 
     def _generate_recommendations(
-        self, stats: Dict[str, Any], criteria: Dict[str, Any]
-    ) -> List[str]:
+        self, stats: dict[str, Any], criteria: dict[str, Any]
+    ) -> list[str]:
         """Generate badge earning recommendations.
 
         Args:
@@ -107,7 +106,7 @@ class BadgeManagerAgent(BaseAgent[BadgeEvaluationInput, BadgeEvaluationOutput]):
         Returns:
             List of recommendations.
         """
-        recommendations: List[str] = []
+        recommendations: list[str] = []
 
         for criterion_name, criterion in criteria.items():
             metric = criterion.get("metric")

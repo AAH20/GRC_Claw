@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -14,8 +17,9 @@ from access_control.api.dependencies import (
     get_role_manager,
     get_settings,
 )
-from access_control.config import Settings
-from access_control.models.enums import AccessDecision
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
 from access_control.models.schemas import (
     AccessAudit,
     AccessRecommendation,
@@ -36,7 +40,7 @@ router = APIRouter()
 
 
 @router.get("/health", tags=["health"])
-async def health_check(settings: Settings = Depends(get_settings)) -> dict[str, str]:
+async def health_check(settings: Settings = Depends(get_settings)) -> dict[str, str]:  # noqa: B008
     """Health check endpoint.
 
     Returns:
@@ -63,7 +67,7 @@ async def health_check(settings: Settings = Depends(get_settings)) -> dict[str, 
 )
 async def evaluate_access(
     request: AccessRequest,
-    evaluator=Depends(get_permission_evaluator),
+    evaluator=Depends(get_permission_evaluator),  # noqa: B008
 ) -> AccessResult:
     """Evaluate an access request using the permission evaluator agent.
 
@@ -93,7 +97,7 @@ async def evaluate_access(
 )
 async def check_access(
     request: AccessRequest,
-    evaluator=Depends(get_permission_evaluator),
+    evaluator=Depends(get_permission_evaluator),  # noqa: B008
 ) -> dict[str, str]:
     """Quick access check endpoint.
 
@@ -131,7 +135,7 @@ async def check_access(
 async def list_roles(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
-    manager=Depends(get_role_manager),
+    manager=Depends(get_role_manager),  # noqa: B008
 ) -> PaginatedResponse[Role]:
     """List all roles with pagination.
 
@@ -162,7 +166,7 @@ async def list_roles(
 )
 async def create_role(
     role_create: RoleCreate,
-    manager=Depends(get_role_manager),
+    manager=Depends(get_role_manager),  # noqa: B008
 ) -> Role:
     """Create a new role.
 
@@ -196,7 +200,7 @@ async def create_role(
 )
 async def get_role(
     role_id: UUID,
-    manager=Depends(get_role_manager),
+    manager=Depends(get_role_manager),  # noqa: B008
 ) -> Role:
     """Get role details by ID.
 
@@ -222,7 +226,7 @@ async def get_role(
 async def update_role(
     role_id: UUID,
     role_update: RoleUpdate,
-    manager=Depends(get_role_manager),
+    manager=Depends(get_role_manager),  # noqa: B008
 ) -> Role:
     """Update an existing role.
 
@@ -257,7 +261,7 @@ async def update_role(
 )
 async def delete_role(
     role_id: UUID,
-    manager=Depends(get_role_manager),
+    manager=Depends(get_role_manager),  # noqa: B008
 ) -> None:
     """Delete a role.
 
@@ -286,7 +290,7 @@ async def list_audit_logs(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     principal_id: str | None = Query(default=None),
-    auditor=Depends(get_access_auditor),
+    auditor=Depends(get_access_auditor),  # noqa: B008
 ) -> PaginatedResponse[AccessAudit]:
     """List audit log entries with pagination.
 
@@ -317,7 +321,7 @@ async def list_audit_logs(
 )
 async def create_audit_entry(
     audit: AccessAudit,
-    auditor=Depends(get_access_auditor),
+    auditor=Depends(get_access_auditor),  # noqa: B008
 ) -> AccessAudit:
     """Create an audit log entry.
 
@@ -339,7 +343,7 @@ async def create_audit_entry(
 )
 async def get_audit_entry(
     audit_id: UUID,
-    auditor=Depends(get_access_auditor),
+    auditor=Depends(get_access_auditor),  # noqa: B008
 ) -> AccessAudit:
     """Get audit entry details by ID.
 
@@ -369,7 +373,7 @@ async def get_audit_entry(
 )
 async def enforce_policies(
     request: AccessRequest,
-    enforcer=Depends(get_policy_enforcer),
+    enforcer=Depends(get_policy_enforcer),  # noqa: B008
 ) -> AccessResult:
     """Enforce policies against an access request.
 
@@ -403,7 +407,7 @@ async def enforce_policies(
 )
 async def get_recommendations(
     principal_id: str = Query(...),
-    recommender=Depends(get_access_recommender),
+    recommender=Depends(get_access_recommender),  # noqa: B008
 ) -> list[AccessRecommendation]:
     """Get access recommendations for a principal.
 
@@ -433,7 +437,7 @@ async def get_recommendations(
 async def generate_recommendations(
     principal_id: str,
     access_history: list[dict] | None = None,
-    recommender=Depends(get_access_recommender),
+    recommender=Depends(get_access_recommender),  # noqa: B008
 ) -> list[AccessRecommendation]:
     """Generate access recommendations for a principal.
 

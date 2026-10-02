@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import structlog
-from typing import Any
 
 from community_curation.agents.base import BaseCurationAgent
-from community_curation.models import CurationResult, RankedContent, Trend, TopicCluster, QualityAssessment
+from community_curation.models import (
+    QualityAssessment,
+    RankedContent,
+    TopicCluster,
+    Trend,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -28,7 +32,9 @@ class CurationExplainerAgent(
 
     async def run(
         self,
-        input_data: tuple[list[RankedContent], list[Trend], list[TopicCluster], list[QualityAssessment]],
+        input_data: tuple[
+            list[RankedContent], list[Trend], list[TopicCluster], list[QualityAssessment]
+        ],
     ) -> str:
         """Generate explanation for curation results.
 
@@ -76,7 +82,8 @@ class CurationExplainerAgent(
             if trends:
                 fastest = max(trends, key=lambda t: t.velocity)
                 sections.append(
-                    f"Fastest growing trend: '{fastest.name}' with velocity {fastest.velocity:.2f} items/hour"
+                    f"Fastest growing trend: '{fastest.name}' with velocity "
+                    f"{fastest.velocity:.2f} items/hour"
                 )
 
         # Clusters
@@ -93,7 +100,9 @@ class CurationExplainerAgent(
 
         # Quality insights
         if quality_assessments:
-            avg_quality = sum(q.quality_score for q in quality_assessments) / len(quality_assessments)
+            avg_quality = (
+                sum(q.quality_score for q in quality_assessments) / len(quality_assessments)
+            )
             sections.append(f"Average quality score: {avg_quality:.2f}")
 
             # Most common flags

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 
 from talent_pool_manager.agents import (
     AgentRegistry,
-    BaseAgent,
     CandidateDiscoveryAgent,
     EngagementOptimizerAgent,
     OutreachAgent,

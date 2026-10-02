@@ -13,7 +13,7 @@ class TestPriorityScorerAgent:
         return PriorityScorerAgent()
 
     async def test_heuristic_score_low_priority(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "Hello, this is a normal message.",
             "content_type": "text",
             "user_history": {"prior_violations": 0},
@@ -22,7 +22,7 @@ class TestPriorityScorerAgent:
         assert result.data["priority"] <= 3
 
     async def test_heuristic_score_high_priority(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "This contains violence and hate speech",
             "content_type": "text",
             "user_history": {"prior_violations": 5},
@@ -31,7 +31,7 @@ class TestPriorityScorerAgent:
         assert result.data["priority"] >= 7
 
     async def test_empty_content_fails(self, agent):
-        result = await agent.execute({"content": ""})
+        result = await agent.process({"content": ""})
         assert not result.success
         assert "No content" in result.error
 
@@ -42,7 +42,7 @@ class TestAutoModeratorAgent:
         return AutoModeratorAgent()
 
     async def test_heuristic_approve(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "This is a perfectly fine message.",
             "content_type": "text",
         })
@@ -50,7 +50,7 @@ class TestAutoModeratorAgent:
         assert result.data["decision"] == "approve"
 
     async def test_heuristic_reject(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "I will kill and murder everyone",
             "content_type": "text",
         })
@@ -58,7 +58,7 @@ class TestAutoModeratorAgent:
         assert result.data["decision"] == "reject"
 
     async def test_heuristic_escalate(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "This is a controversial political opinion",
             "content_type": "text",
         })
@@ -72,7 +72,7 @@ class TestHumanReviewRouterAgent:
         return HumanReviewRouterAgent()
 
     async def test_heuristic_route_general(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "Some borderline content",
             "content_type": "text",
             "auto_moderation_result": {"decision": "escalate", "categories": []},
@@ -82,7 +82,7 @@ class TestHumanReviewRouterAgent:
         assert result.data["queue"] == "general"
 
     async def test_heuristic_route_safety(self, agent):
-        result = await agent.execute({
+        result = await agent.process({
             "content": "Content with violence",
             "content_type": "text",
             "auto_moderation_result": {

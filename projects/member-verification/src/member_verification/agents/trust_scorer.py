@@ -7,7 +7,7 @@ from typing import Any
 from langchain_core.language_models import BaseLanguageModel
 
 from member_verification.agents.base import AgentConfig, BaseAgent
-from member_verification.models.schemas import RiskLevel, TrustScore
+from member_verification.models.schemas import RiskLevel
 
 
 class TrustScorerAgent(BaseAgent):
@@ -84,9 +84,7 @@ class TrustScorerAgent(BaseAgent):
             total_score = min(max(total_score, 0.0), 1.0)
 
             # Determine level
-            if total_score >= 0.8:
-                level = RiskLevel.LOW
-            elif total_score >= 0.6:
+            if total_score >= 0.8 or total_score >= 0.6:
                 level = RiskLevel.LOW
             elif total_score >= 0.4:
                 level = RiskLevel.MEDIUM

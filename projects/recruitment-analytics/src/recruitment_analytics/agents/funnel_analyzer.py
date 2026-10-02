@@ -1,15 +1,15 @@
 """Funnel Analyzer Agent - analyzes recruitment funnel metrics and bottlenecks."""
 
+from typing import TYPE_CHECKING
 from __future__ import annotations
 
 import uuid
-from datetime import date
-
-from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel
 
 from recruitment_analytics.agents.base import BaseAgent
-from recruitment_analytics.integrations.ats_client import ATSClient
+
+if TYPE_CHECKING:
+    from recruitment_analytics.integrations.ats_client import ATSClient
+
 from recruitment_analytics.models.schemas import (
     Funnel,
     FunnelAnalysisRequest,
@@ -126,12 +126,14 @@ class FunnelAnalyzerAgent(BaseAgent[FunnelAnalysisRequest, FunnelAnalysisRespons
 
         if funnel.overall_conversion_rate < 0.05:
             insights.append(
-                f"Overall conversion rate ({funnel.overall_conversion_rate:.1%}) is below industry average"
+                f"Overall conversion rate ({funnel.overall_conversion_rate:.1%}) "
+                f"is below industry average"
             )
 
         if funnel.avg_time_to_hire_days > 45:
             insights.append(
-                f"Time to hire ({funnel.avg_time_to_hire_days:.0f} days) exceeds recommended 45 days"
+                f"Time to hire ({funnel.avg_time_to_hire_days:.0f} days) "
+                f"exceeds recommended 45 days"
             )
 
         if not insights:

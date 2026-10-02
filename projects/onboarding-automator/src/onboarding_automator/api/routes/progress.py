@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from onboarding_automator.agents import ProgressTrackerAgent
-from onboarding_automator.config.settings import Settings, get_settings
 from onboarding_automator.integrations.store import InMemoryStore
 from onboarding_automator.models import AgentResponse, Progress, ProgressUpdate
 
@@ -22,7 +21,7 @@ def get_store(request: Request) -> InMemoryStore:
 @router.get("/{plan_id}", response_model=Progress)
 async def get_progress(
     plan_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Progress:
     """Get progress for a specific onboarding plan.
 
@@ -47,7 +46,7 @@ async def get_progress(
 @router.post("/{plan_id}", response_model=Progress, status_code=status.HTTP_201_CREATED)
 async def create_progress(
     plan_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Progress:
     """Create a new progress record for a plan.
 
@@ -73,7 +72,7 @@ async def create_progress(
 async def update_progress(
     plan_id: UUID,
     update_data: ProgressUpdate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> Progress:
     """Update progress for a plan.
 
@@ -124,7 +123,7 @@ async def update_progress(
 async def recalculate_progress(
     plan_id: UUID,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Trigger progress recalculation via the ProgressTrackerAgent.
 
@@ -156,7 +155,7 @@ async def recalculate_progress(
 async def generate_report(
     plan_id: UUID,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Generate a detailed progress report.
 

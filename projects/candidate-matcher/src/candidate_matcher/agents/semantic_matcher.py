@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -13,7 +12,9 @@ from candidate_matcher.integrations.embedding_client import (
     BaseEmbeddingClient,
     create_embedding_client,
 )
-from candidate_matcher.models.schemas import Candidate, JobPosting
+
+if TYPE_CHECKING:
+    from candidate_matcher.models.schemas import Candidate, JobPosting
 
 logger = get_logger(__name__)
 
@@ -27,8 +28,8 @@ class SemanticMatcherAgent(BaseAgent[dict[str, Any]]):
 
     def __init__(
         self,
-        embedding_client: Optional[BaseEmbeddingClient] = None,
-        llm_client: Optional[Any] = None,
+        embedding_client: BaseEmbeddingClient | None = None,
+        llm_client: Any | None = None,
     ) -> None:
         """Initialize the semantic matcher agent.
 

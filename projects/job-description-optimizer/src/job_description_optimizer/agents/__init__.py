@@ -1,7 +1,7 @@
 """Base agent class for job description optimization agents."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -92,7 +92,7 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         """
         return ["analysis", "optimization"]
 
-    def to_info(self) -> Dict[str, Any]:
+    def to_info(self) -> dict[str, Any]:
         """Convert agent info to dictionary.
 
         Returns:

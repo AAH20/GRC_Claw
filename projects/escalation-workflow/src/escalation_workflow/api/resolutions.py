@@ -6,7 +6,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from escalation_workflow.agents.resolution_optimizer import ResolutionOptimizerAgent, ResolutionOptimizerInput
+from escalation_workflow.agents.resolution_optimizer import (
+    ResolutionOptimizerAgent,
+    ResolutionOptimizerInput,
+)
 from escalation_workflow.config import Settings, get_settings
 from escalation_workflow.models.resolution import Resolution, ResolutionCreate, ResolutionStatus
 
@@ -77,7 +80,7 @@ async def get_resolution(resolution_id: UUID) -> Resolution:
 @router.post("/{resolution_id}/optimize", response_model=ResolutionCreate)
 async def optimize_resolution(
     resolution_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> ResolutionCreate:
     """Optimize a resolution using the resolution optimizer agent.
 

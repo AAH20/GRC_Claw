@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import structlog
 
 from moderation_queue.config import Settings, get_settings

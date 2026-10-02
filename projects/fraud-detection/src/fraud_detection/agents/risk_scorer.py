@@ -6,11 +6,18 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from langchain_deepagents import create_deep_agent
+from deepagents import create_deep_agent
 
 from fraud_detection.config.logging_config import get_logger
 from fraud_detection.config.settings import get_settings
-from fraud_detection.models.schemas import Anomaly, Pattern, RiskFactor, RiskLevel, RiskScore, Transaction
+from fraud_detection.models.schemas import (
+    Anomaly,
+    Pattern,
+    RiskFactor,
+    RiskLevel,
+    RiskScore,
+    Transaction,
+)
 
 logger = get_logger(__name__)
 
@@ -155,7 +162,9 @@ class RiskScorerAgent:
         # Compute weighted score
         if factors:
             total_weight = sum(f.weight for f in factors)
-            overall = sum(f.weight * f.score for f in factors) / total_weight if total_weight > 0 else 0.0
+            overall = (
+                sum(f.weight * f.score for f in factors) / total_weight if total_weight > 0 else 0.0
+            )
         else:
             overall = 0.1
 

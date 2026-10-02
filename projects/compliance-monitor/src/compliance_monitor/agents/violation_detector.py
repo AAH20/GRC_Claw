@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -70,7 +70,7 @@ Determine:
 4. Recommended actions
 """
         result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
-        return {"analysis": result, "event_id": event.get("id"), "timestamp": datetime.utcnow().isoformat()}
+        return {"analysis": result, "event_id": event.get("id"), "timestamp": datetime.now(tz=UTC).isoformat()}
 
     async def detect_from_logs(self, logs: list[str], policy_id: UUID) -> list[Violation]:
         """Detect violations from system logs.
@@ -115,5 +115,5 @@ Evidence: {violation.evidence}
 
 Provide a severity assessment (low/medium/high/critical) with justification.
 """
-        result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
+        await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
         return violation.severity

@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from creator_monetization.models.schemas import Tier, TierCreate, TierLevel
+from creator_monetization.models.schemas import TierCreate
 
 logger = logging.getLogger(__name__)
 

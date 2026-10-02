@@ -255,7 +255,8 @@ class SEOScorerAgent(BaseScoringAgent[DimensionScore]):
                 f"Keyword density: {keyword_metrics['avg_keyword_density']:.2%}",
                 f"Headings: H1={heading_metrics['h1_count']}, H2={heading_metrics['h2_count']}",
                 f"Links: {link_metrics['total_links']} total",
-                f"Meta: title={meta_metrics['has_title_tag']}, desc={meta_metrics['has_meta_description']}",
+                f"Meta: title={meta_metrics['has_title_tag']}, "
+                f"desc={meta_metrics['has_meta_description']}",
                 f"Word count: {length_metrics['word_count']}",
             ]
 

@@ -1,15 +1,17 @@
 """Pydantic models for creator analytics data structures."""
 
-from .audience import Audience, AudienceDemographics, AudienceSegment
-from .content import ContentPerformance, ContentMetrics, ContentType
-from .revenue import RevenueReport, RevenueStream, RevenueBreakdown
-from .growth import GrowthPrediction, GrowthMetric, GrowthScenario
-from .engagement import EngagementReport, EngagementMetrics, EngagementType
+from .audience import AgeGroup, Audience, AudienceDemographics, AudienceSegment, Gender
+from .content import ContentMetrics, ContentPerformance, ContentType
+from .engagement import EngagementMetrics, EngagementReport, EngagementType
+from .growth import GrowthMetric, GrowthPrediction, GrowthScenario
+from .revenue import RevenueBreakdown, RevenueReport, RevenueStream
 
 __all__ = [
+    "AgeGroup",
     "Audience",
     "AudienceDemographics",
     "AudienceSegment",
+    "Gender",
     "ContentPerformance",
     "ContentMetrics",
     "ContentType",

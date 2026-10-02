@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ReminderType(str, Enum):
+class ReminderType(StrEnum):
     """Types of reminders."""
 
     EMAIL = "email"
@@ -20,7 +20,7 @@ class ReminderType(str, Enum):
     SLACK = "slack"
 
 
-class ReminderStatus(str, Enum):
+class ReminderStatus(StrEnum):
     """Reminder lifecycle status."""
 
     PENDING = "pending"
@@ -43,7 +43,7 @@ class Reminder(BaseModel):
     recipient: str = Field(..., description="Recipient address (email, phone, etc.)")
     subject: str | None = Field(None, description="Reminder subject")
     message: str | None = Field(None, description="Reminder message body")
-    scheduled_at: datetime = Field(..., description="When to send the reminder (UTC)")
+    scheduled_at: datetime | None = Field(None, description="When to send the reminder (UTC)")
     sent_at: datetime | None = None
     delivered_at: datetime | None = None
     error_message: str | None = None
@@ -71,6 +71,7 @@ class ReminderCreate(BaseModel):
     recipient: str
     subject: str | None = None
     message: str | None = None
+    scheduled_at: datetime | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

@@ -3,17 +3,29 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from community_governance.api.dependencies import set_agents, set_metrics
-from community_governance.api.routes import analytics, disputes, explain, health, metrics, policies, rules
+from community_governance.api.routes import (
+    analytics,
+    disputes,
+    explain,
+    health,
+    metrics,
+    policies,
+    rules,
+)
 from community_governance.config.logging_config import get_logger, setup_logging
 from community_governance.config.settings import get_settings
 from community_governance.exceptions import GovernanceException
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
 from community_governance.integrations import MetricsIntegration
 
 logger = get_logger(__name__)
@@ -118,7 +130,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Community governance management using agentic AI with rule enforcement, dispute resolution, and policy management",
+        description="Community governance management using agentic AI with rule enforcement, "
+        "dispute resolution, and policy management",
         lifespan=lifespan,
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,

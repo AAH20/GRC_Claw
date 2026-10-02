@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,15 +14,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+_pricing_agent_instance: PricingOptimizerAgent | None = None
+
+
 def get_pricing_agent() -> PricingOptimizerAgent:
-    """Dependency to get the pricing optimizer agent."""
-    return PricingOptimizerAgent()
+    """Dependency to get the pricing optimizer agent (singleton)."""
+    global _pricing_agent_instance
+    if _pricing_agent_instance is None:
+        _pricing_agent_instance = PricingOptimizerAgent()
+    return _pricing_agent_instance
 
 
 @router.post("", response_model=Pricing, status_code=status.HTTP_201_CREATED)
 async def create_pricing(
     data: PricingCreate,
-    agent: PricingOptimizerAgent = Depends(get_pricing_agent),
+    agent: PricingOptimizerAgent = Depends(get_pricing_agent),  # noqa: B008
 ) -> Pricing:
     """Create a new pricing entry."""
     return await agent.create_pricing(data)
@@ -32,7 +37,7 @@ async def create_pricing(
 @router.get("/{pricing_id}", response_model=Pricing)
 async def get_pricing(
     pricing_id: UUID,
-    agent: PricingOptimizerAgent = Depends(get_pricing_agent),
+    agent: PricingOptimizerAgent = Depends(get_pricing_agent),  # noqa: B008
 ) -> Pricing:
     """Get a pricing entry by ID."""
     try:
@@ -45,7 +50,7 @@ async def get_pricing(
 async def update_pricing(
     pricing_id: UUID,
     data: PricingUpdate,
-    agent: PricingOptimizerAgent = Depends(get_pricing_agent),
+    agent: PricingOptimizerAgent = Depends(get_pricing_agent),  # noqa: B008
 ) -> Pricing:
     """Update an existing pricing entry."""
     try:
@@ -57,7 +62,7 @@ async def update_pricing(
 @router.post("/{pricing_id}/optimize", response_model=Pricing)
 async def optimize_pricing(
     pricing_id: UUID,
-    agent: PricingOptimizerAgent = Depends(get_pricing_agent),
+    agent: PricingOptimizerAgent = Depends(get_pricing_agent),  # noqa: B008
 ) -> Pricing:
     """Optimize a pricing entry using AI."""
     try:
@@ -69,7 +74,7 @@ async def optimize_pricing(
 @router.get("/listing/{listing_id}", response_model=Pricing)
 async def get_pricing_for_listing(
     listing_id: UUID,
-    agent: PricingOptimizerAgent = Depends(get_pricing_agent),
+    agent: PricingOptimizerAgent = Depends(get_pricing_agent),  # noqa: B008
 ) -> Pricing:
     """Get pricing for a specific listing."""
     pricing = await agent.get_pricing_for_listing(listing_id)
@@ -80,8 +85,8 @@ async def get_pricing_for_listing(
 
 @router.post("/bulk-optimize")
 async def bulk_optimize_pricing(
-    category: Optional[str] = None,
-    agent: PricingOptimizerAgent = Depends(get_pricing_agent),
+    category: str | None = None,
+    agent: PricingOptimizerAgent = Depends(get_pricing_agent),  # noqa: B008
 ) -> list[Pricing]:
     """Optimize prices for multiple listings."""
     return await agent.bulk_optimize(category=category)

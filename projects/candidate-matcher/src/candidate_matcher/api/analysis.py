@@ -54,7 +54,7 @@ async def analyze_skills_gap(
     request: Request,
     candidate_id: UUID,
     job_id: UUID,
-    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),
+    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),  # noqa: B008
 ) -> SkillsGap:
     """Analyze skills gap between a candidate and job.
 
@@ -77,7 +77,7 @@ async def analyze_bias(
     request: Request,
     candidate_id: UUID,
     job_id: UUID,
-    bias_aware_ranker: BiasAwareRankerAgent = Depends(get_bias_aware_ranker),
+    bias_aware_ranker: BiasAwareRankerAgent = Depends(get_bias_aware_ranker),  # noqa: B008
 ) -> BiasReport:
     """Run bias analysis for a candidate-job pair.
 
@@ -105,7 +105,7 @@ async def assess_culture_fit(
     request: Request,
     candidate_id: UUID,
     job_id: UUID,
-    culture_fit_assessor: CultureFitAssessorAgent = Depends(get_culture_fit_assessor),
+    culture_fit_assessor: CultureFitAssessorAgent = Depends(get_culture_fit_assessor),  # noqa: B008
 ) -> CultureFitResult:
     """Assess culture fit between a candidate and job.
 

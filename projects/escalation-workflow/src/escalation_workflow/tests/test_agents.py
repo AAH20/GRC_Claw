@@ -8,9 +8,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from escalation_workflow.agents.auto_resolver import AutoResolverAgent, AutoResolverInput
-from escalation_workflow.agents.escalation_analyzer import EscalationAnalyzerAgent, EscalationAnalyzerInput
+from escalation_workflow.agents.escalation_analyzer import (
+    EscalationAnalyzerAgent,
+    EscalationAnalyzerInput,
+)
 from escalation_workflow.agents.priority_router import PriorityRouterAgent, PriorityRouterInput
-from escalation_workflow.agents.resolution_optimizer import ResolutionOptimizerAgent, ResolutionOptimizerInput
+from escalation_workflow.agents.resolution_optimizer import (
+    ResolutionOptimizerAgent,
+    ResolutionOptimizerInput,
+)
 from escalation_workflow.agents.sla_tracker import SLATrackerAgent, SLATrackerInput
 from escalation_workflow.models.escalation import Escalation
 from escalation_workflow.models.priority import PriorityLevel
@@ -42,7 +48,9 @@ class TestPriorityRouterAgent:
     """Tests for PriorityRouterAgent."""
 
     @pytest.mark.asyncio
-    async def test_assess_priority(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_assess_priority(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test priority assessment."""
         agent = PriorityRouterAgent(model=mock_llm)
         result = await agent.run(PriorityRouterInput(escalation=sample_escalation))
@@ -79,7 +87,7 @@ class TestSLATrackerAgent:
         agent = SLATrackerAgent(model=mock_llm)
         result = await agent.run(
             SLATrackerInput(
-                escalation_id="test-id",
+                escalation_id="123e4567-e89b-12d3-a456-426614174000",
                 priority="high",
                 started_at=now,
                 response_deadline=now + timedelta(minutes=30),
@@ -96,7 +104,7 @@ class TestSLATrackerAgent:
         agent = SLATrackerAgent(model=mock_llm)
         result = await agent.run(
             SLATrackerInput(
-                escalation_id="test-id",
+                escalation_id="123e4567-e89b-12d3-a456-426614174000",
                 priority="critical",
                 started_at=now - timedelta(hours=2),
                 response_deadline=now - timedelta(hours=1),
@@ -111,7 +119,7 @@ class TestSLATrackerAgent:
         now = datetime.utcnow()
         from escalation_workflow.models.sla import SLA
         sla = SLA(
-            escalation_id="test-id",
+            escalation_id="123e4567-e89b-12d3-a456-426614174000",
             priority="high",
             response_time_minutes=30,
             resolution_time_minutes=120,
@@ -127,7 +135,9 @@ class TestResolutionOptimizerAgent:
     """Tests for ResolutionOptimizerAgent."""
 
     @pytest.mark.asyncio
-    async def test_optimize_resolution(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_optimize_resolution(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test resolution optimization."""
         agent = ResolutionOptimizerAgent(model=mock_llm)
         result = await agent.run(ResolutionOptimizerInput(escalation=sample_escalation))
@@ -149,7 +159,9 @@ class TestEscalationAnalyzerAgent:
     """Tests for EscalationAnalyzerAgent."""
 
     @pytest.mark.asyncio
-    async def test_analyze_escalation(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_analyze_escalation(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test escalation analysis."""
         agent = EscalationAnalyzerAgent(model=mock_llm)
         result = await agent.run(
@@ -159,7 +171,9 @@ class TestEscalationAnalyzerAgent:
         assert result.risk_score >= 0
 
     @pytest.mark.asyncio
-    async def test_generate_trend_report(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_generate_trend_report(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test trend report generation."""
         agent = EscalationAnalyzerAgent(model=mock_llm)
         report = await agent.generate_trend_report([sample_escalation])
@@ -171,7 +185,9 @@ class TestAutoResolverAgent:
     """Tests for AutoResolverAgent."""
 
     @pytest.mark.asyncio
-    async def test_auto_resolve_disabled(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_auto_resolve_disabled(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test auto-resolve when disabled."""
         agent = AutoResolverAgent(model=mock_llm)
         result = await agent.run(
@@ -180,7 +196,9 @@ class TestAutoResolverAgent:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_auto_resolve_low_priority(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_auto_resolve_low_priority(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test auto-resolve for low priority escalation."""
         sample_escalation.priority = "low"
         agent = AutoResolverAgent(model=mock_llm)
@@ -192,7 +210,9 @@ class TestAutoResolverAgent:
             assert result.status == ResolutionStatus.IMPLEMENTED
 
     @pytest.mark.asyncio
-    async def test_auto_resolve_critical_priority(self, sample_escalation: Escalation, mock_llm: MagicMock) -> None:
+    async def test_auto_resolve_critical_priority(
+        self, sample_escalation: Escalation, mock_llm: MagicMock
+    ) -> None:
         """Test auto-resolve blocked for critical priority."""
         sample_escalation.priority = "critical"
         agent = AutoResolverAgent(model=mock_llm)

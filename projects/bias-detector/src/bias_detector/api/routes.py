@@ -26,8 +26,6 @@ from bias_detector.models import (
     AnalyzePatternsRequest,
     BiasReport,
     CreateReportRequest,
-    DemographicData,
-    ErrorResponse,
     FullAnalysisRequest,
     GetRecommendationsRequest,
     HealthResponse,

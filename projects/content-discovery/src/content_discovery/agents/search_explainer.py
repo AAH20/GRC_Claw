@@ -229,7 +229,10 @@ class SearchExplainerAgent(BaseAgent[tuple[SearchRequest, SearchResponse], Searc
             SearchExplanation: Basic explanation.
         """
         if not response.results:
-            explanation = f"No results found for '{request.query}'. Try broadening your search terms."
+            explanation = (
+                f"No results found for '{request.query}'. "
+                "Try broadening your search terms."
+            )
         else:
             explanation = (
                 f"Found {response.total} results for '{request.query}'. "

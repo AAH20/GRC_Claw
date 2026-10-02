@@ -8,7 +8,7 @@ from typing import Any
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
 
-from moderation_analytics.agents import BaseAgent
+from moderation_analytics.agents.base import BaseAgent
 from moderation_analytics.models import Trend, TrendDirection
 
 
@@ -169,8 +169,8 @@ class TrendAnalyzerAgent(BaseAgent[list[Trend]]):
         Returns:
             list[Trend]: LLM-identified trends.
         """
-        data_summary = f"Data points: {len(data)}, Period: {start.date()} to {end_date.date()}"
-        response = await self._prompt.ainvoke(
+        data_summary = f"Data points: {len(data)}, Period: {start.date()} to {end.date()}"
+        await self._prompt.ainvoke(
             {
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),

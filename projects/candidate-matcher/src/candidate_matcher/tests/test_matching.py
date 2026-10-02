@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from typing import TYPE_CHECKING
 
 from candidate_matcher.models.schemas import MatchRequest
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 def test_match_candidates(test_client: TestClient, sample_job, sample_candidate) -> None:

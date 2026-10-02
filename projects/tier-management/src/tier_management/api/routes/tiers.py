@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -20,9 +21,9 @@ _tiers_store: dict[UUID, Tier] = {}
 async def list_tiers(
     level: TierLevel | None = None,
     status: TierStatus = TierStatus.ACTIVE,
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=100, ge=1, le=1000),
-    settings: Settings = Depends(get_settings),
+    skip: int = Query(default=0, ge=0),  # noqa: B008
+    limit: int = Query(default=100, ge=1, le=1000),  # noqa: B008
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> list[Tier]:
     """List all tiers with optional filtering.
 
@@ -46,7 +47,7 @@ async def list_tiers(
 @tiers_router.post("", response_model=Tier, status_code=status.HTTP_201_CREATED)
 async def create_tier(
     tier_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Tier:
     """Create a new tier.
 
@@ -57,7 +58,7 @@ async def create_tier(
     Returns:
         The created tier.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
     from uuid import uuid4
 
     tier = Tier(
@@ -70,8 +71,8 @@ async def create_tier(
         benefits=tier_data.get("benefits", []),
         max_members=tier_data.get("max_members"),
         monthly_fee=float(tier_data.get("monthly_fee", 0.0)),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
         metadata=tier_data.get("metadata", {}),
     )
     _tiers_store[tier.id] = tier
@@ -81,7 +82,7 @@ async def create_tier(
 @tiers_router.get("/{tier_id}", response_model=Tier)
 async def get_tier(
     tier_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Tier:
     """Get a specific tier by ID.
 
@@ -108,7 +109,7 @@ async def get_tier(
 async def update_tier(
     tier_id: UUID,
     tier_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Tier:
     """Update an existing tier.
 
@@ -134,9 +135,9 @@ async def update_tier(
         if hasattr(tier, key) and key != "id":
             setattr(tier, key, value)
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    tier.updated_at = datetime.now(timezone.utc)
+    tier.updated_at = datetime.now(UTC)
     _tiers_store[tier_id] = tier
     return tier
 
@@ -144,7 +145,7 @@ async def update_tier(
 @tiers_router.delete("/{tier_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tier(
     tier_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> None:
     """Delete a tier.
 

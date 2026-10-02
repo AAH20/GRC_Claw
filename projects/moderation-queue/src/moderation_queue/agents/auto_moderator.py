@@ -4,13 +4,15 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from moderation_queue.agents.base import AgentResult, BaseAgent
+from moderation_queue.agents.base import BaseAgent
 from moderation_queue.config.settings import get_settings
+from moderation_queue.models import AgentResult
 
 settings = get_settings()
 
 MODERATION_SYSTEM_PROMPT = """You are an automated content moderation system.
-Analyze the given content and determine if it should be approved, rejected, or escalated to human review.
+Analyze the given content and determine if it should be approved, rejected, or escalated to
+human review.
 
 Decision rules:
 - APPROVE: Content clearly violates no policies
@@ -34,7 +36,7 @@ class AutoModeratorAgent(BaseAgent):
     def __init__(self, llm=None):
         self._llm = llm
 
-    async def execute(self, context: dict[str, Any]) -> AgentResult:
+    async def process(self, context: dict[str, Any]) -> AgentResult:
         content = context.get("content", "")
         content_type = context.get("content_type", "text")
         metadata = context.get("metadata", {})
@@ -52,7 +54,7 @@ class AutoModeratorAgent(BaseAgent):
             messages = [
                 SystemMessage(content=MODERATION_SYSTEM_PROMPT),
                 HumanMessage(
-                    content=f"Content type: {content_type}\nMetadata: {metadata}\nContent:\n{content[:4000]}"
+                    content=f"Content type: {content_type}\nMetadata: {metadata}\nContent:\n{content[:4000]}"  # noqa: E501
                 ),
             ]
             response = await self._llm.ainvoke(messages)

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import logging
-import math
-from datetime import datetime
-from typing import Any, Optional
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
@@ -23,7 +21,7 @@ class TrustScorerAgent:
     detect anomalies, and compute trust scores.
     """
 
-    def __init__(self, llm: Optional[BaseChatModel] = None) -> None:
+    def __init__(self, llm: BaseChatModel | None = None) -> None:
         """Initialize the TrustScorerAgent.
 
         Args:
@@ -149,7 +147,7 @@ class TrustScorerAgent:
         user_id: str,
         transaction_success: bool = False,
         dispute: bool = False,
-        new_rating: Optional[float] = None,
+        new_rating: float | None = None,
     ) -> TrustScore:
         """Update a user's trust score based on new activity.
 
@@ -196,7 +194,7 @@ class TrustScorerAgent:
         trust.score = self._compute_score(data)
         trust.level = self._classify_level(trust.score)
         trust.risk_factors = self._identify_risk_factors(data)
-        trust.updated_at = datetime.utcnow()
+        trust.updated_at = datetime.now(tz=UTC)
 
         logger.info("Updated trust score for user %s: %.4f", user_id, trust.score)
         return trust
@@ -247,7 +245,7 @@ class TrustScorerAgent:
         trust.score = self._compute_score(data)
         trust.level = self._classify_level(trust.score)
         trust.risk_factors = self._identify_risk_factors(data)
-        trust.updated_at = datetime.utcnow()
+        trust.updated_at = datetime.now(tz=UTC)
 
         return trust
 

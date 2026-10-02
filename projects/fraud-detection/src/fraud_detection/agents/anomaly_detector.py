@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from langchain_deepagents import create_deep_agent
+from deepagents import create_deep_agent
 
 from fraud_detection.config.logging_config import get_logger
 from fraud_detection.models.schemas import Anomaly, RiskLevel, Transaction

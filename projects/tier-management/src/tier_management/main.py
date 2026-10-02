@@ -152,7 +152,9 @@ def create_app() -> FastAPI:
         )
 
     # Include routers
-    app.include_router(router)
+    from tier_management.api.routes.health import health_router
+    app.include_router(health_router)
+    app.include_router(router, prefix="/api/v1")
 
     # Root endpoint
     @app.get("/")

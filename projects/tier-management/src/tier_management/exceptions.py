@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class TierManagementError(Exception):
@@ -12,7 +12,7 @@ class TierManagementError(Exception):
         self,
         message: str,
         status_code: int = 500,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the tier management error.
 
@@ -62,7 +62,7 @@ class MemberNotFoundError(TierManagementError):
 class EvaluationError(TierManagementError):
     """Raised when tier evaluation fails."""
 
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         """Initialize with error details.
 
         Args:
@@ -83,7 +83,7 @@ class AccessDeniedError(TierManagementError):
         self,
         member_id: str,
         resource: str,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> None:
         """Initialize with access denial context.
 
@@ -116,7 +116,10 @@ class UpgradeNotEligibleError(TierManagementError):
             reason: Why the upgrade was denied.
         """
         super().__init__(
-            message=f"Member '{member_id}' is not eligible for upgrade to '{target_tier_id}': {reason}",
+            message=(
+                f"Member '{member_id}' is not eligible for upgrade to "
+                f"'{target_tier_id}': {reason}"
+            ),
             status_code=400,
             details={"member_id": member_id, "target_tier_id": target_tier_id, "reason": reason},
         )
@@ -161,7 +164,7 @@ class AgentExecutionError(TierManagementError):
         self,
         agent_name: str,
         message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize with agent failure context.
 

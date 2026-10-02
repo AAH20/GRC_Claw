@@ -1,7 +1,8 @@
 """Application configuration and settings."""
 
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -14,7 +15,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # Server settings
-    HOST: str = "0.0.0.0"
+    HOST: str = "127.0.0.1"
     PORT: int = 8000
     WORKERS: int = 1
 

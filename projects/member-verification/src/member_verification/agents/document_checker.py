@@ -48,7 +48,8 @@ class DocumentCheckerAgent(BaseAgent):
         """Verify a document.
 
         Args:
-            input_data: Dictionary containing document data and optional identity for cross-reference.
+            input_data: Dictionary containing document data and optional identity for
+                cross-reference.
 
         Returns:
             Dictionary with document verification results.

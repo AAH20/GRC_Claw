@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import json
-from typing import Any
-from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
-from community_governance.exceptions import AgentExecutionException, RuleNotFoundException
+from community_governance.exceptions import AgentExecutionError, RuleNotFoundError
 from community_governance.models.governance_action import GovernanceAction
 from community_governance.models.rule import Rule, RuleEnforcementResult, RuleSeverity
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from langchain_core.language_models import BaseLanguageModel
+
 
 logger = get_logger(__name__)
 
@@ -68,13 +71,13 @@ class RuleEnforcerAgent(BaseAgent[dict[str, Any], list[RuleEnforcementResult]]):
             rule_id: The ID of the rule to remove.
 
         Raises:
-            RuleNotFoundException: If the rule is not found.
+            RuleNotFoundError: If the rule is not found.
         """
         if rule_id not in self._rule_index:
-            raise RuleNotFoundException(str(rule_id))
+            raise RuleNotFoundError(str(rule_id))
         self.rules = [r for r in self.rules if r.id != rule_id]
         del self._rule_index[rule_id]
-        logger.info(f"Rule removed from enforcement set", rule_id=str(rule_id))
+        logger.info("Rule removed from enforcement set", rule_id=str(rule_id))
 
     async def execute(self, input_data: dict[str, Any]) -> list[RuleEnforcementResult]:
         """Evaluate an action against all active rules.
@@ -88,7 +91,7 @@ class RuleEnforcerAgent(BaseAgent[dict[str, Any], list[RuleEnforcementResult]]):
             List of enforcement results for each evaluated rule.
 
         Raises:
-            AgentExecutionException: If rule enforcement fails.
+            AgentExecutionError: If rule enforcement fails.
         """
         try:
             action = input_data.get("action")
@@ -121,7 +124,7 @@ class RuleEnforcerAgent(BaseAgent[dict[str, Any], list[RuleEnforcementResult]]):
 
         except Exception as e:
             logger.error(f"Rule enforcement failed: {e}", error=str(e))
-            raise AgentExecutionException(self.name, str(e)) from e
+            raise AgentExecutionError(self.name, str(e)) from e
 
     async def _evaluate_rule(
         self, rule: Rule, action: GovernanceAction, context: dict[str, Any]

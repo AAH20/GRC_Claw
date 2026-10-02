@@ -27,7 +27,7 @@ class ReadinessResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> HealthResponse:
     """Basic health check endpoint.
 
@@ -46,7 +46,7 @@ async def health_check(
 
 @router.get("/ready", response_model=ReadinessResponse)
 async def readiness_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> ReadinessResponse:
     """Readiness probe for Kubernetes.
 

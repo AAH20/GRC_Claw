@@ -20,7 +20,7 @@ _evaluations_store: dict[UUID, TierEvaluation] = {}
 @evaluation_router.post("", response_model=TierEvaluation, status_code=status.HTTP_201_CREATED)
 async def create_evaluation(
     evaluation_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> TierEvaluation:
     """Create a new tier evaluation for a member.
 
@@ -42,13 +42,13 @@ async def create_evaluation(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
-        )
+        ) from e
 
 
 @evaluation_router.get("/{evaluation_id}", response_model=TierEvaluation)
 async def get_evaluation(
     evaluation_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> TierEvaluation:
     """Get a specific evaluation by ID.
 
@@ -74,7 +74,7 @@ async def get_evaluation(
 @evaluation_router.get("/member/{member_id}", response_model=list[TierEvaluation])
 async def get_member_evaluations(
     member_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> list[TierEvaluation]:
     """Get all evaluations for a specific member.
 
@@ -94,7 +94,7 @@ async def get_member_evaluations(
 @evaluation_router.post("/{evaluation_id}/reevaluate", response_model=TierEvaluation)
 async def reevaluate_member(
     evaluation_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> TierEvaluation:
     """Re-evaluate a member with updated metrics.
 

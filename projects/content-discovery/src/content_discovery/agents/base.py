@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
 import structlog
-from langchain_deepagents import DeepAgent
+from deepagents import create_deep_agent
 
 logger = structlog.get_logger()
 
@@ -33,16 +33,16 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         self.llm = llm
         self._agent = self._build_agent()
 
-    def _build_agent(self) -> DeepAgent:
-        """Build the underlying DeepAgent instance.
+    def _build_agent(self):
+        """Build the underlying deep agent instance.
 
         Returns:
-            DeepAgent: Configured DeepAgent instance.
+            Configured deep agent instance.
         """
-        return DeepAgent(
-            name=self.name,
-            llm=self.llm,
+        return create_deep_agent(
+            model=self.llm,
             tools=self._get_tools(),
+            name=self.name,
         )
 
     def _get_tools(self) -> list[Any]:

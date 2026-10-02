@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
 from skills_assessor.config.settings import get_settings
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
 
 T = TypeVar("T")
 R = TypeVar("R")

@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
 # ─── Enums ────────────────────────────────────────────────────────────────────
 
 
-class VerificationStatus(str, Enum):
+class VerificationStatus(StrEnum):
     """Verification status enumeration."""
 
     PENDING = "pending"
@@ -24,7 +23,7 @@ class VerificationStatus(str, Enum):
     EXPIRED = "expired"
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk level enumeration."""
 
     LOW = "low"
@@ -33,7 +32,7 @@ class RiskLevel(str, Enum):
     CRITICAL = "critical"
 
 
-class DocumentType(str, Enum):
+class DocumentType(StrEnum):
     """Document type enumeration."""
 
     PASSPORT = "passport"
@@ -43,7 +42,7 @@ class DocumentType(str, Enum):
     BANK_STATEMENT = "bank_statement"
 
 
-class FraudType(str, Enum):
+class FraudType(StrEnum):
     """Fraud type enumeration."""
 
     IDENTITY_THEFT = "identity_theft"
@@ -86,7 +85,9 @@ class DocumentData(BaseModel):
 
     document_type: DocumentType = Field(..., description="Type of document")
     document_number: str = Field(..., min_length=1, description="Document number")
-    issuing_country: str = Field(..., min_length=2, max_length=2, description="ISO 3166-1 alpha-2 country code")
+    issuing_country: str = Field(
+        ..., min_length=2, max_length=2, description="ISO 3166-1 alpha-2 country code"
+    )
     issue_date: str | None = Field(default=None, description="Document issue date")
     expiry_date: str | None = Field(default=None, description="Document expiry date")
     document_hash: str | None = Field(default=None, description="SHA-256 hash of document image")
@@ -98,7 +99,9 @@ class VerificationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     request_id: UUID = Field(default_factory=uuid4, description="Unique request identifier")
-    member_id: str = Field(..., min_length=1, max_length=100, description="Community member identifier")
+    member_id: str = Field(
+        ..., min_length=1, max_length=100, description="Community member identifier"
+    )
     identity: IdentityData = Field(..., description="Identity information")
     documents: list[DocumentData] = Field(default_factory=list, description="Supporting documents")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
@@ -166,10 +169,16 @@ class VerificationResult(BaseModel):
     trust_score: float = Field(..., ge=0.0, le=1.0, description="Associated trust score")
     fraud_risk: float = Field(..., ge=0.0, le=1.0, description="Fraud risk score")
     risk_level: RiskLevel = Field(..., description="Overall risk level")
-    verified_at: datetime = Field(default_factory=datetime.utcnow, description="Verification timestamp")
+    verified_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Verification timestamp"
+    )
     expires_at: datetime | None = Field(default=None, description="Result expiration time")
-    checks_performed: list[str] = Field(default_factory=list, description="List of checks performed")
-    failure_reasons: list[str] = Field(default_factory=list, description="Reasons for failure if rejected")
+    checks_performed: list[str] = Field(
+        default_factory=list, description="List of checks performed"
+    )
+    failure_reasons: list[str] = Field(
+        default_factory=list, description="Reasons for failure if rejected"
+    )
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional result metadata")
 
 
@@ -183,7 +192,9 @@ class TrustScore(BaseModel):
     level: RiskLevel = Field(..., description="Trust level")
     factors: dict[str, float] = Field(default_factory=dict, description="Factor breakdown")
     history: list[dict[str, Any]] = Field(default_factory=list, description="Historical scores")
-    calculated_at: datetime = Field(default_factory=datetime.utcnow, description="Calculation timestamp")
+    calculated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Calculation timestamp"
+    )
     next_review_at: datetime | None = Field(default=None, description="Next review date")
 
 
@@ -220,7 +231,9 @@ class DocumentVerificationResult(BaseModel):
         default=None, description="Whether document matches identity data"
     )
     issues: list[str] = Field(default_factory=list, description="Issues found with document")
-    verified_at: datetime = Field(default_factory=datetime.utcnow, description="Verification timestamp")
+    verified_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Verification timestamp"
+    )
 
 
 class VerificationExplanation(BaseModel):
@@ -231,9 +244,13 @@ class VerificationExplanation(BaseModel):
     request_id: UUID = Field(..., description="Verification request ID")
     summary: str = Field(..., description="Human-readable summary")
     factors: list[dict[str, Any]] = Field(default_factory=list, description="Decision factors")
-    recommendations: list[str] = Field(default_factory=list, description="Recommendations for member")
+    recommendations: list[str] = Field(
+        default_factory=list, description="Recommendations for member"
+    )
     appeal_process: str | None = Field(default=None, description="How to appeal the decision")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Generation timestamp"
+    )
     detail_level: str = Field(..., description="Detail level of explanation")
 
 

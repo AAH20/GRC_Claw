@@ -1,6 +1,9 @@
 """Pytest configuration and fixtures."""
-
 from __future__ import annotations
+
+import os
+
+os.environ.setdefault("OPENAI_API_KEY", "test-key")
 
 import pytest
 from fastapi.testclient import TestClient

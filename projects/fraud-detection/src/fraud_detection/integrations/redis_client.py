@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from typing import Any
 
 import redis.asyncio as redis
@@ -60,5 +61,5 @@ async def get_cached_transaction(transaction_id: str) -> dict[str, Any] | None:
     client = await get_redis_client()
     data = await client.get(f"transaction:{transaction_id}")
     if data:
-        return eval(data)  # noqa: S307
+        return ast.literal_eval(data)
     return None

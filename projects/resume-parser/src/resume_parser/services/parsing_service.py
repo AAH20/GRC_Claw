@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -15,16 +15,18 @@ from resume_parser.agents import (
     ResumeParserAgent,
     SkillsExtractorAgent,
 )
-from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
-from resume_parser.integrations.storage import BaseStorage
 from resume_parser.models import (
     AgentResult,
-    ParseResponse,
     ParsedResume,
+    ParseResponse,
     ParsingStatus,
 )
 from resume_parser.utils import clean_text, generate_id
+
+if TYPE_CHECKING:
+    from resume_parser.config import Settings
+    from resume_parser.integrations import BaseLLMClient
+    from resume_parser.integrations.storage import BaseStorage
 
 logger = structlog.get_logger(__name__)
 

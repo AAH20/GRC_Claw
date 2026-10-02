@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import structlog
-from langchain_deepagents import DeepAgent
+from deepagents import create_deep_agent
+
+if TYPE_CHECKING:
+    from deepagents import DeepAgent  # noqa: F401
 
 logger = structlog.get_logger(__name__)
 
@@ -34,11 +37,11 @@ class BaseComplianceAgent(ABC, Generic[T, R]):
         """
         self.name = name
         self.model = model
-        self._agent: DeepAgent | None = None
+        self._agent: Any | None = None
         self._logger = logger.bind(agent=name)
 
     @property
-    def agent(self) -> DeepAgent:
+    def agent(self) -> Any:
         """Get or create the LangChain DeepAgent instance.
 
         Returns:
@@ -48,13 +51,13 @@ class BaseComplianceAgent(ABC, Generic[T, R]):
             self._agent = self._create_agent()
         return self._agent
 
-    def _create_agent(self) -> DeepAgent:
+    def _create_agent(self) -> Any:
         """Create the LangChain DeepAgent instance.
 
         Returns:
             Configured DeepAgent instance.
         """
-        return DeepAgent(
+        return create_deep_agent(
             name=self.name,
             model=self.model,
             tools=self._get_tools(),

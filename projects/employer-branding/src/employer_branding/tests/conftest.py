@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("OPENAI_API_KEY", "test-key-for-integration-tests")
+
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from employer_branding.main import create_app
 

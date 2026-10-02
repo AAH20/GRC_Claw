@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from rights_management.models import (
     InfringementReport,
     InfringementSeverity,
@@ -13,12 +11,9 @@ from rights_management.models import (
     LicenseStatus,
     LicenseType,
     RightsValidation,
-    RightsValidationRequest,
     TakedownRequest,
-    TakedownRequestCreate,
     TakedownStatus,
     UsageRecord,
-    UsageRecordCreate,
     UsageSummary,
     UsageType,
     ValidationStatus,

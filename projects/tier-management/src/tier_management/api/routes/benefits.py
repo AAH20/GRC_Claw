@@ -18,7 +18,7 @@ _benefits_store: dict[UUID, Benefit] = {}
 _agent_instance: BenefitManagerAgent | None = None
 
 
-async def _get_agent(settings: Settings = Depends(get_settings)) -> BenefitManagerAgent:
+async def _get_agent(settings: Settings = Depends(get_settings)) -> BenefitManagerAgent:  # noqa: B008
     """Get or create the benefit manager agent singleton.
 
     Args:
@@ -43,8 +43,8 @@ async def agent_initialize() -> None:
 @benefits_router.post("", response_model=Benefit, status_code=status.HTTP_201_CREATED)
 async def create_benefit(
     benefit_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
-    agent: BenefitManagerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: BenefitManagerAgent = Depends(_get_agent),  # noqa: B008
 ) -> Benefit:
     """Create a new benefit.
 
@@ -67,13 +67,13 @@ async def create_benefit(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
-        )
+        ) from e
 
 
 @benefits_router.get("/{benefit_id}", response_model=Benefit)
 async def get_benefit(
     benefit_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> Benefit:
     """Get a specific benefit by ID.
 
@@ -100,7 +100,7 @@ async def get_benefit(
 async def list_benefits(
     tier_id: UUID | None = None,
     active_only: bool = True,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> list[Benefit]:
     """List benefits with optional filtering.
 
@@ -124,8 +124,8 @@ async def list_benefits(
 async def update_benefit(
     benefit_id: UUID,
     benefit_data: dict[str, Any],
-    settings: Settings = Depends(get_settings),
-    agent: BenefitManagerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: BenefitManagerAgent = Depends(_get_agent),  # noqa: B008
 ) -> Benefit:
     """Update an existing benefit.
 
@@ -153,14 +153,14 @@ async def update_benefit(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
 
 
 @benefits_router.post("/{benefit_id}/deactivate", response_model=Benefit)
 async def deactivate_benefit(
     benefit_id: UUID,
-    settings: Settings = Depends(get_settings),
-    agent: BenefitManagerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: BenefitManagerAgent = Depends(_get_agent),  # noqa: B008
 ) -> Benefit:
     """Deactivate a benefit.
 
@@ -186,15 +186,15 @@ async def deactivate_benefit(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
 
 
 @benefits_router.post("/{benefit_id}/assign", response_model=Benefit)
 async def assign_benefit_to_tiers(
     benefit_id: UUID,
     tier_ids: list[UUID],
-    settings: Settings = Depends(get_settings),
-    agent: BenefitManagerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: BenefitManagerAgent = Depends(_get_agent),  # noqa: B008
 ) -> Benefit:
     """Assign a benefit to additional tiers.
 
@@ -222,4 +222,4 @@ async def assign_benefit_to_tiers(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e

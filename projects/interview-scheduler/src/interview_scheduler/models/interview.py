@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class InterviewStatus(str, Enum):
+class InterviewStatus(StrEnum):
     """Interview lifecycle status."""
 
     PENDING = "pending"
@@ -22,7 +22,7 @@ class InterviewStatus(str, Enum):
     NO_SHOW = "no_show"
 
 
-class InterviewType(str, Enum):
+class InterviewType(StrEnum):
     """Type of interview."""
 
     PHONE = "phone"
@@ -87,6 +87,7 @@ class Interview(InterviewBase):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique interview ID")
     status: InterviewStatus = Field(default=InterviewStatus.PENDING)
+    proposed_slot_ids: list[str] = Field(default_factory=list, description="Proposed time slot IDs")
     scheduled_at: datetime | None = Field(None, description="Scheduled start time (UTC)")
     scheduled_timezone: str | None = Field(None, description="Timezone of scheduled time")
     schedule_id: str | None = Field(None, description="Associated schedule ID")

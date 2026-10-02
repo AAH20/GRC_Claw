@@ -1,6 +1,7 @@
 """Growth Predictor Agent using LangChain DeepAgents."""
 
 from typing import Any
+
 import structlog
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.tools import tool
@@ -212,42 +213,44 @@ class GrowthPredictorAgent(BaseCreatorAgent):
             logger.info(f"Predicting growth for creator {creator_id}")
 
             # Predict follower growth
-            predicted_followers = predict_follower_growth(
-                current_followers, monthly_growth_rate, months
-            )
+            predicted_followers = predict_follower_growth.invoke({
+                "current_followers": current_followers, "monthly_growth_rate": monthly_growth_rate, "months": months
+            })
 
             # Predict revenue growth
-            predicted_revenue = predict_revenue_growth(
-                current_monthly_revenue, revenue_growth_rate, months
-            )
+            predicted_revenue = predict_revenue_growth.invoke({
+                "current_monthly_revenue": current_monthly_revenue, "revenue_growth_rate": revenue_growth_rate, "months": months
+            })
 
             # Identify growth drivers
-            drivers = identify_growth_drivers(
-                input_data.get("content_frequency", 0),
-                input_data.get("engagement_rate", 0.0),
-                input_data.get("collaboration_count", 0),
-                input_data.get("platform_diversity", 1),
-            )
+            drivers = identify_growth_drivers.invoke({
+                "content_frequency": input_data.get("content_frequency", 0),
+                "engagement_rate": input_data.get("engagement_rate", 0.0),
+                "collaboration_count": input_data.get("collaboration_count", 0),
+                "platform_diversity": input_data.get("platform_diversity", 1),
+            })
 
             # Assess risks
-            risks = assess_risks(
-                input_data.get("platform_dependency", 0.5),
-                input_data.get("content_saturation", 0.3),
-                input_data.get("audience_concentration", 0.3),
-            )
+            risks = assess_risks.invoke({
+                "platform_dependency": input_data.get("platform_dependency", 0.5),
+                "content_saturation": input_data.get("content_saturation", 0.3),
+                "audience_concentration": input_data.get("audience_concentration", 0.3),
+            })
 
             # Calculate confidence
-            confidence = calculate_confidence_score(
-                input_data.get("data_quality", 0.8),
-                input_data.get("historical_accuracy", 0.7),
-                input_data.get("market_volatility", 0.3),
-            )
+            confidence = calculate_confidence_score.invoke({
+                "data_quality": input_data.get("data_quality", 0.8),
+                "historical_accuracy": input_data.get("historical_accuracy", 0.7),
+                "market_volatility": input_data.get("market_volatility", 0.3),
+            })
 
             # Generate milestones
             milestones = []
             for month in [3, 6, 9, 12]:
                 if month <= months:
-                    moderate_followers = int(current_followers * ((1 + monthly_growth_rate) ** month))
+                    moderate_followers = int(
+                        current_followers * ((1 + monthly_growth_rate) ** month)
+                    )
                     milestones.append({
                         "month": str(month),
                         "follower_target": str(moderate_followers),
@@ -263,8 +266,14 @@ class GrowthPredictorAgent(BaseCreatorAgent):
                     f"Drivers: {drivers}. Risks: {risks}. "
                     f"Provide insights and recommendations."
                 )
-                insights = agent_result.get("insights", []) if isinstance(agent_result, dict) else []
-                recommendations = agent_result.get("recommendations", []) if isinstance(agent_result, dict) else []
+                insights = (
+                    agent_result.get("insights", []) if isinstance(agent_result, dict) else []
+                )
+                recommendations = (
+                    agent_result.get("recommendations", [])
+                    if isinstance(agent_result, dict)
+                    else []
+                )
             else:
                 insights = []
                 recommendations = []

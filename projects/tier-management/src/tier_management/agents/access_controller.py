@@ -6,6 +6,7 @@ configured policies and make grant/deny decisions with reasoning.
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -78,7 +79,7 @@ class AccessControllerAgent(BaseAgent[AccessCheckRequest, AccessCheckResponse]):
             "access_check_complete",
             member_id=str(input_data.member_id),
             resource=input_data.resource,
-            decision=response.decision.value,
+            decision=str(response.decision),
         )
 
         return response
@@ -95,8 +96,7 @@ class AccessControllerAgent(BaseAgent[AccessCheckRequest, AccessCheckResponse]):
         Returns:
             AccessCheckResponse with decision.
         """
-        from datetime import datetime, timezone
-        from uuid import uuid4
+        from datetime import datetime
 
         # Find applicable policies
         applicable = self._find_applicable_policies(request.resource, request.action)
@@ -109,7 +109,7 @@ class AccessControllerAgent(BaseAgent[AccessCheckRequest, AccessCheckResponse]):
                 action=request.action,
                 decision=self.default_decision,
                 reason="No applicable policy found",
-                checked_at=datetime.now(timezone.utc),
+                checked_at=datetime.now(UTC),
             )
 
         # Evaluate policies by priority
@@ -121,7 +121,7 @@ class AccessControllerAgent(BaseAgent[AccessCheckRequest, AccessCheckResponse]):
             action=request.action,
             decision=decision,
             reason=f"Access {decision.value} based on policy evaluation",
-            checked_at=datetime.now(timezone.utc),
+            checked_at=datetime.now(UTC),
             policy_id=applicable[0].id if applicable else None,
         )
 

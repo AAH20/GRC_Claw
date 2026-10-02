@@ -20,7 +20,7 @@ _slas: dict[UUID, SLA] = {}
 async def track_sla(
     escalation_id: UUID,
     priority: str = "medium",
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> SLA:
     """Start tracking SLA for an escalation.
 
@@ -59,7 +59,7 @@ async def track_sla(
 
 @router.get("", response_model=list[SLA])
 async def list_slas(
-    status_filter: SLAStatus | None = Query(default=None, alias="status"),
+    status_filter: SLAStatus | None = Query(default=None, alias="status"),  # noqa: B008
 ) -> list[SLA]:
     """List SLA tracking records.
 
@@ -99,7 +99,7 @@ async def get_sla(sla_id: UUID) -> SLA:
 @router.post("/{sla_id}/check", response_model=SLA)
 async def check_sla_status(
     sla_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> SLA:
     """Check and update SLA status.
 

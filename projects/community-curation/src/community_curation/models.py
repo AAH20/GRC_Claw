@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
-class ContentSource(str, Enum):
+class ContentSource(StrEnum):
     """Supported content sources."""
 
     REDDIT = "reddit"
@@ -88,7 +88,9 @@ class TopicCluster(BaseModel):
     name: str = Field(..., description="Cluster name")
     description: str = Field(default="", description="Cluster description")
     keywords: list[str] = Field(default_factory=list, description="Cluster keywords")
-    content_ids: list[str] = Field(default_factory=list, description="IDs of content in this cluster")
+    content_ids: list[str] = Field(
+        default_factory=list, description="IDs of content in this cluster"
+    )
     coherence_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Cluster coherence")
     size: int = Field(default=0, description="Number of items in cluster")
 

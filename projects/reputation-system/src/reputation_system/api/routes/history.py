@@ -1,13 +1,12 @@
 """Reputation History API routes."""
-
-from typing import Dict, List
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from reputation_system.agents.reputation_history import (
-    ReputationHistoryAgent,
     HistoryAnalysisInput,
+    ReputationHistoryAgent,
 )
 from reputation_system.config.settings import Settings, get_settings
 from reputation_system.models.schemas import ReputationHistory, ReputationHistoryCreate
@@ -15,13 +14,13 @@ from reputation_system.models.schemas import ReputationHistory, ReputationHistor
 router = APIRouter(prefix="/history", tags=["history"])
 
 # In-memory store for demo purposes
-_history: Dict[UUID, ReputationHistory] = {}
+_history: dict[UUID, ReputationHistory] = {}
 
 
 @router.post("", response_model=ReputationHistory, status_code=status.HTTP_201_CREATED)
 async def create_history_entry(
     data: ReputationHistoryCreate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> ReputationHistory:
     """Create a new reputation history entry.
 
@@ -32,7 +31,7 @@ async def create_history_entry(
     Returns:
         Created history entry.
     """
-    entry = ReputationHistory(**data.model_dump())
+    entry = ReputationHistory(**data.model_dump(exclude_none=True))
     _history[entry.id] = entry
     return entry
 
@@ -40,7 +39,7 @@ async def create_history_entry(
 @router.get("/{entry_id}", response_model=ReputationHistory)
 async def get_history_entry(
     entry_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> ReputationHistory:
     """Get a history entry by ID.
 
@@ -62,22 +61,22 @@ async def get_history_entry(
     return _history[entry_id]
 
 
-@router.get("/member/{member_id}", response_model=List[ReputationHistory])
+@router.get("/member/{member_id}", response_model=list[ReputationHistory])
 async def get_member_history(
     member_id: str,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=500),
-    action_filter: str = Query(None),
-    settings: Settings = Depends(get_settings),
-) -> List[ReputationHistory]:
+    settings: Annotated[Settings, Depends(get_settings)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    action_filter: Annotated[str | None, Query()] = None,
+) -> list[ReputationHistory]:
     """Get reputation history for a member.
 
     Args:
         member_id: Member identifier.
+        settings: Application settings.
         skip: Number of records to skip.
         limit: Maximum number of records to return.
         action_filter: Filter by action type.
-        settings: Application settings.
 
     Returns:
         List of history entries for the member.
@@ -91,8 +90,8 @@ async def get_member_history(
 @router.post("/analyze/{member_id}")
 async def analyze_member_history(
     member_id: str,
-    settings: Settings = Depends(get_settings),
-) -> Dict:
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict:
     """Analyze reputation history for a member using the AI agent.
 
     Args:

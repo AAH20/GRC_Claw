@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import httpx
@@ -115,7 +114,7 @@ class Notifier:
 
             logger.info("Email notification sent", recipients=recipients)
             return True
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.error("Failed to send email notification", error=str(exc))
             return False
 

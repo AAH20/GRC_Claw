@@ -1,14 +1,15 @@
 """Diversity Analyzer Agent - analyzes diversity metrics across the recruitment funnel."""
 
+from typing import TYPE_CHECKING
 from __future__ import annotations
 
 import uuid
-from datetime import date
-
-from langchain_core.prompts import ChatPromptTemplate
 
 from recruitment_analytics.agents.base import BaseAgent
-from recruitment_analytics.integrations.ats_client import ATSClient
+
+if TYPE_CHECKING:
+    from recruitment_analytics.integrations.ats_client import ATSClient
+
 from recruitment_analytics.models.schemas import (
     DiversityAnalysisRequest,
     DiversityAnalysisResponse,
@@ -169,7 +170,9 @@ class DiversityAnalyzerAgent(BaseAgent[DiversityAnalysisRequest, DiversityAnalys
         return {
             "industry_average_diversity_score": 0.65,
             "company_score": report.overall_diversity_score,
-            "percentile": "above_average" if report.overall_diversity_score > 0.65 else "below_average",
+            "percentile": (
+                "above_average" if report.overall_diversity_score > 0.65 else "below_average"
+            ),
             "gender_benchmark": {
                 "industry_female_avg": 0.35,
                 "company_female_pct": report.gender.percentages.get("female", 0),

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +12,7 @@ from fastapi.responses import JSONResponse
 from talent_pool_manager.api import router as api_router
 from talent_pool_manager.config import get_settings
 from talent_pool_manager.config.logging_config import configure_logging, get_logger
-from talent_pool_manager.models import APIInfo, ErrorResponse, HealthResponse
+from talent_pool_manager.models import APIInfo, ErrorResponse
 
 logger = get_logger(__name__)
 
@@ -49,7 +48,10 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Agentic AI talent pool management system with candidate discovery, segmentation, and engagement optimization",
+        description=(
+            "Agentic AI talent pool management system with candidate discovery, "
+            "segmentation, and engagement optimization"
+        ),
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",

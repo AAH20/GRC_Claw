@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     """Supported resume file types."""
 
     PDF = "pdf"
@@ -18,7 +18,7 @@ class FileType(str, Enum):
     UNKNOWN = "unknown"
 
 
-class ParsingStatus(str, Enum):
+class ParsingStatus(StrEnum):
     """Resume parsing status."""
 
     PENDING = "pending"

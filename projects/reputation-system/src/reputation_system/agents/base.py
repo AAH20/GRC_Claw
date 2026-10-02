@@ -1,7 +1,7 @@
 """Base agent class for reputation system agents."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel
@@ -33,7 +33,6 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
     def _initialize_agent(self) -> None:
         """Initialize the underlying agent framework."""
         try:
-            from langchain.agents import AgentExecutor, create_react_agent
             from langchain_core.prompts import ChatPromptTemplate
 
             self._agent_type = "react"
@@ -61,7 +60,7 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         """
         ...
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check agent health.
 
         Returns:

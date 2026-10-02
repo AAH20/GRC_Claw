@@ -28,7 +28,9 @@ class Permission(BaseModel):
     conditions: dict[str, Any] = Field(
         default_factory=dict, description="Optional conditions (e.g. time-based, IP-based)"
     )
-    effect: PolicyEffect = Field(default=PolicyEffect.ALLOW, description="Allow or deny this permission")
+    effect: PolicyEffect = Field(
+        default=PolicyEffect.ALLOW, description="Allow or deny this permission"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -44,11 +46,15 @@ class Role(BaseModel):
     id: UUID = Field(default_factory=uuid4, description="Unique role identifier")
     name: str = Field(..., min_length=1, max_length=128, description="Human-readable role name")
     description: str = Field(default="", description="Role description")
-    permissions: list[Permission] = Field(default_factory=list, description="Permissions granted by this role")
+    permissions: list[Permission] = Field(
+        default_factory=list, description="Permissions granted by this role"
+    )
     status: RoleStatus = Field(default=RoleStatus.ACTIVE, description="Lifecycle status")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Arbitrary metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Last update timestamp"
+    )
 
 
 class RoleCreate(BaseModel):
@@ -118,7 +124,9 @@ class Policy(BaseModel):
     name: str = Field(..., min_length=1, max_length=128)
     description: str = Field(default="")
     rules: list[Permission] = Field(default_factory=list)
-    priority: int = Field(default=0, ge=0, description="Higher priority policies are evaluated first")
+    priority: int = Field(
+        default=0, ge=0, description="Higher priority policies are evaluated first"
+    )
     enabled: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
-from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import Field
 
 from community_health_scorer.config import get_settings
 from community_health_scorer.models import EngagementLevel, EngagementMetrics
@@ -41,7 +38,7 @@ class EngagementMetricsAgent:
                         """You are a community engagement analyst. Analyze the provided engagement metrics
                         and produce a comprehensive engagement assessment. Consider DAU/MAU ratio (stickiness),
                         session duration, interaction depth, content creation rate, response rate, and retention rates.
-                        Provide a score from 0-100 and classify the engagement level.""",
+                        Provide a score from 0-100 and classify the engagement level."""  # noqa: E501,
                     ),
                     ("human", "{input}"),
                 ]
@@ -146,19 +143,17 @@ class EngagementMetricsAgent:
         Returns:
             EngagementMetrics with computed scores and classification.
         """
-        start_time = time.time()
-
         if self._agent is not None:
             try:
-                result = await self._agent.ainvoke(
+                await self._agent.ainvoke(
                     {
-                        "input": f"Analyze engagement metrics for community {community_id}: {metrics_data}"
+                        "input": f"Analyze engagement metrics for community {community_id}: {metrics_data}"  # noqa: E501
                     }
                 )
                 # Parse LLM result if possible, fallback to heuristic
                 return self._heuristic_score(metrics_data)
             except Exception:
-                pass
+                return self._heuristic_score(metrics_data)
 
         return self._heuristic_score(metrics_data)
 

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from typing import TYPE_CHECKING
 
-from skills_assessor.config.settings import Settings
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 class TestHealthAPI:
@@ -100,7 +101,7 @@ class TestAssessmentsAPI:
         """Test analyzing gaps for non-existent assessment."""
         response = test_client.post(
             "/assessments/123e4567-e89b-12d3-a456-426614174000/analyze-gaps",
-            json={"target_role": "Engineer"},
+            json={"assessment_id": "123e4567-e89b-12d3-a456-426614174000", "target_role": "Engineer"},
         )
         assert response.status_code == 404
 
@@ -116,7 +117,7 @@ class TestAssessmentsAPI:
         """Test generating learning path for non-existent assessment."""
         response = test_client.post(
             "/assessments/123e4567-e89b-12d3-a456-426614174000/learning-path",
-            json={"target_role": "Engineer"},
+            json={"assessment_id": "123e4567-e89b-12d3-a456-426614174000", "target_role": "Engineer"},
         )
         assert response.status_code == 404
 

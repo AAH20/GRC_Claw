@@ -1,16 +1,13 @@
 """Base agent class for bias detection agents."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
-from langchain_deepagents import DeepAgent
-
 T = TypeVar("T")
 
 
-class BaseBiasAgent(ABC, DeepAgent, Generic[T]):
+class BaseBiasAgent(ABC, Generic[T]):
     """Abstract base class for all bias detection agents.
 
     All bias detection agents inherit from this class and implement
@@ -30,7 +27,7 @@ class BaseBiasAgent(ABC, DeepAgent, Generic[T]):
         Args:
             **kwargs: Additional keyword arguments passed to DeepAgent.
         """
-        super().__init__(name=self.name, description=self.description, **kwargs)
+        pass
 
     @abstractmethod
     async def analyze(self, data: T) -> Any:

@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ResolutionStatus(str, Enum):
+class ResolutionStatus(StrEnum):
     """Status of a resolution."""
 
     PROPOSED = "proposed"

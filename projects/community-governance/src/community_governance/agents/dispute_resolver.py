@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 import json
-from typing import Any
-from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
 from community_governance.exceptions import (
-    AgentExecutionException,
-    DisputeNotFoundException,
-    DisputeResolutionException,
+    AgentExecutionError,
+    DisputeNotFoundError,
+    DisputeResolutionError,
 )
 from community_governance.models.dispute import Dispute, DisputeResolution, DisputeStatus
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from langchain_core.language_models import BaseLanguageModel
+
 
 logger = get_logger(__name__)
 
@@ -74,10 +77,10 @@ class DisputeResolverAgent(BaseAgent[dict[str, Any], DisputeResolution]):
             dispute_id: The ID of the dispute to remove.
 
         Raises:
-            DisputeNotFoundException: If the dispute is not found.
+            DisputeNotFoundError: If the dispute is not found.
         """
         if dispute_id not in self._dispute_index:
-            raise DisputeNotFoundException(str(dispute_id))
+            raise DisputeNotFoundError(str(dispute_id))
         self.disputes = [d for d in self.disputes if d.id != dispute_id]
         del self._dispute_index[dispute_id]
 
@@ -94,9 +97,9 @@ class DisputeResolverAgent(BaseAgent[dict[str, Any], DisputeResolution]):
             The proposed dispute resolution.
 
         Raises:
-            DisputeNotFoundException: If the dispute is not found.
-            DisputeResolutionException: If resolution fails.
-            AgentExecutionException: If the agent execution fails.
+            DisputeNotFoundError: If the dispute is not found.
+            DisputeResolutionError: If resolution fails.
+            AgentExecutionError: If the agent execution fails.
         """
         try:
             dispute_id = input_data.get("dispute_id")
@@ -105,7 +108,7 @@ class DisputeResolverAgent(BaseAgent[dict[str, Any], DisputeResolution]):
 
             dispute = self._dispute_index.get(dispute_id)
             if not dispute:
-                raise DisputeNotFoundException(str(dispute_id))
+                raise DisputeNotFoundError(str(dispute_id))
 
             context = input_data.get("context", {})
             constraints = input_data.get("resolution_constraints", {})
@@ -133,11 +136,11 @@ class DisputeResolverAgent(BaseAgent[dict[str, Any], DisputeResolution]):
 
             return resolution
 
-        except (DisputeNotFoundException, DisputeResolutionException):
+        except (DisputeNotFoundError, DisputeResolutionError):
             raise
         except Exception as e:
             logger.error(f"Dispute resolution failed: {e}", error=str(e))
-            raise AgentExecutionException(self.name, str(e)) from e
+            raise AgentExecutionError(self.name, str(e)) from e
 
     async def _resolve_with_llm(
         self,

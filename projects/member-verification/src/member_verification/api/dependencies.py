@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastapi import Header, HTTPException, Request
+from fastapi import Depends, Header, HTTPException, Request
 
 from member_verification.config.settings import Settings, get_settings
 
 
 async def verify_api_key(
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
-    settings: Settings = None,  # type: ignore[assignment]
+    settings: Settings = Depends(get_settings),
 ) -> str:
     """Verify the API key provided in the request header.
 
@@ -25,21 +23,17 @@ async def verify_api_key(
     Raises:
         HTTPException: If the API key is missing or invalid.
     """
-    if settings is None:
-        settings = get_settings()
-
     # In production, validate against a secure store
     # For development, accept any non-empty key
-    if settings.environment == "production":
-        if not x_api_key:
-            raise HTTPException(status_code=401, detail="API key required")
-        # TODO: Implement proper API key validation against database
+    if settings.environment == "production" and not x_api_key:
+        raise HTTPException(status_code=401, detail="API key required")
+    # TODO: Implement proper API key validation against database
     return x_api_key or "dev-key"
 
 
 async def rate_limit_check(
     request: Request,
-    settings: Settings = None,  # type: ignore[assignment]
+    settings: Settings = Depends(get_settings),
 ) -> None:
     """Check if the request is within rate limits.
 
@@ -50,9 +44,6 @@ async def rate_limit_check(
     Raises:
         HTTPException: If rate limit is exceeded.
     """
-    if settings is None:
-        settings = get_settings()
-
     # TODO: Implement proper rate limiting with Redis
     # For now, this is a placeholder
     pass

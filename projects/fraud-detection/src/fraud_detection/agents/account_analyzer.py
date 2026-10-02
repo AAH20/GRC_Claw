@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from langchain_deepagents import create_deep_agent
+from deepagents import create_deep_agent
 
 from fraud_detection.config.logging_config import get_logger
 from fraud_detection.models.schemas import AccountAnalysis, AccountProfile, RiskScore, Transaction
@@ -170,7 +170,9 @@ class AccountAnalyzerAgent:
         )
 
     @staticmethod
-    async def _build_account_profile(account_id: str, transactions: list[Transaction]) -> dict[str, Any]:
+    async def _build_account_profile(
+        account_id: str, transactions: list[Transaction]
+    ) -> dict[str, Any]:
         """Build account profile from transactions.
 
         Args:

@@ -1,18 +1,21 @@
 """Audience Analyzer Agent using LangChain DeepAgents."""
 
 from typing import Any
+
 import structlog
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.tools import tool
 
 from creator_analytics.agents.base import BaseCreatorAgent
-from creator_analytics.models.audience import Audience, AudienceDemographics, AudienceSegment
+from creator_analytics.models.audience import Audience, AudienceDemographics
 
 logger = structlog.get_logger(__name__)
 
 
 @tool
-def analyze_demographics(age_data: dict[str, float], gender_data: dict[str, float]) -> dict[str, Any]:
+def analyze_demographics(
+    age_data: dict[str, float], gender_data: dict[str, float]
+) -> dict[str, Any]:
     """Analyze demographic data and identify patterns.
 
     Args:
@@ -149,14 +152,16 @@ class AudienceAnalyzerAgent(BaseCreatorAgent):
                     top_countries=input_data.get("top_countries", {}),
                     top_cities=input_data.get("top_cities", {}),
                     languages=input_data.get("languages", {}),
-                    interests=identify_interests(content_tags, engagement_data),
+                    interests=identify_interests.invoke({"content_tags": content_tags, "engagement_data": engagement_data}),
                 ),
                 segments=[],  # Populated from segment_audience tool
                 growth_rate=input_data.get("growth_rate", 0.0),
                 churn_rate=input_data.get("churn_rate", 0.0),
                 peak_activity_hours=input_data.get("peak_activity_hours", []),
                 insights=result.get("insights", []) if isinstance(result, dict) else [],
-                recommendations=result.get("recommendations", []) if isinstance(result, dict) else [],
+                recommendations=(
+                    result.get("recommendations", []) if isinstance(result, dict) else []
+                ),
             )
 
             return audience.model_dump()

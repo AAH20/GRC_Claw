@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 
 from recruitment_analytics.config.settings import Settings, get_settings
 from recruitment_analytics.models.schemas import HealthResponse
@@ -13,7 +12,7 @@ router = APIRouter()
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings)  # noqa: B008
 ) -> HealthResponse:
     """Health check endpoint.
 
@@ -32,7 +31,7 @@ async def health_check(
 
 @router.get("/ready", response_model=HealthResponse)
 async def readiness_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings)  # noqa: B008
 ) -> HealthResponse:
     """Readiness probe for Kubernetes.
 
@@ -50,7 +49,7 @@ async def readiness_check(
 
 @router.get("/live", response_model=HealthResponse)
 async def liveness_check(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings)  # noqa: B008
 ) -> HealthResponse:
     """Liveness probe for Kubernetes.
 

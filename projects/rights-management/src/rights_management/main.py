@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from rights_management.api.routes import (
+from rights_management.api import (
     infringement,
     licenses,
     takedown,
@@ -34,7 +34,6 @@ def create_app() -> FastAPI:
     Returns:
         A fully configured FastAPI application instance.
     """
-    settings = get_settings()
     app = FastAPI(
         title="Rights Management Service",
         description=(

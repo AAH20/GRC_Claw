@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+import json
+from typing import Any
 
 from candidate_matcher.agents.base import BaseAgent
 from candidate_matcher.config.logging_config import get_logger
@@ -32,7 +33,7 @@ class SkillsGapAnalyzerAgent(BaseAgent[SkillsGap]):
     upskilling recommendations.
     """
 
-    def __init__(self, llm_client: Optional[Any] = None) -> None:
+    def __init__(self, llm_client: Any | None = None) -> None:
         """Initialize the skills gap analyzer agent.
 
         Args:
@@ -42,9 +43,9 @@ class SkillsGapAnalyzerAgent(BaseAgent[SkillsGap]):
             name="SkillsGapAnalyzerAgent",
             llm_client=llm_client,
             system_prompt=(
-                "You are an expert at analyzing skills gaps between candidates and job requirements. "
-                "You identify missing skills, quantify proficiency differences, and recommend "
-                "upskilling paths."
+                "You are an expert at analyzing skills gaps between candidates "
+                "and job requirements. You identify missing skills, quantify "
+                "proficiency differences, and recommend upskilling paths."
             ),
         )
 
@@ -52,7 +53,7 @@ class SkillsGapAnalyzerAgent(BaseAgent[SkillsGap]):
         self,
         requirement: JobRequirement,
         candidate_skills: list[Skill],
-    ) -> Optional[Skill]:
+    ) -> Skill | None:
         """Find a candidate skill that matches a job requirement.
 
         Args:
@@ -179,7 +180,7 @@ class SkillsGapAnalyzerAgent(BaseAgent[SkillsGap]):
 
     async def _generate_recommendations(
         self,
-        candidate: Candidate,
+        candidate: Candidate,  # noqa: ARG002
         job: JobPosting,
         missing_skills: list[dict[str, Any]],
         skill_gaps: list[dict[str, Any]],
@@ -198,29 +199,32 @@ class SkillsGapAnalyzerAgent(BaseAgent[SkillsGap]):
         if not missing_skills and not skill_gaps:
             return ["Candidate meets all skill requirements."]
 
-        prompt = f"""Based on the following skills gap analysis, provide 3-5 actionable upskilling recommendations.
-
-Missing Skills: {json.dumps(missing_skills) if missing_skills else "None"}
-Proficiency Gaps: {json.dumps(skill_gaps) if skill_gaps else "None"}
-Job Title: {job.title}
-
-Provide recommendations as a JSON array of strings."""
+        prompt = (
+            "Based on the following skills gap analysis, provide 3-5 actionable "
+            "upskilling recommendations.\n\n"
+            f"Missing Skills: {json.dumps(missing_skills) if missing_skills else 'None'}\n"
+            f"Proficiency Gaps: {json.dumps(skill_gaps) if skill_gaps else 'None'}\n"
+            f"Job Title: {job.title}\n\n"
+            "Provide recommendations as a JSON array of strings."
+        )
 
         try:
-            import json as json_module
             response = await self._generate(prompt)
             # Try to parse JSON from response
             try:
-                recommendations = json_module.loads(response)
+                recommendations = json.loads(response)
                 if isinstance(recommendations, list):
                     return [str(r) for r in recommendations]
-            except json_module.JSONDecodeError:
+            except json.JSONDecodeError:
                 pass
             # Fallback: split by newlines
             return [line.strip("- ").strip() for line in response.split("\n") if line.strip()]
         except Exception as e:
             logger.warning("recommendation_generation_failed", error=str(e))
-            return ["Focus on developing the missing and below-level skills identified in the gap analysis."]
+            return [
+                "Focus on developing the missing and below-level skills "
+                "identified in the gap analysis."
+            ]
 
     async def execute(self, **kwargs: Any) -> SkillsGap:
         """Execute skills gap analysis.

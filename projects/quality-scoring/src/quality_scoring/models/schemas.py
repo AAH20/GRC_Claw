@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class ScoreDimension(str, Enum):
+class ScoreDimension(StrEnum):
     """Enumeration of scoring dimensions."""
 
     READABILITY = "readability"
@@ -18,7 +18,7 @@ class ScoreDimension(str, Enum):
     SEO = "seo"
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     """Supported content types for scoring."""
 
     ARTICLE = "article"
@@ -31,7 +31,7 @@ class ContentType(str, Enum):
     GENERAL = "general"
 
 
-class ScoreLevel(str, Enum):
+class ScoreLevel(StrEnum):
     """Qualitative score levels."""
 
     EXCELLENT = "excellent"
@@ -68,7 +68,7 @@ class DimensionScore(BaseModel):
     level: ScoreLevel = Field(..., description="Qualitative score level")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in the score")
     reasoning: str = Field(..., description="Explanation of the score")
-    metrics: dict[str, float] = Field(default_factory=dict, description="Raw metrics used")
+    metrics: dict[str, Any] = Field(default_factory=dict, description="Raw metrics used")
 
 
 class QualityScore(BaseModel):
@@ -130,15 +130,21 @@ class BenchmarkComparison(BaseModel):
     score_id: str = Field(..., description="Reference to quality score")
     content_type: ContentType = Field(..., description="Content type")
     comparisons: list[BenchmarkData] = Field(..., description="Benchmark comparisons per dimension")
-    percentile_overall: float = Field(..., ge=0.0, le=100.0, description="Overall percentile ranking")
+    percentile_overall: float = Field(
+        ..., ge=0.0, le=100.0, description="Overall percentile ranking"
+    )
     summary: str = Field(..., description="Human-readable comparison summary")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Comparison timestamp")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Comparison timestamp"
+    )
 
 
 class BatchScoreRequest(BaseModel):
     """Request model for batch scoring."""
 
-    items: list[ContentInput] = Field(..., min_length=1, max_length=50, description="Content items to score")
+    items: list[ContentInput] = Field(
+        ..., min_length=1, max_length=50, description="Content items to score"
+    )
     dimensions: list[ScoreDimension] | None = Field(
         default=None, description="Specific dimensions to score (all if None)"
     )
@@ -171,7 +177,9 @@ class ScoreResponse(BaseModel):
 
     score: QualityScore = Field(..., description="Quality score result")
     benchmark: BenchmarkComparison | None = Field(default=None, description="Benchmark comparison")
-    improvements: ImprovementPlan | None = Field(default=None, description="Improvement suggestions")
+    improvements: ImprovementPlan | None = Field(
+        default=None, description="Improvement suggestions"
+    )
 
 
 class HealthResponse(BaseModel):

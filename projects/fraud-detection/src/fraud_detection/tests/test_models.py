@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import pytest
 from pydantic import ValidationError
 
 from fraud_detection.models.schemas import (
     Anomaly,
-    FraudReport,
     Pattern,
     RiskLevel,
     RiskScore,

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import structlog
 from collections import defaultdict
-from typing import Any
+
+import structlog
 
 from community_curation.agents.base import BaseCurationAgent
 from community_curation.config.settings import get_settings
@@ -59,7 +59,9 @@ class TopicClusterAgent(BaseCurationAgent[list[ContentItem], list[TopicCluster]]
         union = len(terms1 | terms2)
         return intersection / union if union > 0 else 0.0
 
-    def _cluster_items(self, items: list[ContentItem], max_clusters: int) -> list[list[ContentItem]]:
+    def _cluster_items(
+        self, items: list[ContentItem], max_clusters: int
+    ) -> list[list[ContentItem]]:
         """Cluster content items using agglomerative clustering.
 
         Args:
@@ -182,7 +184,10 @@ class TopicClusterAgent(BaseCurationAgent[list[ContentItem], list[TopicCluster]]
             for item in cluster_items:
                 for term in self._tokenize(f"{item.title} {item.body}"):
                     all_terms[term] += 1
-            keywords = [term for term, _ in sorted(all_terms.items(), key=lambda x: x[1], reverse=True)[:10]]
+            keywords = [
+                term
+                for term, _ in sorted(all_terms.items(), key=lambda x: x[1], reverse=True)[:10]
+            ]
 
             result.append(
                 TopicCluster(

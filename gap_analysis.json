@@ -1,0 +1,160 @@
+{
+  "total_projects": 31,
+  "projects_with_gaps": 30,
+  "total_gaps": 93,
+  "gaps_by_project": {
+    "candidate-matcher": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "resume-parser": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "interview-scheduler": [
+      "fastapi_app",
+      "agents (found 0, need 5)"
+    ],
+    "job-description-optimizer": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "talent-pool-manager": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "skills-assessor": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "bias-detector": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "recruitment-analytics": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "employer-branding": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "onboarding-automator": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "content-marketplace": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "creator-monetization": [
+      "fastapi_app",
+      "agents (found 0, need 5)"
+    ],
+    "creator-analytics": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "content-generator": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "endpoints (found 5, need 10+)"
+    ],
+    "content-discovery": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "licensing-engine": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "rights-management": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "reputation-system": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "quality-scoring": [
+      "fastapi_app",
+      "agents (found 0, need 5)"
+    ],
+    "content-moderation-pipeline": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "community-curation": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "endpoints (found 9, need 10+)"
+    ],
+    "community-governance": [
+      "fastapi_app",
+      "agents (found 0, need 5)"
+    ],
+    "community-health-scorer": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "endpoints (found 0, need 10+)",
+      "dockerfile",
+      "docker_compose",
+      "tests"
+    ],
+    "member-verification": [
+      "fastapi_app",
+      "agents (found 0, need 5)"
+    ],
+    "moderation-queue": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "moderation-analytics": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "tier-management": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "endpoints (found 1, need 10+)"
+    ],
+    "access-control": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ],
+    "governance-agent": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "endpoints (found 0, need 10+)",
+      "pydantic_models",
+      "dockerfile",
+      "docker_compose",
+      "k8s",
+      "tests"
+    ],
+    "compliance-monitor": [
+      "fastapi_app",
+      "agents (found 0, need 5)",
+      "tests"
+    ]
+  }
+}

@@ -27,7 +27,7 @@ def get_funnel_agent(settings: Settings = Depends(get_settings)) -> FunnelAnalyz
 @router.post("/analyze", response_model=FunnelAnalysisResponse)
 async def analyze_funnel(
     request: FunnelAnalysisRequest,
-    agent: FunnelAnalyzerAgent = Depends(get_funnel_agent),
+    agent: FunnelAnalyzerAgent = Depends(get_funnel_agent)  # noqa: B008
 ) -> FunnelAnalysisResponse:
     """Analyze recruitment funnel for given period and filters.
 
@@ -47,7 +47,7 @@ async def analyze_funnel(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Funnel analysis failed: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/stages", response_model=list[str])

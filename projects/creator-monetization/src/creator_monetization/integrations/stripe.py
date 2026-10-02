@@ -1,7 +1,6 @@
 """Stripe payment integration for creator monetization."""
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import structlog
@@ -16,7 +15,7 @@ class StripeIntegration:
     and webhook processing for creator monetization.
     """
 
-    def __init__(self, api_key: str, webhook_secret: str = "") -> None:
+    def __init__(self, api_key: str, webhook_secret: str) -> None:
         """Initialize the Stripe integration.
 
         Args:

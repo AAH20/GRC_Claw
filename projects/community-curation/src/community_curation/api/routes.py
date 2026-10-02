@@ -7,14 +7,14 @@ import uuid
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from community_curation.agents import (
     ContentRankerAgent,
-    TrendSurferAgent,
+    CurationExplainerAgent,
     QualityFilterAgent,
     TopicClusterAgent,
-    CurationExplainerAgent,
+    TrendSurferAgent,
 )
 from community_curation.config.settings import Settings, get_settings
 from community_curation.integrations import ContentFetcher
@@ -22,14 +22,11 @@ from community_curation.models import (
     AgentInfo,
     CurationRequest,
     CurationResult,
-    ContentItem,
-    ContentSource,
-    ErrorResponse,
     HealthResponse,
-    RankedContent,
-    Trend,
-    TopicCluster,
     QualityAssessment,
+    RankedContent,
+    TopicCluster,
+    Trend,
 )
 
 logger = structlog.get_logger(__name__)
@@ -69,12 +66,12 @@ def get_content_fetcher() -> ContentFetcher:
 
 @router.get("/health", response_model=HealthResponse, tags=["health"])
 async def health_check(
-    ranker: ContentRankerAgent = Depends(get_ranker_agent),
-    trend: TrendSurferAgent = Depends(get_trend_agent),
-    quality: QualityFilterAgent = Depends(get_quality_agent),
-    cluster: TopicClusterAgent = Depends(get_cluster_agent),
-    explainer: CurationExplainerAgent = Depends(get_explainer_agent),
-    settings: Settings = Depends(get_settings),
+    ranker: ContentRankerAgent = Depends(get_ranker_agent),  # noqa: B008
+    trend: TrendSurferAgent = Depends(get_trend_agent),  # noqa: B008
+    quality: QualityFilterAgent = Depends(get_quality_agent),  # noqa: B008
+    cluster: TopicClusterAgent = Depends(get_cluster_agent),  # noqa: B008
+    explainer: CurationExplainerAgent = Depends(get_explainer_agent),  # noqa: B008
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> HealthResponse:
     """Health check endpoint.
 
@@ -99,11 +96,11 @@ async def health_check(
 
 @router.get("/agents", response_model=list[AgentInfo], tags=["agents"])
 async def list_agents(
-    ranker: ContentRankerAgent = Depends(get_ranker_agent),
-    trend: TrendSurferAgent = Depends(get_trend_agent),
-    quality: QualityFilterAgent = Depends(get_quality_agent),
-    cluster: TopicClusterAgent = Depends(get_cluster_agent),
-    explainer: CurationExplainerAgent = Depends(get_explainer_agent),
+    ranker: ContentRankerAgent = Depends(get_ranker_agent),  # noqa: B008
+    trend: TrendSurferAgent = Depends(get_trend_agent),  # noqa: B008
+    quality: QualityFilterAgent = Depends(get_quality_agent),  # noqa: B008
+    cluster: TopicClusterAgent = Depends(get_cluster_agent),  # noqa: B008
+    explainer: CurationExplainerAgent = Depends(get_explainer_agent),  # noqa: B008
 ) -> list[AgentInfo]:
     """List all available agents.
 
@@ -124,12 +121,12 @@ async def list_agents(
 @router.post("/curate", response_model=CurationResult, tags=["curation"])
 async def curate_content(
     request: CurationRequest,
-    ranker: ContentRankerAgent = Depends(get_ranker_agent),
-    trend: TrendSurferAgent = Depends(get_trend_agent),
-    quality: QualityFilterAgent = Depends(get_quality_agent),
-    cluster: TopicClusterAgent = Depends(get_cluster_agent),
-    explainer: CurationExplainerAgent = Depends(get_explainer_agent),
-    fetcher: ContentFetcher = Depends(get_content_fetcher),
+    ranker: ContentRankerAgent = Depends(get_ranker_agent),  # noqa: B008
+    trend: TrendSurferAgent = Depends(get_trend_agent),  # noqa: B008
+    quality: QualityFilterAgent = Depends(get_quality_agent),  # noqa: B008
+    cluster: TopicClusterAgent = Depends(get_cluster_agent),  # noqa: B008
+    explainer: CurationExplainerAgent = Depends(get_explainer_agent),  # noqa: B008
+    fetcher: ContentFetcher = Depends(get_content_fetcher),  # noqa: B008
 ) -> CurationResult:
     """Run the full curation pipeline.
 
@@ -160,7 +157,11 @@ async def curate_content(
         valid_ids = {
             q.content_id
             for q in quality_results
-            if not q.is_spam and not q.is_low_quality and q.quality_score >= request.min_quality_score
+            if (
+                not q.is_spam
+                and not q.is_low_quality
+                and q.quality_score >= request.min_quality_score
+            )
         }
         filtered_content = [c for c in content if c.id in valid_ids]
 
@@ -208,8 +209,8 @@ async def curate_content(
 @router.post("/rank", response_model=list[RankedContent], tags=["curation"])
 async def rank_content(
     request: CurationRequest,
-    ranker: ContentRankerAgent = Depends(get_ranker_agent),
-    fetcher: ContentFetcher = Depends(get_content_fetcher),
+    ranker: ContentRankerAgent = Depends(get_ranker_agent),  # noqa: B008
+    fetcher: ContentFetcher = Depends(get_content_fetcher),  # noqa: B008
 ) -> list[RankedContent]:
     """Rank content without full curation pipeline.
 
@@ -238,8 +239,8 @@ async def rank_content(
 @router.post("/trends", response_model=list[Trend], tags=["curation"])
 async def surface_trends(
     request: CurationRequest,
-    trend: TrendSurferAgent = Depends(get_trend_agent),
-    fetcher: ContentFetcher = Depends(get_content_fetcher),
+    trend: TrendSurferAgent = Depends(get_trend_agent),  # noqa: B008
+    fetcher: ContentFetcher = Depends(get_content_fetcher),  # noqa: B008
 ) -> list[Trend]:
     """Surface trends from community content.
 
@@ -268,8 +269,8 @@ async def surface_trends(
 @router.post("/filter", response_model=list[QualityAssessment], tags=["curation"])
 async def filter_quality(
     request: CurationRequest,
-    quality: QualityFilterAgent = Depends(get_quality_agent),
-    fetcher: ContentFetcher = Depends(get_content_fetcher),
+    quality: QualityFilterAgent = Depends(get_quality_agent),  # noqa: B008
+    fetcher: ContentFetcher = Depends(get_content_fetcher),  # noqa: B008
 ) -> list[QualityAssessment]:
     """Filter content by quality.
 
@@ -298,8 +299,8 @@ async def filter_quality(
 @router.post("/cluster", response_model=list[TopicCluster], tags=["curation"])
 async def cluster_topics(
     request: CurationRequest,
-    cluster: TopicClusterAgent = Depends(get_cluster_agent),
-    fetcher: ContentFetcher = Depends(get_content_fetcher),
+    cluster: TopicClusterAgent = Depends(get_cluster_agent),  # noqa: B008
+    fetcher: ContentFetcher = Depends(get_content_fetcher),  # noqa: B008
 ) -> list[TopicCluster]:
     """Cluster content into topic groups.
 
@@ -328,7 +329,7 @@ async def cluster_topics(
 @router.post("/explain", response_model=dict[str, str], tags=["curation"])
 async def explain_curation(
     result: CurationResult,
-    explainer: CurationExplainerAgent = Depends(get_explainer_agent),
+    explainer: CurationExplainerAgent = Depends(get_explainer_agent),  # noqa: B008
 ) -> dict[str, str]:
     """Explain a curation result.
 
@@ -353,7 +354,7 @@ async def explain_curation(
 
 @router.get("/metrics", tags=["monitoring"])
 async def get_metrics(
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> dict[str, Any]:
     """Get service metrics.
 

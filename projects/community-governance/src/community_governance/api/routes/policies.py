@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from community_governance.api.dependencies import get_policy_manager
-from community_governance.agents import PolicyManagerAgent
 from community_governance.config.logging_config import get_logger
 from community_governance.models.policy import Policy, PolicyCreate, PolicyStatus, PolicyUpdate
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from community_governance.agents import PolicyManagerAgent
+
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/v1/policies", tags=["policies"])
@@ -21,7 +26,7 @@ _policies_store: dict[UUID, Policy] = {}
 @router.post("", response_model=Policy, status_code=status.HTTP_201_CREATED)
 async def create_policy(
     policy_data: PolicyCreate,
-    agent: PolicyManagerAgent = Depends(get_policy_manager),
+    agent: PolicyManagerAgent = Depends(get_policy_manager)  # noqa: B008
 ) -> Policy:
     """Create a new governance policy.
 
@@ -40,9 +45,11 @@ async def create_policy(
 
 @router.get("", response_model=list[Policy])
 async def list_policies(
-    status_filter: PolicyStatus | None = Query(default=None, alias="status", description="Filter by status"),
+    status_filter: PolicyStatus | None = Query(  # noqa: B008
+        default=None, alias="status", description="Filter by status"
+    ),
     scope: str | None = Query(default=None, description="Filter by scope"),
-    agent: PolicyManagerAgent = Depends(get_policy_manager),
+    agent: PolicyManagerAgent = Depends(get_policy_manager)  # noqa: B008
 ) -> list[Policy]:
     """List all governance policies.
 
@@ -65,7 +72,7 @@ async def list_policies(
 @router.get("/{policy_id}", response_model=Policy)
 async def get_policy(
     policy_id: UUID,
-    agent: PolicyManagerAgent = Depends(get_policy_manager),
+    agent: PolicyManagerAgent = Depends(get_policy_manager)  # noqa: B008
 ) -> Policy:
     """Get a specific policy by ID.
 
@@ -92,7 +99,7 @@ async def get_policy(
 async def update_policy(
     policy_id: UUID,
     policy_data: PolicyUpdate,
-    agent: PolicyManagerAgent = Depends(get_policy_manager),
+    agent: PolicyManagerAgent = Depends(get_policy_manager)  # noqa: B008
 ) -> Policy:
     """Update an existing policy.
 
@@ -123,17 +130,17 @@ async def update_policy(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=str(e),
-            )
+            ) from e
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to update policy: {str(e)}",
-        )
+        ) from e
 
 
 @router.delete("/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_policy(
     policy_id: UUID,
-    agent: PolicyManagerAgent = Depends(get_policy_manager),
+    agent: PolicyManagerAgent = Depends(get_policy_manager)  # noqa: B008
 ) -> None:
     """Delete a policy.
 
@@ -153,5 +160,5 @@ async def delete_policy(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=str(e),
-            )
+            ) from e
         raise

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,7 +18,7 @@ _policies_store: dict[UUID, AccessPolicy] = {}
 _agent_instance: AccessControllerAgent | None = None
 
 
-async def _get_agent(settings: Settings = Depends(get_settings)) -> AccessControllerAgent:
+async def _get_agent(settings: Settings = Depends(get_settings)) -> AccessControllerAgent:  # noqa: B008
     """Get or create the access controller agent singleton.
 
     Args:
@@ -39,8 +40,8 @@ async def _get_agent(settings: Settings = Depends(get_settings)) -> AccessContro
 @access_router.post("/check", response_model=AccessCheckResponse)
 async def check_access(
     request: AccessCheckRequest,
-    settings: Settings = Depends(get_settings),
-    agent: AccessControllerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: AccessControllerAgent = Depends(_get_agent),  # noqa: B008
 ) -> AccessCheckResponse:
     """Check if a member has access to a resource.
 
@@ -58,8 +59,8 @@ async def check_access(
 @access_router.post("/policies", response_model=AccessPolicy, status_code=status.HTTP_201_CREATED)
 async def create_policy(
     policy_data: dict,
-    settings: Settings = Depends(get_settings),
-    agent: AccessControllerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: AccessControllerAgent = Depends(_get_agent),  # noqa: B008
 ) -> AccessPolicy:
     """Create a new access policy.
 
@@ -71,7 +72,7 @@ async def create_policy(
     Returns:
         The created policy.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
     from uuid import uuid4
 
     policy = AccessPolicy(
@@ -84,8 +85,8 @@ async def create_policy(
         conditions=policy_data.get("conditions", {}),
         priority=int(policy_data.get("priority", 0)),
         enabled=bool(policy_data.get("enabled", True)),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
     _policies_store[policy.id] = policy
@@ -96,7 +97,7 @@ async def create_policy(
 @access_router.get("/policies/{policy_id}", response_model=AccessPolicy)
 async def get_policy(
     policy_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> AccessPolicy:
     """Get a specific access policy.
 
@@ -122,7 +123,7 @@ async def get_policy(
 @access_router.get("/policies", response_model=list[AccessPolicy])
 async def list_policies(
     tier_id: UUID | None = None,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> list[AccessPolicy]:
     """List access policies with optional filtering.
 
@@ -142,8 +143,8 @@ async def list_policies(
 @access_router.delete("/policies/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_policy(
     policy_id: UUID,
-    settings: Settings = Depends(get_settings),
-    agent: AccessControllerAgent = Depends(_get_agent),
+    settings: Settings = Depends(get_settings),  # noqa: B008
+    agent: AccessControllerAgent = Depends(_get_agent),  # noqa: B008
 ) -> None:
     """Delete an access policy.
 

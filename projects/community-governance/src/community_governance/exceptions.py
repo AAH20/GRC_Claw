@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 
-class GovernanceException(Exception):
+class GovernanceError(Exception):
     """Base exception for all governance-related errors."""
 
     def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
@@ -20,7 +20,7 @@ class GovernanceException(Exception):
         self.details = details or {}
 
 
-class RuleNotFoundException(GovernanceException):
+class RuleNotFoundError(GovernanceError):
     """Raised when a requested rule cannot be found."""
 
     def __init__(self, rule_id: str) -> None:
@@ -33,7 +33,7 @@ class RuleNotFoundException(GovernanceException):
         self.rule_id = rule_id
 
 
-class DisputeNotFoundException(GovernanceException):
+class DisputeNotFoundError(GovernanceError):
     """Raised when a requested dispute cannot be found."""
 
     def __init__(self, dispute_id: str) -> None:
@@ -46,7 +46,7 @@ class DisputeNotFoundException(GovernanceException):
         self.dispute_id = dispute_id
 
 
-class PolicyNotFoundException(GovernanceException):
+class PolicyNotFoundError(GovernanceError):
     """Raised when a requested policy cannot be found."""
 
     def __init__(self, policy_id: str) -> None:
@@ -59,7 +59,7 @@ class PolicyNotFoundException(GovernanceException):
         self.policy_id = policy_id
 
 
-class RuleValidationException(GovernanceException):
+class RuleValidationError(GovernanceError):
     """Raised when rule validation fails."""
 
     def __init__(self, message: str, field_errors: dict[str, str] | None = None) -> None:
@@ -73,7 +73,7 @@ class RuleValidationException(GovernanceException):
         self.field_errors = field_errors or {}
 
 
-class DisputeResolutionException(GovernanceException):
+class DisputeResolutionError(GovernanceError):
     """Raised when dispute resolution fails."""
 
     def __init__(self, dispute_id: str, reason: str) -> None:
@@ -91,7 +91,7 @@ class DisputeResolutionException(GovernanceException):
         self.reason = reason
 
 
-class PolicyEnforcementException(GovernanceException):
+class PolicyEnforcementError(GovernanceError):
     """Raised when policy enforcement fails."""
 
     def __init__(self, policy_id: str, action_id: str, reason: str) -> None:
@@ -111,7 +111,7 @@ class PolicyEnforcementException(GovernanceException):
         self.reason = reason
 
 
-class AgentExecutionException(GovernanceException):
+class AgentExecutionError(GovernanceError):
     """Raised when an agent fails to execute."""
 
     def __init__(self, agent_name: str, reason: str) -> None:
@@ -129,7 +129,7 @@ class AgentExecutionException(GovernanceException):
         self.reason = reason
 
 
-class RateLimitException(GovernanceException):
+class RateLimitError(GovernanceError):
     """Raised when a rate limit is exceeded."""
 
     def __init__(self, limit: int, window_seconds: int) -> None:

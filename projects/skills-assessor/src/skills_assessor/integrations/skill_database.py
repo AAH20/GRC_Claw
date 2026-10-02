@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
-from skills_assessor.config.settings import Settings
 from skills_assessor.models.schemas import Skill, SkillCategory
+
+if TYPE_CHECKING:
+    from skills_assessor.config.settings import Settings
 
 
 class SkillDatabase:

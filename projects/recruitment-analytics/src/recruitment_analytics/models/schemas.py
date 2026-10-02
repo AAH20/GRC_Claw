@@ -4,16 +4,15 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from enum import Enum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 
 # --- Enums --------------------------------------------------------------------
 
 
-class FunnelStage(str, Enum):
+class FunnelStage(StrEnum):
     """Recruitment funnel stages."""
     APPLIED = "applied"
     SCREENING = "screening"
@@ -26,7 +25,7 @@ class FunnelStage(str, Enum):
     WITHDRAWN = "withdrawn"
 
 
-class SourceType(str, Enum):
+class SourceType(StrEnum):
     """Candidate source types."""
     JOB_BOARD = "job_board"
     REFERRAL = "referral"
@@ -40,7 +39,7 @@ class SourceType(str, Enum):
     OTHER = "other"
 
 
-class Gender(str, Enum):
+class Gender(StrEnum):
     """Gender categories for diversity reporting."""
     MALE = "male"
     FEMALE = "female"
@@ -49,7 +48,7 @@ class Gender(str, Enum):
     OTHER = "other"
 
 
-class Ethnicity(str, Enum):
+class Ethnicity(StrEnum):
     """Ethnicity categories for diversity reporting."""
     ASIAN = "asian"
     BLACK = "black"
@@ -62,7 +61,7 @@ class Ethnicity(str, Enum):
     OTHER = "other"
 
 
-class PredictionOutcome(str, Enum):
+class PredictionOutcome(StrEnum):
     """Possible outcomes for predictive hiring."""
     STRONG_HIRE = "strong_hire"
     HIRE = "hire"
@@ -71,7 +70,7 @@ class PredictionOutcome(str, Enum):
     NO_HIRE = "no_hire"
 
 
-class CostCategory(str, Enum):
+class CostCategory(StrEnum):
     """Cost categories for recruitment spend."""
     JOB_BOARD = "job_board"
     RECRUITER = "recruiter"
@@ -106,8 +105,8 @@ class Funnel(BaseModel):
     name: str
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
+    department: str | None = None
+    role: str | None = None
     stages: list[FunnelStageMetrics] = Field(default_factory=list)
     total_applicants: int = Field(default=0, ge=0)
     total_hired: int = Field(default=0, ge=0)
@@ -129,9 +128,9 @@ class FunnelAnalysisRequest(BaseModel):
     """Request model for funnel analysis."""
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
-    source: Optional[SourceType] = None
+    department: str | None = None
+    role: str | None = None
+    source: SourceType | None = None
 
 
 class FunnelAnalysisResponse(BaseModel):
@@ -167,7 +166,7 @@ class Source(BaseModel):
     id: str
     source_type: SourceType
     label: str
-    description: Optional[str] = None
+    description: str | None = None
     is_active: bool = True
     metrics: SourceMetrics
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -178,8 +177,8 @@ class SourceTrackingRequest(BaseModel):
     """Request model for source tracking analysis."""
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
+    department: str | None = None
+    role: str | None = None
 
 
 class SourceTrackingResponse(BaseModel):
@@ -204,7 +203,7 @@ class CandidateFeatures(BaseModel):
     interview_scores: list[float] = Field(default_factory=list)
     cultural_fit_score: float = Field(default=0.0, ge=0.0, le=1.0)
     referral_boost: bool = False
-    previous_company_tier: Optional[str] = None
+    previous_company_tier: str | None = None
     certifications: list[str] = Field(default_factory=list)
 
 
@@ -260,8 +259,8 @@ class DiversityReport(BaseModel):
     name: str
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
+    department: str | None = None
+    role: str | None = None
     total_candidates: int = Field(default=0, ge=0)
     gender: DiversityDimension
     ethnicity: DiversityDimension
@@ -276,8 +275,8 @@ class DiversityAnalysisRequest(BaseModel):
     """Request model for diversity analysis."""
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
+    department: str | None = None
+    role: str | None = None
     dimensions: list[str] = Field(default_factory=lambda: ["gender", "ethnicity"])
 
 
@@ -310,13 +309,13 @@ class CostReport(BaseModel):
     name: str
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
+    department: str | None = None
+    role: str | None = None
     total_cost: Decimal = Field(default=Decimal("0"), ge=Decimal("0"))
     total_hires: int = Field(default=0, ge=0)
     cost_per_hire: Decimal = Field(default=Decimal("0"), ge=Decimal("0"))
     breakdown: list[CostBreakdown] = Field(default_factory=list)
-    budget_variance: Optional[Decimal] = None
+    budget_variance: Decimal | None = None
     insights: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -326,9 +325,9 @@ class CostAnalysisRequest(BaseModel):
     """Request model for cost analysis."""
     start_date: date
     end_date: date
-    department: Optional[str] = None
-    role: Optional[str] = None
-    budget: Optional[Decimal] = Field(default=None, ge=Decimal("0"))
+    department: str | None = None
+    role: str | None = None
+    budget: Decimal | None = Field(default=None, ge=Decimal("0"))
 
 
 class CostAnalysisResponse(BaseModel):

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 
-from content_marketplace.models.listing import Listing, ListingCreate, ListingUpdate, ListingStatus
+from content_marketplace.models.listing import Listing, ListingCreate, ListingStatus, ListingUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class ListingManagerAgent:
     categorization, and lifecycle management.
     """
 
-    def __init__(self, llm: Optional[BaseChatModel] = None) -> None:
+    def __init__(self, llm: BaseChatModel | None = None) -> None:
         """Initialize the ListingManagerAgent.
 
         Args:
@@ -84,8 +84,8 @@ class ListingManagerAgent:
             if value is not None:
                 setattr(listing, field, value)
 
-        from datetime import datetime
-        listing.updated_at = datetime.utcnow()
+        from datetime import UTC, datetime
+        listing.updated_at = datetime.now(tz=UTC)
         logger.info("Updated listing %s", listing_id)
         return listing
 
@@ -107,9 +107,9 @@ class ListingManagerAgent:
 
     async def list_listings(
         self,
-        seller_id: Optional[str] = None,
-        status: Optional[ListingStatus] = None,
-        category: Optional[str] = None,
+        seller_id: str | None = None,
+        status: ListingStatus | None = None,
+        category: str | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[Listing]:

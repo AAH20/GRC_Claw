@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
-from uuid import UUID
+from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
@@ -26,7 +25,7 @@ class MarketplaceAnalyticsAgent:
     generate reports, and provide actionable insights.
     """
 
-    def __init__(self, llm: Optional[BaseChatModel] = None) -> None:
+    def __init__(self, llm: BaseChatModel | None = None) -> None:
         """Initialize the MarketplaceAnalyticsAgent.
 
         Args:

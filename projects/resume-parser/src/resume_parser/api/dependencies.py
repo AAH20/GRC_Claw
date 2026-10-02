@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-import structlog
-from fastapi import Request
+from typing import TYPE_CHECKING
 
-from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
-from resume_parser.integrations.storage import BaseStorage
+import structlog
+
+if TYPE_CHECKING:
+    from fastapi import Request
+
+    from resume_parser.config import Settings
+    from resume_parser.integrations import BaseLLMClient
+    from resume_parser.integrations.storage import BaseStorage
 
 logger = structlog.get_logger(__name__)
 

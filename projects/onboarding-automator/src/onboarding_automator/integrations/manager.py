@@ -6,9 +6,12 @@ HR systems, and document storage backends.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from onboarding_automator.config.settings import Settings
+if TYPE_CHECKING:
+    from onboarding_automator.config.settings import Settings
+
+
 
 __all__ = ["IntegrationManager"]
 

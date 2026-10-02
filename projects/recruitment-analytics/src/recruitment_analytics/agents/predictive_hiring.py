@@ -1,14 +1,16 @@
 """Predictive Hiring Agent - predicts candidate success using ML and heuristics."""
 
+from typing import TYPE_CHECKING
 from __future__ import annotations
 
 import uuid
 from datetime import date
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from recruitment_analytics.agents.base import BaseAgent
-from recruitment_analytics.integrations.hrms_client import HRMSClient
+
+if TYPE_CHECKING:
+    from recruitment_analytics.integrations.hrms_client import HRMSClient
+
 from recruitment_analytics.models.schemas import (
     CandidateFeatures,
     Prediction,
@@ -173,7 +175,10 @@ class PredictiveHiringAgent(BaseAgent[PredictiveHiringRequest, PredictiveHiringR
         if features.referral_boost:
             parts.append("employee referral provides additional confidence")
 
-        return f"Candidate shows {', '.join(parts)}. Overall assessment: {outcome.value.replace('_', ' ')}."
+        return (
+            f"Candidate shows {', '.join(parts)}. "
+            f"Overall assessment: {outcome.value.replace('_', ' ')}."
+        )
 
     async def _find_similar_successes(self, features: CandidateFeatures) -> list[dict]:
         """Find similar successful hires from historical data."""
@@ -183,7 +188,7 @@ class PredictiveHiringAgent(BaseAgent[PredictiveHiringRequest, PredictiveHiringR
                     start_date=date(2020, 1, 1),
                     end_date=date.today(),
                 )
-            except Exception:
+            except Exception:  # noqa: B110
                 pass
 
         return [

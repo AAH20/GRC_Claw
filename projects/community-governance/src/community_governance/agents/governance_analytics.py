@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
-from typing import Any
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
-from community_governance.exceptions import AgentExecutionException
+from community_governance.exceptions import AgentExecutionError
 from community_governance.models.analytics import (
     GovernanceAnalytics,
     GovernanceHealthScore,
@@ -19,7 +17,12 @@ from community_governance.models.analytics import (
 from community_governance.models.dispute import Dispute, DisputeStatus
 from community_governance.models.governance_action import ActionStatus, GovernanceAction
 from community_governance.models.policy import Policy, PolicyStatus
-from community_governance.models.rule import Rule
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+
+    from community_governance.models.rule import Rule
+
 
 logger = get_logger(__name__)
 
@@ -79,7 +82,7 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
             Comprehensive governance analytics.
 
         Raises:
-            AgentExecutionException: If analytics generation fails.
+            AgentExecutionError: If analytics generation fails.
         """
         try:
             period_start_str = input_data.get("period_start")
@@ -148,7 +151,7 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
 
         except Exception as e:
             logger.error(f"Analytics generation failed: {e}", error=str(e))
-            raise AgentExecutionException(self.name, str(e)) from e
+            raise AgentExecutionError(self.name, str(e)) from e
 
     def _filter_by_period(
         self, items: list[Any], start: datetime, end: datetime
@@ -381,10 +384,7 @@ Provide 3-5 specific, actionable recommendations."""
         )
 
         total = len(self.actions)
-        if total > 0:
-            health_score = ((total - violations_24h) / total) * 100
-        else:
-            health_score = 100.0
+        health_score = ((total - violations_24h) / total) * 100 if total > 0 else 100.0
 
         return GovernanceSummary(
             total_active_rules=active_rules,

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -36,9 +35,9 @@ class TransactionCreate(BaseModel):
 class TransactionUpdate(BaseModel):
     """Schema for updating a transaction."""
 
-    status: Optional[TransactionStatus] = None
-    payment_method: Optional[str] = None
-    metadata: Optional[dict[str, str]] = None
+    status: TransactionStatus | None = None
+    payment_method: str | None = None
+    metadata: dict[str, str] | None = None
 
 
 class Transaction(BaseModel):
@@ -57,7 +56,7 @@ class Transaction(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
     class Config:
         from_attributes = True

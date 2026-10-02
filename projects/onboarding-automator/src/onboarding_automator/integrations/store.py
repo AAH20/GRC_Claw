@@ -7,16 +7,21 @@ database backend (PostgreSQL, MongoDB, etc.).
 
 from __future__ import annotations
 
-from typing import Optional
-from uuid import UUID
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
+    from onboarding_automator.models import (
+        ComplianceCheck,
+        Document,
+        OnboardingPlan,
+        Progress,
+        Task,
+        WelcomeMessage,
+    )
+
 
 from onboarding_automator.models import (
-    ComplianceCheck,
-    Document,
-    OnboardingPlan,
-    Progress,
-    Task,
-    WelcomeMessage,
 )
 
 __all__ = ["InMemoryStore"]
@@ -44,7 +49,7 @@ class InMemoryStore:
         """Save or update an onboarding plan."""
         self._plans[plan.id] = plan
 
-    async def get_plan(self, plan_id: UUID) -> Optional[OnboardingPlan]:
+    async def get_plan(self, plan_id: UUID) -> OnboardingPlan | None:
         """Retrieve a plan by ID."""
         return self._plans.get(plan_id)
 
@@ -65,11 +70,11 @@ class InMemoryStore:
         """Save or update a task."""
         self._tasks[task.id] = task
 
-    async def get_task(self, task_id: UUID) -> Optional[Task]:
+    async def get_task(self, task_id: UUID) -> Task | None:
         """Retrieve a task by ID."""
         return self._tasks.get(task_id)
 
-    async def list_tasks(self, plan_id: Optional[UUID] = None) -> list[Task]:
+    async def list_tasks(self, plan_id: UUID | None = None) -> list[Task]:
         """List tasks, optionally filtered by plan ID."""
         tasks = list(self._tasks.values())
         if plan_id is not None:
@@ -89,11 +94,11 @@ class InMemoryStore:
         """Save or update a document."""
         self._documents[document.id] = document
 
-    async def get_document(self, document_id: UUID) -> Optional[Document]:
+    async def get_document(self, document_id: UUID) -> Document | None:
         """Retrieve a document by ID."""
         return self._documents.get(document_id)
 
-    async def list_documents(self, plan_id: Optional[UUID] = None) -> list[Document]:
+    async def list_documents(self, plan_id: UUID | None = None) -> list[Document]:
         """List documents, optionally filtered by plan ID."""
         docs = list(self._documents.values())
         if plan_id is not None:
@@ -113,7 +118,7 @@ class InMemoryStore:
         """Save or update a progress record."""
         self._progress[progress.id] = progress
 
-    async def get_progress(self, plan_id: UUID) -> Optional[Progress]:
+    async def get_progress(self, plan_id: UUID) -> Progress | None:
         """Retrieve progress by plan ID."""
         for p in self._progress.values():
             if p.plan_id == plan_id:
@@ -130,12 +135,12 @@ class InMemoryStore:
         """Save or update a compliance check."""
         self._compliance_checks[check.id] = check
 
-    async def get_compliance_check(self, check_id: UUID) -> Optional[ComplianceCheck]:
+    async def get_compliance_check(self, check_id: UUID) -> ComplianceCheck | None:
         """Retrieve a compliance check by ID."""
         return self._compliance_checks.get(check_id)
 
     async def list_compliance_checks(
-        self, plan_id: Optional[UUID] = None
+        self, plan_id: UUID | None = None
     ) -> list[ComplianceCheck]:
         """List compliance checks, optionally filtered by plan ID."""
         checks = list(self._compliance_checks.values())
@@ -156,7 +161,7 @@ class InMemoryStore:
         """Save or update a welcome message."""
         self._welcome_messages[message.id] = message
 
-    async def get_welcome_message(self, message_id: UUID) -> Optional[WelcomeMessage]:
+    async def get_welcome_message(self, message_id: UUID) -> WelcomeMessage | None:
         """Retrieve a welcome message by ID."""
         return self._welcome_messages.get(message_id)
 

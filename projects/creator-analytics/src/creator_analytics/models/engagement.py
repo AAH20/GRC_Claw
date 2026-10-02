@@ -1,11 +1,12 @@
 """Engagement analysis Pydantic models."""
 
-from pydantic import BaseModel, Field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
-class EngagementType(str, Enum):
+class EngagementType(StrEnum):
     """Types of engagement."""
 
     LIKE = "like"

@@ -237,7 +237,8 @@ class TierRecommenderAgent:
             gap = prices[i] - prices[i - 1]
             if gap > Decimal("20.00"):
                 recommendations.append(
-                    f"Large price gap detected between ${prices[i-1]} and ${prices[i]} - consider adding intermediate tier"
+                    f"Large price gap detected between ${prices[i-1]} "
+                    f"and ${prices[i]} - consider adding intermediate tier"
                 )
 
         # Check benefit differentiation

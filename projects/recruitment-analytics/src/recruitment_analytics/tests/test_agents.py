@@ -12,11 +12,11 @@ from recruitment_analytics.agents.funnel_analyzer import FunnelAnalyzerAgent
 from recruitment_analytics.agents.predictive_hiring import PredictiveHiringAgent
 from recruitment_analytics.agents.source_tracker import SourceTrackerAgent
 from recruitment_analytics.models.schemas import (
+    CandidateFeatures,
     CostAnalysisRequest,
     DiversityAnalysisRequest,
     FunnelAnalysisRequest,
     PredictiveHiringRequest,
-    CandidateFeatures,
     SourceTrackingRequest,
 )
 

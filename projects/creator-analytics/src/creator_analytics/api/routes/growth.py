@@ -1,8 +1,9 @@
 """Growth prediction API endpoints."""
 
-from fastapi import APIRouter, HTTPException, Depends
 from typing import Any
+
 import structlog
+from fastapi import APIRouter, Depends, HTTPException
 
 from creator_analytics.agents import GrowthPredictorAgent
 
@@ -18,7 +19,7 @@ def get_growth_agent() -> GrowthPredictorAgent:
 @router.post("/predict", response_model=dict[str, Any])
 async def predict_growth(
     input_data: dict[str, Any],
-    agent: GrowthPredictorAgent = Depends(get_growth_agent),
+    agent: GrowthPredictorAgent = Depends(get_growth_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Predict growth for a creator.
 
@@ -34,13 +35,13 @@ async def predict_growth(
         return result
     except Exception as e:
         logger.error(f"Growth prediction failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{creator_id}", response_model=dict[str, Any])
 async def get_growth_prediction(
     creator_id: str,
-    agent: GrowthPredictorAgent = Depends(get_growth_agent),
+    agent: GrowthPredictorAgent = Depends(get_growth_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Get growth prediction for a creator.
 
@@ -56,13 +57,13 @@ async def get_growth_prediction(
         return result
     except Exception as e:
         logger.error(f"Failed to get growth prediction for {creator_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{creator_id}/scenarios", response_model=dict[str, Any])
 async def get_growth_scenarios(
     creator_id: str,
-    agent: GrowthPredictorAgent = Depends(get_growth_agent),
+    agent: GrowthPredictorAgent = Depends(get_growth_agent),  # noqa: B008
 ) -> dict[str, Any]:
     """Get growth scenarios for a creator.
 
@@ -84,4 +85,4 @@ async def get_growth_scenarios(
         }
     except Exception as e:
         logger.error(f"Failed to get growth scenarios for {creator_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

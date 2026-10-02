@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import random
-import structlog
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
 
 import httpx
+import structlog
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from community_curation.config.settings import get_settings
@@ -74,7 +73,7 @@ class ContentFetcher:
                         score=float(post.get("score", 0)),
                         comment_count=int(post.get("num_comments", 0)),
                         created_at=datetime.fromtimestamp(
-                            post.get("created_utc", 0), tz=timezone.utc
+                            post.get("created_utc", 0), tz=UTC
                         ),
                         metadata={
                             "upvote_ratio": post.get("upvote_ratio", 0.5),
@@ -124,7 +123,7 @@ class ContentFetcher:
                         score=float(hit.get("points", 0)),
                         comment_count=int(hit.get("num_comments", 0)),
                         created_at=datetime.fromtimestamp(
-                            hit.get("created_at_i", 0), tz=timezone.utc
+                            hit.get("created_at_i", 0), tz=UTC
                         ),
                         metadata={
                             "verified_author": False,
@@ -150,10 +149,12 @@ class ContentFetcher:
             List of mock content items.
         """
         items: list[ContentItem] = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         for i in range(limit):
-            item_id = hashlib.md5(f"{source.value}_{query}_{i}".encode()).hexdigest()[:12]
+            item_id = hashlib.md5(
+                f"{source.value}_{query}_{i}".encode(), usedforsecurity=False
+            ).hexdigest()[:12]
             items.append(
                 ContentItem(
                     id=f"{source.value}_{item_id}",

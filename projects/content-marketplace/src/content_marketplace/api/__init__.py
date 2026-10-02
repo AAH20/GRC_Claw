@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter
 
+from content_marketplace.api.analytics import router as analytics_router
 from content_marketplace.api.listings import router as listings_router
 from content_marketplace.api.pricing import router as pricing_router
 from content_marketplace.api.transactions import router as transactions_router
-from content_marketplace.api.analytics import router as analytics_router
 from content_marketplace.api.trust import router as trust_router
 
 api_router = APIRouter()

@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from onboarding_automator.agents import TaskGeneratorAgent
-from onboarding_automator.config.settings import Settings, get_settings
 from onboarding_automator.integrations.store import InMemoryStore
 from onboarding_automator.models import (
     AgentResponse,
@@ -32,7 +31,7 @@ def get_task_agent(request: Request) -> TaskGeneratorAgent:
 @router.post("", response_model=OnboardingPlan, status_code=status.HTTP_201_CREATED)
 async def create_plan(
     plan_data: OnboardingPlanCreate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> OnboardingPlan:
     """Create a new onboarding plan.
 
@@ -52,7 +51,7 @@ async def create_plan(
 
 @router.get("", response_model=list[OnboardingPlan])
 async def list_plans(
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
     skip: int = 0,
     limit: int = 100,
 ) -> list[OnboardingPlan]:
@@ -72,7 +71,7 @@ async def list_plans(
 @router.get("/{plan_id}", response_model=OnboardingPlan)
 async def get_plan(
     plan_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> OnboardingPlan:
     """Get a specific onboarding plan by ID.
 
@@ -98,7 +97,7 @@ async def get_plan(
 async def update_plan(
     plan_id: UUID,
     update_data: OnboardingPlanUpdate,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> OnboardingPlan:
     """Update an existing onboarding plan.
 
@@ -134,7 +133,7 @@ async def update_plan(
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_plan(
     plan_id: UUID,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> None:
     """Delete an onboarding plan.
 
@@ -156,7 +155,7 @@ async def delete_plan(
 async def generate_tasks(
     plan_id: UUID,
     request: Request,
-    store: InMemoryStore = Depends(get_store),
+    store: InMemoryStore = Depends(get_store)  # noqa: B008
 ) -> AgentResponse:
     """Trigger task generation for an onboarding plan.
 

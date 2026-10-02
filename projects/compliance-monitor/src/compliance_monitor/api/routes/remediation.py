@@ -6,9 +6,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from compliance_monitor.agents import RemediationAgent
 from compliance_monitor.api.dependencies import get_remediation_agent
 from compliance_monitor.api.store import store
-from compliance_monitor.agents import RemediationAgent
 from compliance_monitor.models.schemas import RemediationAction, RemediationRequest
 
 router = APIRouter()
@@ -18,7 +18,7 @@ router = APIRouter()
 async def remediate_violation(
     violation_id: UUID,
     data: RemediationRequest,
-    agent: RemediationAgent = Depends(get_remediation_agent),
+    agent: RemediationAgent = Depends(get_remediation_agent)  # noqa: B008,
 ) -> RemediationAction:
     """Remediate a compliance violation.
 

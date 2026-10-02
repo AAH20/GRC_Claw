@@ -2,14 +2,11 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-
-from creator_monetization.agents.analytics import ReportPeriod
 
 logger = logging.getLogger(__name__)
 

@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
-from typing import AsyncGenerator
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from resume_parser.config import Settings
 from resume_parser.integrations import BaseLLMClient
 from resume_parser.integrations.storage import InMemoryStorage
 from resume_parser.main import create_app
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from fastapi import FastAPI
 
 
 class MockLLMClient(BaseLLMClient):
@@ -88,6 +93,19 @@ def mock_llm_client() -> MockLLMClient:
         MockLLMClient: Mock LLM client.
     """
     return MockLLMClient()
+
+
+@pytest.fixture
+def mock_llm(mock_llm_client: MockLLMClient) -> MockLLMClient:
+    """Alias for mock_llm_client fixture.
+
+    Args:
+        mock_llm_client: The mock LLM client fixture.
+
+    Returns:
+        MockLLMClient: Mock LLM client.
+    """
+    return mock_llm_client
 
 
 @pytest.fixture

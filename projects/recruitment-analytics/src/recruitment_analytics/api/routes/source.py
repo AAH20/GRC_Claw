@@ -27,7 +27,7 @@ def get_source_agent(settings: Settings = Depends(get_settings)) -> SourceTracke
 @router.post("/analyze", response_model=SourceTrackingResponse)
 async def analyze_sources(
     request: SourceTrackingRequest,
-    agent: SourceTrackerAgent = Depends(get_source_agent),
+    agent: SourceTrackerAgent = Depends(get_source_agent)  # noqa: B008
 ) -> SourceTrackingResponse:
     """Analyze recruitment sources for given period.
 
@@ -47,7 +47,7 @@ async def analyze_sources(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Source analysis failed: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/types", response_model=list[str])

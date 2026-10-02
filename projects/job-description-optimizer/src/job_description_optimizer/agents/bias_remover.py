@@ -3,10 +3,7 @@
 import json
 from typing import Any
 
-from langchain_core.language_models import BaseLanguageModel
-
 from job_description_optimizer.agents import BaseAgent
-from job_description_optimizer.config import Settings
 from job_description_optimizer.models import (
     BiasInstance,
     BiasReport,
@@ -60,7 +57,9 @@ Return your analysis in the following JSON format:
     "cleaned_text": "the full job description with biased language replaced",
     "instances": [
         {
-            "bias_type": "gendered_language|age_related|cultural|ableist|racial|socioeconomic|other",
+            "bias_type": (
+                "gendered_language|age_related|cultural|ableist|racial|socioeconomic|other"
+            ),
             "original_text": "the biased text",
             "suggestion": "the suggested replacement",
             "explanation": "why this is biased",

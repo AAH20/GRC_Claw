@@ -1,8 +1,8 @@
 """Pydantic models for the job description optimizer."""
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import Enum, StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -14,42 +14,42 @@ class JobDescription(BaseModel):
     description: str = Field(
         ..., min_length=10, max_length=50000, description="Full job description text"
     )
-    company: Optional[str] = Field(
+    company: str | None = Field(
         default=None, max_length=200, description="Company name"
     )
-    location: Optional[str] = Field(
+    location: str | None = Field(
         default=None, max_length=200, description="Job location"
     )
-    department: Optional[str] = Field(
+    department: str | None = Field(
         default=None, max_length=200, description="Department name"
     )
-    employment_type: Optional[str] = Field(
+    employment_type: str | None = Field(
         default=None,
         description="Employment type (full-time, part-time, contract, etc.)",
     )
-    experience_level: Optional[str] = Field(
+    experience_level: str | None = Field(
         default=None,
         description="Experience level (entry, mid, senior, executive)",
     )
-    skills: List[str] = Field(
+    skills: list[str] = Field(
         default_factory=list, description="Required skills for the position"
     )
-    responsibilities: List[str] = Field(
+    responsibilities: list[str] = Field(
         default_factory=list, description="Key responsibilities"
     )
-    qualifications: List[str] = Field(
+    qualifications: list[str] = Field(
         default_factory=list, description="Required qualifications"
     )
-    salary_range: Optional[str] = Field(
+    salary_range: str | None = Field(
         default=None, description="Salary range information"
     )
-    benefits: List[str] = Field(
+    benefits: list[str] = Field(
         default_factory=list, description="Benefits offered"
     )
-    industry: Optional[str] = Field(
+    industry: str | None = Field(
         default=None, description="Industry sector"
     )
-    remote_policy: Optional[str] = Field(
+    remote_policy: str | None = Field(
         default=None, description="Remote work policy"
     )
 
@@ -70,7 +70,7 @@ class JobDescription(BaseModel):
         return v.strip()
 
 
-class BiasType(str, Enum):
+class BiasType(StrEnum):
     """Types of bias that can be detected."""
 
     GENDERED_LANGUAGE = "gendered_language"
@@ -99,7 +99,7 @@ class BiasReport(BaseModel):
 
     original_text: str = Field(..., description="Original job description text")
     cleaned_text: str = Field(..., description="Text with bias removed")
-    instances: List[BiasInstance] = Field(
+    instances: list[BiasInstance] = Field(
         default_factory=list, description="Detected bias instances"
     )
     overall_score: float = Field(
@@ -116,13 +116,13 @@ class SEOReport(BaseModel):
 
     original_text: str = Field(..., description="Original job description text")
     optimized_text: str = Field(..., description="SEO-optimized text")
-    title_suggestions: List[str] = Field(
+    title_suggestions: list[str] = Field(
         default_factory=list, description="Suggested SEO-friendly titles"
     )
-    meta_description: Optional[str] = Field(
+    meta_description: str | None = Field(
         default=None, description="Suggested meta description"
     )
-    keyword_density: Dict[str, float] = Field(
+    keyword_density: dict[str, float] = Field(
         default_factory=dict, description="Keyword density analysis"
     )
     readability_score: float = Field(
@@ -131,7 +131,7 @@ class SEOReport(BaseModel):
     seo_score: float = Field(
         ..., ge=0.0, le=1.0, description="Overall SEO score"
     )
-    recommendations: List[str] = Field(
+    recommendations: list[str] = Field(
         default_factory=list, description="SEO recommendations"
     )
     timestamp: datetime = Field(
@@ -147,16 +147,16 @@ class ATSReport(BaseModel):
     ats_score: float = Field(
         ..., ge=0.0, le=1.0, description="ATS compatibility score"
     )
-    issues: List[str] = Field(
+    issues: list[str] = Field(
         default_factory=list, description="ATS compatibility issues found"
     )
-    warnings: List[str] = Field(
+    warnings: list[str] = Field(
         default_factory=list, description="ATS warnings"
     )
-    formatting_suggestions: List[str] = Field(
+    formatting_suggestions: list[str] = Field(
         default_factory=list, description="Formatting suggestions for ATS"
     )
-    keyword_matches: Dict[str, bool] = Field(
+    keyword_matches: dict[str, bool] = Field(
         default_factory=dict, description="Keyword match results"
     )
     timestamp: datetime = Field(
@@ -164,7 +164,7 @@ class ATSReport(BaseModel):
     )
 
 
-class ToneType(str, Enum):
+class ToneType(StrEnum):
     """Types of tone that can be detected."""
 
     FORMAL = "formal"
@@ -181,20 +181,20 @@ class ToneReport(BaseModel):
     """Report of tone analysis results."""
 
     original_text: str = Field(..., description="Original job description text")
-    detected_tones: List[ToneType] = Field(
+    detected_tones: list[ToneType] = Field(
         default_factory=list, description="Detected tones in the text"
     )
     primary_tone: ToneType = Field(..., description="Primary tone detected")
-    tone_scores: Dict[str, float] = Field(
+    tone_scores: dict[str, float] = Field(
         default_factory=dict, description="Score for each tone type"
     )
     inclusivity_score: float = Field(
         ..., ge=0.0, le=1.0, description="Inclusivity score"
     )
-    suggestions: List[str] = Field(
+    suggestions: list[str] = Field(
         default_factory=list, description="Tone improvement suggestions"
     )
-    improved_text: Optional[str] = Field(
+    improved_text: str | None = Field(
         default=None, description="Text with improved tone"
     )
     timestamp: datetime = Field(
@@ -207,22 +207,22 @@ class KeywordReport(BaseModel):
 
     original_text: str = Field(..., description="Original job description text")
     optimized_text: str = Field(..., description="Text with optimized keywords")
-    extracted_keywords: List[str] = Field(
+    extracted_keywords: list[str] = Field(
         default_factory=list, description="Keywords extracted from text"
     )
-    suggested_keywords: List[str] = Field(
+    suggested_keywords: list[str] = Field(
         default_factory=list, description="Suggested additional keywords"
     )
-    missing_keywords: List[str] = Field(
+    missing_keywords: list[str] = Field(
         default_factory=list, description="Important keywords missing from text"
     )
-    keyword_density: Dict[str, float] = Field(
+    keyword_density: dict[str, float] = Field(
         default_factory=dict, description="Keyword density analysis"
     )
     industry_relevance: float = Field(
         ..., ge=0.0, le=1.0, description="Industry relevance score"
     )
-    recommendations: List[str] = Field(
+    recommendations: list[str] = Field(
         default_factory=list, description="Keyword recommendations"
     )
     timestamp: datetime = Field(
@@ -235,19 +235,19 @@ class OptimizedDescription(BaseModel):
 
     original: JobDescription = Field(..., description="Original job description")
     optimized_text: str = Field(..., description="Fully optimized text")
-    bias_report: Optional[BiasReport] = Field(
+    bias_report: BiasReport | None = Field(
         default=None, description="Bias analysis report"
     )
-    seo_report: Optional[SEOReport] = Field(
+    seo_report: SEOReport | None = Field(
         default=None, description="SEO optimization report"
     )
-    ats_report: Optional[ATSReport] = Field(
+    ats_report: ATSReport | None = Field(
         default=None, description="ATS compatibility report"
     )
-    tone_report: Optional[ToneReport] = Field(
+    tone_report: ToneReport | None = Field(
         default=None, description="Tone analysis report"
     )
-    keyword_report: Optional[KeywordReport] = Field(
+    keyword_report: KeywordReport | None = Field(
         default=None, description="Keyword optimization report"
     )
     overall_score: float = Field(
@@ -256,7 +256,7 @@ class OptimizedDescription(BaseModel):
     processing_time_ms: float = Field(
         ..., ge=0.0, description="Processing time in milliseconds"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
     timestamp: datetime = Field(
@@ -268,7 +268,7 @@ class OptimizationRequest(BaseModel):
     """Request model for optimization endpoint."""
 
     job_description: JobDescription = Field(..., description="Job description to optimize")
-    options: Dict[str, Any] = Field(
+    options: dict[str, Any] = Field(
         default_factory=dict,
         description="Optimization options (e.g., skip certain agents)",
     )
@@ -278,7 +278,7 @@ class AnalysisRequest(BaseModel):
     """Request model for analysis endpoint."""
 
     job_description: JobDescription = Field(..., description="Job description to analyze")
-    analyses: List[str] = Field(
+    analyses: list[str] = Field(
         default_factory=lambda: ["bias", "seo", "ats", "tone", "keywords"],
         description="List of analyses to perform",
     )
@@ -299,7 +299,7 @@ class AgentInfo(BaseModel):
 
     name: str = Field(..., description="Agent name")
     description: str = Field(..., description="Agent description")
-    capabilities: List[str] = Field(
+    capabilities: list[str] = Field(
         default_factory=list, description="Agent capabilities"
     )
     status: str = Field(default="available", description="Agent status")
@@ -309,8 +309,8 @@ class ErrorResponse(BaseModel):
     """Standard error response model."""
 
     error: str = Field(..., description="Error message")
-    detail: Optional[str] = Field(default=None, description="Detailed error information")
-    code: Optional[str] = Field(default=None, description="Error code")
+    detail: str | None = Field(default=None, description="Detailed error information")
+    code: str | None = Field(default=None, description="Error code")
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Error timestamp"
     )

@@ -1,6 +1,6 @@
 """LangChain integration client for LLM interactions."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
@@ -12,14 +12,14 @@ from reputation_system.config.settings import Settings, get_settings
 class LangChainClient:
     """Client for interacting with LangChain and LLM providers."""
 
-    def __init__(self, settings: Optional[Settings] = None) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
         """Initialize the LangChain client.
 
         Args:
             settings: Application settings.
         """
         self.settings = settings or get_settings()
-        self._llm: Optional[BaseLanguageModel] = None
+        self._llm: BaseLanguageModel | None = None
 
     async def initialize(self) -> None:
         """Initialize the LLM connection."""
@@ -41,7 +41,7 @@ class LangChainClient:
     async def generate(
         self,
         prompt: str,
-        system_message: Optional[str] = None,
+        system_message: str | None = None,
     ) -> str:
         """Generate a response using the LLM.
 
@@ -58,7 +58,7 @@ class LangChainClient:
         if not self._llm:
             raise RuntimeError("LLM not initialized. Call initialize() first.")
 
-        messages: List[BaseMessage] = []
+        messages: list[BaseMessage] = []
         if system_message:
             messages.append(SystemMessage(content=system_message))
         messages.append(HumanMessage(content=prompt))
@@ -70,7 +70,7 @@ class LangChainClient:
         self,
         prompt: str,
         response_model: type[BaseModel],
-        system_message: Optional[str] = None,
+        system_message: str | None = None,
     ) -> BaseModel:
         """Generate a structured response using the LLM.
 
@@ -89,7 +89,7 @@ class LangChainClient:
             raise RuntimeError("LLM not initialized. Call initialize() first.")
 
         structured_llm = self._llm.with_structured_output(response_model)
-        messages: List[BaseMessage] = []
+        messages: list[BaseMessage] = []
         if system_message:
             messages.append(SystemMessage(content=system_message))
         messages.append(HumanMessage(content=prompt))
@@ -97,7 +97,7 @@ class LangChainClient:
         result = await structured_llm.ainvoke(messages)
         return result
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check LLM connection health.
 
         Returns:

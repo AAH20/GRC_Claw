@@ -27,7 +27,7 @@ def get_diversity_agent(settings: Settings = Depends(get_settings)) -> Diversity
 @router.post("/analyze", response_model=DiversityAnalysisResponse)
 async def analyze_diversity(
     request: DiversityAnalysisRequest,
-    agent: DiversityAnalyzerAgent = Depends(get_diversity_agent),
+    agent: DiversityAnalyzerAgent = Depends(get_diversity_agent)  # noqa: B008
 ) -> DiversityAnalysisResponse:
     """Analyze diversity metrics for given period.
 
@@ -47,7 +47,7 @@ async def analyze_diversity(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Diversity analysis failed: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/dimensions", response_model=list[str])

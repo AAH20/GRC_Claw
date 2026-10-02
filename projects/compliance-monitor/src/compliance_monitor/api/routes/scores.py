@@ -6,9 +6,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from compliance_monitor.agents import ComplianceScorerAgent
 from compliance_monitor.api.dependencies import get_compliance_scorer
 from compliance_monitor.api.store import store
-from compliance_monitor.agents import ComplianceScorerAgent
 from compliance_monitor.models.schemas import ComplianceScore, ScoreRequest
 
 router = APIRouter()
@@ -27,7 +27,7 @@ async def list_scores() -> list[ComplianceScore]:
 @router.post("", response_model=ComplianceScore, status_code=status.HTTP_201_CREATED)
 async def compute_score(
     data: ScoreRequest,
-    agent: ComplianceScorerAgent = Depends(get_compliance_scorer),
+    agent: ComplianceScorerAgent = Depends(get_compliance_scorer)  # noqa: B008,
 ) -> ComplianceScore:
     """Compute a compliance score.
 

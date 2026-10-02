@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
-from uuid import UUID, uuid4
+from typing import Any
+from uuid import uuid4
 
 import httpx
 
@@ -21,7 +21,7 @@ class PaymentResult:
         transaction_id: str,
         amount: float,
         currency: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         self.success = success
         self.transaction_id = transaction_id
@@ -42,7 +42,7 @@ class PaymentGateway(ABC):
 
     @abstractmethod
     async def refund_payment(
-        self, transaction_id: str, amount: Optional[float] = None
+        self, transaction_id: str, amount: float | None = None
     ) -> PaymentResult:
         """Refund a payment."""
         ...
@@ -92,7 +92,7 @@ class StripePaymentGateway(PaymentGateway):
             )
 
     async def refund_payment(
-        self, transaction_id: str, amount: Optional[float] = None
+        self, transaction_id: str, amount: float | None = None
     ) -> PaymentResult:
         """Refund a payment through Stripe."""
         try:

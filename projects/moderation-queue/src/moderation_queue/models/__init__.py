@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ModerationStatus(str, Enum):
+class ModerationStatus(StrEnum):
     """Status of a moderation item."""
 
     PENDING = "pending"
@@ -21,7 +21,7 @@ class ModerationStatus(str, Enum):
     AUTO_MODERATED = "auto_moderated"
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     """Type of content being moderated."""
 
     TEXT = "text"
@@ -33,7 +33,7 @@ class ContentType(str, Enum):
     MESSAGE = "message"
 
 
-class PriorityLevel(str, Enum):
+class PriorityLevel(StrEnum):
     """Priority level for moderation items."""
 
     LOW = "low"
@@ -201,6 +201,20 @@ class AgentResponse(BaseModel):
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional response metadata"
+    )
+
+
+class AgentResult(BaseModel):
+    """Result from an AI agent execution."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    success: bool = Field(..., description="Whether the operation succeeded")
+    data: dict[str, Any] = Field(default_factory=dict, description="Result data")
+    error: str | None = Field(default=None, description="Error message if failed")
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence score")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
     )
 
 

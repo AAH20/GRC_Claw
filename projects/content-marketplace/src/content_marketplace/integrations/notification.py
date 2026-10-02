@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class NotificationResult:
     """Result of a notification operation."""
 
-    def __init__(self, success: bool, message_id: str, metadata: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, success: bool, message_id: str, metadata: dict[str, Any] | None = None) -> None:
         self.success = success
         self.message_id = message_id
         self.metadata = metadata or {}
@@ -25,7 +25,7 @@ class NotificationService(ABC):
 
     @abstractmethod
     async def send_notification(
-        self, recipient: str, subject: str, body: str, metadata: Optional[dict[str, Any]] = None
+        self, recipient: str, subject: str, body: str, metadata: dict[str, Any] | None = None
     ) -> NotificationResult:
         """Send a notification."""
         ...
@@ -39,7 +39,7 @@ class EmailNotificationService(NotificationService):
         self.from_email = from_email
 
     async def send_notification(
-        self, recipient: str, subject: str, body: str, metadata: Optional[dict[str, Any]] = None
+        self, recipient: str, subject: str, body: str, metadata: dict[str, Any] | None = None
     ) -> NotificationResult:
         """Send an email notification."""
         try:
@@ -67,12 +67,12 @@ class EmailNotificationService(NotificationService):
 class WebhookNotificationService(NotificationService):
     """Webhook notification service for real-time events."""
 
-    def __init__(self, webhook_url: str, secret: str = "") -> None:
+    def __init__(self, webhook_url: str, secret: str) -> None:
         self.webhook_url = webhook_url
         self.secret = secret
 
     async def send_notification(
-        self, recipient: str, subject: str, body: str, metadata: Optional[dict[str, Any]] = None
+        self, recipient: str, subject: str, body: str, metadata: dict[str, Any] | None = None
     ) -> NotificationResult:
         """Send a webhook notification."""
         try:

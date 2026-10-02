@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import create_agent
 
 from rights_management.agents.base import BaseAgent
 from rights_management.models import TakedownProcessRequest, TakedownRequest, TakedownStatus
@@ -29,20 +29,18 @@ Return a JSON object with:
 class TakedownAgent(BaseAgent[dict[str, Any], TakedownRequest]):
     """Agent that processes content takedown requests."""
 
-    def _build_agent(self) -> AgentExecutor:
-        """Build the LangChain ReAct agent for takedown processing.
+    def _build_agent(self):
+        """Build the LangChain agent for takedown processing.
 
         Returns:
-            Configured AgentExecutor instance.
+            Configured agent instance.
         """
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", _SYSTEM_PROMPT),
-                ("human", "{input}"),
-            ]
+        return create_agent(
+            model=self._get_llm(),
+            tools=[],
+            system_prompt=_SYSTEM_PROMPT,
+            debug=self._settings.debug,
         )
-        agent = create_react_agent(self._llm, tools=[], prompt=prompt)
-        return AgentExecutor(agent=agent, tools=[], verbose=self._settings.debug)
 
     async def run(self, payload: dict[str, Any]) -> TakedownRequest:
         """Process a takedown request.
@@ -57,7 +55,7 @@ class TakedownAgent(BaseAgent[dict[str, Any], TakedownRequest]):
         from datetime import datetime
 
         try:
-            result: dict[str, Any] = await self._agent.ainvoke(
+            result: dict[str, Any] = await self._get_agent().ainvoke(
                 {"input": str(payload)}
             )
             output = result.get("output", "")
@@ -68,11 +66,11 @@ class TakedownAgent(BaseAgent[dict[str, Any], TakedownRequest]):
                 reason=str(payload.get("reason", "")),
                 legal_basis=payload.get("legal_basis"),
                 status=TakedownStatus.PENDING,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=UTC),
                 processed_at=None,
                 metadata={"agent_output": output} if output else {},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return TakedownRequest(
                 id=str(payload.get("id", uuid.uuid4())),
                 content_id=str(payload.get("content_id", "")),
@@ -80,7 +78,7 @@ class TakedownAgent(BaseAgent[dict[str, Any], TakedownRequest]):
                 reason=str(payload.get("reason", "")),
                 legal_basis=payload.get("legal_basis"),
                 status=TakedownStatus.PENDING,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=UTC),
                 processed_at=None,
                 metadata={"error": "Takedown processing failed"},
             )
@@ -102,7 +100,7 @@ class TakedownAgent(BaseAgent[dict[str, Any], TakedownRequest]):
         from datetime import datetime
 
         request.status = process_req.action
-        request.processed_at = datetime.utcnow()
+        request.processed_at = datetime.now(tz=UTC)
         request.metadata["reviewer_id"] = process_req.reviewer_id
         if process_req.notes:
             request.metadata["review_notes"] = process_req.notes

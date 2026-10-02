@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import create_agent
 
 from rights_management.agents.base import BaseAgent
 from rights_management.models import UsageRecord, UsageSummary
@@ -30,20 +30,18 @@ Return a JSON object representing the usage record with fields:
 class UsageTrackerAgent(BaseAgent[dict[str, Any], UsageRecord]):
     """Agent that records and analyzes content usage events."""
 
-    def _build_agent(self) -> AgentExecutor:
-        """Build the LangChain ReAct agent for usage tracking.
+    def _build_agent(self):
+        """Build the LangChain agent for usage tracking.
 
         Returns:
-            Configured AgentExecutor instance.
+            Configured agent instance.
         """
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", _SYSTEM_PROMPT),
-                ("human", "{input}"),
-            ]
+        return create_agent(
+            model=self._get_llm(),
+            tools=[],
+            system_prompt=_SYSTEM_PROMPT,
+            debug=self._settings.debug,
         )
-        agent = create_react_agent(self._llm, tools=[], prompt=prompt)
-        return AgentExecutor(agent=agent, tools=[], verbose=self._settings.debug)
 
     async def run(self, payload: dict[str, Any]) -> UsageRecord:
         """Process a usage event and return a structured record.
@@ -58,25 +56,31 @@ class UsageTrackerAgent(BaseAgent[dict[str, Any], UsageRecord]):
         from datetime import datetime
 
         try:
-            result: dict[str, Any] = await self._agent.ainvoke(
+            result: dict[str, Any] = await self._get_agent().ainvoke(
                 {"input": str(payload)}
             )
             output = result.get("output", "{}")
+            usage_type = payload.get("usage_type", "view")
+            if hasattr(usage_type, "value"):
+                usage_type = usage_type.value
             return UsageRecord(
                 id=str(uuid.uuid4()),
                 content_id=str(payload.get("content_id", "")),
-                usage_type=str(payload.get("usage_type", "view")),
+                usage_type=str(usage_type),
                 user_id=str(payload.get("user_id", "")),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(tz=UTC),
                 context={"raw_output": output},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
+            usage_type = payload.get("usage_type", "view")
+            if hasattr(usage_type, "value"):
+                usage_type = usage_type.value
             return UsageRecord(
                 id=str(uuid.uuid4()),
                 content_id=str(payload.get("content_id", "")),
-                usage_type=str(payload.get("usage_type", "view")),
+                usage_type=str(usage_type),
                 user_id=str(payload.get("user_id", "")),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(tz=UTC),
                 context={"error": "Usage tracking failed"},
             )
 

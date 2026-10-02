@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from interview_scheduler.models.conflict import Conflict, ConflictCreate, ConflictSeverity, ConflictType
-from interview_scheduler.models.interview import Interview
-from interview_scheduler.models.timeslot import TimeSlot
+from interview_scheduler.models.conflict import (
+    Conflict,
+    ConflictSeverity,
+    ConflictType,
+)
+
+if TYPE_CHECKING:
+    from interview_scheduler.models.interview import Interview
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +58,9 @@ class ConflictDetectorAgent:
                     ),
                 )
             except ImportError:
-                logger.warning("langchain-deepagents not available, using direct conflict detection")
+                logger.warning(
+                    "langchain-deepagents not available, using direct conflict detection"
+                )
                 self._agent = None
         return self._agent
 
@@ -149,7 +156,9 @@ class ConflictDetectorAgent:
         end_time = local_time + timedelta(minutes=interview.duration_minutes)
 
         if not (
-            self._is_within_business_hours(local_time, self.business_hours_start, self.business_hours_end)
+            self._is_within_business_hours(
+                local_time, self.business_hours_start, self.business_hours_end
+            )
             and end_time.hour <= self.business_hours_end
         ):
             conflicts.append(

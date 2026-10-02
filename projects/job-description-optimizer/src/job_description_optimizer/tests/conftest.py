@@ -1,6 +1,6 @@
 """Pytest configuration and fixtures."""
 
-from typing import AsyncGenerator, Generator
+from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient

@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class DisputeStatus(str, Enum):
+class DisputeStatus(StrEnum):
     """Status of a dispute."""
 
     OPEN = "open"
@@ -21,7 +21,7 @@ class DisputeStatus(str, Enum):
     ESCALATED = "escalated"
 
 
-class DisputePriority(str, Enum):
+class DisputePriority(StrEnum):
     """Priority levels for disputes."""
 
     LOW = "low"

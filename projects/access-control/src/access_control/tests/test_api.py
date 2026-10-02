@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from typing import TYPE_CHECKING
 
-from access_control.models.enums import AccessDecision
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 class TestAPI:

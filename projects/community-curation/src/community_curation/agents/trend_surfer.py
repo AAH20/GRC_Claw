@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import structlog
 from collections import Counter
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
+
+import structlog
 
 from community_curation.agents.base import BaseCurationAgent
 from community_curation.config.settings import get_settings
@@ -125,7 +125,7 @@ class TrendSurferAgent(BaseCurationAgent[list[ContentItem], list[Trend]]):
             return []
 
         lookback = self.settings.trend_lookback_hours
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=lookback)
+        cutoff = datetime.now(UTC) - timedelta(hours=lookback)
 
         # Filter to recent content
         recent_items = [item for item in input_data if item.created_at >= cutoff]
@@ -168,7 +168,9 @@ class TrendSurferAgent(BaseCurationAgent[list[ContentItem], list[Trend]]):
                 Trend(
                     id=f"trend_{idx}",
                     name=keyword.title(),
-                    description=f"Emerging trend around '{keyword}' with {len(items)} related items",
+                    description=(
+                        f"Emerging trend around '{keyword}' with {len(items)} related items"
+                    ),
                     keywords=[keyword],
                     content_count=len(items),
                     velocity=round(velocity, 2),

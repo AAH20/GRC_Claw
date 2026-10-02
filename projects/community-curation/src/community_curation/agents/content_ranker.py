@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
+from datetime import UTC, datetime
+
 import structlog
-from datetime import datetime, timezone
-from typing import Any
 
 from community_curation.agents.base import BaseCurationAgent
 from community_curation.config.settings import get_settings
@@ -15,7 +15,8 @@ logger = structlog.get_logger(__name__)
 
 
 class ContentRankerAgent(BaseCurationAgent[list[ContentItem], list[RankedContent]]):
-    """Agent that ranks community content using engagement, recency, quality, and relevance signals."""
+    """Agent that ranks community content using engagement, recency, quality, and
+    relevance signals."""
 
     def __init__(self) -> None:
         """Initialize the content ranker agent."""
@@ -50,7 +51,7 @@ class ContentRankerAgent(BaseCurationAgent[list[ContentItem], list[RankedContent
         Returns:
             Recency score between 0 and 1.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         age_hours = (now - item.created_at).total_seconds() / 3600.0
         # Exponential decay with 48-hour half-life
         return math.exp(-age_hours / 48.0)
@@ -142,7 +143,7 @@ class ContentRankerAgent(BaseCurationAgent[list[ContentItem], list[RankedContent
             ranked.append(
                 RankedContent(
                     content=item,
-                    rank=0,  # Will be set after sorting
+                    rank=1,  # Will be set after sorting
                     ranking_score=round(total_score, 4),
                     score_breakdown={
                         "engagement": round(engagement, 4),
@@ -176,7 +177,10 @@ class ContentRankerAgent(BaseCurationAgent[list[ContentItem], list[RankedContent
         """
         ranked = []
         for idx, item in enumerate(items, start=1):
-            score = self._compute_engagement_score(item) * 0.5 + self._compute_recency_score(item) * 0.5
+            score = (
+                self._compute_engagement_score(item) * 0.5
+                + self._compute_recency_score(item) * 0.5
+            )
             ranked.append(
                 RankedContent(
                     content=item,
@@ -191,7 +195,9 @@ class ContentRankerAgent(BaseCurationAgent[list[ContentItem], list[RankedContent
             item.rank = idx
         return ranked
 
-    def _generate_reason(self, engagement: float, recency: float, quality: float, relevance: float) -> str:
+    def _generate_reason(
+        self, engagement: float, recency: float, quality: float, relevance: float
+    ) -> str:
         """Generate human-readable ranking reason.
 
         Args:

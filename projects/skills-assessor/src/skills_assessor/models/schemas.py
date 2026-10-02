@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class ProficiencyLevel(str, Enum):
+class ProficiencyLevel(StrEnum):
     """Enumeration of skill proficiency levels."""
 
     NOVICE = "novice"
@@ -20,7 +20,7 @@ class ProficiencyLevel(str, Enum):
     EXPERT = "expert"
 
 
-class SkillCategory(str, Enum):
+class SkillCategory(StrEnum):
     """Enumeration of skill categories."""
 
     TECHNICAL = "technical"
@@ -41,9 +41,9 @@ class Skill(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str = Field(..., min_length=1, max_length=200, description="Skill name")
     category: SkillCategory = Field(default=SkillCategory.TECHNICAL)
-    description: Optional[str] = Field(default=None, max_length=1000)
+    description: str | None = Field(default=None, max_length=1000)
     keywords: list[str] = Field(default_factory=list)
-    parent_skill_id: Optional[UUID] = Field(default=None)
+    parent_skill_id: UUID | None = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -65,10 +65,10 @@ class SkillProficiency(BaseModel):
     skill: Skill
     level: ProficiencyLevel
     confidence: float = Field(..., ge=0.0, le=1.0)
-    years_experience: Optional[float] = Field(default=None, ge=0.0)
-    last_used: Optional[datetime] = None
+    years_experience: float | None = Field(default=None, ge=0.0)
+    last_used: datetime | None = None
     evidence: list[str] = Field(default_factory=list)
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class SkillAssessment(BaseModel):
@@ -78,15 +78,15 @@ class SkillAssessment(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     candidate_id: str = Field(..., min_length=1, max_length=200)
-    candidate_name: Optional[str] = Field(default=None, max_length=200)
-    target_role: Optional[str] = Field(default=None, max_length=200)
+    candidate_name: str | None = Field(default=None, max_length=200)
+    target_role: str | None = Field(default=None, max_length=200)
     status: str = Field(default="pending", pattern="^(pending|in_progress|completed|failed)$")
     skills: list[SkillProficiency] = Field(default_factory=list)
-    overall_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    overall_score: float | None = Field(default=None, ge=0.0, le=1.0)
     metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
 
 class GapReport(BaseModel):
@@ -116,7 +116,7 @@ class SkillGap(BaseModel):
     required_level: ProficiencyLevel
     gap_severity: str = Field(..., pattern="^(none|minor|moderate|major|critical)$")
     priority: int = Field(..., ge=1, le=5)
-    estimated_hours_to_close: Optional[float] = Field(default=None, ge=0.0)
+    estimated_hours_to_close: float | None = Field(default=None, ge=0.0)
 
 
 class LearningPath(BaseModel):
@@ -129,7 +129,7 @@ class LearningPath(BaseModel):
     candidate_id: str = Field(..., min_length=1, max_length=200)
     target_role: str = Field(..., min_length=1, max_length=200)
     title: str = Field(..., min_length=1, max_length=300)
-    description: Optional[str] = Field(default=None, max_length=2000)
+    description: str | None = Field(default=None, max_length=2000)
     steps: list[LearningStep] = Field(default_factory=list)
     total_estimated_hours: float = Field(default=0.0, ge=0.0)
     difficulty: str = Field(default="intermediate", pattern="^(beginner|intermediate|advanced)$")
@@ -143,7 +143,7 @@ class LearningStep(BaseModel):
 
     order: int = Field(..., ge=1)
     title: str = Field(..., min_length=1, max_length=300)
-    description: Optional[str] = Field(default=None, max_length=1000)
+    description: str | None = Field(default=None, max_length=1000)
     skill_target: Skill
     proficiency_goal: ProficiencyLevel
     estimated_hours: float = Field(..., ge=0.0)
@@ -157,11 +157,13 @@ class LearningResource(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     title: str = Field(..., min_length=1, max_length=300)
-    type: str = Field(..., pattern="^(course|article|video|book|tutorial|documentation|project|other)$")
-    url: Optional[str] = Field(default=None, max_length=500)
-    provider: Optional[str] = Field(default=None, max_length=200)
+    type: str = Field(
+        ..., pattern="^(course|article|video|book|tutorial|documentation|project|other)$"
+    )
+    url: str | None = Field(default=None, max_length=500)
+    provider: str | None = Field(default=None, max_length=200)
     is_free: bool = Field(default=True)
-    estimated_hours: Optional[float] = Field(default=None, ge=0.0)
+    estimated_hours: float | None = Field(default=None, ge=0.0)
 
 
 class SkillValidationResult(BaseModel):
@@ -181,9 +183,13 @@ class SkillValidationResult(BaseModel):
 class ExtractionRequest(BaseModel):
     """Request model for skill extraction."""
 
-    text: str = Field(..., min_length=1, max_length=50000, description="Text to extract skills from")
-    context: Optional[str] = Field(default=None, max_length=5000)
-    source_type: str = Field(default="resume", pattern="^(resume|job_description|linkedin|manual|other)$")
+    text: str = Field(
+        ..., min_length=1, max_length=50000, description="Text to extract skills from"
+    )
+    context: str | None = Field(default=None, max_length=5000)
+    source_type: str = Field(
+        default="resume", pattern="^(resume|job_description|linkedin|manual|other)$"
+    )
     max_skills: int = Field(default=20, ge=1, le=100)
 
 
@@ -200,8 +206,8 @@ class ScoringRequest(BaseModel):
     """Request model for proficiency scoring."""
 
     skills: list[Skill] = Field(..., min_length=1)
-    candidate_context: Optional[str] = Field(default=None, max_length=10000)
-    target_role: Optional[str] = Field(default=None, max_length=200)
+    candidate_context: str | None = Field(default=None, max_length=10000)
+    target_role: str | None = Field(default=None, max_length=200)
 
 
 class ScoringResponse(BaseModel):
@@ -217,7 +223,7 @@ class GapAnalysisRequest(BaseModel):
 
     assessment_id: UUID
     target_role: str = Field(..., min_length=1, max_length=200)
-    required_skills: Optional[list[Skill]] = None
+    required_skills: list[Skill] | None = None
 
 
 class GapAnalysisResponse(BaseModel):
@@ -256,6 +262,6 @@ class ErrorResponse(BaseModel):
     """Standard error response model."""
 
     error: str
-    detail: Optional[str] = None
-    code: Optional[str] = None
+    detail: str | None = None
+    code: str | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)

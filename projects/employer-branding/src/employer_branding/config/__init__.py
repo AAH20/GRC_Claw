@@ -19,12 +19,15 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = Field(default="employer-branding", description="Application name")
-    app_env: str = Field(default="development", description="Environment (development/staging/production)")
+    app_env: str = Field(
+        default="development",
+        description="Environment (development/staging/production)",
+    )
     debug: bool = Field(default=False, description="Debug mode")
     log_level: str = Field(default="INFO", description="Logging level")
 
     # Server
-    host: str = Field(default="0.0.0.0", description="Server host")
+    host: str = Field(default="127.0.0.1", description="Server host")
     port: int = Field(default=8000, description="Server port")
 
     # AI/LLM
@@ -43,7 +46,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = Field(default=100, description="API rate limit per minute")
 
     # Content Generation
-    max_content_length: int = Field(default=10000, description="Maximum content length in characters")
+    max_content_length: int = Field(
+        default=10000, description="Maximum content length in characters"
+    )
     default_language: str = Field(default="en", description="Default content language")
 
     @property

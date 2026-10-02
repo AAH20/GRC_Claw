@@ -1,11 +1,12 @@
 """Audience-related Pydantic models."""
 
-from pydantic import BaseModel, Field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
-class AgeGroup(str, Enum):
+class AgeGroup(StrEnum):
     """Age group categories for audience demographics."""
 
     UNDER_18 = "under_18"
@@ -17,7 +18,7 @@ class AgeGroup(str, Enum):
     AGE_65_PLUS = "65_plus"
 
 
-class Gender(str, Enum):
+class Gender(StrEnum):
     """Gender categories for audience demographics."""
 
     MALE = "male"

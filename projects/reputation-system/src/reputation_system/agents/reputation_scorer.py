@@ -1,11 +1,11 @@
 """Reputation Scorer Agent for calculating member reputation scores."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from reputation_system.agents.base import BaseAgent
-from reputation_system.models.schemas import ReputationScore, TrustTierLevel
+from reputation_system.models.schemas import TrustTierLevel
 
 
 class ScoringInput(BaseModel):
@@ -27,7 +27,7 @@ class ScoringOutput(BaseModel):
     member_id: str
     score: int = Field(..., ge=0, le=1000)
     trust_tier: TrustTierLevel
-    factors: List[Dict[str, Any]] = Field(default_factory=list)
+    factors: list[dict[str, Any]] = Field(default_factory=list)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
@@ -85,11 +85,31 @@ class ReputationScorerAgent(BaseAgent[ScoringInput, ScoringOutput]):
 
         # Build factors
         factors = [
-            {"name": "contributions", "value": input_data.contributions, "impact": contribution_score * contribution_weight},
-            {"name": "feedback_ratio", "value": feedback_ratio, "impact": feedback_score * feedback_weight},
-            {"name": "activity", "value": input_data.recent_activity_score, "impact": activity_score * activity_weight},
-            {"name": "quality", "value": input_data.quality_score, "impact": quality_score * quality_weight},
-            {"name": "badges", "value": input_data.badge_count, "impact": badge_score * badge_weight},
+            {
+                "name": "contributions",
+                "value": input_data.contributions,
+                "impact": contribution_score * contribution_weight,
+            },
+            {
+                "name": "feedback_ratio",
+                "value": feedback_ratio,
+                "impact": feedback_score * feedback_weight,
+            },
+            {
+                "name": "activity",
+                "value": input_data.recent_activity_score,
+                "impact": activity_score * activity_weight,
+            },
+            {
+                "name": "quality",
+                "value": input_data.quality_score,
+                "impact": quality_score * quality_weight,
+            },
+            {
+                "name": "badges",
+                "value": input_data.badge_count,
+                "impact": badge_score * badge_weight,
+            },
         ]
 
         # Confidence based on data completeness

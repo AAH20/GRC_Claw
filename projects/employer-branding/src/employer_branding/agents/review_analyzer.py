@@ -135,7 +135,10 @@ Extract structured information accurately from each review."""
         if not raw_reviews:
             return []
 
-        prompt = f"Analyze these reviews from {source.value}:\n\n{json.dumps(raw_reviews, indent=2)}"
+        prompt = (
+            f"Analyze these reviews from {source.value}:\n\n"
+            f"{json.dumps(raw_reviews, indent=2)}"
+        )
         response = await self._model.ainvoke(prompt)
         raw_content = response.content if hasattr(response, "content") else str(response)
 

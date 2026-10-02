@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from rights_management.models import (
     InfringementReport,
-    InfringementStatus,
     License,
     LicenseStatus,
     RightsValidation,
@@ -34,7 +31,6 @@ class InMemoryStorage:
 
     async def close(self) -> None:
         """Release any resources held by the storage backend."""
-        pass
 
     # License operations
 

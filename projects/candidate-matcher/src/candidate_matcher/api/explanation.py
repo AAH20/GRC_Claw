@@ -17,7 +17,6 @@ from candidate_matcher.models.schemas import (
     JobPosting,
     MatchExplanation,
     MatchResult,
-    SkillsGap,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["explanation"])
@@ -63,8 +62,8 @@ def _get_match_result(request: Request, match_id: UUID) -> MatchResult:
 async def explain_match(
     request: Request,
     match_id: UUID,
-    match_explainer: MatchExplainerAgent = Depends(get_match_explainer),
-    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),
+    match_explainer: MatchExplainerAgent = Depends(get_match_explainer),  # noqa: B008
+    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),  # noqa: B008
 ) -> MatchExplanation:
     """Generate an explanation for a match result.
 

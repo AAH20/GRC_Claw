@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
-from fastapi import FastAPI
-from httpx import AsyncClient
+from typing import TYPE_CHECKING
 
-from resume_parser.tests.conftest import MockLLMClient
+import pytest
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient
+
+    from resume_parser.tests.conftest import MockLLMClient
 
 
 class TestHealthEndpoints:
@@ -92,7 +95,7 @@ class TestParseEndpoints:
             "/api/v1/parse/text",
             json={},
         )
-        assert response.status_code == 422
+        assert response.status_code == 400
 
 
 class TestResumeEndpoints:

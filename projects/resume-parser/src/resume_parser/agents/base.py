@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
 from resume_parser.models import AgentResult
+
+if TYPE_CHECKING:
+    from resume_parser.config import Settings
+    from resume_parser.integrations import BaseLLMClient
 
 logger = structlog.get_logger(__name__)
 

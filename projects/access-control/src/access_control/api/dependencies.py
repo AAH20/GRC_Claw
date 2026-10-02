@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
-from fastapi import Request
-from langchain_core.language_models import BaseLanguageModel
 from langchain_openai import ChatOpenAI
 
-from access_control.config import Settings, get_settings as _get_settings
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+
 from access_control.agents import (
     AccessAuditorAgent,
     AccessRecommenderAgent,
@@ -16,6 +17,8 @@ from access_control.agents import (
     PolicyEnforcerAgent,
     RoleManagerAgent,
 )
+from access_control.config import Settings
+from access_control.config import get_settings as _get_settings
 
 
 def get_settings() -> Settings:
@@ -23,7 +26,6 @@ def get_settings() -> Settings:
     return _get_settings()
 
 
-@lru_cache
 def get_llm(settings: Settings | None = None) -> BaseLanguageModel:
     """Get or create the LLM instance for agents.
 

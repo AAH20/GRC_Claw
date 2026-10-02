@@ -5,15 +5,17 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from resume_parser.agents.base import BaseAgent
-from resume_parser.config import Settings
-from resume_parser.integrations import BaseLLMClient
 from resume_parser.models import AgentResult, ParsedResume, ParsingStatus
+
+if TYPE_CHECKING:
+    from resume_parser.config import Settings
+    from resume_parser.integrations import BaseLLMClient
 
 logger = structlog.get_logger(__name__)
 

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_openai import ChatOpenAI
 
-from access_control.config import Settings
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+
+if TYPE_CHECKING:
+    from access_control.config import Settings
 
 
 class LangChainIntegration:

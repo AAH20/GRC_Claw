@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -20,7 +19,6 @@ from candidate_matcher.api.dependencies import (
     get_semantic_matcher,
     get_skills_gap_analyzer,
 )
-from candidate_matcher.config.exceptions import ResourceNotFoundError
 from candidate_matcher.config.logging_config import get_logger
 from candidate_matcher.models.schemas import (
     BatchMatchRequest,
@@ -85,11 +83,11 @@ def _get_job(request: Request, job_id: UUID) -> JobPosting:
 async def match_candidates(
     request: Request,
     match_request: MatchRequest,
-    semantic_matcher: SemanticMatcherAgent = Depends(get_semantic_matcher),
-    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),
-    bias_aware_ranker: BiasAwareRankerAgent = Depends(get_bias_aware_ranker),
-    culture_fit_assessor: CultureFitAssessorAgent = Depends(get_culture_fit_assessor),
-    match_explainer: MatchExplainerAgent = Depends(get_match_explainer),
+    semantic_matcher: SemanticMatcherAgent = Depends(get_semantic_matcher),  # noqa: B008
+    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),  # noqa: B008
+    bias_aware_ranker: BiasAwareRankerAgent = Depends(get_bias_aware_ranker),  # noqa: B008
+    culture_fit_assessor: CultureFitAssessorAgent = Depends(get_culture_fit_assessor),  # noqa: B008
+    match_explainer: MatchExplainerAgent = Depends(get_match_explainer),  # noqa: B008
 ) -> list[MatchResult]:
     """Match candidates to a job posting.
 
@@ -203,10 +201,10 @@ async def match_candidates(
 async def batch_match_candidates(
     request: Request,
     batch_request: BatchMatchRequest,
-    semantic_matcher: SemanticMatcherAgent = Depends(get_semantic_matcher),
-    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),
-    bias_aware_ranker: BiasAwareRankerAgent = Depends(get_bias_aware_ranker),
-    culture_fit_assessor: CultureFitAssessorAgent = Depends(get_culture_fit_assessor),
+    semantic_matcher: SemanticMatcherAgent = Depends(get_semantic_matcher),  # noqa: B008
+    skills_gap_analyzer: SkillsGapAnalyzerAgent = Depends(get_skills_gap_analyzer),  # noqa: B008
+    bias_aware_ranker: BiasAwareRankerAgent = Depends(get_bias_aware_ranker),  # noqa: B008
+    culture_fit_assessor: CultureFitAssessorAgent = Depends(get_culture_fit_assessor),  # noqa: B008
 ) -> BatchMatchResponse:
     """Batch match multiple candidates to a job.
 
@@ -224,7 +222,6 @@ async def batch_match_candidates(
     start_time = time.time()
     job = _get_job(request, batch_request.job_id)
 
-    candidate_store: dict[UUID, Candidate] = request.app.state.candidate_store
     results: list[MatchResult] = []
 
     for cid in batch_request.candidate_ids:

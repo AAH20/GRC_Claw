@@ -1,6 +1,5 @@
 """Trust Tier Agent for managing member trust levels."""
 
-from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -27,9 +26,9 @@ class TrustTierOutput(BaseModel):
     recommended_tier: TrustTierLevel
     can_upgrade: bool
     can_downgrade: bool
-    requirements_met: List[str] = Field(default_factory=list)
-    requirements_pending: List[str] = Field(default_factory=list)
-    benefits: List[str] = Field(default_factory=list)
+    requirements_met: list[str] = Field(default_factory=list)
+    requirements_pending: list[str] = Field(default_factory=list)
+    benefits: list[str] = Field(default_factory=list)
 
 
 class TrustTierAgent(BaseAgent[TrustTierInput, TrustTierOutput]):
@@ -121,7 +120,7 @@ class TrustTierAgent(BaseAgent[TrustTierInput, TrustTierOutput]):
 
     def _evaluate_requirements(
         self, data: TrustTierInput, target_tier: TrustTierLevel
-    ) -> tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Evaluate which requirements are met or pending.
 
         Args:
@@ -131,8 +130,8 @@ class TrustTierAgent(BaseAgent[TrustTierInput, TrustTierOutput]):
         Returns:
             Tuple of (met requirements, pending requirements).
         """
-        met: List[str] = []
-        pending: List[str] = []
+        met: list[str] = []
+        pending: list[str] = []
 
         # Score requirement
         tier_thresholds = {
@@ -170,7 +169,7 @@ class TrustTierAgent(BaseAgent[TrustTierInput, TrustTierOutput]):
 
         return met, pending
 
-    def _get_tier_benefits(self, tier: TrustTierLevel) -> List[str]:
+    def _get_tier_benefits(self, tier: TrustTierLevel) -> list[str]:
         """Get benefits for a trust tier.
 
         Args:
@@ -181,9 +180,28 @@ class TrustTierAgent(BaseAgent[TrustTierInput, TrustTierOutput]):
         """
         benefits = {
             TrustTierLevel.BRONZE: ["Basic access", "Community participation"],
-            TrustTierLevel.SILVER: ["Priority support", "Early access to features", "Reduced fees"],
-            TrustTierLevel.GOLD: ["Premium support", "Exclusive content", "Fee discounts", "API access"],
-            TrustTierLevel.PLATINUM: ["Dedicated account manager", "Custom integrations", "Highest limits", "SLA guarantee"],
-            TrustTierLevel.DIAMOND: ["White-glove service", "Custom development", "Strategic partnership", "Maximum limits"],
+            TrustTierLevel.SILVER: [
+                "Priority support",
+                "Early access to features",
+                "Reduced fees",
+            ],
+            TrustTierLevel.GOLD: [
+                "Premium support",
+                "Exclusive content",
+                "Fee discounts",
+                "API access",
+            ],
+            TrustTierLevel.PLATINUM: [
+                "Dedicated account manager",
+                "Custom integrations",
+                "Highest limits",
+                "SLA guarantee",
+            ],
+            TrustTierLevel.DIAMOND: [
+                "White-glove service",
+                "Custom development",
+                "Strategic partnership",
+                "Maximum limits",
+            ],
         }
         return benefits.get(tier, [])

@@ -1,7 +1,6 @@
 """Revenue Optimizer Agent - Optimizes creator revenue streams using AI."""
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -30,7 +29,9 @@ class OptimizationSuggestion(BaseModel):
     description: str = Field(..., description="Detailed description")
     expected_impact: Decimal = Field(..., description="Expected monthly revenue impact")
     effort_level: str = Field(..., description="Effort level (low, medium, high)")
-    category: str = Field(..., description="Category (pricing, content, engagement, diversification)")
+    category: str = Field(
+        ..., description="Category (pricing, content, engagement, diversification)"
+    )
 
 
 class RevenueOptimizerAgent:

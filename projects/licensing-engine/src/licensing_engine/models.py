@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ── Enums ────────────────────────────────────────────────────────────────────
 
 
-class LicenseType(str, Enum):
+class LicenseType(StrEnum):
     """Types of content licenses."""
 
     EXCLUSIVE = "exclusive"
@@ -24,7 +23,7 @@ class LicenseType(str, Enum):
     USAGE_BASED = "usage_based"
 
 
-class LicenseStatus(str, Enum):
+class LicenseStatus(StrEnum):
     """Status of a license."""
 
     DRAFT = "draft"
@@ -35,7 +34,7 @@ class LicenseStatus(str, Enum):
     SUSPENDED = "suspended"
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     """Types of licensable content."""
 
     TEXT = "text"
@@ -47,7 +46,7 @@ class ContentType(str, Enum):
     MUSIC = "music"
 
 
-class ComplianceStatus(str, Enum):
+class ComplianceStatus(StrEnum):
     """Compliance check status."""
 
     COMPLIANT = "compliant"
@@ -56,7 +55,7 @@ class ComplianceStatus(str, Enum):
     EXEMPT = "exempt"
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk assessment levels."""
 
     LOW = "low"
@@ -65,7 +64,7 @@ class RiskLevel(str, Enum):
     CRITICAL = "critical"
 
 
-class NegotiationStatus(str, Enum):
+class NegotiationStatus(StrEnum):
     """Status of a negotiation."""
 
     INITIATED = "initiated"

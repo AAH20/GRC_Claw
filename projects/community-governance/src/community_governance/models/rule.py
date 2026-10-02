@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class RuleCategory(str, Enum):
+class RuleCategory(StrEnum):
     """Categories of governance rules."""
 
     CONTENT_MODERATION = "content_moderation"
@@ -22,7 +22,7 @@ class RuleCategory(str, Enum):
     CUSTOM = "custom"
 
 
-class RuleSeverity(str, Enum):
+class RuleSeverity(StrEnum):
     """Severity levels for rule violations."""
 
     LOW = "low"

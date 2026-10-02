@@ -1,6 +1,5 @@
 """Trust Tier API routes."""
-
-from typing import Dict, List
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -12,13 +11,13 @@ from reputation_system.models.schemas import TrustTier, TrustTierCreate, TrustTi
 router = APIRouter(prefix="/trust-tiers", tags=["trust-tiers"])
 
 # In-memory store for demo purposes
-_tiers: Dict[UUID, TrustTier] = {}
+_tiers: dict[UUID, TrustTier] = {}
 
 
 @router.post("", response_model=TrustTier, status_code=status.HTTP_201_CREATED)
 async def create_trust_tier(
     data: TrustTierCreate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> TrustTier:
     """Create a new trust tier.
 
@@ -29,7 +28,7 @@ async def create_trust_tier(
     Returns:
         Created trust tier.
     """
-    tier = TrustTier(**data.model_dump())
+    tier = TrustTier(**data.model_dump(exclude_none=True))
     _tiers[tier.id] = tier
     return tier
 
@@ -37,7 +36,7 @@ async def create_trust_tier(
 @router.get("/{tier_id}", response_model=TrustTier)
 async def get_trust_tier(
     tier_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> TrustTier:
     """Get a trust tier by ID.
 
@@ -59,18 +58,18 @@ async def get_trust_tier(
     return _tiers[tier_id]
 
 
-@router.get("", response_model=List[TrustTier])
+@router.get("", response_model=list[TrustTier])
 async def list_trust_tiers(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
-    settings: Settings = Depends(get_settings),
-) -> List[TrustTier]:
+    settings: Annotated[Settings, Depends(get_settings)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+) -> list[TrustTier]:
     """List all trust tiers with pagination.
 
     Args:
+        settings: Application settings.
         skip: Number of records to skip.
         limit: Maximum number of records to return.
-        settings: Application settings.
 
     Returns:
         List of trust tiers.
@@ -83,7 +82,7 @@ async def list_trust_tiers(
 async def update_trust_tier(
     tier_id: UUID,
     data: TrustTierUpdate,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> TrustTier:
     """Update a trust tier.
 
@@ -114,7 +113,7 @@ async def update_trust_tier(
 @router.delete("/{tier_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_trust_tier(
     tier_id: UUID,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
     """Delete a trust tier.
 
@@ -136,23 +135,23 @@ async def delete_trust_tier(
 @router.post("/evaluate/{member_id}")
 async def evaluate_trust_tier(
     member_id: str,
-    current_score: int = Query(..., ge=0, le=1000),
-    current_tier: str = Query(...),
-    account_age_days: int = Query(0, ge=0),
-    violation_count: int = Query(0, ge=0),
-    verification_status: bool = Query(False),
-    settings: Settings = Depends(get_settings),
-) -> Dict:
+    settings: Annotated[Settings, Depends(get_settings)],
+    current_score: Annotated[int, Query(ge=0, le=1000)],
+    current_tier: Annotated[str, Query()],
+    account_age_days: Annotated[int, Query(ge=0)] = 0,
+    violation_count: Annotated[int, Query(ge=0)] = 0,
+    verification_status: Annotated[bool, Query()] = False,
+) -> dict:
     """Evaluate trust tier for a member using the AI agent.
 
     Args:
         member_id: Member identifier.
+        settings: Application settings.
         current_score: Current reputation score.
         current_tier: Current trust tier level.
         account_age_days: Account age in days.
         violation_count: Number of violations.
         verification_status: Identity verification status.
-        settings: Application settings.
 
     Returns:
         Trust tier evaluation results.

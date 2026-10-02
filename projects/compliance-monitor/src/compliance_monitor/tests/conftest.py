@@ -1,11 +1,22 @@
 """Test configuration and fixtures."""
-
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
 
+from compliance_monitor.api.store import store
 from compliance_monitor.main import create_app
+
+
+@pytest.fixture(autouse=True)
+def clear_store():
+    """Clear the global store before each test."""
+    store._policies.clear()
+    store._violations.clear()
+    store._audits.clear()
+    store._scores.clear()
+    store._remediations.clear()
+    yield
 
 
 @pytest.fixture

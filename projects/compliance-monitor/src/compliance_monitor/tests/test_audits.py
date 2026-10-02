@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
@@ -19,8 +19,8 @@ def test_generate_audit(client: TestClient) -> None:
     audit_data = {
         "title": "Q4 2024 Compliance Audit",
         "description": "Quarterly compliance audit",
-        "period_start": datetime.utcnow().isoformat(),
-        "period_end": (datetime.utcnow() + timedelta(days=90)).isoformat(),
+        "period_start": datetime.now(tz=UTC).isoformat(),
+        "period_end": (datetime.now(tz=UTC) + timedelta(days=90)).isoformat(),
     }
     response = client.post("/api/v1/audits", json=audit_data)
     assert response.status_code == 201
@@ -33,8 +33,8 @@ def test_get_audit(client: TestClient) -> None:
     """Test getting an audit report by ID."""
     audit_data = {
         "title": "Test Audit",
-        "period_start": datetime.utcnow().isoformat(),
-        "period_end": (datetime.utcnow() + timedelta(days=30)).isoformat(),
+        "period_start": datetime.now(tz=UTC).isoformat(),
+        "period_end": (datetime.now(tz=UTC) + timedelta(days=30)).isoformat(),
     }
     create_response = client.post("/api/v1/audits", json=audit_data)
     audit_id = create_response.json()["id"]

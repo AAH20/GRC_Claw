@@ -5,7 +5,9 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_generate_engagement_report(client: AsyncClient, sample_engagement_data: dict) -> None:
+async def test_generate_engagement_report(
+    client: AsyncClient, sample_engagement_data: dict
+) -> None:
     """Test engagement report generation endpoint.
 
     Args:

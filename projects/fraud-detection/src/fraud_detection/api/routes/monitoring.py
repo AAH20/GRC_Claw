@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fraud_detection.agents.transaction_monitor import TransactionMonitorAgent
 from fraud_detection.api.dependencies import verify_api_key
 from fraud_detection.config.logging_config import get_logger
-from fraud_detection.models.schemas import MonitoringSession, Transaction
+from fraud_detection.models.schemas import MonitoringSession
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/monitor", tags=["monitoring"])

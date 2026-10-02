@@ -1,13 +1,13 @@
 """Pydantic models for API requests and responses."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     TEXT = "text"
     IMAGE = "image"
     VIDEO = "video"
@@ -15,20 +15,20 @@ class ContentType(str, Enum):
     MIXED = "mixed"
 
 
-class ModerationDecision(str, Enum):
+class ModerationDecision(StrEnum):
     APPROVE = "approve"
     REJECT = "reject"
     ESCALATE = "escalate"
 
 
-class UrgencyLevel(str, Enum):
+class UrgencyLevel(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
 
-class QueueName(str, Enum):
+class QueueName(StrEnum):
     GENERAL = "general"
     LEGAL = "legal"
     SAFETY = "safety"

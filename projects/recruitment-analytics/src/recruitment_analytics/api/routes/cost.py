@@ -27,7 +27,7 @@ def get_cost_agent(settings: Settings = Depends(get_settings)) -> CostAnalyzerAg
 @router.post("/analyze", response_model=CostAnalysisResponse)
 async def analyze_costs(
     request: CostAnalysisRequest,
-    agent: CostAnalyzerAgent = Depends(get_cost_agent),
+    agent: CostAnalyzerAgent = Depends(get_cost_agent)  # noqa: B008
 ) -> CostAnalysisResponse:
     """Analyze recruitment costs for given period.
 
@@ -47,7 +47,7 @@ async def analyze_costs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cost analysis failed: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/categories", response_model=list[str])

@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import AsyncGenerator, Generator
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
 from talent_pool_manager.main import create_app
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture

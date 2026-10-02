@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import httpx
 from typing import Any
+
+import httpx
 
 from community_governance.config.logging_config import get_logger
 
@@ -108,7 +109,11 @@ class NotificationIntegration:
         return self._client
 
     async def send_notification(
-        self, title: str, message: str, priority: str = "normal", metadata: dict[str, Any] | None = None
+        self,
+        title: str,
+        message: str,
+        priority: str = "normal",
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Send a notification.
 
@@ -159,7 +164,9 @@ class MetricsIntegration:
         self._gauges: dict[str, float] = {}
         self._histograms: dict[str, list[float]] = {}
 
-    def increment_counter(self, name: str, value: int = 1, labels: dict[str, str] | None = None) -> None:
+    def increment_counter(
+        self, name: str, value: int = 1, labels: dict[str, str] | None = None
+    ) -> None:
         """Increment a counter metric.
 
         Args:
@@ -185,7 +192,9 @@ class MetricsIntegration:
         key = self._build_key(name, labels)
         self._gauges[key] = value
 
-    def observe_histogram(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
+    def observe_histogram(
+        self, name: str, value: float, labels: dict[str, str] | None = None
+    ) -> None:
         """Observe a histogram metric.
 
         Args:

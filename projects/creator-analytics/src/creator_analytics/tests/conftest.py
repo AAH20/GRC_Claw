@@ -1,8 +1,9 @@
 """Test configuration and fixtures."""
 
+from collections.abc import AsyncGenerator
+
 import pytest
-from httpx import AsyncClient, ASGITransport
-from typing import AsyncGenerator
+from httpx import ASGITransport, AsyncClient
 
 from creator_analytics.main import create_app
 
