@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Any
 
 import structlog
 
 
-def configure_logging(log_level: str = "INFO") -> None:
+def configure_logging(
+    log_level: str = "INFO",
+    fmt: str = "json",
+) -> None:
     """Configure structured logging for the application.
 
     Args:
-        log_level: The logging level to use.
+        log_level: The logging level to use (default: "INFO").
+        fmt: Output format — "json" for production, "console" for development.
     """
     logging.basicConfig(
         format="%(message)s",
@@ -20,15 +25,27 @@ def configure_logging(log_level: str = "INFO") -> None:
         level=getattr(logging, log_level.upper()),
     )
 
-    structlog.configure(
-        processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
+    shared_processors: list[Any] = [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.add_logger_name,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.UnicodeDecoder(),
+    ]
+
+    if fmt == "json":
+        processors = shared_processors + [
             structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
-        ],
+        ]
+    else:
+        processors = shared_processors + [
+            structlog.dev.ConsoleRenderer(colors=True),
+        ]
+
+    structlog.configure(
+        processors=processors,
         wrapper_class=structlog.make_filtering_bound_logger(
             getattr(logging, log_level.upper())
         ),

@@ -1,24 +1,78 @@
-"""Main API router combining all endpoint routers."""
-
-from __future__ import annotations
+"""API route registration for gated-communities."""
 
 from fastapi import APIRouter
-from tier_management.api.routes import (access_router, analytics_router,
-                                        benefits_router, evaluation_router,
-                                        health_router, tiers_router,
-                                        upgrades_router)
 
-api_router = APIRouter(prefix="/api/v1")
-
-api_router.include_router(health_router, tags=["health"])
-api_router.include_router(tiers_router, prefix="/tiers", tags=["tiers"])
-api_router.include_router(
-    evaluation_router, prefix="/evaluations", tags=["evaluations"]
+from gated_communities.api.routers import (
+    analytics,
+    comments,
+    communities,
+    events,
+    invitations,
+    members,
+    messages,
+    posts,
+    reports,
+    settings,
 )
-api_router.include_router(upgrades_router, prefix="/upgrades", tags=["upgrades"])
-api_router.include_router(access_router, prefix="/access", tags=["access"])
-api_router.include_router(benefits_router, prefix="/benefits", tags=["benefits"])
-api_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
 
-router = APIRouter()
-router.include_router(api_router)
+api_router = APIRouter()
+
+api_router.include_router(
+    members.router,
+    prefix="/members",
+    tags=["members"],
+)
+
+api_router.include_router(
+    communities.router,
+    prefix="/communities",
+    tags=["communities"],
+)
+
+api_router.include_router(
+    posts.router,
+    prefix="/posts",
+    tags=["posts"],
+)
+
+api_router.include_router(
+    comments.router,
+    prefix="/comments",
+    tags=["comments"],
+)
+
+api_router.include_router(
+    events.router,
+    prefix="/events",
+    tags=["events"],
+)
+
+api_router.include_router(
+    messages.router,
+    prefix="/messages",
+    tags=["messages"],
+)
+
+api_router.include_router(
+    analytics.router,
+    prefix="/analytics",
+    tags=["analytics"],
+)
+
+api_router.include_router(
+    reports.router,
+    prefix="/reports",
+    tags=["reports"],
+)
+
+api_router.include_router(
+    invitations.router,
+    prefix="/invitations",
+    tags=["invitations"],
+)
+
+api_router.include_router(
+    settings.router,
+    prefix="/settings",
+    tags=["settings"],
+)

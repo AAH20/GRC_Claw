@@ -60,6 +60,16 @@ class Cache:
             logger.warning(f"Cache delete error: {e}")
             return False
 
+    async def clear(self) -> bool:
+        """Clear all cache entries."""
+        try:
+            r = await self._get_redis()
+            await r.flushdb()
+            return True
+        except Exception as e:
+            logger.warning(f"Cache clear error: {e}")
+            return False
+
     async def delete_pattern(self, pattern: str) -> int:
         """Delete keys matching pattern."""
         try:

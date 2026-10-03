@@ -166,3 +166,77 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             response.headers[key] = value
 
         return response
+
+
+def rate_limit(requests: int, window: int):
+    """Decorator for endpoint-level rate limiting.
+
+    Args:
+        requests: Maximum number of requests allowed in the time window.
+        window: Time window in seconds.
+
+    Usage:
+        @app.get("/api/resource")
+        @rate_limit(requests=10, window=60)
+        async def get_resource():
+            return {"data": "value"}
+    """
+    import functools
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            from fastapi import HTTPException, Request
+
+            request = None
+            for arg in args:
+                if isinstance(arg, Request):
+                    request = arg
+                    break
+            if request is None:
+                request = kwargs.get("request")
+
+            if request is None:
+                raise ValueError("rate_limit decorator requires a Request parameter")
+
+            redis_client = getattr(request.app.state, "redis", None)
+            if redis_client is None:
+                import redis.asyncio as redis
+
+                redis_client = redis.from_url("redis://localhost:6379/0")
+
+            client_id = _get_client_id(request)
+            key = f"ratelimit:{func.__name__}:{client_id}"
+
+            now = time.time()
+            pipe = redis_client.pipeline()
+            pipe.zremrangebyscore(key, 0, now - window)
+            pipe.zcard(key)
+            results = await pipe.execute()
+            current_count = results[1]
+
+            if current_count >= requests:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Rate limit exceeded",
+                    headers={"Retry-After": str(window)},
+                )
+
+            pipe = redis_client.pipeline()
+            pipe.zadd(key, {str(now): now})
+            pipe.expire(key, window)
+            await pipe.execute()
+
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def _get_client_id(request) -> str:
+    """Extract client identifier from request."""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"

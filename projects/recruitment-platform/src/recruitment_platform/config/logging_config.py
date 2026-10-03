@@ -53,3 +53,15 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
             logger_factory=structlog.PrintLoggerFactory(),
             cache_logger_on_first_use=True,
         )
+
+
+def get_logger(name: str) -> structlog.stdlib.BoundLogger:
+    """Get a configured structured logger.
+
+    Args:
+        name: Logger name, typically __name__.
+
+    Returns:
+        A configured structlog BoundLogger instance.
+    """
+    return structlog.get_logger(name)
