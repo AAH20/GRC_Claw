@@ -16,7 +16,8 @@ from pydantic import BaseModel, Field
 if TYPE_CHECKING:
     from access_control.config import Settings
 
-from access_control.models.schemas import Permission, Role, RoleCreate, RoleUpdate
+from access_control.models.schemas import (Permission, Role, RoleCreate,
+                                           RoleUpdate)
 
 
 class RoleManagerInput(BaseModel):

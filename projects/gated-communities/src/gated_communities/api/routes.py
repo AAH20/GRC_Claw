@@ -3,15 +3,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
-from tier_management.api.routes import (
-                                        access_router,
-                                        analytics_router,
-                                        benefits_router,
-                                        evaluation_router,
-                                        health_router,
-                                        tiers_router,
-                                        upgrades_router,
-)
+from tier_management.api.routes import (access_router, analytics_router,
+                                        benefits_router, evaluation_router,
+                                        health_router, tiers_router,
+                                        upgrades_router)
 
 api_router = APIRouter(prefix="/api/v1")
 

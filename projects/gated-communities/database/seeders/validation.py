@@ -23,7 +23,7 @@ _src = str(Path(__file__).resolve().parents[3] / "src")
 if _src not in sys.path:
     sys.path.insert(0, _src)
 
-from database.seeders.factories import (
+from database.seeders.factories import (  # noqa: E402
     AccessAuditFactory,
     AccessPolicyFactory,
     AccessRecommendationFactory,
@@ -91,7 +91,7 @@ from database.seeders.factories import (
     VerificationResultFactory,
     ViolationFactory,
 )
-from database.seeders.seeders import seed_all
+from database.seeders.seeders import seed_all  # noqa: E402
 
 # ===========================================================================
 # 1. Factory Validation
@@ -324,7 +324,7 @@ def benchmark_seeders() -> dict[str, Any]:
 
     for name, func, count in seeder_funcs:
         start = time.perf_counter()
-        result = func(count=count)
+        func(count=count)
         elapsed = time.perf_counter() - start
         benchmarks[name] = {
             "count": count,

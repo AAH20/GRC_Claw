@@ -1,25 +1,18 @@
 """Models module for member verification service."""
 
-from member_verification.models.schemas import (
-                                                AgentInfo,
-                                                DocumentData,
+from member_verification.models.schemas import (AgentInfo, DocumentData,
                                                 DocumentVerificationResult,
                                                 DocumentVerifyRequest,
                                                 ErrorResponse,
                                                 ExplanationRequest,
-                                                FraudCheckRequest,
-                                                FraudReport,
-                                                FraudType,
-                                                HealthResponse,
-                                                IdentityData,
-                                                RiskLevel,
-                                                TrustScore,
-                                                TrustScoreRequest,
+                                                FraudCheckRequest, FraudReport,
+                                                FraudType, HealthResponse,
+                                                IdentityData, RiskLevel,
+                                                TrustScore, TrustScoreRequest,
                                                 VerificationExplanation,
                                                 VerificationRequest,
                                                 VerificationResult,
-                                                VerificationStatus,
-)
+                                                VerificationStatus)
 
 __all__ = [
     "AgentInfo",

@@ -7,12 +7,11 @@ from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
-from community_governance.exceptions import (
-    AgentExecutionError,
-    DisputeNotFoundError,
-    DisputeResolutionError,
-)
-from community_governance.models.dispute import Dispute, DisputeResolution, DisputeStatus
+from community_governance.exceptions import (AgentExecutionError,
+                                             DisputeNotFoundError,
+                                             DisputeResolutionError)
+from community_governance.models.dispute import (Dispute, DisputeResolution,
+                                                 DisputeStatus)
 
 if TYPE_CHECKING:
     from uuid import UUID

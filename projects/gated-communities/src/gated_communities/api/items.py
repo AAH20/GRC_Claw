@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from moderation_queue.api.dependencies import get_logger
-from moderation_queue.models import ContentType, ModerationItem, ModerationStatus
+from moderation_queue.models import (ContentType, ModerationItem,
+                                     ModerationStatus)
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:

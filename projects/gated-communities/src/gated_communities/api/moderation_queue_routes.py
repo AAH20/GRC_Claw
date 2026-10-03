@@ -8,16 +8,12 @@ from fastapi import APIRouter, HTTPException
 from moderation_queue.agents.auto_moderator import AutoModeratorAgent
 from moderation_queue.agents.human_review_router import HumanReviewRouterAgent
 from moderation_queue.agents.priority_scorer import PriorityScorerAgent
-from moderation_queue.api.models import (
-    ContentSubmission,
-    ModerationDecision,
-    ModerationPipelineResponse,
-    ModerationResultResponse,
-    PriorityScoreResponse,
-    QueueItemResponse,
-    QueueStatsResponse,
-    RoutingResultResponse,
-)
+from moderation_queue.api.models import (ContentSubmission, ModerationDecision,
+                                         ModerationPipelineResponse,
+                                         ModerationResultResponse,
+                                         PriorityScoreResponse,
+                                         QueueItemResponse, QueueStatsResponse,
+                                         RoutingResultResponse)
 from moderation_queue.config.settings import get_settings
 from structlog import get_logger
 

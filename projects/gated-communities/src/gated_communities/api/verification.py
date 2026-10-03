@@ -6,12 +6,10 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from member_verification.api.dependencies import verify_api_key
-from member_verification.models.schemas import (
-    ExplanationRequest,
-    VerificationExplanation,
-    VerificationRequest,
-    VerificationResult,
-)
+from member_verification.models.schemas import (ExplanationRequest,
+                                                VerificationExplanation,
+                                                VerificationRequest,
+                                                VerificationResult)
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -40,7 +38,8 @@ async def submit_verification(
         HTTPException: If the request is invalid.
     """
     from member_verification.agents.fraud_preventor import FraudPreventorAgent
-    from member_verification.agents.identity_verifier import IdentityVerifierAgent
+    from member_verification.agents.identity_verifier import \
+        IdentityVerifierAgent
     from member_verification.agents.trust_scorer import TrustScorerAgent
 
     # Run identity verification

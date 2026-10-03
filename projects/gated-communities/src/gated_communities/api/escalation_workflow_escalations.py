@@ -4,22 +4,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from escalation_workflow.agents.auto_resolver import AutoResolverAgent, AutoResolverInput
+from escalation_workflow.agents.auto_resolver import (AutoResolverAgent,
+                                                      AutoResolverInput)
 from escalation_workflow.agents.escalation_analyzer import (
-    EscalationAnalyzerAgent,
-    EscalationAnalyzerInput,
-)
-from escalation_workflow.agents.priority_router import PriorityRouterAgent, PriorityRouterInput
-from escalation_workflow.agents.resolution_optimizer import ResolutionOptimizerAgent
+    EscalationAnalyzerAgent, EscalationAnalyzerInput)
+from escalation_workflow.agents.priority_router import (PriorityRouterAgent,
+                                                        PriorityRouterInput)
+from escalation_workflow.agents.resolution_optimizer import \
+    ResolutionOptimizerAgent
 from escalation_workflow.agents.sla_tracker import SLATrackerAgent
 from escalation_workflow.config import Settings, get_settings
 from escalation_workflow.models.analysis import EscalationAnalysis
-from escalation_workflow.models.escalation import (
-    Escalation,
-    EscalationCreate,
-    EscalationStatus,
-    EscalationUpdate,
-)
+from escalation_workflow.models.escalation import (Escalation,
+                                                   EscalationCreate,
+                                                   EscalationStatus,
+                                                   EscalationUpdate)
 from escalation_workflow.models.priority import PriorityAssessment
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
@@ -148,7 +147,7 @@ async def list_escalations(
     ),  # noqa: B008
     priority: str | None = None,
     category: str | None = None,
-    page: int = Query(default=1, ge=1),
+    page: int = Query(1, ge=1),  # noqa: B008
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> EscalationListResponse:
     """List escalations with optional filtering.

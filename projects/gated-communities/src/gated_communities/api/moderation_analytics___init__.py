@@ -6,23 +6,17 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, status
-from moderation_analytics.agents import (
-    AnalyticsExplainerAgent,
-    ModerationPredictorAgent,
-    ModeratorPerformanceAgent,
-    PolicyEffectivenessAgent,
-    TrendAnalyzerAgent,
-)
+from moderation_analytics.agents import (AnalyticsExplainerAgent,
+                                         ModerationPredictorAgent,
+                                         ModeratorPerformanceAgent,
+                                         PolicyEffectivenessAgent,
+                                         TrendAnalyzerAgent)
 from moderation_analytics.config import Settings, get_settings
-from moderation_analytics.models import (
-    AnalyticsSummary,
-    HealthResponse,
-    ModerationAnalytics,
-    ModerationPrediction,
-    ModeratorPerformance,
-    PolicyEffectiveness,
-    Trend,
-)
+from moderation_analytics.models import (AnalyticsSummary, HealthResponse,
+                                         ModerationAnalytics,
+                                         ModerationPrediction,
+                                         ModeratorPerformance,
+                                         PolicyEffectiveness, Trend)
 from prometheus_client import Counter, Histogram, generate_latest
 from starlette.responses import Response
 
@@ -108,7 +102,7 @@ async def metrics() -> Response:
 )
 async def get_analytics_summary(
     days: int = Query(default=30, ge=1, le=365),
-    settings: Settings = Depends(get_settings),  # noqa: B008,
+    settings: Settings = Depends(get_settings),  # noqa: B008  # noqa: B008,
 ) -> AnalyticsSummary:
     """Get complete analytics summary.
 

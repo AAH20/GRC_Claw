@@ -7,13 +7,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from compliance_monitor.models.schemas import (
-        AuditReport,
-        ComplianceScore,
-        Policy,
-        RemediationAction,
-        Violation,
-    )
+    from compliance_monitor.models.schemas import (AuditReport,
+                                                   ComplianceScore, Policy,
+                                                   RemediationAction,
+                                                   Violation)
 
 
 class ComplianceStore:

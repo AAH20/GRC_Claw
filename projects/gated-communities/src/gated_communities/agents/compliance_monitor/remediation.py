@@ -7,12 +7,9 @@ from typing import Any
 from uuid import UUID
 
 from compliance_monitor.agents.base import BaseComplianceAgent
-from compliance_monitor.models.schemas import (
-    RemediationAction,
-    RemediationRequest,
-    RemediationStatus,
-    Violation,
-)
+from compliance_monitor.models.schemas import (RemediationAction,
+                                               RemediationRequest,
+                                               RemediationStatus, Violation)
 
 
 class RemediationAgent(BaseComplianceAgent[RemediationRequest, RemediationAction]):

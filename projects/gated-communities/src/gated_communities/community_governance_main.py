@@ -6,16 +6,10 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from community_governance.api.dependencies import set_agents, set_metrics
-from community_governance.api.routes import (
-    analytics,
-    disputes,
-    explain,
-    health,
-    metrics,
-    policies,
-    rules,
-)
-from community_governance.config.logging_config import get_logger, setup_logging
+from community_governance.api.routes import (analytics, disputes, explain,
+                                             health, metrics, policies, rules)
+from community_governance.config.logging_config import (get_logger,
+                                                        setup_logging)
 from community_governance.config.settings import get_settings
 from community_governance.exceptions import GovernanceException
 from fastapi import FastAPI, Request, status
@@ -67,13 +61,11 @@ def create_agents() -> dict[str, Any]:
     """
     llm = create_llm()
 
-    from community_governance.agents import (
-        DisputeResolverAgent,
-        GovernanceAnalyticsAgent,
-        GovernanceExplainerAgent,
-        PolicyManagerAgent,
-        RuleEnforcerAgent,
-    )
+    from community_governance.agents import (DisputeResolverAgent,
+                                             GovernanceAnalyticsAgent,
+                                             GovernanceExplainerAgent,
+                                             PolicyManagerAgent,
+                                             RuleEnforcerAgent)
 
     agents = {
         "rule_enforcer": RuleEnforcerAgent(llm=llm),

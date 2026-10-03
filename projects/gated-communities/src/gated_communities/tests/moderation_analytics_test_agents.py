@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from moderation_analytics.agents import (
-    AnalyticsExplainerAgent,
-    ModerationPredictorAgent,
-    ModeratorPerformanceAgent,
-    PolicyEffectivenessAgent,
-    TrendAnalyzerAgent,
-)
+from moderation_analytics.agents import (AnalyticsExplainerAgent,
+                                         ModerationPredictorAgent,
+                                         ModeratorPerformanceAgent,
+                                         PolicyEffectivenessAgent,
+                                         TrendAnalyzerAgent)
 
 
 @pytest.mark.asyncio

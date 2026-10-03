@@ -9,6 +9,7 @@ both synchronous and asynchronous usage patterns.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -333,10 +334,8 @@ class GatedCommunitiesClient:
                     if response.is_success:
                         # Cache successful GET responses
                         if method == "GET" and self._cache is not None:
-                            try:
+                            with contextlib.suppress(json.JSONDecodeError, ValueError):
                                 self._cache.set(method, url, response.json(), params)
-                            except (json.JSONDecodeError, ValueError):
-                                pass
                         return response
 
                     # Don't retry client errors (except 429)
@@ -352,7 +351,8 @@ class GatedCommunitiesClient:
                                 delay = max(delay, float(retry_after))
                         ctx.log(
                             logging.WARNING,
-                            f"Retryable error (HTTP {response.status_code}), retrying in {delay:.1f}s",
+                            f"Retryable error (HTTP {response.status_code}), "
+                            f"retrying in {delay:.1f}s",
                             status_code=response.status_code,
                             attempt=attempt + 1,
                             max_retries=self._max_retries + 1,
@@ -476,10 +476,8 @@ class GatedCommunitiesClient:
                     if response.is_success:
                         # Cache successful GET responses
                         if method == "GET" and self._cache is not None:
-                            try:
+                            with contextlib.suppress(json.JSONDecodeError, ValueError):
                                 self._cache.set(method, url, response.json(), params)
-                            except (json.JSONDecodeError, ValueError):
-                                pass
                         return response
 
                     # Don't retry client errors (except 429)
@@ -495,7 +493,8 @@ class GatedCommunitiesClient:
                                 delay = max(delay, float(retry_after))
                         ctx.log(
                             logging.WARNING,
-                            f"Retryable error (HTTP {response.status_code}), retrying in {delay:.1f}s",
+                            f"Retryable error (HTTP {response.status_code}), "
+                            f"retrying in {delay:.1f}s",
                             status_code=response.status_code,
                             attempt=attempt + 1,
                             max_retries=self._max_retries + 1,

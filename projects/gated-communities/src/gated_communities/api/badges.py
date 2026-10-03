@@ -4,7 +4,8 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from reputation_system.agents.badge_manager import BadgeEvaluationInput, BadgeManagerAgent
+from reputation_system.agents.badge_manager import (BadgeEvaluationInput,
+                                                    BadgeManagerAgent)
 from reputation_system.config.settings import Settings, get_settings
 from reputation_system.models.schemas import Badge, BadgeCreate, BadgeUpdate
 

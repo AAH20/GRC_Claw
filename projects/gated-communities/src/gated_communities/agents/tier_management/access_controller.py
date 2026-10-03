@@ -11,12 +11,9 @@ from typing import TYPE_CHECKING, Any
 
 from tier_management.agents.base import BaseAgent
 from tier_management.config.logging_config import get_logger
-from tier_management.models.schemas import (
-    AccessCheckRequest,
-    AccessCheckResponse,
-    AccessDecision,
-    AccessPolicy,
-)
+from tier_management.models.schemas import (AccessCheckRequest,
+                                            AccessCheckResponse,
+                                            AccessDecision, AccessPolicy)
 
 if TYPE_CHECKING:
     from uuid import UUID

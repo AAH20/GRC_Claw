@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from escalation_workflow.agents.base import BaseAgent
-from escalation_workflow.models.analysis import EscalationAnalysis, EscalationPattern, TrendReport
+from escalation_workflow.models.analysis import (EscalationAnalysis,
+                                                 EscalationPattern,
+                                                 TrendReport)
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 

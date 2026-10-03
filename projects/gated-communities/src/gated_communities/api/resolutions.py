@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from escalation_workflow.agents.resolution_optimizer import (
-    ResolutionOptimizerAgent,
-    ResolutionOptimizerInput,
-)
+    ResolutionOptimizerAgent, ResolutionOptimizerInput)
 from escalation_workflow.config import Settings, get_settings
-from escalation_workflow.models.resolution import Resolution, ResolutionCreate, ResolutionStatus
+from escalation_workflow.models.resolution import (Resolution,
+                                                   ResolutionCreate,
+                                                   ResolutionStatus)
 from fastapi import APIRouter, Depends, HTTPException, status
 
 if TYPE_CHECKING:

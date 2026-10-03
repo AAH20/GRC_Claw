@@ -6,13 +6,9 @@ from typing import TYPE_CHECKING
 
 from community_governance.api.dependencies import get_dispute_resolver
 from community_governance.config.logging_config import get_logger
-from community_governance.models.dispute import (
-    Dispute,
-    DisputeCreate,
-    DisputeResolution,
-    DisputeStatus,
-    DisputeUpdate,
-)
+from community_governance.models.dispute import (Dispute, DisputeCreate,
+                                                 DisputeResolution,
+                                                 DisputeStatus, DisputeUpdate)
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 if TYPE_CHECKING:

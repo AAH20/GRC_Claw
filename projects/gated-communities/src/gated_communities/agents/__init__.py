@@ -14,18 +14,10 @@ Each sub-package corresponds to a specific domain:
 - community_governance: Dispute resolution, rule enforcement, policy management
 """
 
-from . import (
-               access_control,
-               community_governance,
-               community_health_scorer,
-               compliance_monitor,
-               escalation_workflow,
-               member_verification,
-               moderation_analytics,
-               moderation_queue,
-               reputation_system,
-               tier_management,
-)
+from . import (access_control, community_governance, community_health_scorer,
+               compliance_monitor, escalation_workflow, member_verification,
+               moderation_analytics, moderation_queue, reputation_system,
+               tier_management)
 
 __all__ = [
     "access_control",

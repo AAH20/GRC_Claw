@@ -6,8 +6,11 @@ from typing import TYPE_CHECKING, Any
 
 from community_governance.api.dependencies import get_rule_enforcer
 from community_governance.config.logging_config import get_logger
-from community_governance.models.governance_action import GovernanceAction, GovernanceActionCreate
-from community_governance.models.rule import Rule, RuleCreate, RuleEnforcementResult, RuleUpdate
+from community_governance.models.governance_action import (
+    GovernanceAction, GovernanceActionCreate)
+from community_governance.models.rule import (Rule, RuleCreate,
+                                              RuleEnforcementResult,
+                                              RuleUpdate)
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 if TYPE_CHECKING:

@@ -22,7 +22,7 @@ if _src not in sys.path:
 # Workaround: access_control_schemas.py imports from access_control.models.enums
 # but the actual enums live in gated_communities.models.enums. Pre-populate
 # sys.modules so the import resolves correctly.
-import types
+import types  # noqa: E402
 if "access_control" not in sys.modules:
     _ac = types.ModuleType("access_control")
     _ac_models = types.ModuleType("access_control.models")
@@ -40,7 +40,7 @@ if "access_control" not in sys.modules:
     sys.modules["access_control.models"] = _ac_models
     sys.modules["access_control.models.enums"] = _ac_enums
 
-from database.seeders.factories import (
+from database.seeders.factories import (  # noqa: E402
     AccessAuditFactory,
     AccessPolicyFactory,
     AccessRecommendationFactory,
@@ -108,7 +108,7 @@ from database.seeders.factories import (
     VerificationResultFactory,
     ViolationFactory,
 )
-from database.seeders.seeders import seed_all
+from database.seeders.seeders import seed_all  # noqa: E402
 
 ALL_FACTORIES = [
     TierFactory,

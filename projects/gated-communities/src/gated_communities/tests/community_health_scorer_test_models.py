@@ -3,25 +3,15 @@
 from __future__ import annotations
 
 import pytest
-from community_health_scorer.models import (
-    AgentRunRequest,
-    AgentRunResponse,
-    ChurnPrediction,
-    ChurnRisk,
-    EngagementLevel,
-    EngagementMetrics,
-    ErrorResponse,
-    GrowthAnalysis,
-    GrowthTrend,
-    HealthCategory,
-    HealthExplanation,
-    HealthResponse,
-    HealthScore,
-    ReadinessResponse,
-    ScoreRequest,
-    ToxicityLevel,
-    ToxicityReport,
-)
+from community_health_scorer.models import (AgentRunRequest, AgentRunResponse,
+                                            ChurnPrediction, ChurnRisk,
+                                            EngagementLevel, EngagementMetrics,
+                                            ErrorResponse, GrowthAnalysis,
+                                            GrowthTrend, HealthCategory,
+                                            HealthExplanation, HealthResponse,
+                                            HealthScore, ReadinessResponse,
+                                            ScoreRequest, ToxicityLevel,
+                                            ToxicityReport)
 
 
 class TestEngagementMetrics:

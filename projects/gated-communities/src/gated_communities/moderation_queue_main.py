@@ -8,13 +8,8 @@ import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from moderation_queue.api import (
-    agents_router,
-    escalations_router,
-    items_router,
-    queues_router,
-    reviews_router,
-)
+from moderation_queue.api import (agents_router, escalations_router,
+                                  items_router, queues_router, reviews_router)
 from moderation_queue.config import get_settings
 from prometheus_client import make_asgi_app
 

@@ -7,7 +7,8 @@ from typing import Any
 
 from langchain_core.messages import AIMessage
 from moderation_queue.agents.base import AgentConfig, BaseAgent
-from moderation_queue.models import ModerationItem, PriorityLevel, PriorityScore
+from moderation_queue.models import (ModerationItem, PriorityLevel,
+                                     PriorityScore)
 from pydantic import BaseModel, Field
 
 

@@ -8,7 +8,7 @@ from member_verification.config.settings import Settings, get_settings
 
 async def verify_api_key(
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> str:
     """Verify the API key provided in the request header.
 
@@ -32,7 +32,7 @@ async def verify_api_key(
 
 async def rate_limit_check(
     request: Request,
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008
 ) -> None:
     """Check if the request is within rate limits.
 

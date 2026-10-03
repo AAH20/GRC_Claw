@@ -5,8 +5,10 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from community_health_scorer.agents.engagement_metrics_agent import EngagementMetricsAgent
-from community_health_scorer.agents.toxicity_detector_agent import ToxicityDetectorAgent
+from community_health_scorer.agents.engagement_metrics_agent import \
+    EngagementMetricsAgent
+from community_health_scorer.agents.toxicity_detector_agent import \
+    ToxicityDetectorAgent
 from community_health_scorer.models import EngagementLevel, ToxicityLevel
 
 

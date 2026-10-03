@@ -7,10 +7,14 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import structlog
 from langchain_openai import ChatOpenAI
-from moderation_analytics.agents.analytics_explainer import AnalyticsExplainerAgent
-from moderation_analytics.agents.moderation_predictor import ModerationPredictorAgent
-from moderation_analytics.agents.moderator_performance import ModeratorPerformanceAgent
-from moderation_analytics.agents.policy_effectiveness import PolicyEffectivenessAgent
+from moderation_analytics.agents.analytics_explainer import \
+    AnalyticsExplainerAgent
+from moderation_analytics.agents.moderation_predictor import \
+    ModerationPredictorAgent
+from moderation_analytics.agents.moderator_performance import \
+    ModeratorPerformanceAgent
+from moderation_analytics.agents.policy_effectiveness import \
+    PolicyEffectivenessAgent
 from moderation_analytics.agents.trend_analyzer import TrendAnalyzerAgent
 from moderation_analytics.config import get_settings
 

@@ -1,22 +1,15 @@
 """Models package."""
 
-from compliance_monitor.models.schemas import (
-                                               AuditReport,
-                                               AuditRequest,
+from compliance_monitor.models.schemas import (AuditReport, AuditRequest,
                                                ComplianceReport,
-                                               ComplianceScore,
-                                               Policy,
-                                               PolicyCreate,
-                                               PolicyStatus,
+                                               ComplianceScore, Policy,
+                                               PolicyCreate, PolicyStatus,
                                                RemediationAction,
                                                RemediationRequest,
-                                               RemediationStatus,
-                                               ScoreRequest,
-                                               Violation,
-                                               ViolationCreate,
+                                               RemediationStatus, ScoreRequest,
+                                               Violation, ViolationCreate,
                                                ViolationSeverity,
-                                               ViolationStatus,
-)
+                                               ViolationStatus)
 
 __all__ = [
     "AuditReport",

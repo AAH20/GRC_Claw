@@ -11,13 +11,14 @@ logger = logging.getLogger(__name__)
 
 def init_tracing(app: Any) -> None:
     """Initialize OpenTelemetry tracing."""
-    if not os.getenv("TRACING_ENABLED", "false").lower() == "true":
+    if os.getenv("TRACING_ENABLED", "false").lower() != "true":
         logger.info("Tracing not enabled, skipping initialization")
         return
 
     try:
         from opentelemetry import trace
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
+            OTLPSpanExporter
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider

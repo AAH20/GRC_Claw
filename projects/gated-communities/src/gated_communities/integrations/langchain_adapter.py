@@ -38,7 +38,8 @@ class LangChainAgentAdapter:
     def get_agent(self, agent_type: str) -> Any:
         """Get an agent instance with the LLM injected."""
         from moderation_queue.agents.auto_moderator import AutoModeratorAgent
-        from moderation_queue.agents.human_review_router import HumanReviewRouterAgent
+        from moderation_queue.agents.human_review_router import \
+            HumanReviewRouterAgent
         from moderation_queue.agents.priority_scorer import PriorityScorerAgent
 
         agents = {

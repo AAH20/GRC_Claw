@@ -4,9 +4,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from reputation_system.agents.reputation_explainer import ExplanationInput, ReputationExplainerAgent
+from reputation_system.agents.reputation_explainer import (
+    ExplanationInput, ReputationExplainerAgent)
 from reputation_system.config.settings import Settings, get_settings
-from reputation_system.models.schemas import ReputationExplanation, ReputationExplanationCreate
+from reputation_system.models.schemas import (ReputationExplanation,
+                                              ReputationExplanationCreate)
 
 router = APIRouter(prefix="/explanations", tags=["explanations"])
 

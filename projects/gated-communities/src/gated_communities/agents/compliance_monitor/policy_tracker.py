@@ -6,7 +6,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from compliance_monitor.agents.base import BaseComplianceAgent
-from compliance_monitor.models.schemas import Policy, PolicyCreate, PolicyStatus
+from compliance_monitor.models.schemas import (Policy, PolicyCreate,
+                                               PolicyStatus)
 
 if TYPE_CHECKING:
     from uuid import UUID

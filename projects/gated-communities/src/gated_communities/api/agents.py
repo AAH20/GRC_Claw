@@ -5,14 +5,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
-from moderation_queue.agents.auto_moderation import AutoModerationAgent, AutoModerationInput
+from moderation_queue.agents.auto_moderation import (AutoModerationAgent,
+                                                     AutoModerationInput)
 from moderation_queue.agents.escalation import EscalationAgent, EscalationInput
 from moderation_queue.agents.human_review_router import (
-    HumanReviewRouterAgent,
-    HumanReviewRouterInput,
-)
-from moderation_queue.agents.priority_scorer import PriorityScorerAgent, PriorityScorerInput
-from moderation_queue.agents.queue_optimizer import QueueOptimizerAgent, QueueOptimizerInput
+    HumanReviewRouterAgent, HumanReviewRouterInput)
+from moderation_queue.agents.priority_scorer import (PriorityScorerAgent,
+                                                     PriorityScorerInput)
+from moderation_queue.agents.queue_optimizer import (QueueOptimizerAgent,
+                                                     QueueOptimizerInput)
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import AgentResponse, ModerationItem
 from pydantic import BaseModel, Field

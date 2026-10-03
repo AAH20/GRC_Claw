@@ -6,6 +6,7 @@ automatic fallback to in-memory caching when Redis is unavailable.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging

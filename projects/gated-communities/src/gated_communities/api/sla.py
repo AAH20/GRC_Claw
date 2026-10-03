@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
-from escalation_workflow.agents.sla_tracker import SLATrackerAgent, SLATrackerInput
+from escalation_workflow.agents.sla_tracker import (SLATrackerAgent,
+                                                    SLATrackerInput)
 from escalation_workflow.config import Settings, get_settings
 from escalation_workflow.models.sla import SLA, SLABreach, SLAStatus
 from fastapi import APIRouter, Depends, HTTPException, Query, status

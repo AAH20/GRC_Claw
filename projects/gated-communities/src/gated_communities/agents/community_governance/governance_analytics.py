@@ -9,13 +9,12 @@ from typing import TYPE_CHECKING, Any
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
 from community_governance.exceptions import AgentExecutionError
-from community_governance.models.analytics import (
-    GovernanceAnalytics,
-    GovernanceHealthScore,
-    GovernanceSummary,
-)
+from community_governance.models.analytics import (GovernanceAnalytics,
+                                                   GovernanceHealthScore,
+                                                   GovernanceSummary)
 from community_governance.models.dispute import Dispute, DisputeStatus
-from community_governance.models.governance_action import ActionStatus, GovernanceAction
+from community_governance.models.governance_action import (ActionStatus,
+                                                           GovernanceAction)
 from community_governance.models.policy import Policy, PolicyStatus
 
 if TYPE_CHECKING:

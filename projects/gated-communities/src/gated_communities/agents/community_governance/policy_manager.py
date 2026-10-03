@@ -8,12 +8,11 @@ from typing import TYPE_CHECKING, Any
 
 from community_governance.agents.base import BaseAgent
 from community_governance.config.logging_config import get_logger
-from community_governance.exceptions import (
-    AgentExecutionError,
-    PolicyEnforcementError,
-    PolicyNotFoundError,
-)
-from community_governance.models.policy import Policy, PolicyCreate, PolicyStatus, PolicyUpdate
+from community_governance.exceptions import (AgentExecutionError,
+                                             PolicyEnforcementError,
+                                             PolicyNotFoundError)
+from community_governance.models.policy import (Policy, PolicyCreate,
+                                                PolicyStatus, PolicyUpdate)
 
 if TYPE_CHECKING:
     from uuid import UUID

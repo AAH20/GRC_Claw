@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from community_governance.api.dependencies import get_governance_analytics
 from community_governance.config.logging_config import get_logger
-from community_governance.models.analytics import GovernanceAnalytics, GovernanceSummary
+from community_governance.models.analytics import (GovernanceAnalytics,
+                                                   GovernanceSummary)
 from fastapi import APIRouter, Depends, Query
 
 if TYPE_CHECKING:

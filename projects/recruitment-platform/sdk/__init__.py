@@ -22,7 +22,14 @@ from .exceptions import (
     TimeoutError,
     ValidationError,
 )
-from .logging_config import get_logger, setup_logging
+from .logging_config import (
+    clear_correlation_id,
+    get_correlation_id,
+    get_logger,
+    log_request,
+    set_correlation_id,
+    setup_logging,
+)
 from .models import (
     HealthResponse,
     APIResponse,

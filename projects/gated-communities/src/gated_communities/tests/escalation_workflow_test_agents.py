@@ -6,17 +6,16 @@ from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from escalation_workflow.agents.auto_resolver import AutoResolverAgent, AutoResolverInput
+from escalation_workflow.agents.auto_resolver import (AutoResolverAgent,
+                                                      AutoResolverInput)
 from escalation_workflow.agents.escalation_analyzer import (
-    EscalationAnalyzerAgent,
-    EscalationAnalyzerInput,
-)
-from escalation_workflow.agents.priority_router import PriorityRouterAgent, PriorityRouterInput
+    EscalationAnalyzerAgent, EscalationAnalyzerInput)
+from escalation_workflow.agents.priority_router import (PriorityRouterAgent,
+                                                        PriorityRouterInput)
 from escalation_workflow.agents.resolution_optimizer import (
-    ResolutionOptimizerAgent,
-    ResolutionOptimizerInput,
-)
-from escalation_workflow.agents.sla_tracker import SLATrackerAgent, SLATrackerInput
+    ResolutionOptimizerAgent, ResolutionOptimizerInput)
+from escalation_workflow.agents.sla_tracker import (SLATrackerAgent,
+                                                    SLATrackerInput)
 from escalation_workflow.models.escalation import Escalation
 from escalation_workflow.models.priority import PriorityLevel
 from escalation_workflow.models.resolution import ResolutionStatus
