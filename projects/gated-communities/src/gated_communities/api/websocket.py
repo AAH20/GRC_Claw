@@ -1,4 +1,4 @@
-"""WebSocket endpoint for real-time notifications."""
+"""WebSocket endpoint for real-time community events."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 class ConnectionManager:
-    """Manages WebSocket connections."""
+    """Manages WebSocket connections per community."""
 
     def __init__(self) -> None:
         self.active_connections: dict[str, list[WebSocket]] = {}
@@ -47,17 +47,35 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-@router.websocket("/ws/{community_id}")
-async def websocket_endpoint(websocket: WebSocket, community_id: str) -> None:
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for real-time community updates."""
+    community_id = websocket.query_params.get("community_id", "default")
     await manager.connect(websocket, community_id)
+
+    # Send initial connection confirmation
+    await websocket.send_json({
+        "type": "connection_established",
+        "community_id": community_id,
+        "message": "Connected to community websocket",
+    })
+
     try:
         while True:
             data = await websocket.receive_text()
-            message = json.loads(data)
-            await manager.broadcast(
-                {"type": "message", "community_id": community_id, "data": message},
-                community_id,
-            )
+            event = json.loads(data)
+
+            response = {
+                "type": event.get("type", "unknown"),
+                "community_id": community_id,
+                "data": event.get("data", {}),
+                "status": "received",
+            }
+            await websocket.send_json(response)
+
     except WebSocketDisconnect:
         manager.disconnect(websocket, community_id)
+        await manager.broadcast(
+            {"type": "member_disconnected", "community_id": community_id},
+            community_id,
+        )

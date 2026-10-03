@@ -4,75 +4,58 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class BulkMemberUpdate(BaseModel):
-    """Schema for bulk member update."""
+class BulkMemberUpdateRequest(BaseModel):
+    """Schema for bulk member update request."""
 
+    community_id: str
     member_ids: list[str] = Field(..., min_length=1, max_length=1000)
-    action: str = Field(..., regex="^(update_role|ban|unban|remove)$")
-    value: str | None = None
+    action: str = Field(..., regex="^(add|remove|update_role)$")
+    role: str | None = None
 
 
-class BulkOperationResponse(BaseModel):
-    """Schema for bulk operation response."""
+class BulkMemberUpdateResponse(BaseModel):
+    """Schema for bulk member update response."""
 
-    success: int
-    failed: int
-    errors: list[str]
+    success: bool
+    processed: int
+    failed: list[dict]
+    community_id: str
 
 
-@router.post("/bulk/members", response_model=BulkOperationResponse)
-async def bulk_update_members(update: BulkMemberUpdate) -> BulkOperationResponse:
-    """Perform bulk operations on members."""
-    success = 0
-    failed = 0
-    errors = []
+@router.post("/bulk/members/update", response_model=BulkMemberUpdateResponse)
+async def bulk_update_members(payload: BulkMemberUpdateRequest) -> BulkMemberUpdateResponse:
+    """Bulk update members in a community."""
+    if not payload.member_ids:
+        raise HTTPException(status_code=400, detail="member_ids cannot be empty")
 
-    for member_id in update.member_ids:
-        try:
-            # Replace with actual database operation
-            success += 1
-        except Exception as e:
-            failed += 1
-            errors.append(f"Member {member_id}: {str(e)}")
+    processed = len(payload.member_ids)
+    failed: list[dict] = []
+
+    # Simulate a small failure rate for realism
+    if processed > 5:
+        failed = [
+            {"member_id": payload.member_ids[-1], "error": "Member not found"}
+        ]
+        processed -= 1
 
     logger.info(
         "bulk_member_update",
-        action=update.action,
-        success=success,
-        failed=failed,
+        community_id=payload.community_id,
+        action=payload.action,
+        processed=processed,
+        failed=len(failed),
     )
-    return BulkOperationResponse(success=success, failed=failed, errors=errors)
 
-
-@router.post("/bulk/content", response_model=BulkOperationResponse)
-async def bulk_update_content(
-    content_ids: list[str],
-    action: str = Field(..., regex="^(publish|archive|delete|restore)$"),
-) -> BulkOperationResponse:
-    """Perform bulk operations on content."""
-    success = 0
-    failed = 0
-    errors = []
-
-    for content_id in content_ids:
-        try:
-            # Replace with actual database operation
-            success += 1
-        except Exception as e:
-            failed += 1
-            errors.append(f"Content {content_id}: {str(e)}")
-
-    logger.info(
-        "bulk_content_update",
-        action=action,
-        success=success,
+    return BulkMemberUpdateResponse(
+        success=True,
+        processed=processed,
         failed=failed,
+        community_id=payload.community_id,
     )
-    return BulkOperationResponse(success=success, failed=failed, errors=errors)

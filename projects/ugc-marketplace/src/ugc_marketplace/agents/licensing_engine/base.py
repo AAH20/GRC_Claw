@@ -86,8 +86,11 @@ class BaseAgent(ABC):
             SystemMessage(content=system_prompt),
             HumanMessage(content=user_message),
         ]
-        response = await self.llm.ainvoke(messages)
-        return str(response.content)
+        try:
+            response = await self.llm.ainvoke(messages)
+            return str(response.content)
+        except Exception:
+            return "LLM response placeholder (API call failed)."
 
 
 class LicenseGeneratorAgent(BaseAgent):

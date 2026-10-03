@@ -262,6 +262,66 @@ class BusinessMetrics:
             registry=self._registry,
         )
 
+        # --- Content Delivery ---
+        self.content_delivery_bandwidth_bytes = Histogram(
+            "ugc_content_delivery_bandwidth_bytes",
+            "Content delivery bandwidth by type",
+            ["content_type", "cdn_provider"],
+            buckets=[1048576, 10485760, 104857600, 1073741824],
+            registry=self._registry,
+        )
+        self.content_streaming_quality_score = Gauge(
+            "ugc_content_streaming_quality_score",
+            "Streaming quality score by content type",
+            ["content_type", "quality_tier"],
+            registry=self._registry,
+        )
+
+        # --- API Endpoint Metrics ---
+        self.api_endpoint_latency_seconds = Histogram(
+            "ugc_api_endpoint_latency_seconds",
+            "Per-endpoint API latency",
+            ["endpoint", "method"],
+            buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+            registry=self._registry,
+        )
+        self.api_endpoint_requests_total = Counter(
+            "ugc_api_endpoint_requests_total",
+            "Per-endpoint API request count",
+            ["endpoint", "method", "status"],
+            registry=self._registry,
+        )
+
+        # --- Queue Depth ---
+        self.queue_depth = Gauge(
+            "ugc_queue_depth",
+            "Queue depth by queue name",
+            ["queue_name"],
+            registry=self._registry,
+        )
+
+        # --- Feature Flags ---
+        self.feature_flag_evaluations_total = Counter(
+            "ugc_feature_flag_evaluations_total",
+            "Feature flag evaluations by flag and variant",
+            ["flag_name", "variant"],
+            registry=self._registry,
+        )
+
+        # --- WebSocket ---
+        self.websocket_connections_active = Gauge(
+            "ugc_websocket_connections_active",
+            "Active WebSocket connections by channel",
+            ["channel"],
+            registry=self._registry,
+        )
+        self.websocket_messages_total = Counter(
+            "ugc_websocket_messages_total",
+            "WebSocket messages by channel and type",
+            ["channel", "message_type"],
+            registry=self._registry,
+        )
+
     # --- Recording Methods ---
 
     def record_content_upload(
