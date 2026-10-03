@@ -1,6 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #1e293b;
+}
 
 @layer base {
   :root {
@@ -23,7 +37,6 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
 
-    /* Design tokens */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
@@ -77,10 +90,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--color-border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -97,18 +111,18 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+    background-color: var(--color-gray-300);
+    border-radius: 9999px;
   }
 }
 
-/* Focus visible styles for accessibility */
 @layer base {
   :focus-visible {
-    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary-500);
   }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -119,15 +133,21 @@
   }
 }
 
-/* Skip navigation link */
 .skip-nav {
-  @apply absolute -top-10 left-0 z-50 bg-primary-600 text-white px-4 py-2 rounded-b-lg transition-all;
+  position: absolute;
+  top: -2.5rem;
+  left: 0;
+  z-index: 50;
+  background-color: var(--color-primary-600);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  transition: all;
 }
 .skip-nav:focus {
-  @apply top-0;
+  top: 0;
 }
 
-/* Touch target sizes for mobile */
 @media (max-width: 640px) {
   button,
   [role="button"],
@@ -140,17 +160,15 @@
   }
 }
 
-/* Dark mode selection colors */
 .dark ::selection {
-  @apply bg-primary-900 text-primary-100;
+  background-color: var(--color-primary-900);
+  color: var(--color-primary-100);
 }
 
-/* Dark mode scrollbar */
 .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  @apply bg-gray-600;
+  background-color: var(--color-gray-600);
 }
 
-/* Print styles */
 @media print {
   .no-print {
     display: none !important;
