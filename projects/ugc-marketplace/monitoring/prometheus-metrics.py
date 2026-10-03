@@ -447,6 +447,46 @@ class BusinessMetrics:
     def set_build_info(self, **kwargs: Any) -> None:
         self.build_info.info(kwargs)
 
+    def record_content_delivery(
+        self, content_type: str, cdn_provider: str, bandwidth_bytes: int
+    ) -> None:
+        self.content_delivery_bandwidth_bytes.labels(
+            content_type=content_type, cdn_provider=cdn_provider
+        ).observe(bandwidth_bytes)
+
+    def set_streaming_quality(
+        self, content_type: str, quality_tier: str, score: float
+    ) -> None:
+        self.content_streaming_quality_score.labels(
+            content_type=content_type, quality_tier=quality_tier
+        ).set(score)
+
+    def record_api_endpoint(
+        self, endpoint: str, method: str, status: str, latency_seconds: float
+    ) -> None:
+        self.api_endpoint_requests_total.labels(
+            endpoint=endpoint, method=method, status=status
+        ).inc()
+        self.api_endpoint_latency_seconds.labels(
+            endpoint=endpoint, method=method
+        ).observe(latency_seconds)
+
+    def set_queue_depth(self, queue_name: str, depth: int) -> None:
+        self.queue_depth.labels(queue_name=queue_name).set(depth)
+
+    def record_feature_flag(self, flag_name: str, variant: str) -> None:
+        self.feature_flag_evaluations_total.labels(
+            flag_name=flag_name, variant=variant
+        ).inc()
+
+    def set_websocket_connections(self, channel: str, count: int) -> None:
+        self.websocket_connections_active.labels(channel=channel).set(count)
+
+    def record_websocket_message(self, channel: str, message_type: str) -> None:
+        self.websocket_messages_total.labels(
+            channel=channel, message_type=message_type
+        ).inc()
+
     @staticmethod
     def _result_bucket(count: int) -> str:
         if count == 0:
