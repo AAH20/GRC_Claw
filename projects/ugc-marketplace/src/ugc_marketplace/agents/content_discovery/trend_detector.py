@@ -39,7 +39,7 @@ class TrendDetectorAgent(BaseAgent["TrendRequest", "TrendResponse"]):
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a trend detection specialist. Analyze content "
                 "patterns, engagement metrics, and external signals to "
                 "identify emerging trends. Provide trend direction, "

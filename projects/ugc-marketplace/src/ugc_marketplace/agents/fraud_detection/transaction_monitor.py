@@ -45,7 +45,7 @@ class TransactionMonitorAgent:
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a real-time transaction monitoring specialist. Monitor "
                 "transaction streams, detect fraud as it happens, and generate "
                 "alerts for suspicious activity."

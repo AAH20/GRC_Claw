@@ -42,7 +42,7 @@ class SearchExplainerAgent(
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a search explanation specialist. Analyze search "
                 "queries and results to provide clear, helpful explanations "
                 "of why specific content was returned. Suggest query "

@@ -40,7 +40,7 @@ class PersonalizationAgent(
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a content personalization specialist. Analyze user "
                 "preferences and behavior to generate personalized content "
                 "recommendations. Consider user history, context, and content "

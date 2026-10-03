@@ -197,3 +197,11 @@ class ConfigurationError(RecruitmentPlatformError):
     This may indicate invalid parameters, missing required settings,
     or incompatible configuration combinations.
     """
+
+
+class CircuitBreakerOpenError(RecruitmentPlatformError):
+    """Raised when the circuit breaker is open.
+
+    The circuit breaker prevents cascading failures by stopping requests
+    after consecutive failures. Wait for the recovery timeout before retrying.
+    """

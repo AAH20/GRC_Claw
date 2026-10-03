@@ -47,7 +47,7 @@ class AnomalyDetectorAgent:
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a fraud anomaly detection specialist. Analyze transactions "
                 "to identify statistical outliers and behavioral anomalies. Compare "
                 "against account baselines for amount, frequency, time, location, "

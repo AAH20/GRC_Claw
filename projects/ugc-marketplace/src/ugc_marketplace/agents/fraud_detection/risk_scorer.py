@@ -46,7 +46,7 @@ class RiskScorerAgent:
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a fraud risk scoring specialist. Compute overall risk "
                 "scores by aggregating signals from transaction analysis, account "
                 "history, and behavioral patterns. Provide a score between 0 and 1 "

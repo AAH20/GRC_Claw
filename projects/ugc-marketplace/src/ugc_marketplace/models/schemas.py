@@ -401,11 +401,9 @@ class ImprovementSuggestion(BaseModel):
 class ImprovementPlan(BaseModel):
     """Improvement plan model."""
 
-    content_id: str
-    current_score: float = Field(default=0.0, ge=0.0, le=1.0)
-    target_score: float = Field(default=1.0, ge=0.0, le=1.0)
-    recommendations: list[str] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    id: UUID = Field(default_factory=uuid4)
+    suggestions: list[ImprovementSuggestion] = Field(default_factory=list)
+    overall_score: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class QualityAssessment(BaseModel):

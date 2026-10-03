@@ -44,7 +44,7 @@ class PatternDetectorAgent:
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a fraud pattern detection specialist. Analyze transactions "
                 "to identify known fraud patterns including velocity attacks, "
                 "round amount patterns, and geographic anomalies. Return structured "

@@ -44,7 +44,7 @@ class AccountAnalyzerAgent:
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are an account fraud analysis specialist. Analyze account "
                 "behavior, transaction history, and patterns to build risk profiles "
                 "and detect account-level fraud indicators."

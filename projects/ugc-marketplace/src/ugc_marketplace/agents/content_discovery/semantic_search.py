@@ -39,7 +39,7 @@ class SemanticSearchAgent(BaseAgent["SearchRequest", "SearchResponse"]):
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a semantic search specialist. Use vector embeddings "
                 "and semantic similarity to find relevant content. Combine "
                 "keyword and semantic search for optimal results."

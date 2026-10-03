@@ -15,6 +15,7 @@ from .client import RecruitmentPlatformClient
 from .exceptions import (
     AuthenticationError,
     CacheError,
+    CircuitBreakerOpenError,
     ConfigurationError,
     ConnectionError,
     NotFoundError,
@@ -139,6 +140,7 @@ __all__ = [
     "ConnectionError",
     "CacheError",
     "ConfigurationError",
+    "CircuitBreakerOpenError",
     # Models
     "HealthResponse",
     "APIResponse",

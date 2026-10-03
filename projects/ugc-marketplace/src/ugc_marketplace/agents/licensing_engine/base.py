@@ -80,6 +80,8 @@ class BaseAgent(ABC):
         Returns:
             The LLM response content.
         """
+        if not self.context.settings.openai_api_key:
+            return "LLM response placeholder (no API key configured)."
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=user_message),

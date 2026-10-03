@@ -20,7 +20,7 @@ async def health_check() -> HealthResponse:
     return HealthResponse(status="healthy", version=__version__)
 
 
-@router.get("/ready", response_model=HealthResponse)
+@router.get("/health/ready", response_model=HealthResponse)
 async def readiness_check() -> HealthResponse:
     """Readiness check endpoint.
 
@@ -30,7 +30,7 @@ async def readiness_check() -> HealthResponse:
     return HealthResponse(status="ready", version=__version__)
 
 
-@router.get("/live", response_model=HealthResponse)
+@router.get("/health/live", response_model=HealthResponse)
 async def liveness_check() -> HealthResponse:
     """Liveness check endpoint.
 

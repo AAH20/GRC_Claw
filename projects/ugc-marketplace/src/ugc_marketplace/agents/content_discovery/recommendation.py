@@ -38,7 +38,7 @@ class RecommendationAgent(BaseAgent["RecommendationRequest", "RecommendationResp
 
         agent = create_deep_agent(
             tools=tools,
-            instructions=(
+            system_prompt=(
                 "You are a content recommendation specialist. Generate "
                 "recommendations using collaborative filtering, content-based "
                 "filtering, and trending analysis. Provide diverse, relevant "
