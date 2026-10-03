@@ -454,7 +454,7 @@ class TestSchemaConsistency:
     def test_extensions_enabled(self, engine):
         """Test that required extensions are enabled."""
         with engine.connect() as conn:
-            result = ext.execute(text("SELECT extname FROM pg_extension"))
+            result = conn.execute(text("SELECT extname FROM pg_extension"))
             extensions = {row[0] for row in result}
             expected = {"pgcrypto", "uuid-ossp", "pg_trgm", "btree_gin"}
             assert expected.issubset(extensions)
