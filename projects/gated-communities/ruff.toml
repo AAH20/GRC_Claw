@@ -1,9 +1,0 @@
-target-version = "py311"
-line-length = 100
-
-[lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "A", "C4", "SIM", "TCH"]
-
-[lint.per-file-ignores]
-"database/migrations/versions/*.py" = ["E501"]
-"database/seeders/factories.py" = ["E501"]
