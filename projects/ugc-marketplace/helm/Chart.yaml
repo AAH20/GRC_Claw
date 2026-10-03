@@ -1,0 +1,22 @@
+apiVersion: v2
+name: ugc-marketplace
+description: A Helm chart for the UGC Marketplace Platform - Unified agentic AI system for content moderation, creator monetization, rights management, and marketplace operations
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ugc
+  - marketplace
+  - content-moderation
+  - creator-monetization
+  - rights-management
+  - fraud-detection
+home: https://github.com/ahmedhassan/ugc-marketplace
+sources:
+  - https://github.com/ahmedhassan/ugc-marketplace
+maintainers:
+  - name: Ahmed Hassan
+    email: ahmed@example.com
+icon: https://raw.githubusercontent.com/ahmedhassan/ugc-marketplace/main/docs/icon.png
+annotations:
+  category: Application

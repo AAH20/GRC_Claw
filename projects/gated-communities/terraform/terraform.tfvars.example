@@ -1,0 +1,36 @@
+# ─── General ──────────────────────────────────────────────────────────────────
+
+aws_region    = "us-east-1"
+project_name  = "gated-communities"
+environment   = "production"
+owner         = "platform-team"
+
+# ─── VPC ──────────────────────────────────────────────────────────────────────
+
+vpc_cidr            = "10.0.0.0/16"
+availability_zones  = ["us-east-1a", "us-east-1b", "us-east-1c"]
+private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+public_subnet_cidrs  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+# ─── EKS ──────────────────────────────────────────────────────────────────────
+
+eks_cluster_version    = "1.29"
+eks_node_instance_types = ["t3.large"]
+eks_node_desired_size   = 2
+eks_node_min_size       = 1
+eks_node_max_size       = 5
+
+# ─── RDS ──────────────────────────────────────────────────────────────────────
+
+rds_engine            = "postgres"
+rds_engine_version    = "16.3"
+rds_instance_class    = "db.t3.medium"
+rds_allocated_storage = 100
+rds_db_name           = "gated_communities"
+rds_username          = "gc_admin"
+rds_password          = "CHANGE_ME_STRONG_PASSWORD"
+
+# ─── ElastiCache ──────────────────────────────────────────────────────────────
+
+elasticache_node_type = "cache.t3.micro"
+elasticache_num_nodes = 2

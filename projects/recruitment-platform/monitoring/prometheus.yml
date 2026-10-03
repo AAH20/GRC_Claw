@@ -1,19 +1,23 @@
-# Prometheus Configuration
+# Prometheus Configuration for Recruitment Platform
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
     monitor: recruitment-platform
+    environment: production
 
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: []
+        - targets:
+            - alertmanager:9093
 
-rule_files: []
+rule_files:
+  - /etc/prometheus/rules/*.yml
 
 scrape_configs:
-  - job_name: recruitment-platform
+  # Application API metrics
+  - job_name: recruitment-api
     static_configs:
       - targets:
           - api:8000
@@ -21,7 +25,39 @@ scrape_configs:
     scrape_interval: 15s
     scrape_timeout: 10s
 
+  # Celery worker metrics
+  - job_name: recruitment-worker
+    static_configs:
+      - targets:
+          - worker:8000
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # PostgreSQL exporter
+  - job_name: postgres-exporter
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
+    scrape_interval: 30s
+
+  # Redis exporter
+  - job_name: redis-exporter
+    static_configs:
+      - targets:
+          - redis-exporter:9121
+    scrape_interval: 30s
+
+  # Node exporter (host metrics)
+  - job_name: node-exporter
+    static_configs:
+      - targets:
+          - node-exporter:9100
+    scrape_interval: 30s
+
+  # Prometheus self-monitoring
   - job_name: prometheus
     static_configs:
       - targets:
           - localhost:9090
+    scrape_interval: 15s

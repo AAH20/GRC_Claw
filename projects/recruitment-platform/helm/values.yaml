@@ -1,0 +1,229 @@
+# Default values for recruitment-platform.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Number of replicas for the deployment
+replicaCount: 3
+
+# -- Global values shared across all charts
+global:
+  # -- Global image registry
+  imageRegistry: ""
+  # -- Global image pull secrets
+  imagePullSecrets: []
+  # -- Global storage class
+  storageClass: ""
+
+image:
+  # -- Image repository
+  repository: recruitment-platform
+  # -- Image tag (defaults to chart appVersion)
+  tag: ""
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Image pull secrets
+  pullSecrets: []
+
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the release
+fullnameOverride: ""
+
+# -- Service account configuration
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# -- Pod annotations
+podAnnotations: {}
+# -- Pod labels
+podLabels: {}
+# -- Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Container resources
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+# -- Horizontal Pod Autoscaler configuration
+autoscaling:
+  # -- Enable HPA
+  enabled: true
+  # -- Minimum number of replicas
+  minReplicas: 3
+  # -- Maximum number of replicas
+  maxReplicas: 10
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization percentage
+  targetMemoryUtilizationPercentage: 80
+  # -- Scale down behavior
+  scaleDown:
+    stabilizationWindowSeconds: 300
+    policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+  # -- Scale up behavior
+  scaleUp:
+    stabilizationWindowSeconds: 60
+    policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+
+# -- Pod Disruption Budget configuration
+pdb:
+  # -- Enable PDB
+  enabled: true
+  # -- Minimum available pods
+  minAvailable: 2
+
+# -- Service configuration
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Service target port
+  targetPort: 8000
+  # -- Service annotations
+  annotations: {}
+
+# -- Ingress configuration
+ingress:
+  # -- Enable ingress
+  enabled: true
+  # -- Ingress class name
+  className: nginx
+  # -- Ingress annotations
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+  # -- Ingress hosts
+  hosts:
+    - host: recruitment.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration
+  tls:
+    - secretName: recruitment-platform-tls
+      hosts:
+        - recruitment.example.com
+
+# -- Application configuration (non-sensitive)
+config:
+  APP_NAME: "Recruitment Platform"
+  APP_VERSION: "1.0.0"
+  DEBUG: "false"
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  WORKERS: "1"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  OPENAI_MODEL: "gpt-4"
+
+# -- Sensitive configuration (secrets)
+secrets:
+  # -- Application secret key (CHANGE IN PRODUCTION)
+  SECRET_KEY: "change-me-in-production"
+  # -- Database connection URL
+  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/recruitment"
+  # -- Redis connection URL
+  REDIS_URL: "redis://redis:6379/0"
+  # -- OpenAI API key
+  OPENAI_API_KEY: ""
+
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /api/v1/ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+# -- Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /api/v1/health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+# -- Node selector for pod assignment
+nodeSelector: {}
+# -- Tolerations for pod assignment
+tolerations: []
+# -- Affinity rules for pod assignment
+affinity: {}
+# -- Topology spread constraints
+topologySpreadConstraints: []
+
+# -- Extra environment variables
+extraEnv: []
+# -- Extra environment variables from configmaps/secrets
+extraEnvFrom: []
+# -- Extra volumes
+extraVolumes: []
+# -- Extra volume mounts
+extraVolumeMounts: []
+# -- Extra init containers
+initContainers: []
+# -- Extra sidecar containers
+extraContainers: []
+
+# -- Monitoring configuration
+monitoring:
+  # -- Enable ServiceMonitor for Prometheus Operator
+  enabled: false
+  # -- ServiceMonitor interval
+  interval: 30s
+  # -- ServiceMonitor scrape timeout
+  scrapeTimeout: 10s
+  # -- ServiceMonitor labels
+  labels: {}
+  # -- ServiceMonitor annotations
+  annotations: {}

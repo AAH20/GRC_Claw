@@ -1,0 +1,228 @@
+# Jaeger distributed tracing configuration for UGC Marketplace
+# Deployed as a sidecar or standalone collector
+
+# ============================================================
+# Jaeger Agent configuration (deployed as DaemonSet)
+# ============================================================
+agent:
+  # gRPC port for receiving spans from clients
+  grpc:
+    port: 14250
+    max-call-recv-message-size: 4194304
+
+  # HTTP port for admin/health checks
+  http:
+    port: 14269
+
+  # Sampling strategies
+  sampling:
+    strategies-file: /etc/jaeger/sampling_strategies.json
+
+  # Reporter configuration
+  reporter:
+    grpc:
+      host-port: jaeger-collector:14250
+      retry:
+        max-attempts: 5
+        initial-interval: 1s
+        max-interval: 30s
+
+# ============================================================
+# Jaeger Collector configuration
+# ============================================================
+collector:
+  # HTTP port for receiving spans directly
+  http:
+    port 14268
+
+  # gRPC port for receiving spans
+  grpc:
+    port 14267
+
+  # Admin port
+  admin:
+    port 14269
+
+  # Collector workers
+  num-workers: 50
+  queue-size: 2000
+
+  # Sampling strategies (default)
+  sampling:
+    default_strategy:
+      type: probabilistic
+      param: 0.1
+    service_strategies:
+      - service: ugc-marketplace-api
+        type: probabilistic
+        param: 0.5
+      - service: ugc-marketplace-db
+        type: probabilistic
+        param: 0.1
+      - service: ugc-marketplace-redis
+        type: probabilistic
+        param: 0.1
+      - service: ugc-marketplace-kafka
+        type: probabilistic
+        param: 0.2
+      - service: ugc-marketplace-moderation
+        type: probabilistic
+        param: 0.3
+      - service: ugc-marketplace-licensing
+        type: probabilistic
+        param: 0.3
+      - service: ugc-marketplace-fraud-detection
+        type: probabilistic
+        param: 0.3
+
+  # Storage configuration
+  storage:
+    type: elasticsearch
+    elasticsearch:
+      server-urls:
+        - http://elasticsearch:9200
+      index-prefix: jaeger
+      max-span-age: 72h
+      num-shards: 5
+      num-replicas: 1
+      bulk:
+        size: 5000000
+        actions: 1000
+        flush-interval: 1s
+        workers: 1
+
+  # Metrics
+  metrics:
+    backend: prometheus
+    prometheus:
+      endpoint: /metrics
+
+# ============================================================
+# Jaeger Query configuration (UI + API)
+# ============================================================
+query:
+  # HTTP port for UI and API
+  http:
+    port 16686
+
+  # gRPC port for internal communication
+  grpc:
+    port 16685
+
+  # Base path for UI
+  base-path: /
+
+  # Static files for UI
+  static-files: /usr/local/share/jaeger/
+
+  # UI configuration
+  ui:
+    # Maximum number of traces to display
+    trace-limit: 100
+    # Search limit
+    search-limit: 100
+    # Archive storage
+    archive-enabled: true
+
+  # Storage configuration (same as collector)
+  storage:
+    type: elasticsearch
+    elasticsearch:
+      server-urls:
+        - http://elasticsearch:9200
+      index-prefix: jaeger
+      max-span-age: 72h
+
+# ============================================================
+# Jaeger Ingester configuration (Kafka -> Storage)
+# ============================================================
+ingester:
+  # Kafka configuration
+  kafka:
+    topic: jaeger-spans
+    brokers:
+      - kafka:9092
+    consumer-group: jaeger-ingester
+    client-id: jaeger-ingester
+
+  # Storage configuration
+  storage:
+    type: elasticsearch
+    elasticsearch:
+      server-urls:
+        - http://elasticsearch:9200
+      index-prefix: jaeger
+      max-span-age: 72h
+      bulk:
+        size: 5000000
+        actions: 1000
+        flush-interval: 1s
+        workers: 1
+
+# ============================================================
+# Sampling strategies JSON (mounted as ConfigMap)
+# ============================================================
+sampling_strategies:
+  default_strategy:
+    type: probabilistic
+    param: 0.1
+  service_strategies:
+    - service: ugc-marketplace-api
+      type: probabilistic
+      param: 0.5
+    - service: ugc-marketplace-db
+      type: probabilistic
+      param: 0.1
+    - service: ugc-marketplace-redis
+      type: probabilistic
+      param: 0.1
+    - service: ugc-marketplace-kafka
+      type: probabilistic
+      param: 0.2
+    - service: ugc-marketplace-moderation
+      type: probabilistic
+      param: 0.3
+    - service: ugc-marketplace-licensing
+      type: probabilistic
+      param: 0.3
+    - service: ugc-marketplace-fraud-detection
+      type: probabilistic
+      param: 0.3
+    - service: ugc-marketplace-creator-monetization
+      type: probabilistic
+      param: 0.3
+    - service: ugc-marketplace-rights-management
+      type: probabilistic
+      param: 0.3
+    - service: ugc-marketplace-content-discovery
+      type: probabilistic
+      param: 0.2
+    - service: ugc-marketplace-quality-scoring
+      type: probabilistic
+      param: 0.2
+    - service: ugc-marketplace-community-curation
+      type: probabilistic
+      param: 0.2
+    - service: ugc-marketplace-creator-analytics
+      type: probabilistic
+      param: 0.2
+    - service: ugc-marketplace-content-marketplace
+      type: probabilistic
+      param: 0.2
+  operation_strategies:
+    - service: ugc-marketplace-api
+      operation: POST /api/v1/content
+      type: probabilistic
+      param: 0.8
+    - service: ugc-marketplace-api
+      operation: POST /api/v1/moderation
+      type: probabilistic
+      param: 0.8
+    - service: ugc-marketplace-api
+      operation: POST /api/v1/licensing
+      type: probabilistic
+      param: 0.8
+    - service: ugc-marketplace-api
+      operation: POST /api/v1/fraud-detection
+      type: probabilistic
+      param: 0.8

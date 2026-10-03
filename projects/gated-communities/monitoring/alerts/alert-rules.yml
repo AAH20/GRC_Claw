@@ -1,0 +1,265 @@
+# Prometheus Alert Rules for Gated Communities
+# Production-grade alerting configuration
+
+groups:
+  # ============================================================
+  # Service Availability Alerts
+  # ============================================================
+  - name: service-availability
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} (instance {{ $labels.instance }}) has been down for more than 1 minute."
+          runbook: "https://wiki.internal/runbooks/service-down"
+
+      - alert: ServiceHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            /
+          sum(rate(http_requests_total[5m])) by (service)
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Service {{ $labels.service }} has error rate above 5% (current: {{ $value | humanizePercentage }})."
+          runbook: "https://wiki.internal/runbooks/high-error-rate"
+
+      - alert: ServiceHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "Service {{ $labels.service }} has P95 latency above 2s (current: {{ $value }}s)."
+          runbook: "https://wiki.internal/runbooks/high-latency"
+
+  # ============================================================
+  # Resource Utilization Alerts
+  # ============================================================
+  - name: resource-utilization
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage on {{ $labels.instance }} is above 85% (current: {{ $value }}%)."
+          runbook: "https://wiki.internal/runbooks/high-cpu"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+            /
+          node_memory_MemTotal_bytes * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage on {{ $labels.instance }} is above 90% (current: {{ $value }}%)."
+          runbook: "https://wiki.internal/runbooks/high-memory"
+
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space on {{ $labels.instance }} is below 15% (current: {{ $value }}%)."
+          runbook: "https://wiki.internal/runbooks/low-disk"
+
+      - alert: DiskWillFillIn4Hours
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 4 * 3600) < 0
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Disk will fill in 4 hours on {{ $labels.instance }}"
+          description: "Disk on {{ $labels.instance }} is predicted to fill within 4 hours."
+          runbook: "https://wiki.internal/runbooks/disk-full-prediction"
+
+  # ============================================================
+  # Database Alerts
+  # ============================================================
+  - name: database
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance {{ $labels.instance }} is down."
+          runbook: "https://wiki.internal/runbooks/postgresql-down"
+
+      - alert: PostgreSQLHighConnections
+        expr: |
+          pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "PostgreSQL high connection count"
+          description: "PostgreSQL connections above 80% (current: {{ $value }}%)."
+          runbook: "https://wiki.internal/runbooks/pg-high-connections"
+
+      - alert: PostgreSQLReplicationLag
+        expr: pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "PostgreSQL replication lag"
+          description: "Replication lag is {{ $value }}s on {{ $labels.instance }}."
+          runbook: "https://wiki.internal/runbooks/pg-replication-lag"
+
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} is down."
+          runbook: "https://wiki.internal/runbooks/redis-down"
+
+      - alert: RedisHighMemory
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage above 90% (current: {{ $value }}%)."
+          runbook: "https://wiki.internal/runbooks/redis-high-memory"
+
+  # ============================================================
+  # Business Logic Alerts
+  # ============================================================
+  - name: business-logic
+    interval: 60s
+    rules:
+      - alert: CommunityCreationSpike
+        expr: |
+          rate(community_created_total[1h]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Unusual community creation rate"
+          description: "Community creation rate is {{ $value }}/sec, exceeding threshold of 100/hour."
+          runbook: "https://wiki.internal/runbooks/community-spike"
+
+      - alert: FailedLoginAttempts
+        expr: |
+          rate(login_failed_total[5m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High failed login attempts"
+          description: "Failed login attempts exceeding 50 per 5 minutes."
+          runbook: "https://wiki.internal/runbooks/failed-logins"
+
+      - alert: WebhookDeliveryFailures
+        expr: |
+          rate(webhook_delivery_failed_total[15m]) > 10
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Webhook delivery failures"
+          description: "Webhook delivery failure rate is {{ $value }}/sec."
+          runbook: "https://wiki.internal/runbooks/webhook-failures"
+
+  # ============================================================
+  # Observability Stack Alerts
+  # ============================================================
+  - name: observability
+    interval: 30s
+    rules:
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: observability
+        annotations:
+          summary: "Prometheus target missing"
+          description: "Prometheus target {{ $labels.job }} has been missing for 5 minutes."
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: observability
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager is not reachable."
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: observability
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana is not reachable."
+
+      - alert: JaegerDown
+        expr: up{job="jaeger"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: observability
+        annotations:
+          summary: "Jaeger is down"
+          description: "Jaeger tracing backend is not reachable."
+
+      - alert: FluentdBufferQueueHigh
+        expr: fluentd_output_status_buffer_queue_length > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: observability
+        annotations:
+          summary: "Fluentd buffer queue high"
+          description: "Fluentd buffer queue length is {{ $value }}."
+          runbook: "https://wiki.internal/runbooks/fluentd-buffer"

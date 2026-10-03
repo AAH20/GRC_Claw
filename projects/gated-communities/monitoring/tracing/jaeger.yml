@@ -1,0 +1,262 @@
+# Jaeger Configuration for Gated Communities
+# Distributed tracing with Elasticsearch storage
+
+# ============================================================
+# Jaeger All-in-One / Collector Configuration
+# ============================================================
+
+# Server configuration
+server:
+  http:
+    port: 16686
+    host: 0.0.0.0
+  grpc:
+    port: 14250
+    host: 0.0.0.0
+  admin:
+    port: 14269
+    host: 0.0.0.0
+
+# Collector configuration
+collector:
+  # Queue size for spans
+  queue-size: 2000
+  # Workers processing spans
+  workers: 50
+  # HTTP server settings
+  http:
+    port: 14268
+    host: 0.0.0.0
+  # gRPC server settings
+  grpc:
+    port: 14250
+    host: 0.0.0.0
+  # Zipkin compatibility
+  zipkin:
+    host-port: 9411
+    enabled: false
+
+# Agent configuration (sidecar)
+agent:
+  # HTTP admin port
+  http:
+    port: 5778
+    host: 0.0.0.0
+  # Compact thrift protocol
+  compact:
+    port: 6831
+    host: 0.0.0.0
+  # Binary thrift protocol
+  binary:
+    port: 6832
+    host: 0.0.0.0
+  # Reporting interval
+  reporter:
+    grpc:
+      host-port: jaeger-collector:14250
+      retry-max: 10
+      timeout: 10s
+
+# Storage configuration
+storage:
+  type: elasticsearch
+  options:
+    es:
+      server-urls:
+        - http://elasticsearch:9200
+      index-prefix: jaeger
+      # Index settings
+      index:
+        shards: 5
+        replicas: 1
+      # Bulk processing
+      bulk:
+        size: 5000000
+        workers: 1
+        flush-interval: 200ms
+        actions: 1000
+      # TLS settings (uncomment for production)
+      # tls:
+      #   enabled: true
+      #   ca: /etc/jaeger/certs/ca.crt
+      #   cert: /etc/jaeger/certs/jaeger.crt
+      #   key: /etc/jaeger/certs/jaeger.key
+      #   server-name: elasticsearch
+      #   skip-host-verify: false
+      # Authentication (uncomment for production)
+      # username: jaeger
+      # password: ${ES_PASSWORD}
+      # Token (uncomment for API key auth)
+      # token: ${ES_API_KEY}
+
+# Query service configuration
+query:
+  # Base path for UI
+  base-path: /
+  # Static files path
+  static-files: /usr/local/share/jaeger/
+  # UI configuration
+  ui:
+    # Dependencies enabled
+    dependencies:
+      enabled: true
+    # Tracking enabled
+    tracking:
+      enabled: true
+    # Menu items
+    menu:
+      - label: About
+        url: /about
+  # Port for query API
+  port: 16686
+  # Host binding
+  host: 0.0.0.0
+
+# Metrics configuration
+metrics:
+  # Backend: prometheus | expvar | none
+  backend: prometheus
+  # Prometheus specific
+  prometheus:
+    endpoint: /metrics
+    port: 14269
+  # Expvar specific
+  expvar:
+    port: 14269
+
+# Sampling strategies
+sampling:
+  # Default sampling strategy
+  default_strategy:
+    type: probabilistic
+    param: 0.1
+  # Service-specific strategies
+  service_strategies:
+    - service: api-gateway
+      type: probabilistic
+      param: 0.5
+    - service: community-service
+      type: probabilistic
+      param: 0.3
+    - service: membership-service
+      type: probabilistic
+      param: 0.3
+    - service: notification-service
+      type: probabilistic
+      param: 0.2
+    - service: auth-service
+      type: probabilistic
+      param: 0.8
+    - service: webhook-service
+      type: probabilistic
+      param: 0.5
+  # Per-operation strategies
+  operation_strategies:
+    - service: api-gateway
+      operation: POST /api/v1/communities
+      type: probabilistic
+      param: 1.0
+    - service: api-gateway
+      operation: POST /api/v1/memberships
+      type: probabilistic
+      param: 1.0
+    - service: api-gateway
+      operation: POST /api/v1/auth/login
+      type: probabilistic
+      param: 1.0
+    - service: community-service
+      operation: createCommunity
+      type: probabilistic
+      param: 1.0
+    - service: membership-service
+      operation: joinCommunity
+      type: probabilistic
+      param: 1.0
+    - service: membership-service
+      operation: leaveCommunity
+      type: probabilistic
+      param: 1.0
+
+# Processor configuration
+processor:
+  # Max queue size
+  max-queue-size: 2000
+  # Span cache size
+  span-cache-size: 10000
+  # Batch size
+  batch-size: 1000
+  # Flush interval
+  flush-interval: 1s
+
+# Ingester configuration (for Kafka-based pipeline)
+ingester:
+  # Kafka configuration
+  kafka:
+    brokers:
+      - kafka:9092
+    topic: jaeger-spans
+    group-id: jaeger-ingester
+    # Consumer settings
+    consumer:
+      fetch-min-bytes: 1
+      fetch-default-bytes: 1048576
+      session-timeout: 10s
+      heartbeat-interval: 3s
+      max-poll-records: 1000
+    # Producer settings
+    producer:
+      compression: snappy
+      batch-size: 100
+      linger: 10ms
+      max-message-bytes: 1000000
+
+# Cleaner configuration (for Elasticsearch index cleanup)
+cleaner:
+  # Number of days to retain
+  retention: 7d
+  # Schedule (cron expression)
+  schedule: "0 0 * * *"
+  # Batch size for deletion
+  batch-size: 1000
+  # Maximum number of indices to process
+  max-indices: 100
+
+# Health check configuration
+health-check:
+  port: 14269
+  host: 0.0.0.0
+
+# Logging configuration
+logging:
+  level: info
+  format: json
+  output: stdout
+
+# Tags to add to all spans
+tags:
+  - key: environment
+    value: production
+  - key: cluster
+    value: gated-communities
+  - key: region
+    value: us-east-1
+  - key: version
+    value: 1.0.0
+
+# CORS configuration
+cors:
+  allowed-origins:
+    - https://gated-communities.example.com
+    - https://grafana.example.com
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Content-Type
+    - Authorization
+    - X-Requested-With
+  allow-credentials: true
+  max-age: 3600

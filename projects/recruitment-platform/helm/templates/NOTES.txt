@@ -1,0 +1,46 @@
+{{- $fullName := include "recruitment-platform.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+
+Recruitment Platform has been deployed successfully!
+
+Release name: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+To verify the deployment:
+
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "recruitment-platform.name" . }}
+
+To access the application:
+
+{{- if .Values.ingress.enabled }}
+  Via Ingress:
+  {{- range $host := .Values.ingress.hosts }}
+    {{- range .paths }}
+    http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if contains "NodePort" .Values.service.type }}
+  Via NodePort:
+    export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ $fullName }})
+    export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+    echo http://$NODE_IP:$NODE_PORT
+{{- end }}
+{{- if contains "LoadBalancer" .Values.service.type }}
+  Via LoadBalancer:
+    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ $fullName }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+    echo http://$SERVICE_IP:{{ $svcPort }}
+{{- end }}
+{{- if contains "ClusterIP" .Values.service.type }}
+  Via Port Forward:
+    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ $fullName }} {{ $svcPort }}:{{ .Values.service.targetPort }}
+    echo "Visit http://127.0.0.1:{{ $svcPort }} to use the application"
+{{- end }}
+
+To view logs:
+
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "recruitment-platform.name" . }} -f
+
+To check HPA status:
+
+  kubectl get hpa -n {{ .Release.Namespace }} {{ $fullName }}

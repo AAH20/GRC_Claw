@@ -1,0 +1,62 @@
+# Jaeger Configuration for Recruitment Platform
+# Distributed tracing setup
+
+# Jaeger agent configuration
+agent:
+  # HTTP admin port
+  http:
+    port: 14269
+  # gRPC receiver for Jaeger clients
+  grpc:
+    port: 14250
+  # HTTP receiver for Jaeger clients
+  http_server:
+    port: 14268
+  # Zipkin compatible receiver
+  zipkin:
+    port: 9411
+
+# Collector configuration
+collector:
+  # Number of collector workers
+  workers: 5
+  # Queue size for spans
+  queue_size: 2000
+  # Sampling strategies
+  sampling:
+    default_strategy:
+      type: probabilistic
+      param: 0.1
+    service_strategies:
+      - service: recruitment-api
+        type: probabilistic
+        param: 0.5
+      - service: recruitment-worker
+        type: probabilistic
+        param: 0.3
+
+# Storage configuration
+storage:
+  type: elasticsearch
+  options:
+    server-urls: http://elasticsearch:9200
+    index-prefix: jaeger
+    max-span-age: 168h
+    num-shards: 5
+    num-replicas: 1
+
+# Query service configuration
+query:
+  port: 16686
+  base-path: "/"
+  static-files: /jaeger-ui/
+
+# Metrics configuration
+metrics:
+  backend: prometheus
+  http-route: /metrics
+
+# Logging configuration
+logging:
+  level: info
+  format: json

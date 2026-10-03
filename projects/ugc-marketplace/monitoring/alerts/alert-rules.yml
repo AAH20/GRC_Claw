@@ -1,0 +1,428 @@
+# Prometheus Alert Rules for UGC Marketplace
+# Production-grade alerting for all critical services
+
+groups:
+  # ============================================================
+  # Service Availability
+  # ============================================================
+  - name: ugc-marketplace-availability
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute."
+          runbook: "https://wiki.internal/runbooks/service-down"
+
+      - alert: APIServiceDown
+        expr: up{job="ugc-marketplace-api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "UGC Marketplace API is down"
+          description: "The API service has been unreachable for more than 30 seconds."
+          runbook: "https://wiki.internal/runbooks/api-down"
+
+      - alert: DatabaseDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL exporter is unreachable. Database may be down."
+          runbook: "https://wiki.internal/runbooks/database-down"
+
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "Redis is down"
+          description: "Redis exporter is unreachable. Cache layer may be down."
+          runbook: "https://wiki.internal/runbooks/redis-down"
+
+      - alert: KafkaDown
+        expr: up{job="kafka-exporter"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "Kafka is down"
+          description: "Kafka exporter is unreachable. Messaging layer may be down."
+          runbook: "https://wiki.internal/runbooks/kafka-down"
+
+  # ============================================================
+  # HTTP / API Performance
+  # ============================================================
+  - name: ugc-marketplace-api-performance
+    interval: 15s
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="ugc-marketplace-api", status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="ugc-marketplace-api"}[5m]))
+          > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High 5xx error rate on API"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+          runbook: "https://wiki.internal/runbooks/high-error-rate"
+
+      - alert: HighClientErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="ugc-marketplace-api", status=~"4.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="ugc-marketplace-api"}[5m]))
+          > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High 4xx error rate on API"
+          description: "Client error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="ugc-marketplace-api"}[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "P95 latency above 2s"
+          description: "95th percentile latency is {{ $value | humanizeDuration }} over the last 5 minutes."
+
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{job="ugc-marketplace-api"}[5m])) by (le)
+          ) > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "P99 latency above 5s"
+          description: "99th percentile latency is {{ $value | humanizeDuration }} over the last 5 minutes."
+
+      - alert: APIRequestRateDrop
+        expr: |
+          sum(rate(http_requests_total{job="ugc-marketplace-api"}[5m]))
+          <
+          0.1 * sum(rate(http_requests_total{job="ugc-marketplace-api"}[1h] offset 1h))
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "API request rate dropped significantly"
+          description: "Request rate has dropped by more than 90% compared to the same time yesterday."
+
+  # ============================================================
+  # Resource Utilization
+  # ============================================================
+  - name: ugc-marketplace-resources
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 85% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+          /
+          node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for more than 5 minutes."
+
+      - alert: HighDiskUsage
+        expr: |
+          (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_avail_bytes{mountpoint="/"})
+          /
+          node_filesystem_size_bytes{mountpoint="/"} * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is above 85% for more than 5 minutes."
+
+      - alert: DiskWillFillIn4Hours
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[6h], 4 * 3600) < 0
+        for: 1h
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Disk will fill in 4 hours on {{ $labels.instance }}"
+          description: "Based on current trend, disk will be full in less than 4 hours."
+
+  # ============================================================
+  # Container / Pod Health
+  # ============================================================
+  - name: ugc-marketplace-containers
+    interval: 30s
+    rules:
+      - alert: ContainerCrashLooping
+        expr: |
+          rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Container {{ $labels.container }} is crash looping"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is restarting frequently."
+
+      - alert: ContainerHighMemory
+        expr: |
+          container_memory_usage_bytes{container!="", container!="POD"}
+          /
+          container_spec_memory_limit_bytes{container!="", container!="POD"} > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Container {{ $labels.container }} memory usage high"
+          description: "Container {{ $labels.container }} is using more than 90% of its memory limit."
+
+      - alert: ContainerHighCPU
+        expr: |
+          rate(container_cpu_usage_seconds_total{container!="", container!="POD"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Container {{ $labels.container }} CPU usage high"
+          description: "Container {{ $labels.container }} is using more than 80% CPU for 10 minutes."
+
+  # ============================================================
+  # Database Health
+  # ============================================================
+  - name: ugc-marketplace-database
+    interval: 30s
+    rules:
+      - alert: PostgreSQLHighConnections
+        expr: |
+          pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "PostgreSQL connection pool near exhaustion"
+          description: "{{ $value | humanizePercentage }} of PostgreSQL connections are in use."
+
+      - alert: PostgreSQLSlowQueries
+        expr: |
+          rate(pg_slow_queries_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "More than 10 slow queries per second detected."
+
+      - alert: PostgreSQLReplicationLag
+        expr: |
+          pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "PostgreSQL replication lag high"
+          description: "Replication lag is {{ $value | humanizeDuration }}."
+
+      - alert: PostgreSQLDeadlocks
+        expr: |
+          rate(pg_stat_database_deadlocks[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "PostgreSQL deadlocks detected"
+          description: "Deadlocks have been detected in the last 5 minutes."
+
+  # ============================================================
+  # Redis Health
+  # ============================================================
+  - name: ugc-marketplace-redis
+    interval: 30s
+    rules:
+      - alert: RedisHighMemory
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis is using {{ $value | humanizePercentage }} of its max memory."
+
+      - alert: RedisHighConnections
+        expr: |
+          redis_connected_clients / redis_maxclients * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "Redis connection count high"
+          description: "Redis is using {{ $value | humanizePercentage }} of max connections."
+
+      - alert: RedisEvictionRate
+        expr: |
+          rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "Redis evicting keys"
+          description: "Redis is evicting keys at a rate of {{ $value }} per second."
+
+  # ============================================================
+  # Kafka Health
+  # ============================================================
+  - name: ugc-marketplace-kafka
+    interval: 30s
+    rules:
+      - alert: KafkaConsumerLag
+        expr: |
+          kafka_consumergroup_lag > 10000
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "Kafka consumer lag high for group {{ $labels.consumergroup }}"
+          description: "Consumer group {{ $labels.consumergroup }} has a lag of {{ $value }} messages."
+
+      - alert: KafkaOfflinePartitions
+        expr: |
+          kafka_server_replicamanager_offlinepartitionscount > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "Kafka has offline partitions"
+          description: "{{ $value }} partitions are offline."
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: |
+          kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+        annotations:
+          summary: "Kafka under-replicated partitions"
+          description: "{{ $value }} partitions are under-replicated."
+
+  # ============================================================
+  # Tracing
+  # ============================================================
+  - name: ugc-marketplace-tracing
+    interval: 30s
+    rules:
+      - alert: JaegerHighErrorRate
+        expr: |
+          rate(jaeger_traces_spans_total{status="error"}[5m])
+          /
+          rate(jaeger_traces_spans_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Jaeger reporting high error rate"
+          description: "More than 10% of traces contain errors."
+
+      - alert: JaegerAgentDown
+        expr: up{job="jaeger"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Jaeger agent is down"
+          description: "Jaeger agent has been unreachable for more than 1 minute."
+
+  # ============================================================
+  # Logging Pipeline
+  # ============================================================
+  - name: ugc-marketplace-logging
+    interval: 30s
+    rules:
+      - alert: FluentdBufferQueueHigh
+        expr: |
+          fluentd_output_status_buffer_queue_length > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Fluentd buffer queue is high"
+          description: "Fluentd buffer queue length is {{ $value }}."
+
+      - alert: FluentdRetryCountHigh
+        expr: |
+          rate(fluentd_output_status_retry_count[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Fluentd retry rate is high"
+          description: "Fluentd is retrying {{ $value }} times per second."
+
+      - alert: LogPipelineDown
+        expr: up{job="fluentd"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Fluentd log pipeline is down"
+          description: "Fluentd has been unreachable for more than 1 minute."

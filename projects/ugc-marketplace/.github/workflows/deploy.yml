@@ -1,0 +1,129 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CD"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: "Image tag to deploy (leave empty for latest)"
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'Production' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.service_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ secrets.EKS_CLUSTER_NAME }} \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Install kubectl & kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+      - name: Determine image tag
+        id: image
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Kubernetes
+        id: deploy
+        env:
+          IMAGE_TAG: ${{ steps.image.outputs.tag }}
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
+        run: |
+          cd k8s/overlays/${ENVIRONMENT}
+
+          # Update image tag in kustomization
+          kustomize edit set image ugc-marketplace=ghcr.io/${{ github.repository }}:${IMAGE_TAG}
+
+          # Apply manifests
+          kustomize build . | kubectl apply -f -
+
+          # Wait for rollout
+          kubectl rollout status deployment/ugc-marketplace -n ugc-marketplace --timeout=300s
+
+          # Get service URL
+          SERVICE_URL=$(kubectl get ingress ugc-marketplace -n ugc-marketplace -o jsonpath='{.spec.rules[0].host}')
+          echo "service_url=https://${SERVICE_URL}" >> $GITHUB_OUTPUT
+
+      - name: Verify deployment
+        run: |
+          echo "Running post-deployment verification..."
+          # Add health check verification here
+          # curl -sf https://${{ steps.deploy.outputs.service_url }}/api/v1/health
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed, rolling back..."
+          kubectl rollout undo deployment/ugc-marketplace -n ugc-marketplace
+          kubectl rollout status deployment/ugc-marketplace -n ugc-marketplace --timeout=300s
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ secrets.EKS_CLUSTER_NAME }} \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to staging
+        run: |
+          cd k8s/overlays/development
+          kustomize edit set image ugc-marketplace=ghcr.io/${{ github.repository }}:sha-$(git rev-parse --short HEAD)
+          kustomize build . | kubectl apply -f -
+          kubectl rollout status deployment/ugc-marketplace -n ugc-marketplace --timeout=300s
