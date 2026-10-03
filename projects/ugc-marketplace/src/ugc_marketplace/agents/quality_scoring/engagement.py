@@ -8,8 +8,8 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 
-from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
-                                                         BaseScoringAgent)
+from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.types import DimensionScore
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -64,8 +64,7 @@ class EngagementScorerAgent(BaseScoringAgent["DimensionScore"]):
         Returns:
             Dimension score with engagement metrics.
         """
-        from ugc_marketplace.models.schemas import (DimensionScore,
-                                                    ScoreDimension, ScoreLevel)
+        from ugc_marketplace.models.schemas import DimensionScore, ScoreDimension, ScoreLevel
 
         word_count = len(content.split())
         has_question = "?" in content

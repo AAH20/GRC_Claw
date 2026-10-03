@@ -1,4 +1,5 @@
 """Async processing with Celery for background tasks."""
+
 from __future__ import annotations
 
 import logging

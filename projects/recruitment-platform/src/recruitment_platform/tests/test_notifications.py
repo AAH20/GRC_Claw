@@ -5,10 +5,7 @@ from __future__ import annotations
 import pytest
 
 from recruitment_platform.notifications.notification_service import (
-    NotificationChannel,
-    NotificationPriority,
-    NotificationService,
-)
+    NotificationChannel, NotificationService)
 
 
 class TestNotificationService:

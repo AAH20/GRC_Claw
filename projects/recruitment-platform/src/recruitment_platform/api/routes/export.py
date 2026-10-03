@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
@@ -19,6 +17,7 @@ async def export_csv(
 ) -> Response:
     """Export data as CSV."""
     import json
+
     try:
         parsed_data = json.loads(data)
         field_list = fields.split(",") if fields else None
@@ -38,6 +37,7 @@ async def export_json(
 ) -> Response:
     """Export data as JSON."""
     import json
+
     try:
         parsed_data = json.loads(data)
         json_content = await export_service.export_to_json(parsed_data)
@@ -57,6 +57,7 @@ async def export_xml(
 ) -> Response:
     """Export data as XML."""
     import json
+
     try:
         parsed_data = json.loads(data)
         xml_content = await export_service.export_to_xml(parsed_data, root_element)

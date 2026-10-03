@@ -1,11 +1,17 @@
 """Integration modules for fraud detection."""
 
-from ugc_marketplace.integrations.fraud_detection.database import (
-    close_db, get_db_session, init_db)
+from ugc_marketplace.integrations.fraud_detection.database import close_db, get_db_session, init_db
 from ugc_marketplace.integrations.fraud_detection.kafka_producer import (
-    close_kafka, get_kafka_producer, send_alert)
+    close_kafka,
+    get_kafka_producer,
+    send_alert,
+)
 from ugc_marketplace.integrations.fraud_detection.redis_client import (
-    cache_transaction, close_redis, get_cached_transaction, get_redis_client)
+    cache_transaction,
+    close_redis,
+    get_cached_transaction,
+    get_redis_client,
+)
 
 __all__ = [
     "cache_transaction",

@@ -1,4 +1,5 @@
 """Webhook management API."""
+
 from __future__ import annotations
 
 import hashlib
@@ -17,6 +18,7 @@ router = APIRouter()
 
 class WebhookCreate(BaseModel):
     """Schema for creating a webhook."""
+
     url: str = Field(..., description="Webhook URL")
     events: list[str] = Field(..., description="List of events to subscribe to")
     secret: str | None = Field(None, description="Secret for HMAC signature")
@@ -24,6 +26,7 @@ class WebhookCreate(BaseModel):
 
 class WebhookResponse(BaseModel):
     """Schema for webhook response."""
+
     id: str
     url: str
     events: list[str]
@@ -33,6 +36,7 @@ class WebhookResponse(BaseModel):
 
 class WebhookDeliveryResponse(BaseModel):
     """Schema for webhook delivery response."""
+
     id: str
     webhook_id: str
     event: str
@@ -107,7 +111,5 @@ async def test_webhook(webhook_id: str) -> WebhookDeliveryResponse:
 
 def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> bool:
     """Verify HMAC signature for webhook payload."""
-    expected = hmac.new(
-        secret.encode(), payload, hashlib.sha256
-    ).hexdigest()
+    expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature)

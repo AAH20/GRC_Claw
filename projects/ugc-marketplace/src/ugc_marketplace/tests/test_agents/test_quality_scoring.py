@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.quality_scoring import (EngagementScorerAgent,
-                                                    ImprovementSuggesterAgent,
-                                                    OriginalityScorerAgent,
-                                                    ReadabilityScorerAgent,
-                                                    SEOScorerAgent)
+from ugc_marketplace.agents.quality_scoring import (
+    EngagementScorerAgent,
+    ImprovementSuggesterAgent,
+    OriginalityScorerAgent,
+    ReadabilityScorerAgent,
+    SEOScorerAgent,
+)
 
 
 @pytest.mark.asyncio

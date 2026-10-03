@@ -20,9 +20,8 @@ async def check_ats(data: dict[str, Any]) -> dict[str, Any]:
         Compatibility results.
     """
     try:
-        from recruitment_platform.agents.job_description_optimizer.ats_compatibility import (
-            ATSCompatibility,
-        )
+        from recruitment_platform.agents.job_description_optimizer.ats_compatibility import \
+            ATSCompatibility
 
         agent = ATSCompatibility()
         result = await agent.process(data)
@@ -41,7 +40,8 @@ async def remove_bias(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Cleaned text with bias report.
     """
-    from recruitment_platform.agents.job_description_optimizer.bias_remover import BiasRemover
+    from recruitment_platform.agents.job_description_optimizer.bias_remover import \
+        BiasRemover
 
     agent = BiasRemover()
     result = await agent.process(data)
@@ -58,9 +58,8 @@ async def optimize_keywords(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Optimized text with keyword suggestions.
     """
-    from recruitment_platform.agents.job_description_optimizer.keyword_optimizer import (
-        KeywordOptimizer,
-    )
+    from recruitment_platform.agents.job_description_optimizer.keyword_optimizer import \
+        KeywordOptimizer
 
     agent = KeywordOptimizer()
     result = await agent.process(data)
@@ -77,7 +76,8 @@ async def optimize_seo(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         SEO recommendations.
     """
-    from recruitment_platform.agents.job_description_optimizer.seo_optimizer import SEOOptimizer
+    from recruitment_platform.agents.job_description_optimizer.seo_optimizer import \
+        SEOOptimizer
 
     agent = SEOOptimizer()
     result = await agent.process(data)
@@ -94,7 +94,8 @@ async def analyze_tone(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Tone analysis.
     """
-    from recruitment_platform.agents.job_description_optimizer.tone_analyzer import ToneAnalyzer
+    from recruitment_platform.agents.job_description_optimizer.tone_analyzer import \
+        ToneAnalyzer
 
     agent = ToneAnalyzer()
     result = await agent.process(data)

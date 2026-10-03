@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.licensing_engine import (AgentContext,
-                                                     ComplianceTrackerAgent,
-                                                     ContractAnalyzerAgent,
-                                                     LicenseGeneratorAgent,
-                                                     RoyaltyCalculatorAgent,
-                                                     TermsNegotiatorAgent)
+from ugc_marketplace.agents.licensing_engine import (
+    AgentContext,
+    ComplianceTrackerAgent,
+    ContractAnalyzerAgent,
+    LicenseGeneratorAgent,
+    RoyaltyCalculatorAgent,
+    TermsNegotiatorAgent,
+)
 
 
 @pytest.mark.asyncio

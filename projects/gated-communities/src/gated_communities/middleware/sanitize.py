@@ -1,4 +1,5 @@
 """Input sanitization utilities."""
+
 from __future__ import annotations
 
 import html
@@ -34,7 +35,19 @@ def sanitize_dict(data: dict[str, Any]) -> dict[str, Any]:
 def sanitize_html(value: str, allowed_tags: list[str] | None = None) -> str:
     """Sanitize HTML content, allowing only specified tags."""
     if allowed_tags is None:
-        allowed_tags = ["p", "br", "strong", "em", "u", "h1", "h2", "h3", "ul", "ol", "li"]
+        allowed_tags = [
+            "p",
+            "br",
+            "strong",
+            "em",
+            "u",
+            "h1",
+            "h2",
+            "h3",
+            "ul",
+            "ol",
+            "li",
+        ]
     pattern = r"<(?!/?({})\b)[^>]*>".format("|".join(allowed_tags))
     value = re.sub(pattern, "", value)
     return value

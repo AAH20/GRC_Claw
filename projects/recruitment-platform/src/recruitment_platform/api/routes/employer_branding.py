@@ -20,7 +20,8 @@ async def brand_strategy(data: dict[str, Any]) -> dict[str, Any]:
         Brand strategy.
     """
     try:
-        from recruitment_platform.agents.employer_branding.brand_strategy import BrandStrategy
+        from recruitment_platform.agents.employer_branding.brand_strategy import \
+            BrandStrategy
 
         agent = BrandStrategy()
         result = await agent.process(data)
@@ -39,7 +40,8 @@ async def generate_content(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Generated content.
     """
-    from recruitment_platform.agents.employer_branding.content_generator import ContentGenerator
+    from recruitment_platform.agents.employer_branding.content_generator import \
+        ContentGenerator
 
     agent = ContentGenerator()
     result = await agent.process(data)
@@ -56,7 +58,8 @@ async def manage_reputation(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Reputation status.
     """
-    from recruitment_platform.agents.employer_branding.reputation_manager import ReputationManager
+    from recruitment_platform.agents.employer_branding.reputation_manager import \
+        ReputationManager
 
     agent = ReputationManager()
     result = await agent.process(data)
@@ -73,7 +76,8 @@ async def analyze_reviews(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Review analysis.
     """
-    from recruitment_platform.agents.employer_branding.review_analyzer import ReviewAnalyzer
+    from recruitment_platform.agents.employer_branding.review_analyzer import \
+        ReviewAnalyzer
 
     agent = ReviewAnalyzer()
     result = await agent.process(data)
@@ -90,7 +94,8 @@ async def analyze_sentiment(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Sentiment analysis.
     """
-    from recruitment_platform.agents.employer_branding.sentiment_analyzer import SentimentAnalyzer
+    from recruitment_platform.agents.employer_branding.sentiment_analyzer import \
+        SentimentAnalyzer
 
     agent = SentimentAnalyzer()
     result = await agent.process(data)

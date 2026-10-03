@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from ugc_marketplace.models.schemas import (ContentType, DimensionScore,
-                                            ScoreDimension, ScoreLevel)
+from ugc_marketplace.models.schemas import ContentType, DimensionScore, ScoreDimension, ScoreLevel
 
 router = APIRouter(prefix="/quality", tags=["quality"])
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, status
 
 router = APIRouter(prefix="/marketplace", tags=["marketplace"])
@@ -18,8 +20,7 @@ def get_listing_agent() -> Any:
 
 def get_transaction_agent() -> Any:
     """Get or create TransactionProcessorAgent singleton."""
-    from ugc_marketplace.agents.content_marketplace import \
-        TransactionProcessorAgent
+    from ugc_marketplace.agents.content_marketplace import TransactionProcessorAgent
 
     if not hasattr(get_transaction_agent, "_instance"):
         get_transaction_agent._instance = TransactionProcessorAgent()
@@ -37,8 +38,7 @@ def get_trust_agent() -> Any:
 
 def get_pricing_agent() -> Any:
     """Get or create PricingOptimizerAgent singleton."""
-    from ugc_marketplace.agents.content_marketplace import \
-        PricingOptimizerAgent
+    from ugc_marketplace.agents.content_marketplace import PricingOptimizerAgent
 
     if not hasattr(get_pricing_agent, "_instance"):
         get_pricing_agent._instance = PricingOptimizerAgent()
@@ -47,8 +47,7 @@ def get_pricing_agent() -> Any:
 
 def get_analytics_agent() -> Any:
     """Get or create MarketplaceAnalyticsAgent singleton."""
-    from ugc_marketplace.agents.content_marketplace import \
-        MarketplaceAnalyticsAgent
+    from ugc_marketplace.agents.content_marketplace import MarketplaceAnalyticsAgent
 
     if not hasattr(get_analytics_agent, "_instance"):
         get_analytics_agent._instance = MarketplaceAnalyticsAgent()

@@ -8,6 +8,7 @@ Usage:
     python -m database.seeders.cli validate
     python -m database.seeders.cli benchmark
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,33 +23,75 @@ _src = str(Path(__file__).resolve().parents[3] / "src")
 if _src not in sys.path:
     sys.path.insert(0, _src)
 
-from database.seeders.seeders import (
-    seed_tiers, seed_tier_evaluations, seed_upgrade_requests,
-    seed_access_policies, seed_benefits, seed_tier_analytics,
-    seed_governance_policies, seed_rules, seed_rule_enforcement_results,
-    seed_disputes, seed_dispute_resolutions, seed_governance_actions,
-    seed_governance_health_scores, seed_governance_analytics,
-    seed_governance_summaries, seed_escalations, seed_resolutions,
-    seed_slas, seed_sla_breaches, seed_priorities,
-    seed_priority_assessments, seed_escalation_analyses,
-    seed_trend_reports, seed_permissions, seed_roles,
-    seed_access_requests, seed_access_results, seed_access_audits,
-    seed_access_recommendations, seed_reputation_scores, seed_badges,
-    seed_trust_tiers, seed_reputation_history, seed_reputation_explanations,
-    seed_compliance_policies, seed_violations, seed_audit_reports,
-    seed_compliance_scores, seed_compliance_reports, seed_remediation_actions,
-    seed_identity_data, seed_document_data, seed_verification_requests,
-    seed_verification_results, seed_trust_scores, seed_fraud_reports,
-    seed_document_verification_results, seed_verification_explanations,
-    seed_moderation_items, seed_queues, seed_priority_scores,
-    seed_review_decisions, seed_moderation_escalations, seed_queue_metrics,
-    seed_moderation_analytics, seed_trends, seed_moderator_performance,
-    seed_policy_effectiveness, seed_moderation_predictions,
-    seed_analytics_summaries, seed_engagement_metrics, seed_toxicity_reports,
-    seed_growth_analyses, seed_churn_predictions, seed_health_scores,
-    seed_health_explanations, seed_all,
+from database.seeders.seeders import (  # noqa: E402
+    seed_access_audits,
+    seed_access_policies,
+    seed_access_recommendations,
+    seed_access_requests,
+    seed_access_results,
+    seed_all,
+    seed_analytics_summaries,
+    seed_audit_reports,
+    seed_badges,
+    seed_benefits,
+    seed_churn_predictions,
+    seed_compliance_policies,
+    seed_compliance_reports,
+    seed_compliance_scores,
+    seed_dispute_resolutions,
+    seed_disputes,
+    seed_document_data,
+    seed_document_verification_results,
+    seed_engagement_metrics,
+    seed_escalation_analyses,
+    seed_escalations,
+    seed_fraud_reports,
+    seed_governance_actions,
+    seed_governance_analytics,
+    seed_governance_health_scores,
+    seed_governance_policies,
+    seed_governance_summaries,
+    seed_growth_analyses,
+    seed_health_explanations,
+    seed_health_scores,
+    seed_identity_data,
+    seed_moderation_analytics,
+    seed_moderation_escalations,
+    seed_moderation_items,
+    seed_moderation_predictions,
+    seed_moderator_performance,
+    seed_permissions,
+    seed_policy_effectiveness,
+    seed_priorities,
+    seed_priority_assessments,
+    seed_priority_scores,
+    seed_queue_metrics,
+    seed_queues,
+    seed_remediation_actions,
+    seed_reputation_explanations,
+    seed_reputation_history,
+    seed_reputation_scores,
+    seed_resolutions,
+    seed_review_decisions,
+    seed_roles,
+    seed_rule_enforcement_results,
+    seed_rules,
+    seed_sla_breaches,
+    seed_slas,
+    seed_tier_analytics,
+    seed_tier_evaluations,
+    seed_tiers,
+    seed_toxicity_reports,
+    seed_trend_reports,
+    seed_trends,
+    seed_trust_scores,
+    seed_trust_tiers,
+    seed_upgrade_requests,
+    seed_verification_explanations,
+    seed_verification_requests,
+    seed_verification_results,
+    seed_violations,
 )
-
 
 # Entity name to seeder function mapping
 SEEDER_MAP: dict[str, Any] = {
@@ -137,7 +180,10 @@ def cmd_seed(args: argparse.Namespace) -> None:
         entity = args.entity
         if entity not in SEEDER_MAP:
             print(f"Error: Unknown entity '{entity}'", file=sys.stderr)
-            print(f"Available entities: {', '.join(sorted(SEEDER_MAP.keys()))}", file=sys.stderr)
+            print(
+                f"Available entities: {', '.join(sorted(SEEDER_MAP.keys()))}",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         seeder_func = SEEDER_MAP[entity]
@@ -151,8 +197,11 @@ def cmd_seed(args: argparse.Namespace) -> None:
         print(f"Seeded {len(result)} {entity} in {elapsed:.4f}s")
         if args.output:
             # Output as JSON
-            output_data = [item.model_dump() if hasattr(item, 'model_dump') else item.dict() for item in result]
-            with open(args.output, 'w') as f:
+            output_data = [
+                item.model_dump() if hasattr(item, "model_dump") else item.dict()
+                for item in result
+            ]
+            with open(args.output, "w") as f:
                 json.dump(output_data, f, indent=2, default=str)
             print(f"Output written to {args.output}")
     else:
@@ -163,7 +212,9 @@ def cmd_seed(args: argparse.Namespace) -> None:
         elapsed = time.perf_counter() - start
 
         total = sum(len(v) for v in data.values())
-        print(f"Seeded {total} records across {len(data)} entity types in {elapsed:.4f}s:")
+        print(
+            f"Seeded {total} records across {len(data)} entity types in {elapsed:.4f}s:"
+        )
         for name, records in data.items():
             print(f"  {name}: {len(records)}")
 
@@ -188,7 +239,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
 
     # Edge cases
     ec = results["edge_cases"]
-    print(f"\n2. Edge Cases:")
+    print("\n2. Edge Cases:")
     for name, result in ec.items():
         status = result.get("status", "unknown")
         if status == "passed":
@@ -200,32 +251,38 @@ def cmd_validate(args: argparse.Namespace) -> None:
 
     # Performance benchmarks
     pb = results["performance_benchmarks"]
-    print(f"\n3. Performance Benchmarks:")
+    print("\n3. Performance Benchmarks:")
     for name, bench in pb.items():
-        print(f"   {name}: {bench['count']} records in {bench['elapsed_seconds']}s ({bench['records_per_second']} rec/s)")
+        print(
+            f"   {name}: {bench['count']} records in "
+            f"{bench['elapsed_seconds']}s ({bench['records_per_second']} rec/s)"
+        )
 
     # Data consistency
     dc = results["data_consistency"]
-    print(f"\n4. Data Consistency:")
+    print("\n4. Data Consistency:")
     for name, check in dc.items():
         status = check.get("status", "unknown")
         if status == "passed":
             print(f"   PASS: {name}: {check.get('detail', '')}")
         elif status == "warning":
-            print(f"   WARN: {name}: missing={check.get('missing', [])}, extra={check.get('extra', [])}")
+            print(
+                f"   WARN: {name}: missing={check.get('missing', [])}, "
+                f"extra={check.get('extra', [])}"
+            )
         else:
             print(f"   FAIL: {name}: {check.get('error', '')}")
 
     # Bulk insert
     bi = results["bulk_insert_optimization"]
-    print(f"\n5. Bulk Insert Optimization:")
+    print("\n5. Bulk Insert Optimization:")
     print(f"   INSERT: {bi['insert_simulation']['records_per_second']} rec/s")
     print(f"   COPY: {bi['copy_simulation']['records_per_second']} rec/s")
     print(f"   Speedup: {bi['speedup']}x")
 
     # Save results if requested
     if args.output:
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             json.dump(results, f, indent=2, default=str)
         print(f"\nFull results written to {args.output}")
 
@@ -239,12 +296,16 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
 
     print("\n" + "=" * 60)
     print("PERFORMANCE BENCHMARKS")
-    print("=" *  60)
+    print("=" * 60)
     for name, bench in results.items():
-        print(f"{name:30s} {bench['count']:6d} records  {bench['elapsed_seconds']:8.4f}s  {bench['records_per_second']:10.2f} rec/s")
+        print(
+            f"{name:30s} {bench['count']:6d} records  "
+            f"{bench['elapsed_seconds']:8.4f}s  "
+            f"{bench['records_per_second']:10.2f} rec/s"
+        )
 
     if args.output:
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             json.dump(results, f, indent=2, default=str)
         print(f"\nResults written to {args.output}")
 
@@ -256,16 +317,92 @@ def cmd_list(args: argparse.Namespace) -> None:
 
     # Group by service
     services = {
-        "Tier Management": ["tiers", "tier_evaluations", "upgrade_requests", "access_policies", "benefits", "tier_analytics"],
-        "Community Governance": ["governance_policies", "rules", "rule_enforcement_results", "disputes", "dispute_resolutions", "governance_actions", "governance_health_scores", "governance_analytics", "governance_summaries"],
-        "Escalation Workflow": ["escalations", "resolutions", "slas", "sla_breaches", "priorities", "priority_assessments", "escalation_analyses", "trend_reports"],
-        "Access Control": ["permissions", "roles", "access_requests", "access_results", "access_audits", "access_recommendations"],
-        "Reputation System": ["reputation_scores", "badges", "trust_tiers", "reputation_history", "reputation_explanations"],
-        "Compliance Monitor": ["compliance_policies", "violations", "audit_reports", "compliance_scores", "compliance_reports", "remediation_actions"],
-        "Member Verification": ["identity_data", "document_data", "verification_requests", "verification_results", "trust_scores", "fraud_reports", "document_verification_results", "verification_explanations"],
-        "Moderation Queue": ["moderation_items", "queues", "priority_scores", "review_decisions", "moderation_escalations", "queue_metrics"],
-        "Moderation Analytics": ["moderation_analytics", "trends", "moderator_performance", "policy_effectiveness", "moderation_predictions", "analytics_summaries"],
-        "Community Health Scorer": ["engagement_metrics", "toxicity_reports", "growth_analyses", "churn_predictions", "health_scores", "health_explanations"],
+        "Tier Management": [
+            "tiers",
+            "tier_evaluations",
+            "upgrade_requests",
+            "access_policies",
+            "benefits",
+            "tier_analytics",
+        ],
+        "Community Governance": [
+            "governance_policies",
+            "rules",
+            "rule_enforcement_results",
+            "disputes",
+            "dispute_resolutions",
+            "governance_actions",
+            "governance_health_scores",
+            "governance_analytics",
+            "governance_summaries",
+        ],
+        "Escalation Workflow": [
+            "escalations",
+            "resolutions",
+            "slas",
+            "sla_breaches",
+            "priorities",
+            "priority_assessments",
+            "escalation_analyses",
+            "trend_reports",
+        ],
+        "Access Control": [
+            "permissions",
+            "roles",
+            "access_requests",
+            "access_results",
+            "access_audits",
+            "access_recommendations",
+        ],
+        "Reputation System": [
+            "reputation_scores",
+            "badges",
+            "trust_tiers",
+            "reputation_history",
+            "reputation_explanations",
+        ],
+        "Compliance Monitor": [
+            "compliance_policies",
+            "violations",
+            "audit_reports",
+            "compliance_scores",
+            "compliance_reports",
+            "remediation_actions",
+        ],
+        "Member Verification": [
+            "identity_data",
+            "document_data",
+            "verification_requests",
+            "verification_results",
+            "trust_scores",
+            "fraud_reports",
+            "document_verification_results",
+            "verification_explanations",
+        ],
+        "Moderation Queue": [
+            "moderation_items",
+            "queues",
+            "priority_scores",
+            "review_decisions",
+            "moderation_escalations",
+            "queue_metrics",
+        ],
+        "Moderation Analytics": [
+            "moderation_analytics",
+            "trends",
+            "moderator_performance",
+            "policy_effectiveness",
+            "moderation_predictions",
+            "analytics_summaries",
+        ],
+        "Community Health Scorer": [
+            "engagement_metrics",
+            "toxicity_reports",
+            "growth_analyses",
+            "churn_predictions",
+            "health_scores",
+            "health_explanations",
+        ],
     }
 
     for service, entities in services.items():
@@ -286,21 +423,29 @@ def main() -> None:
 
     # seed command
     seed_parser = subparsers.add_parser("seed", help="Run seeders")
-    seed_parser.add_argument("--entity", "-e", help="Entity to seed (e.g., tiers, escalations)")
-    seed_parser.add_argument("--count", "-c", type=int, default=10, help="Number of records to seed")
+    seed_parser.add_argument(
+        "--entity", "-e", help="Entity to seed (e.g., tiers, escalations)"
+    )
+    seed_parser.add_argument(
+        "--count", "-c", type=int, default=10, help="Number of records to seed"
+    )
     seed_parser.add_argument("--output", "-o", help="Output file (JSON)")
-    seed_parser.add_argument("--all", "-a", action="store_true", help="Seed all entities")
+    seed_parser.add_argument(
+        "--all", "-a", action="store_true", help="Seed all entities"
+    )
 
     # validate command
     validate_parser = subparsers.add_parser("validate", help="Run validation suite")
     validate_parser.add_argument("--output", "-o", help="Output file (JSON)")
 
     # benchmark command
-    benchmark_parser = subparsers.add_parser("benchmark", help="Run performance benchmarks")
+    benchmark_parser = subparsers.add_parser(
+        "benchmark", help="Run performance benchmarks"
+    )
     benchmark_parser.add_argument("--output", "-o", help="Output file (JSON)")
 
     # list command
-    list_parser = subparsers.add_parser("list", help="List available seeders")
+    subparsers.add_parser("list", help="List available seeders")
 
     args = parser.parse_args()
 

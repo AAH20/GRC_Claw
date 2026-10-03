@@ -6,11 +6,13 @@ from decimal import Decimal
 
 import pytest
 
-from ugc_marketplace.agents.creator_monetization import (AnalyticsAgent,
-                                                         PayoutManagerAgent,
-                                                         RevenueOptimizerAgent,
-                                                         SubscriptionAgent,
-                                                         TierRecommenderAgent)
+from ugc_marketplace.agents.creator_monetization import (
+    AnalyticsAgent,
+    PayoutManagerAgent,
+    RevenueOptimizerAgent,
+    SubscriptionAgent,
+    TierRecommenderAgent,
+)
 
 
 @pytest.mark.asyncio
@@ -51,8 +53,7 @@ async def test_subscription_agent() -> None:
 async def test_tier_recommender_agent() -> None:
     """Test tier recommender agent."""
     agent = TierRecommenderAgent()
-    from ugc_marketplace.agents.creator_monetization.tier_recommender import \
-        CreatorProfile
+    from ugc_marketplace.agents.creator_monetization.tier_recommender import CreatorProfile
 
     profile = CreatorProfile(creator_id="creator_1", subscriber_count=500)
     recommendations = await agent.recommend_tiers(profile)

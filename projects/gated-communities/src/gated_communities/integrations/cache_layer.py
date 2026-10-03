@@ -1,11 +1,11 @@
 """Redis caching layer for performance optimization."""
+
 from __future__ import annotations
 
 import json
 import logging
-import pickle
-from typing import Any
 from functools import wraps
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class CacheLayer:
         """Establish Redis connection."""
         try:
             import redis.asyncio as aioredis
+
             self._redis = aioredis.from_url(
                 self.redis_url,
                 encoding="utf-8",
@@ -91,6 +92,7 @@ class CacheLayer:
 
 def cached(ttl: int = 300, key_prefix: str = ""):
     """Decorator for caching function results."""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -109,7 +111,9 @@ def cached(ttl: int = 300, key_prefix: str = ""):
             await cache.set(cache_key, result, ttl)
 
             return result
+
         return wrapper
+
     return decorator
 
 

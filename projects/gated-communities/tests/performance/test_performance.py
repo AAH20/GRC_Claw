@@ -1,4 +1,5 @@
 """Performance tests using pytest-benchmark."""
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient

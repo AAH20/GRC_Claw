@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.fraud_detection import (AccountAnalyzerAgent,
-                                                    AnomalyDetectorAgent,
-                                                    PatternDetectorAgent,
-                                                    RiskScorerAgent,
-                                                    TransactionMonitorAgent)
+from ugc_marketplace.agents.fraud_detection import (
+    AccountAnalyzerAgent,
+    AnomalyDetectorAgent,
+    PatternDetectorAgent,
+    RiskScorerAgent,
+    TransactionMonitorAgent,
+)
 
 
 @pytest.mark.asyncio

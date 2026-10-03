@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.community_curation import (ContentRankerAgent,
-                                                       CurationExplainerAgent,
-                                                       QualityFilterAgent,
-                                                       TopicClusterAgent,
-                                                       TrendSurferAgent)
+from ugc_marketplace.agents.community_curation import (
+    ContentRankerAgent,
+    CurationExplainerAgent,
+    QualityFilterAgent,
+    TopicClusterAgent,
+    TrendSurferAgent,
+)
 
 
 @pytest.mark.asyncio

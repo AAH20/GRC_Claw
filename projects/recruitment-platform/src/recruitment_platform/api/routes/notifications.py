@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
 from recruitment_platform.notifications.notification_service import (
-    NotificationChannel,
-    NotificationPriority,
-    notification_service,
-)
+    NotificationChannel, NotificationPriority, notification_service)
 
 router = APIRouter()
 
@@ -22,7 +19,7 @@ async def send_notification(
     subject: str,
     message: str,
     priority: NotificationPriority = NotificationPriority.NORMAL,
-    data: Optional[dict[str, Any]] = None,
+    data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Send a notification across multiple channels."""
     try:
@@ -44,7 +41,7 @@ async def send_email(
     to: str,
     subject: str,
     body: str,
-    html_body: Optional[str] = None,
+    html_body: str | None = None,
 ) -> dict[str, Any]:
     """Send an email notification."""
     result = await notification_service.send_email(to, subject, body, html_body)
@@ -66,7 +63,7 @@ async def send_push(
     user_id: str,
     title: str,
     body: str,
-    data: Optional[dict[str, Any]] = None,
+    data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Send a push notification."""
     result = await notification_service.send_push(user_id, title, body, data)

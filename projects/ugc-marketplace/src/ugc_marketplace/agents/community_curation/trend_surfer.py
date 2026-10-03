@@ -8,6 +8,7 @@ from typing import Any
 import structlog
 
 from ugc_marketplace.agents.community_curation.base import BaseCurationAgent
+from ugc_marketplace.agents.community_curation.types import ContentItem, Trend, create_deep_agent
 
 logger = structlog.get_logger(__name__)
 

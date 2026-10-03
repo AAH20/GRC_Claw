@@ -8,8 +8,7 @@ from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 
-from ugc_marketplace.models.schemas import (TrustLevel, TrustScore,
-                                            TrustScoreCreate)
+from ugc_marketplace.models.schemas import TrustLevel, TrustScore, TrustScoreCreate
 
 logger = logging.getLogger(__name__)
 

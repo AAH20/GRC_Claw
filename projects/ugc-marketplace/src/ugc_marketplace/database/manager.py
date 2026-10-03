@@ -10,8 +10,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from ugc_marketplace.config import get_settings
 from ugc_marketplace.config.logging_config import get_logger

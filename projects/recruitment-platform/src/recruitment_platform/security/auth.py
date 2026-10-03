@@ -8,7 +8,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -48,9 +48,7 @@ def create_refresh_token(data: dict[str, Any]) -> str:
     settings = get_settings()
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(days=7)
-    to_encode.update(
-        {"exp": expire, "iat": datetime.now(UTC), "type": "refresh"}
-    )
+    to_encode.update({"exp": expire, "iat": datetime.now(UTC), "type": "refresh"})
     return jwt.encode(to_encode, settings.secret_key, algorithm="HS256")
 
 

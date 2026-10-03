@@ -167,7 +167,9 @@ class RedisCache(CacheBackend):
             logger.warning("Redis clear failed: %s", e)
 
 
-def generate_cache_key(method: str, url: str, params: dict[str, Any] | None = None) -> str:
+def generate_cache_key(
+    method: str, url: str, params: dict[str, Any] | None = None
+) -> str:
     """Generate a deterministic cache key from request parameters.
 
     Args:
@@ -202,7 +204,9 @@ class ResponseCache:
         self._backend = backend or InMemoryCache(default_ttl)
         self._default_ttl = default_ttl
 
-    def get(self, method: str, url: str, params: dict[str, Any] | None = None) -> Any | None:
+    def get(
+        self, method: str, url: str, params: dict[str, Any] | None = None
+    ) -> Any | None:
         """Get a cached response.
 
         Args:
@@ -236,7 +240,9 @@ class ResponseCache:
         key = generate_cache_key(method, url, params)
         self._backend.set(key, data, ttl or self._default_ttl)
 
-    def invalidate(self, method: str, url: str, params: dict[str, Any] | None = None) -> None:
+    def invalidate(
+        self, method: str, url: str, params: dict[str, Any] | None = None
+    ) -> None:
         """Invalidate a cached response.
 
         Args:

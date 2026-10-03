@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.content_moderation import (AppealHandlerAgent,
-                                                       ImageModerationAgent,
-                                                       PolicyEnforcementAgent,
-                                                       TextModerationAgent,
-                                                       VideoModerationAgent)
+from ugc_marketplace.agents.content_moderation import (
+    AppealHandlerAgent,
+    ImageModerationAgent,
+    PolicyEnforcementAgent,
+    TextModerationAgent,
+    VideoModerationAgent,
+)
 from ugc_marketplace.models.schemas import ContentType
 
 

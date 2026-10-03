@@ -1,4 +1,5 @@
 """OpenTelemetry APM integration."""
+
 from __future__ import annotations
 
 import logging
@@ -22,11 +23,13 @@ def init_tracing(app: Any) -> None:
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-        resource = Resource.create({
-            "service.name": "gated-communities",
-            "service.version": os.getenv("APP_VERSION", "1.0.0"),
-            "deployment.environment": os.getenv("ENVIRONMENT", "production"),
-        })
+        resource = Resource.create(
+            {
+                "service.name": "gated-communities",
+                "service.version": os.getenv("APP_VERSION", "1.0.0"),
+                "deployment.environment": os.getenv("ENVIRONMENT", "production"),
+            }
+        )
 
         provider = TracerProvider(resource=resource)
         processor = BatchSpanProcessor(OTLPSpanExporter())
@@ -45,6 +48,7 @@ def get_tracer(name: str) -> Any:
     """Get a tracer instance."""
     try:
         from opentelemetry import trace
+
         return trace.get_tracer(name)
     except ImportError:
         return None

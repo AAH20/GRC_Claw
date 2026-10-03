@@ -11,8 +11,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
 from ugc_marketplace.config import get_settings
-from ugc_marketplace.models.schemas import (ContentType, ModerationAction,
-                                            ModerationResult)
+from ugc_marketplace.models.schemas import ContentType, ModerationAction, ModerationResult
 
 logger = structlog.get_logger(__name__)
 

@@ -36,7 +36,9 @@ class ConnectionManager:
                 del self.active_connections[room]
         logger.info(f"WebSocket disconnected from room: {room}")
 
-    async def send_personal_message(self, message: dict[str, Any], websocket: WebSocket) -> None:
+    async def send_personal_message(
+        self, message: dict[str, Any], websocket: WebSocket
+    ) -> None:
         """Send message to a specific connection."""
         await websocket.send_text(json.dumps(message))
 

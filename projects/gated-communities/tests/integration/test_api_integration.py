@@ -1,4 +1,5 @@
 """Integration tests for API endpoints."""
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
@@ -27,7 +28,13 @@ class TestTiersIntegration:
     def test_create_tier(self, client: TestClient) -> None:
         response = client.post(
             "/api/v1/tiers",
-            json={"name": "Gold", "level": "gold", "description": "Gold tier", "price": 9.99, "benefits": ["priority_support"]},
+            json={
+                "name": "Gold",
+                "level": "gold",
+                "description": "Gold tier",
+                "price": 9.99,
+                "benefits": ["priority_support"],
+            },
         )
         assert response.status_code == 201
         data = response.json()
@@ -44,7 +51,12 @@ class TestModerationIntegration:
     def test_create_moderation_item(self, client: TestClient) -> None:
         response = client.post(
             "/api/v1/moderation/queue",
-            json={"content": "Test content", "content_type": "text", "author_id": "user123", "community_id": "community456"},
+            json={
+                "content": "Test content",
+                "content_type": "text",
+                "author_id": "user123",
+                "community_id": "community456",
+            },
         )
         assert response.status_code == 201
         data = response.json()
@@ -92,7 +104,11 @@ class TestBulkOperationsIntegration:
     def test_bulk_member_update(self, client: TestClient) -> None:
         response = client.post(
             "/api/v1/bulk/members",
-            json={"member_ids": ["1", "2", "3"], "action": "update_role", "value": "moderator"},
+            json={
+                "member_ids": ["1", "2", "3"],
+                "action": "update_role",
+                "value": "moderator",
+            },
         )
         assert response.status_code == 200
         data = response.json()
@@ -104,7 +120,13 @@ class TestAuditIntegration:
     def test_create_audit_log(self, client: TestClient) -> None:
         response = client.post(
             "/api/v1/audit",
-            json={"action": "member_created", "user_id": "user123", "resource_type": "member", "resource_id": "member456", "details": {"role": "admin"}},
+            json={
+                "action": "member_created",
+                "user_id": "user123",
+                "resource_type": "member",
+                "resource_id": "member456",
+                "details": {"role": "admin"},
+            },
         )
         assert response.status_code == 201
         data = response.json()

@@ -1,11 +1,12 @@
 """Custom Prometheus metrics for Gated Communities."""
+
 from __future__ import annotations
 
-import time
 import logging
+import time
 from typing import Any
 
-from prometheus_client import Counter, Histogram, Gauge, Info
+from prometheus_client import Counter, Gauge, Histogram, Info
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,6 @@ class MetricsMiddleware:
         await self.app(scope, receive, send_wrapper)
 
         duration = time.time() - start_time
-        http_request_duration_seconds.labels(
-            method=method, endpoint=path
-        ).observe(duration)
+        http_request_duration_seconds.labels(method=method, endpoint=path).observe(
+            duration
+        )

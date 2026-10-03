@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 T = TypeVar("T")
 
 
-class BaseSchema(BaseModel):
+class BaseSchema(BaseModel[T]):
     """Base schema with common configuration."""
 
     model_config = {"from_attributes": True}
@@ -25,7 +27,7 @@ class HealthResponse(BaseSchema):
     timestamp: datetime | None = None
 
 
-class AgentResponse(BaseSchema, Generic[T]):
+class AgentResponse(BaseSchema[T]):
     """Generic agent response wrapper."""
 
     success: bool = True

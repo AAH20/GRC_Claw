@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ class SearchService:
     async def search_jobs(
         self,
         query: str,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> dict[str, Any]:
@@ -31,7 +31,7 @@ class SearchService:
     async def search_candidates(
         self,
         query: str,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> dict[str, Any]:
@@ -62,7 +62,9 @@ class SearchService:
         """Autocomplete suggestions."""
         return []
 
-    async def index_entity(self, entity_type: str, entity_id: str, data: dict[str, Any]) -> bool:
+    async def index_entity(
+        self, entity_type: str, entity_id: str, data: dict[str, Any]
+    ) -> bool:
         """Index an entity for search."""
         logger.info(f"Indexing {entity_type}:{entity_id}")
         return True

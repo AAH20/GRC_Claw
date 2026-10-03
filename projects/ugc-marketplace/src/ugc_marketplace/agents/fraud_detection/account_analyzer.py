@@ -8,6 +8,7 @@ from typing import Any
 
 from deepagents import create_deep_agent
 
+from ugc_marketplace.agents.fraud_detection.types import AccountAnalysis
 from ugc_marketplace.config.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -86,8 +87,7 @@ class AccountAnalyzerAgent:
         except Exception as exc:
             self._error_count += 1
             logger.error("Account analysis failed", error=str(exc))
-            from ugc_marketplace.models.schemas import (AccountAnalysis,
-                                                        RiskLevel)
+            from ugc_marketplace.models.schemas import AccountAnalysis, RiskLevel
 
             return AccountAnalysis(
                 analysis_id=str(uuid.uuid4()),

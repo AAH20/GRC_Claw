@@ -20,7 +20,8 @@ async def analyze_cost(data: dict[str, Any]) -> dict[str, Any]:
         Cost analysis results.
     """
     try:
-        from recruitment_platform.agents.recruitment_analytics.cost_analyzer import CostAnalyzer
+        from recruitment_platform.agents.recruitment_analytics.cost_analyzer import \
+            CostAnalyzer
 
         agent = CostAnalyzer()
         result = await agent.process(data)
@@ -39,7 +40,8 @@ async def analyze_funnel(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Funnel analysis results.
     """
-    from recruitment_platform.agents.recruitment_analytics.funnel_analyzer import FunnelAnalyzer
+    from recruitment_platform.agents.recruitment_analytics.funnel_analyzer import \
+        FunnelAnalyzer
 
     agent = FunnelAnalyzer()
     result = await agent.process(data)
@@ -56,9 +58,8 @@ async def diversity_metrics(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Diversity metrics.
     """
-    from recruitment_platform.agents.recruitment_analytics.diversity_analyzer import (
-        DiversityAnalyzer,
-    )
+    from recruitment_platform.agents.recruitment_analytics.diversity_analyzer import \
+        DiversityAnalyzer
 
     agent = DiversityAnalyzer()
     result = await agent.process(data)
@@ -75,7 +76,8 @@ async def predict_hiring(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Predictive metrics.
     """
-    from recruitment_platform.agents.recruitment_analytics.predictive_hiring import PredictiveHiring
+    from recruitment_platform.agents.recruitment_analytics.predictive_hiring import \
+        PredictiveHiring
 
     agent = PredictiveHiring()
     result = await agent.process(data)
@@ -92,7 +94,8 @@ async def source_effectiveness(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Source effectiveness metrics.
     """
-    from recruitment_platform.agents.recruitment_analytics.source_tracker import SourceTracker
+    from recruitment_platform.agents.recruitment_analytics.source_tracker import \
+        SourceTracker
 
     agent = SourceTracker()
     result = await agent.process(data)

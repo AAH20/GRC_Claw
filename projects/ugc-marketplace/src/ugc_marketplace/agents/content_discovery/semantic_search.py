@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 import structlog
 
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
+from ugc_marketplace.agents.content_discovery.types import SearchRequest, SearchResponse
 
 if TYPE_CHECKING:
     from ugc_marketplace.models.schemas import SearchRequest, SearchResponse

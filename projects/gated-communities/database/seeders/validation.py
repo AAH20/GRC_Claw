@@ -8,15 +8,15 @@ Validates:
 4. Data consistency checks (foreign key relationships)
 5. Bulk insert optimization (COPY vs INSERT)
 """
+
 from __future__ import annotations
 
+import json
 import sys
 import time
-import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
-from datetime import UTC, datetime
 
 # Ensure src/ is on the path
 _src = str(Path(__file__).resolve().parents[3] / "src")
@@ -24,55 +24,146 @@ if _src not in sys.path:
     sys.path.insert(0, _src)
 
 from database.seeders.factories import (
-    TierFactory, TierEvaluationFactory, UpgradeRequestFactory, AccessPolicyFactory,
-    BenefitFactory, TierAnalyticsFactory, GovernancePolicyFactory, RuleFactory,
-    RuleEnforcementResultFactory, DisputeFactory, DisputeResolutionFactory,
-    GovernanceActionFactory, GovernanceHealthScoreFactory, GovernanceAnalyticsFactory,
-    GovernanceSummaryFactory, EscalationFactory, ResolutionFactory, SLAFactory,
-    SLABreachFactory, PriorityFactory, PriorityAssessmentFactory, EscalationAnalysisFactory,
-    TrendReportFactory, PermissionFactory, RoleFactory, AccessRequestFactory,
-    AccessResultFactory, AccessAuditFactory, AccessRecommendationFactory,
-    ReputationScoreFactory, BadgeFactory, TrustTierFactory, ReputationHistoryFactory,
-    ReputationExplanationFactory, CompliancePolicyFactory, ViolationFactory,
-    AuditReportFactory, ComplianceScoreFactory, ComplianceReportFactory,
-    RemediationActionFactory, IdentityDataFactory, DocumentDataFactory,
-    VerificationRequestFactory, VerificationResultFactory, TrustScoreFactory,
-    FraudReportFactory, DocumentVerificationResultFactory, VerificationExplanationFactory,
-    ModerationItemFactory, QueueFactory, PriorityScoreFactory, ReviewDecisionFactory,
-    ModerationEscalationFactory, QueueMetricsFactory, ModerationAnalyticsFactory,
-    TrendFactory, ModeratorPerformanceFactory, PolicyEffectivenessFactory,
-    ModerationPredictionFactory, AnalyticsSummaryFactory, EngagementMetricsFactory,
-    ToxicityReportFactory, GrowthAnalysisFactory, ChurnPredictionFactory,
-    HealthScoreFactory, HealthExplanationFactory,
+    AccessAuditFactory,
+    AccessPolicyFactory,
+    AccessRecommendationFactory,
+    AccessRequestFactory,
+    AccessResultFactory,
+    AnalyticsSummaryFactory,
+    AuditReportFactory,
+    BadgeFactory,
+    BenefitFactory,
+    ChurnPredictionFactory,
+    CompliancePolicyFactory,
+    ComplianceReportFactory,
+    ComplianceScoreFactory,
+    DisputeFactory,
+    DisputeResolutionFactory,
+    DocumentDataFactory,
+    DocumentVerificationResultFactory,
+    EngagementMetricsFactory,
+    EscalationAnalysisFactory,
+    EscalationFactory,
+    FraudReportFactory,
+    GovernanceActionFactory,
+    GovernanceAnalyticsFactory,
+    GovernanceHealthScoreFactory,
+    GovernancePolicyFactory,
+    GovernanceSummaryFactory,
+    GrowthAnalysisFactory,
+    HealthExplanationFactory,
+    HealthScoreFactory,
+    IdentityDataFactory,
+    ModerationAnalyticsFactory,
+    ModerationEscalationFactory,
+    ModerationItemFactory,
+    ModerationPredictionFactory,
+    ModeratorPerformanceFactory,
+    PermissionFactory,
+    PolicyEffectivenessFactory,
+    PriorityAssessmentFactory,
+    PriorityFactory,
+    PriorityScoreFactory,
+    QueueFactory,
+    QueueMetricsFactory,
+    RemediationActionFactory,
+    ReputationExplanationFactory,
+    ReputationHistoryFactory,
+    ReputationScoreFactory,
+    ResolutionFactory,
+    ReviewDecisionFactory,
+    RoleFactory,
+    RuleEnforcementResultFactory,
+    RuleFactory,
+    SLABreachFactory,
+    SLAFactory,
+    TierAnalyticsFactory,
+    TierEvaluationFactory,
+    TierFactory,
+    ToxicityReportFactory,
+    TrendFactory,
+    TrendReportFactory,
+    TrustScoreFactory,
+    TrustTierFactory,
+    UpgradeRequestFactory,
+    VerificationExplanationFactory,
+    VerificationRequestFactory,
+    VerificationResultFactory,
+    ViolationFactory,
 )
 from database.seeders.seeders import seed_all
-
 
 # ===========================================================================
 # 1. Factory Validation
 # ===========================================================================
 
 ALL_FACTORIES = [
-    TierFactory, TierEvaluationFactory, UpgradeRequestFactory, AccessPolicyFactory,
-    BenefitFactory, TierAnalyticsFactory, GovernancePolicyFactory, RuleFactory,
-    RuleEnforcementResultFactory, DisputeFactory, DisputeResolutionFactory,
-    GovernanceActionFactory, GovernanceHealthScoreFactory, GovernanceAnalyticsFactory,
-    GovernanceSummaryFactory, EscalationFactory, ResolutionFactory, SLAFactory,
-    SLABreachFactory, PriorityFactory, PriorityAssessmentFactory, EscalationAnalysisFactory,
-    TrendReportFactory, PermissionFactory, RoleFactory, AccessRequestFactory,
-    AccessResultFactory, AccessAuditFactory, AccessRecommendationFactory,
-    ReputationScoreFactory, BadgeFactory, TrustTierFactory, ReputationHistoryFactory,
-    ReputationExplanationFactory, CompliancePolicyFactory, ViolationFactory,
-    AuditReportFactory, ComplianceScoreFactory, ComplianceReportFactory,
-    RemediationActionFactory, IdentityDataFactory, DocumentDataFactory,
-    VerificationRequestFactory, VerificationResultFactory, TrustScoreFactory,
-    FraudReportFactory, DocumentVerificationResultFactory, VerificationExplanationFactory,
-    ModerationItemFactory, QueueFactory, PriorityScoreFactory, ReviewDecisionFactory,
-    ModerationEscalationFactory, QueueMetricsFactory, ModerationAnalyticsFactory,
-    TrendFactory, ModeratorPerformanceFactory, PolicyEffectivenessFactory,
-    ModerationPredictionFactory, AnalyticsSummaryFactory, EngagementMetricsFactory,
-    ToxicityReportFactory, GrowthAnalysisFactory, ChurnPredictionFactory,
-    HealthScoreFactory, HealthExplanationFactory,
+    TierFactory,
+    TierEvaluationFactory,
+    UpgradeRequestFactory,
+    AccessPolicyFactory,
+    BenefitFactory,
+    TierAnalyticsFactory,
+    GovernancePolicyFactory,
+    RuleFactory,
+    RuleEnforcementResultFactory,
+    DisputeFactory,
+    DisputeResolutionFactory,
+    GovernanceActionFactory,
+    GovernanceHealthScoreFactory,
+    GovernanceAnalyticsFactory,
+    GovernanceSummaryFactory,
+    EscalationFactory,
+    ResolutionFactory,
+    SLAFactory,
+    SLABreachFactory,
+    PriorityFactory,
+    PriorityAssessmentFactory,
+    EscalationAnalysisFactory,
+    TrendReportFactory,
+    PermissionFactory,
+    RoleFactory,
+    AccessRequestFactory,
+    AccessResultFactory,
+    AccessAuditFactory,
+    AccessRecommendationFactory,
+    ReputationScoreFactory,
+    BadgeFactory,
+    TrustTierFactory,
+    ReputationHistoryFactory,
+    ReputationExplanationFactory,
+    CompliancePolicyFactory,
+    ViolationFactory,
+    AuditReportFactory,
+    ComplianceScoreFactory,
+    ComplianceReportFactory,
+    RemediationActionFactory,
+    IdentityDataFactory,
+    DocumentDataFactory,
+    VerificationRequestFactory,
+    VerificationResultFactory,
+    TrustScoreFactory,
+    FraudReportFactory,
+    DocumentVerificationResultFactory,
+    VerificationExplanationFactory,
+    ModerationItemFactory,
+    QueueFactory,
+    PriorityScoreFactory,
+    ReviewDecisionFactory,
+    ModerationEscalationFactory,
+    QueueMetricsFactory,
+    ModerationAnalyticsFactory,
+    TrendFactory,
+    ModeratorPerformanceFactory,
+    PolicyEffectivenessFactory,
+    ModerationPredictionFactory,
+    AnalyticsSummaryFactory,
+    EngagementMetricsFactory,
+    ToxicityReportFactory,
+    GrowthAnalysisFactory,
+    ChurnPredictionFactory,
+    HealthScoreFactory,
+    HealthExplanationFactory,
 ]
 
 
@@ -83,20 +174,23 @@ def validate_factories() -> dict[str, Any]:
         try:
             obj = factory()
             assert obj is not None
-            assert hasattr(obj, 'model_dump') or hasattr(obj, 'dict')
+            assert hasattr(obj, "model_dump") or hasattr(obj, "dict")
             results["passed"] += 1
         except Exception as e:
             results["failed"] += 1
-            results["errors"].append({
-                "factory": factory.__name__,
-                "error": str(e),
-            })
+            results["errors"].append(
+                {
+                    "factory": factory.__name__,
+                    "error": str(e),
+                }
+            )
     return results
 
 
 # ===========================================================================
 # 2. Edge Case Data
 # ===========================================================================
+
 
 def generate_edge_cases() -> dict[str, Any]:
     """Generate edge case data: null values, boundary values, unicode."""
@@ -123,7 +217,10 @@ def generate_edge_cases() -> dict[str, Any]:
             max_members=1,  # min
             monthly_fee=0.0,  # min
         )
-        edge_cases["boundary_min"] = {"status": "passed", "example": f"name={tier.name}, max_members={tier.max_members}"}
+        edge_cases["boundary_min"] = {
+            "status": "passed",
+            "example": f"name={tier.name}, max_members={tier.max_members}",
+        }
     except Exception as e:
         edge_cases["boundary_min"] = {"status": "failed", "error": str(e)}
 
@@ -133,7 +230,10 @@ def generate_edge_cases() -> dict[str, Any]:
             max_members=10000,  # max
             monthly_fee=500.0,  # max
         )
-        edge_cases["boundary_max"] = {"status": "passed", "example": f"name_len={len(tier.name)}, max_members={tier.max_members}"}
+        edge_cases["boundary_max"] = {
+            "status": "passed",
+            "example": f"name_len={len(tier.name)}, max_members={tier.max_members}",
+        }
     except Exception as e:
         edge_cases["boundary_max"] = {"status": "failed", "error": str(e)}
 
@@ -171,7 +271,10 @@ def generate_edge_cases() -> dict[str, Any]:
         tier = TierFactory(
             name="T" * 1000,  # exceeds max_length
         )
-        edge_cases["long_strings"] = {"status": "passed", "example": f"name_len={len(tier.name)}"}
+        edge_cases["long_strings"] = {
+            "status": "passed",
+            "example": f"name_len={len(tier.name)}",
+        }
     except Exception as e:
         edge_cases["long_strings"] = {"status": "expected_failure", "error": str(e)}
 
@@ -180,7 +283,10 @@ def generate_edge_cases() -> dict[str, Any]:
         tier = TierFactory(
             monthly_fee=-1.0,
         )
-        edge_cases["negative_values"] = {"status": "passed", "example": f"fee={tier.monthly_fee}"}
+        edge_cases["negative_values"] = {
+            "status": "passed",
+            "example": f"fee={tier.monthly_fee}",
+        }
     except Exception as e:
         edge_cases["negative_values"] = {"status": "expected_failure", "error": str(e)}
 
@@ -190,6 +296,7 @@ def generate_edge_cases() -> dict[str, Any]:
 # ===========================================================================
 # 3. Performance Benchmarks
 # ===========================================================================
+
 
 def benchmark_seeders() -> dict[str, Any]:
     """Benchmark seeder execution time."""
@@ -222,7 +329,9 @@ def benchmark_seeders() -> dict[str, Any]:
         benchmarks[name] = {
             "count": count,
             "elapsed_seconds": round(elapsed, 4),
-            "records_per_second": round(count / elapsed, 2) if elapsed > 0 else float("inf"),
+            "records_per_second": (
+                round(count / elapsed, 2) if elapsed > 0 else float("inf")
+            ),
         }
 
     # Benchmark seed_all
@@ -233,7 +342,9 @@ def benchmark_seeders() -> dict[str, Any]:
     benchmarks["seed_all"] = {
         "count": total_records,
         "elapsed_seconds": round(elapsed, 4),
-        "records_per_second": round(total_records / elapsed, 2) if elapsed > 0 else float("inf"),
+        "records_per_second": (
+            round(total_records / elapsed, 2) if elapsed > 0 else float("inf")
+        ),
     }
 
     return benchmarks
@@ -242,6 +353,7 @@ def benchmark_seeders() -> dict[str, Any]:
 # ===========================================================================
 # 4. Data Consistency Checks
 # ===========================================================================
+
 
 def check_data_consistency() -> dict[str, Any]:
     """Verify foreign key relationships and data consistency."""
@@ -261,7 +373,10 @@ def check_data_consistency() -> dict[str, Any]:
         verification = VerificationRequestFactory()
         assert verification.identity is not None
         assert verification.member_id is not None
-        checks["nested_models"] = {"status": "passed", "detail": "Nested models are consistent"}
+        checks["nested_models"] = {
+            "status": "passed",
+            "detail": "Nested models are consistent",
+        }
     except Exception as e:
         checks["nested_models"] = {"status": "failed", "error": str(e)}
 
@@ -270,7 +385,10 @@ def check_data_consistency() -> dict[str, Any]:
         access_result = AccessResultFactory()
         assert access_result.request is not None
         assert access_result.decision in ["allow", "deny", "conditional", "abstain"]
-        checks["subfactory_relationships"] = {"status": "passed", "detail": "SubFactory relationships work"}
+        checks["subfactory_relationships"] = {
+            "status": "passed",
+            "detail": "SubFactory relationships work",
+        }
     except Exception as e:
         checks["subfactory_relationships"] = {"status": "failed", "error": str(e)}
 
@@ -288,7 +406,10 @@ def check_data_consistency() -> dict[str, Any]:
         tier = TierFactory()
         assert tier.monthly_fee >= 0
         assert tier.max_members is None or tier.max_members >= 1
-        checks["numeric_ranges"] = {"status": "passed", "detail": "Numeric ranges are respected"}
+        checks["numeric_ranges"] = {
+            "status": "passed",
+            "detail": "Numeric ranges are respected",
+        }
     except Exception as e:
         checks["numeric_ranges"] = {"status": "failed", "error": str(e)}
 
@@ -305,35 +426,87 @@ def check_data_consistency() -> dict[str, Any]:
     try:
         data = seed_all()
         expected_keys = {
-            "tiers", "tier_evaluations", "upgrade_requests", "access_policies",
-            "benefits", "tier_analytics", "governance_policies", "rules",
-            "rule_enforcement_results", "disputes", "dispute_resolutions",
-            "governance_actions", "governance_health_scores", "governance_analytics",
-            "governance_summaries", "escalations", "resolutions", "slas",
-            "sla_breaches", "priorities", "priority_assessments",
-            "escalation_analyses", "trend_reports", "permissions", "roles",
-            "access_requests", "access_results", "access_audits",
-            "access_recommendations", "reputation_scores", "badges",
-            "trust_tiers", "reputation_history", "reputation_explanations",
-            "compliance_policies", "violations", "audit_reports",
-            "compliance_scores", "compliance_reports", "remediation_actions",
-            "identity_data", "document_data", "verification_requests",
-            "verification_results", "trust_scores", "fraud_reports",
-            "document_verification_results", "verification_explanations",
-            "moderation_items", "queues", "priority_scores", "review_decisions",
-            "moderation_escalations", "queue_metrics", "moderation_analytics",
-            "trends", "moderator_performance", "policy_effectiveness",
-            "moderation_predictions", "analytics_summaries", "engagement_metrics",
-            "toxicity_reports", "growth_analyses", "churn_predictions",
-            "health_scores", "health_explanations",
+            "tiers",
+            "tier_evaluations",
+            "upgrade_requests",
+            "access_policies",
+            "benefits",
+            "tier_analytics",
+            "governance_policies",
+            "rules",
+            "rule_enforcement_results",
+            "disputes",
+            "dispute_resolutions",
+            "governance_actions",
+            "governance_health_scores",
+            "governance_analytics",
+            "governance_summaries",
+            "escalations",
+            "resolutions",
+            "slas",
+            "sla_breaches",
+            "priorities",
+            "priority_assessments",
+            "escalation_analyses",
+            "trend_reports",
+            "permissions",
+            "roles",
+            "access_requests",
+            "access_results",
+            "access_audits",
+            "access_recommendations",
+            "reputation_scores",
+            "badges",
+            "trust_tiers",
+            "reputation_history",
+            "reputation_explanations",
+            "compliance_policies",
+            "violations",
+            "audit_reports",
+            "compliance_scores",
+            "compliance_reports",
+            "remediation_actions",
+            "identity_data",
+            "document_data",
+            "verification_requests",
+            "verification_results",
+            "trust_scores",
+            "fraud_reports",
+            "document_verification_results",
+            "verification_explanations",
+            "moderation_items",
+            "queues",
+            "priority_scores",
+            "review_decisions",
+            "moderation_escalations",
+            "queue_metrics",
+            "moderation_analytics",
+            "trends",
+            "moderator_performance",
+            "policy_effectiveness",
+            "moderation_predictions",
+            "analytics_summaries",
+            "engagement_metrics",
+            "toxicity_reports",
+            "growth_analyses",
+            "churn_predictions",
+            "health_scores",
+            "health_explanations",
         }
         actual_keys = set(data.keys())
         missing = expected_keys - actual_keys
         extra = actual_keys - expected_keys
         if not missing and not extra:
-            checks["seed_all_completeness"] = {"status": "passed", "detail": f"All {len(expected_keys)} keys present"}
+            checks["seed_all_completeness"] = {
+                "status": "passed",
+                "detail": f"All {len(expected_keys)} keys present",
+            }
         else:
-            checks["seed_all_completeness"] = {"status": "warning", "missing": list(missing), "extra": list(extra)}
+            checks["seed_all_completeness"] = {
+                "status": "warning",
+                "missing": list(missing),
+                "extra": list(extra),
+            }
     except Exception as e:
         checks["seed_all_completeness"] = {"status": "failed", "error": str(e)}
 
@@ -343,6 +516,7 @@ def check_data_consistency() -> dict[str, Any]:
 # ===========================================================================
 # 5. Bulk Insert Optimization (COPY vs INSERT)
 # ===========================================================================
+
 
 def benchmark_bulk_insert() -> dict[str, Any]:
     """Benchmark COPY vs INSERT for bulk data loading."""
@@ -355,53 +529,65 @@ def benchmark_bulk_insert() -> dict[str, Any]:
     start = time.perf_counter()
     insert_data = []
     for tier in tiers:
-        insert_data.append({
-            "id": str(tier.id),
-            "name": tier.name,
-            "level": tier.level,
-            "status": tier.status,
-            "description": tier.description,
-            "requirements": json.dumps(tier.requirements),
-            "benefits": json.dumps(tier.benefits),
-            "max_members": tier.max_members,
-            "monthly_fee": tier.monthly_fee,
-            "created_at": tier.created_at.isoformat(),
-            "updated_at": tier.updated_at.isoformat(),
-            "metadata": json.dumps(tier.metadata),
-        })
+        insert_data.append(
+            {
+                "id": str(tier.id),
+                "name": tier.name,
+                "level": tier.level,
+                "status": tier.status,
+                "description": tier.description,
+                "requirements": json.dumps(tier.requirements),
+                "benefits": json.dumps(tier.benefits),
+                "max_members": tier.max_members,
+                "monthly_fee": tier.monthly_fee,
+                "created_at": tier.created_at.isoformat(),
+                "updated_at": tier.updated_at.isoformat(),
+                "metadata": json.dumps(tier.metadata),
+            }
+        )
     insert_time = time.perf_counter() - start
 
     # Simulate COPY (bulk)
     start = time.perf_counter()
     copy_data = []
     for tier in tiers:
-        copy_data.append((
-            str(tier.id),
-            tier.name,
-            tier.level,
-            tier.status,
-            tier.description or "",
-            json.dumps(tier.requirements),
-            json.dumps(tier.benefits),
-            tier.max_members or 0,
-            tier.monthly_fee,
-            tier.created_at.isoformat(),
-            tier.updated_at.isoformat(),
-            json.dumps(tier.metadata),
-        ))
+        copy_data.append(
+            (
+                str(tier.id),
+                tier.name,
+                tier.level,
+                tier.status,
+                tier.description or "",
+                json.dumps(tier.requirements),
+                json.dumps(tier.benefits),
+                tier.max_members or 0,
+                tier.monthly_fee,
+                tier.created_at.isoformat(),
+                tier.updated_at.isoformat(),
+                json.dumps(tier.metadata),
+            )
+        )
     copy_time = time.perf_counter() - start
 
     results["insert_simulation"] = {
         "record_count": len(insert_data),
         "elapsed_seconds": round(insert_time, 4),
-        "records_per_second": round(len(insert_data) / insert_time, 2) if insert_time > 0 else float("inf"),
+        "records_per_second": (
+            round(len(insert_data) / insert_time, 2)
+            if insert_time > 0
+            else float("inf")
+        ),
     }
     results["copy_simulation"] = {
         "record_count": len(copy_data),
         "elapsed_seconds": round(copy_time, 4),
-        "records_per_second": round(len(copy_data) / copy_time, 2) if copy_time > 0 else float("inf"),
+        "records_per_second": (
+            round(len(copy_data) / copy_time, 2) if copy_time > 0 else float("inf")
+        ),
     }
-    results["speedup"] = round(insert_time / copy_time, 2) if copy_time > 0 else float("inf")
+    results["speedup"] = (
+        round(insert_time / copy_time, 2) if copy_time > 0 else float("inf")
+    )
 
     return results
 
@@ -409,6 +595,7 @@ def benchmark_bulk_insert() -> dict[str, Any]:
 # ===========================================================================
 # Main validation runner
 # ===========================================================================
+
 
 def run_all_validations() -> dict[str, Any]:
     """Run all validations and return comprehensive results."""

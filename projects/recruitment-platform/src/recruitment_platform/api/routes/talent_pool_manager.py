@@ -20,9 +20,8 @@ async def source_candidates(data: dict[str, Any]) -> dict[str, Any]:
         Sourced candidates with match scores.
     """
     try:
-        from recruitment_platform.agents.talent_pool_manager.candidate_sourcer import (
-            CandidateSourcer,
-        )
+        from recruitment_platform.agents.talent_pool_manager.candidate_sourcer import \
+            CandidateSourcer
 
         agent = CandidateSourcer()
         result = await agent.process(data)
@@ -41,7 +40,8 @@ async def analyze_pool(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Pool analysis results.
     """
-    from recruitment_platform.agents.talent_pool_manager.pool_analyzer import PoolAnalyzer
+    from recruitment_platform.agents.talent_pool_manager.pool_analyzer import \
+        PoolAnalyzer
 
     agent = PoolAnalyzer()
     result = await agent.process(data)
@@ -58,7 +58,8 @@ async def recommend_talent(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Ranked recommendations.
     """
-    from recruitment_platform.agents.talent_pool_manager.talent_recommender import TalentRecommender
+    from recruitment_platform.agents.talent_pool_manager.talent_recommender import \
+        TalentRecommender
 
     agent = TalentRecommender()
     result = await agent.process(data)
@@ -75,7 +76,8 @@ async def track_engagement(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Engagement metrics.
     """
-    from recruitment_platform.agents.talent_pool_manager.engagement_tracker import EngagementTracker
+    from recruitment_platform.agents.talent_pool_manager.engagement_tracker import \
+        EngagementTracker
 
     agent = EngagementTracker()
     result = await agent.process(data)

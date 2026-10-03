@@ -8,6 +8,7 @@ from typing import Any
 
 from deepagents import create_deep_agent
 
+from ugc_marketplace.agents.fraud_detection.types import Anomaly, Pattern, RiskScore, Transaction
 from ugc_marketplace.config import get_settings
 from ugc_marketplace.config.logging_config import get_logger
 

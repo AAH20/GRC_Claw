@@ -140,7 +140,9 @@ class GatedCommunitiesClient:
             else None
         )
         self._async_rate_limiter = (
-            AsyncRateLimiter(requests_per_second=rate_limit_rps, burst_size=rate_limit_burst)
+            AsyncRateLimiter(
+                requests_per_second=rate_limit_rps, burst_size=rate_limit_burst
+            )
             if enable_rate_limiting
             else None
         )
@@ -911,9 +913,7 @@ class MembersResource:
         if status:
             params["status"] = status
 
-        data = self._client._get(
-            f"/communities/{community_id}/members", params=params
-        )
+        data = self._client._get(f"/communities/{community_id}/members", params=params)
         return PaginatedResponse[Member].model_validate(data)
 
     def get(self, community_id: str, member_id: str) -> Member:

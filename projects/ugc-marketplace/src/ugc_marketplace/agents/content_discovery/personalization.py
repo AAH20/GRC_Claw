@@ -10,8 +10,7 @@ import structlog
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
 
 if TYPE_CHECKING:
-    from ugc_marketplace.models.schemas import (RecommendationRequest,
-                                                RecommendationResponse)
+    from ugc_marketplace.models.schemas import RecommendationRequest, RecommendationResponse
 
 logger = structlog.get_logger(__name__)
 

@@ -5,15 +5,12 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-from recruitment_platform.security.auth import (
-    create_access_token,
-    verify_token,
-    verify_password,
-    get_password_hash,
-    sanitize_input,
-    generate_secure_id,
-    generate_api_key,
-)
+from recruitment_platform.security.auth import (create_access_token,
+                                                generate_api_key,
+                                                generate_secure_id,
+                                                get_password_hash,
+                                                sanitize_input,
+                                                verify_password, verify_token)
 
 
 class TestPasswordHashing:
@@ -48,6 +45,7 @@ class TestJWT:
     def test_token_expiration(self) -> None:
         """Test that expired tokens are rejected."""
         from datetime import timedelta
+
         data = {"sub": "user-123"}
         token = create_access_token(data, expires_delta=timedelta(seconds=-1))
         with pytest.raises(HTTPException):
@@ -59,7 +57,10 @@ class TestInputSanitization:
 
     def test_sanitize_html(self) -> None:
         """Test HTML escaping."""
-        assert sanitize_input("<script>alert('xss')</script>") == "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"
+        assert (
+            sanitize_input("<script>alert('xss')</script>")
+            == "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"
+        )
 
     def test_sanitize_null_bytes(self) -> None:
         """Test null byte removal."""

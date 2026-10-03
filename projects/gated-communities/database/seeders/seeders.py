@@ -390,6 +390,7 @@ def seed_queues(count: int = 5, **kwargs: Any) -> list[Any]:
 def seed_priority_scores(count: int = 50, **kwargs: Any) -> list[Any]:
     """Seed priority scores."""
     from .factories import PriorityScoreFactory
+
     return PriorityScoreFactory.create_batch(count, **kwargs)
 
 

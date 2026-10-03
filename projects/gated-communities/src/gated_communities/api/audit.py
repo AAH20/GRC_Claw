@@ -1,4 +1,5 @@
 """Audit log API."""
+
 from __future__ import annotations
 
 import logging
@@ -15,6 +16,7 @@ router = APIRouter()
 
 class AuditLogEntry(BaseModel):
     """Schema for audit log entry."""
+
     id: str
     action: str
     user_id: str
@@ -27,6 +29,7 @@ class AuditLogEntry(BaseModel):
 
 class AuditLogCreate(BaseModel):
     """Schema for creating audit log entry."""
+
     action: str
     user_id: str
     resource_type: str

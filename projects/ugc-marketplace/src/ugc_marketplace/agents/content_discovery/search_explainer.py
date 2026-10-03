@@ -8,6 +8,11 @@ from typing import Any
 import structlog
 
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
+from ugc_marketplace.agents.content_discovery.types import (
+    SearchExplanation,
+    SearchRequest,
+    SearchResponse,
+)
 
 logger = structlog.get_logger(__name__)
 

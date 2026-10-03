@@ -61,19 +61,14 @@ class ViolationDetectorAgent(BaseComplianceAgent[ViolationCreate, Violation]):
         """
         prompt = (
             "Analyze the following event for compliance violations against these policy rules:\n\n"
-
-Policy Rules:
-{chr(10).join(f"- {rule}" for rule in policy_rules)}
-
-Event:
-{event}
-
-Determine:
-1. Is this a violation? (yes/no)
-2. If yes, what severity? (low/medium/high/critical)
-3. What evidence supports this?
-4. Recommended actions
-"""
+            f"Policy Rules:\n{chr(10).join(f'- {rule}' for rule in policy_rules)}\n\n"
+            f"Event:\n{event}\n\n"
+            "Determine:\n"
+            "1. Is this a violation? (yes/no)\n"
+            "2. If yes, what severity? (low/medium/high/critical)\n"
+            "3. What evidence supports this?\n"
+            "4. Recommended actions\n"
+        )
         result = await self.agent.ainvoke(
             {"messages": [{"role": "user", "content": prompt}]}
         )

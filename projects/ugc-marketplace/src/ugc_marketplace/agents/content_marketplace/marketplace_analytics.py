@@ -8,9 +8,11 @@ from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 
-from ugc_marketplace.models.schemas import (DemandPrediction,
-                                            MarketplaceAnalytics,
-                                            MarketplaceInsight)
+from ugc_marketplace.models.schemas import (
+    DemandPrediction,
+    MarketplaceAnalytics,
+    MarketplaceInsight,
+)
 
 logger = logging.getLogger(__name__)
 

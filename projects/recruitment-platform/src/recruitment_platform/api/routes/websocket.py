@@ -17,6 +17,7 @@ async def websocket_endpoint(websocket: WebSocket, room: str = "general") -> Non
         while True:
             data = await websocket.receive_text()
             import json
+
             message = json.loads(data)
             if message.get("type") == "ping":
                 await manager.send_personal_message({"type": "pong"}, websocket)
@@ -27,5 +28,5 @@ async def websocket_endpoint(websocket: WebSocket, room: str = "general") -> Non
                 room = new_room
     except WebSocketDisconnect:
         manager.disconnect(websocket, room)
-    except Exception as e:
+    except Exception:
         manager.disconnect(websocket, room)

@@ -1,4 +1,5 @@
 """Sentry integration for error tracking."""
+
 from __future__ import annotations
 
 import logging
@@ -66,6 +67,7 @@ def capture_exception(exc: Exception, **context: Any) -> None:
     """Capture an exception and send to Sentry."""
     try:
         import sentry_sdk
+
         with sentry_sdk.push_scope() as scope:
             for key, value in context.items():
                 scope.set_extra(key, value)

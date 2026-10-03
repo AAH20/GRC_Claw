@@ -6,13 +6,13 @@ Tests cover:
 - Schema consistency with models
 - Individual migration validation
 """
+
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import create_engine, inspect, text
-from alembic.config import Config
 from alembic import command
-
+from alembic.config import Config
+from sqlalchemy import create_engine, inspect, text
 
 DATABASE_URL = "postgresql+psycopg2://user:password@localhost:5432/gated_communities"
 ALEMBIC_INI = "migrations/alembic.ini"
@@ -66,9 +66,16 @@ class TestDowngrade:
         inspector = inspect(engine)
         tables = inspector.get_table_names()
         expected_tables = [
-            "communities", "tiers", "members", "content",
-            "moderation_actions", "reputation_scores", "escalations",
-            "compliance_reports", "analytics_events", "audit_log",
+            "communities",
+            "tiers",
+            "members",
+            "content",
+            "moderation_actions",
+            "reputation_scores",
+            "escalations",
+            "compliance_reports",
+            "analytics_events",
+            "audit_log",
         ]
         for table in expected_tables:
             assert table not in tables, f"Table {table} should be dropped"
@@ -76,17 +83,27 @@ class TestDowngrade:
     def test_all_types_dropped(self, engine):
         """Test that all enum types are dropped after downgrade."""
         with engine.connect() as conn:
-            result = conn.execute(text(
-                "SELECT typname FROM pg_type WHERE typtype = 'e'"
-            ))
+            result = conn.execute(
+                text("SELECT typname FROM pg_type WHERE typtype = 'e'")
+            )
             types = {row[0] for row in result}
             expected_types = {
-                "community_visibility", "community_status", "tier_billing_period",
-                "member_role", "member_status", "content_type", "content_status",
-                "moderation_action_type", "moderation_action_status",
-                "escalation_priority", "escalation_status", "escalation_category",
-                "compliance_report_type", "compliance_report_status",
-                "analytics_event_type", "audit_action",
+                "community_visibility",
+                "community_status",
+                "tier_billing_period",
+                "member_role",
+                "member_status",
+                "content_type",
+                "content_status",
+                "moderation_action_type",
+                "moderation_action_status",
+                "escalation_priority",
+                "escalation_status",
+                "escalation_category",
+                "compliance_report_type",
+                "compliance_report_status",
+                "analytics_event_type",
+                "audit_action",
             }
             for t in expected_types:
                 assert t not in types, f"Type {t} should be dropped"
@@ -100,9 +117,22 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("communities")}
         expected = {
-            "id", "slug", "name", "description", "avatar_url", "banner_url",
-            "visibility", "status", "settings", "metadata", "member_count",
-            "content_count", "created_by", "created_at", "updated_at", "deleted_at",
+            "id",
+            "slug",
+            "name",
+            "description",
+            "avatar_url",
+            "banner_url",
+            "visibility",
+            "status",
+            "settings",
+            "metadata",
+            "member_count",
+            "content_count",
+            "created_by",
+            "created_at",
+            "updated_at",
+            "deleted_at",
         }
         assert expected.issubset(columns)
 
@@ -111,9 +141,22 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("tiers")}
         expected = {
-            "id", "community_id", "slug", "name", "description", "price_cents",
-            "currency", "billing_period", "is_public", "is_active", "sort_order",
-            "benefits", "metadata", "subscriber_count", "created_at", "updated_at",
+            "id",
+            "community_id",
+            "slug",
+            "name",
+            "description",
+            "price_cents",
+            "currency",
+            "billing_period",
+            "is_public",
+            "is_active",
+            "sort_order",
+            "benefits",
+            "metadata",
+            "subscriber_count",
+            "created_at",
+            "updated_at",
             "deleted_at",
         }
         assert expected.issubset(columns)
@@ -123,10 +166,26 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("members")}
         expected = {
-            "id", "community_id", "user_id", "tier_id", "role", "status",
-            "display_name", "bio", "avatar_url", "joined_at", "invited_at",
-            "banned_at", "banned_reason", "tier_expires_at", "last_active_at",
-            "notification_prefs", "metadata", "created_at", "updated_at", "deleted_at",
+            "id",
+            "community_id",
+            "user_id",
+            "tier_id",
+            "role",
+            "status",
+            "display_name",
+            "bio",
+            "avatar_url",
+            "joined_at",
+            "invited_at",
+            "banned_at",
+            "banned_reason",
+            "tier_expires_at",
+            "last_active_at",
+            "notification_prefs",
+            "metadata",
+            "created_at",
+            "updated_at",
+            "deleted_at",
         }
         assert expected.issubset(columns)
 
@@ -135,11 +194,29 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("content")}
         expected = {
-            "id", "community_id", "author_id", "parent_id", "content_type",
-            "status", "title", "body", "body_rendered", "media_urls", "tags",
-            "metadata", "like_count", "comment_count", "share_count", "view_count",
-            "is_pinned", "is_locked", "published_at", "edited_at", "created_at",
-            "updated_at", "deleted_at",
+            "id",
+            "community_id",
+            "author_id",
+            "parent_id",
+            "content_type",
+            "status",
+            "title",
+            "body",
+            "body_rendered",
+            "media_urls",
+            "tags",
+            "metadata",
+            "like_count",
+            "comment_count",
+            "share_count",
+            "view_count",
+            "is_pinned",
+            "is_locked",
+            "published_at",
+            "edited_at",
+            "created_at",
+            "updated_at",
+            "deleted_at",
         }
         assert expected.issubset(columns)
 
@@ -148,10 +225,23 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("moderation_actions")}
         expected = {
-            "id", "community_id", "target_member_id", "target_content_id",
-            "action_type", "status", "reason", "details", "duration_hours",
-            "expires_at", "applied_by", "applied_at", "reversed_by", "reversed_at",
-            "reversal_reason", "created_at", "updated_at",
+            "id",
+            "community_id",
+            "target_member_id",
+            "target_content_id",
+            "action_type",
+            "status",
+            "reason",
+            "details",
+            "duration_hours",
+            "expires_at",
+            "applied_by",
+            "applied_at",
+            "reversed_by",
+            "reversed_at",
+            "reversal_reason",
+            "created_at",
+            "updated_at",
         }
         assert expected.issubset(columns)
 
@@ -160,8 +250,16 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("reputation_scores")}
         expected = {
-            "id", "community_id", "member_id", "score", "total_earned",
-            "total_deducted", "breakdown", "last_event_at", "created_at", "updated_at",
+            "id",
+            "community_id",
+            "member_id",
+            "score",
+            "total_earned",
+            "total_deducted",
+            "breakdown",
+            "last_event_at",
+            "created_at",
+            "updated_at",
         }
         assert expected.issubset(columns)
 
@@ -170,10 +268,25 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("escalations")}
         expected = {
-            "id", "community_id", "reporter_id", "target_member_id", "target_content_id",
-            "category", "priority", "status", "subject", "description",
-            "resolution_notes", "assigned_to", "resolved_by", "resolved_at",
-            "due_at", "metadata", "created_at", "updated_at", "deleted_at",
+            "id",
+            "community_id",
+            "reporter_id",
+            "target_member_id",
+            "target_content_id",
+            "category",
+            "priority",
+            "status",
+            "subject",
+            "description",
+            "resolution_notes",
+            "assigned_to",
+            "resolved_by",
+            "resolved_at",
+            "due_at",
+            "metadata",
+            "created_at",
+            "updated_at",
+            "deleted_at",
         }
         assert expected.issubset(columns)
 
@@ -182,9 +295,22 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("compliance_reports")}
         expected = {
-            "id", "community_id", "reporter_id", "report_type", "status", "subject",
-            "description", "evidence_urls", "metadata", "reviewed_by", "reviewed_at",
-            "review_notes", "external_ref", "created_at", "updated_at", "deleted_at",
+            "id",
+            "community_id",
+            "reporter_id",
+            "report_type",
+            "status",
+            "subject",
+            "description",
+            "evidence_urls",
+            "metadata",
+            "reviewed_by",
+            "reviewed_at",
+            "review_notes",
+            "external_ref",
+            "created_at",
+            "updated_at",
+            "deleted_at",
         }
         assert expected.issubset(columns)
 
@@ -193,9 +319,20 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("audit_log")}
         expected = {
-            "id", "table_name", "record_id", "action", "old_data", "new_data",
-            "changed_fields", "performed_by", "performed_by_type", "ip_address",
-            "user_agent", "session_id", "request_id", "created_at",
+            "id",
+            "table_name",
+            "record_id",
+            "action",
+            "old_data",
+            "new_data",
+            "changed_fields",
+            "performed_by",
+            "performed_by_type",
+            "ip_address",
+            "user_agent",
+            "session_id",
+            "request_id",
+            "created_at",
         }
         assert expected.issubset(columns)
 
@@ -204,8 +341,16 @@ class TestSchemaConsistency:
         inspector = inspect(engine)
         columns = {col["name"] for col in inspector.get_columns("analytics_events")}
         expected = {
-            "id", "community_id", "user_id", "session_id", "event_type",
-            "event_data", "ip_address", "user_agent", "referrer_url", "page_url",
+            "id",
+            "community_id",
+            "user_id",
+            "session_id",
+            "event_type",
+            "event_data",
+            "ip_address",
+            "user_agent",
+            "referrer_url",
+            "page_url",
             "created_at",
         }
         assert expected.issubset(columns)
@@ -282,26 +427,34 @@ class TestSchemaConsistency:
     def test_enum_types_exist(self, engine):
         """Test that all enum types are created."""
         with engine.connect() as conn:
-            result = conn.execute(text(
-                "SELECT typname FROM pg_type WHERE typtype = 'e'"
-            ))
+            result = conn.execute(
+                text("SELECT typname FROM pg_type WHERE typtype = 'e'")
+            )
             types = {row[0] for row in result}
             expected_types = {
-                "community_visibility", "community_status", "tier_billing_period",
-                "member_role", "member_status", "content_type", "content_status",
-                "moderation_action_type", "moderation_action_status",
-                "escalation_priority", "escalation_status", "escalation_category",
-                "compliance_report_type", "compliance_report_status",
-                "analytics_event_type", "audit_action",
+                "community_visibility",
+                "community_status",
+                "tier_billing_period",
+                "member_role",
+                "member_status",
+                "content_type",
+                "content_status",
+                "moderation_action_type",
+                "moderation_action_status",
+                "escalation_priority",
+                "escalation_status",
+                "escalation_category",
+                "compliance_report_type",
+                "compliance_report_status",
+                "analytics_event_type",
+                "audit_action",
             }
             assert expected_types.issubset(types)
 
     def test_extensions_enabled(self, engine):
         """Test that required extensions are enabled."""
         with engine.connect() as conn:
-            result = ext.execute(text(
-                "SELECT extname FROM pg_extension"
-            ))
+            result = ext.execute(text("SELECT extname FROM pg_extension"))
             extensions = {row[0] for row in result}
             expected = {"pgcrypto", "uuid-ossp", "pg_trgm", "btree_gin"}
             assert expected.issubset(extensions)
@@ -310,9 +463,9 @@ class TestSchemaConsistency:
         """Test that views are created."""
         inspector = inspect(engine)
         with engine.connect() as conn:
-            result = conn.execute(text(
-                "SELECT viewname FROM pg_views WHERE schemaname = 'public'"
-            ))
+            result = conn.execute(
+                text("SELECT viewname FROM pg_views WHERE schemaname = 'public'")
+            )
             views = {row[0] for row in result}
             expected = {"v_community_summary", "v_member_detail", "v_content_detail"}
             assert expected.issubset(views)
@@ -326,12 +479,19 @@ class TestSchemaConsistency:
             """))
             triggers = {row[0] for row in result}
             expected_triggers = {
-                "trg_communities_updated_at", "trg_tiers_updated_at",
-                "trg_members_updated_at", "trg_content_updated_at",
-                "trg_moderation_actions_updated_at", "trg_reputation_scores_updated_at",
-                "trg_escalations_updated_at", "trg_compliance_reports_updated_at",
-                "trg_audit_communities", "trg_audit_members", "trg_audit_content",
-                "trg_audit_moderation_actions", "trg_audit_escalations",
+                "trg_communities_updated_at",
+                "trg_tiers_updated_at",
+                "trg_members_updated_at",
+                "trg_content_updated_at",
+                "trg_moderation_actions_updated_at",
+                "trg_reputation_scores_updated_at",
+                "trg_escalations_updated_at",
+                "trg_compliance_reports_updated_at",
+                "trg_audit_communities",
+                "trg_audit_members",
+                "trg_audit_content",
+                "trg_audit_moderation_actions",
+                "trg_audit_escalations",
                 "trg_audit_compliance_reports",
             }
             assert expected_triggers.issubset(triggers)
@@ -375,16 +535,26 @@ class TestSchemaConsistency:
             """))
             constraints = {row[0] for row in result}
             expected = {
-                "chk_communities_name_not_empty", "chk_communities_member_count",
-                "chk_communities_content_count", "chk_tiers_name_not_empty",
-                "chk_tiers_price_cents", "chk_tiers_subscriber_count",
-                "chk_members_display_name", "chk_content_title",
-                "chk_content_like_count", "chk_content_comment_count",
-                "chk_content_share_count", "chk_content_view_count",
-                "chk_moderation_reason_not_empty", "chk_moderation_duration_hours",
-                "chk_reputation_total_earned", "chk_reputation_total_deducted",
-                "chk_escalations_subject_not_empty", "chk_escalations_description_not_empty",
-                "chk_compliance_subject_not_empty", "chk_compliance_description_not_empty",
+                "chk_communities_name_not_empty",
+                "chk_communities_member_count",
+                "chk_communities_content_count",
+                "chk_tiers_name_not_empty",
+                "chk_tiers_price_cents",
+                "chk_tiers_subscriber_count",
+                "chk_members_display_name",
+                "chk_content_title",
+                "chk_content_like_count",
+                "chk_content_comment_count",
+                "chk_content_share_count",
+                "chk_content_view_count",
+                "chk_moderation_reason_not_empty",
+                "chk_moderation_duration_hours",
+                "chk_reputation_total_earned",
+                "chk_reputation_total_deducted",
+                "chk_escalations_subject_not_empty",
+                "chk_escalations_description_not_empty",
+                "chk_compliance_subject_not_empty",
+                "chk_compliance_description_not_empty",
             }
             assert expected.issubset(constraints)
 
@@ -395,12 +565,14 @@ class TestMigrationValidation:
     def test_migration_file_exists(self):
         """Test that migration file exists."""
         import os
+
         migration_path = "migrations/versions/0001_initial_schema.py"
         assert os.path.exists(migration_path)
 
     def test_migration_has_revision_id(self):
         """Test that migration has correct revision ID."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "migration", "migrations/versions/0001_initial_schema.py"
         )
@@ -411,6 +583,7 @@ class TestMigrationValidation:
     def test_migration_has_down_revision(self):
         """Test that migration has correct down_revision."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "migration", "migrations/versions/0001_initial_schema.py"
         )
@@ -421,6 +594,7 @@ class TestMigrationValidation:
     def test_migration_has_upgrade_function(self):
         """Test that migration has upgrade function."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "migration", "migrations/versions/0001_initial_schema.py"
         )
@@ -432,6 +606,7 @@ class TestMigrationValidation:
     def test_migration_has_downgrade_function(self):
         """Test that migration has downgrade function."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "migration", "migrations/versions/0001_initial_schema.py"
         )
@@ -443,9 +618,6 @@ class TestMigrationValidation:
     def test_migration_creates_all_tables(self):
         """Test that migration creates all expected tables."""
         import importlib.util
-        from alembic.operations import Operations
-        from alembic.runtime.migration import MigrationContext
-        from sqlalchemy import create_engine
 
         spec = importlib.util.spec_from_file_location(
             "migration", "migrations/versions/0001_initial_schema.py"
@@ -455,15 +627,24 @@ class TestMigrationValidation:
 
         # Check that upgrade function references all tables
         import inspect
+
         source = inspect.getsource(mod.upgrade)
         expected_tables = [
-            "communities", "tiers", "members", "content",
-            "moderation_actions", "reputation_scores", "escalations",
-            "compliance_reports", "analytics_events", "audit_log",
+            "communities",
+            "tiers",
+            "members",
+            "content",
+            "moderation_actions",
+            "reputation_scores",
+            "escalations",
+            "compliance_reports",
+            "analytics_events",
+            "audit_log",
         ]
         for table in expected_tables:
-            assert f"'{table}'" in source or f'"{table}"' in source, \
-                f"Table {table} not found in migration"
+            assert (
+                f"'{table}'" in source or f'"{table}"' in source
+            ), f"Table {table} not found in migration"
 
     def test_migration_drops_all_tables(self):
         """Test that migration drops all expected tables in downgrade."""
@@ -478,10 +659,18 @@ class TestMigrationValidation:
 
         source = inspect.getsource(mod.downgrade)
         expected_tables = [
-            "communities", "tiers", "members", "content",
-            "moderation_actions", "reputation_scores", "escalations",
-            "compliance_reports", "analytics_events", "audit_log",
+            "communities",
+            "tiers",
+            "members",
+            "content",
+            "moderation_actions",
+            "reputation_scores",
+            "escalations",
+            "compliance_reports",
+            "analytics_events",
+            "audit_log",
         ]
         for table in expected_tables:
-            assert f"'{table}'" in source or f'"{table}'" in source, \
-                f"Table {table} not found in downgrade migration"
+            assert (
+                f"'{table}'" in source or f'"{table}"' in source
+            ), f"Table {table} not found in downgrade migration"

@@ -1,4 +1,5 @@
 """Integration tests for materialized views."""
+
 import pytest
 import pytest_asyncio
 
@@ -8,6 +9,7 @@ pytestmark = pytest.mark.asyncio
 @pytest_asyncio.fixture
 async def db_pool():
     from recruitment_platform.db import create_pool
+
     pool = await create_pool(min_size=2, max_size=5)
     yield pool
     await pool.close()
@@ -55,7 +57,8 @@ async def test_candidate_pipeline_view_populated(db_pool, materialized_views):
     async with db_pool.acquire() as conn:
         await conn.execute(
             "INSERT INTO candidates (name, email) VALUES ($1, $2)",
-            "View Test", "view@example.com"
+            "View Test",
+            "view@example.com",
         )
         cid = await conn.fetchval(
             "SELECT id FROM candidates WHERE email = $1", "view@example.com"
@@ -66,7 +69,9 @@ async def test_candidate_pipeline_view_populated(db_pool, materialized_views):
         jid = await conn.fetchval("SELECT id FROM jobs WHERE title = $1", "Engineer")
         await conn.execute(
             "INSERT INTO applications (candidate_id, job_id, status) VALUES ($1, $2, $3)",
-            cid, jid, "screening"
+            cid,
+            jid,
+            "screening",
         )
         await conn.execute("REFRESH MATERIALIZED VIEW mv_candidate_pipeline")
         row = await conn.fetchrow(
@@ -86,17 +91,18 @@ async def test_job_stats_aggregation(db_pool, materialized_views):
         for i in range(3):
             cid = await conn.fetchval(
                 "INSERT INTO candidates (name, email) VALUES ($1, $2) RETURNING id",
-                f"Cand {i}", f"cand{i}@example.com"
+                f"Cand {i}",
+                f"cand{i}@example.com",
             )
             status = "hired" if i == 0 else "rejected"
             await conn.execute(
                 "INSERT INTO applications (candidate_id, job_id, status) VALUES ($1, $2, $3)",
-                cid, jid, status
+                cid,
+                jid,
+                status,
             )
         await conn.execute("REFRESH MATERIALIZED VIEW mv_job_stats")
-        stats = await conn.fetchrow(
-            "SELECT * FROM mv_job_stats WHERE job_id = $1", jid
-        )
+        stats = await conn.fetchrow("SELECT * FROM mv_job_stats WHERE job_id = $1", jid)
         assert stats["total_applications"] == 3
         assert stats["hires"] == 1
         assert stats["rejections"] == 2
@@ -107,7 +113,8 @@ async def test_materialized_view_not_auto_refreshing(db_pool, materialized_views
     async with db_pool.acquire() as conn:
         await conn.execute(
             "INSERT INTO candidates (name, email) VALUES ($1, $2)",
-            "Stale", "stale@example.com"
+            "Stale",
+            "stale@example.com",
         )
         cid = await conn.fetchval(
             "SELECT id FROM candidates WHERE email = $1", "stale@example.com"
@@ -118,7 +125,9 @@ async def test_materialized_view_not_auto_refreshing(db_pool, materialized_views
         jid = await conn.fetchval("SELECT id FROM jobs WHERE title = $1", "Manager")
         await conn.execute(
             "INSERT INTO applications (candidate_id, job_id, status) VALUES ($1, $2, $3)",
-            cid, jid, "applied"
+            cid,
+            jid,
+            "applied",
         )
         row = await conn.fetchrow(
             "SELECT * FROM mv_candidate_pipeline WHERE candidate_id = $1", cid

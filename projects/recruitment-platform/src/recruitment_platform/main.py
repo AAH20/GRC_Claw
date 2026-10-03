@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from contextlib import asynccontextmanager
 
 from recruitment_platform.api.router import api_router
-from recruitment_platform.config.settings import get_settings
 from recruitment_platform.config.logging_config import configure_logging
+from recruitment_platform.config.settings import get_settings
 from recruitment_platform.monitoring.metrics import MetricsMiddleware
 from recruitment_platform.monitoring.tracing import setup_tracing
-from recruitment_platform.security.middleware import SecurityHeadersMiddleware, RequestIDMiddleware
+from recruitment_platform.security.middleware import (
+    RequestIDMiddleware, SecurityHeadersMiddleware)
 
 settings = get_settings()
 configure_logging(settings.log_level, settings.log_format)

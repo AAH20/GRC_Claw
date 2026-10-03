@@ -9,6 +9,7 @@ from typing import Any
 from langchain.agents import create_agent
 
 from ugc_marketplace.agents.rights_management.base import BaseAgent
+from ugc_marketplace.agents.rights_management.types import UsageRecord
 
 
 class UsageTrackerAgent(BaseAgent[dict[str, Any], "UsageRecord"]):

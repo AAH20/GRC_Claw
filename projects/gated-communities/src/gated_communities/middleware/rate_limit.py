@@ -1,4 +1,5 @@
 """Rate limiting middleware."""
+
 from __future__ import annotations
 
 import logging

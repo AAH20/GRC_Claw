@@ -20,7 +20,8 @@ async def assess_skills(data: dict[str, Any]) -> dict[str, Any]:
         Assessment results with proficiency scores.
     """
     try:
-        from recruitment_platform.agents.skills_assessor.proficiency_scorer import ProficiencyScorer
+        from recruitment_platform.agents.skills_assessor.proficiency_scorer import \
+            ProficiencyScorer
 
         agent = ProficiencyScorer()
         result = await agent.process(data)
@@ -39,9 +40,8 @@ async def recommend_learning_path(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Learning path recommendations.
     """
-    from recruitment_platform.agents.skills_assessor.learning_path_recommender import (
-        LearningPathRecommender,
-    )
+    from recruitment_platform.agents.skills_assessor.learning_path_recommender import \
+        LearningPathRecommender
 
     agent = LearningPathRecommender()
     result = await agent.process(data)
@@ -58,7 +58,8 @@ async def validate_skills(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Validation results.
     """
-    from recruitment_platform.agents.skills_assessor.skill_validator import SkillValidator
+    from recruitment_platform.agents.skills_assessor.skill_validator import \
+        SkillValidator
 
     agent = SkillValidator()
     result = await agent.process(data)

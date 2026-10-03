@@ -20,9 +20,8 @@ async def check_compliance(data: dict[str, Any]) -> dict[str, Any]:
         Compliance status.
     """
     try:
-        from recruitment_platform.agents.onboarding_automator.compliance_checker import (
-            ComplianceChecker,
-        )
+        from recruitment_platform.agents.onboarding_automator.compliance_checker import \
+            ComplianceChecker
 
         agent = ComplianceChecker()
         result = await agent.process(data)
@@ -41,9 +40,8 @@ async def generate_documents(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Generated documents.
     """
-    from recruitment_platform.agents.onboarding_automator.document_generator import (
-        DocumentGenerator,
-    )
+    from recruitment_platform.agents.onboarding_automator.document_generator import \
+        DocumentGenerator
 
     agent = DocumentGenerator()
     result = await agent.process(data)
@@ -60,7 +58,8 @@ async def track_progress(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Progress status.
     """
-    from recruitment_platform.agents.onboarding_automator.progress_tracker import ProgressTracker
+    from recruitment_platform.agents.onboarding_automator.progress_tracker import \
+        ProgressTracker
 
     agent = ProgressTracker()
     result = await agent.process(data)
@@ -77,7 +76,8 @@ async def schedule_tasks(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Scheduled tasks.
     """
-    from recruitment_platform.agents.onboarding_automator.task_scheduler import TaskScheduler
+    from recruitment_platform.agents.onboarding_automator.task_scheduler import \
+        TaskScheduler
 
     agent = TaskScheduler()
     result = await agent.process(data)
@@ -94,7 +94,8 @@ async def generate_welcome(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Welcome message content.
     """
-    from recruitment_platform.agents.onboarding_automator.welcome_message import WelcomeMessage
+    from recruitment_platform.agents.onboarding_automator.welcome_message import \
+        WelcomeMessage
 
     agent = WelcomeMessage()
     result = await agent.process(data)

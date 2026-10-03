@@ -1,4 +1,5 @@
 """Full-text search API."""
+
 from __future__ import annotations
 
 import logging
@@ -12,6 +13,7 @@ router = APIRouter()
 
 class SearchResult(BaseModel):
     """Schema for search results."""
+
     id: str
     type: str
     title: str
@@ -21,6 +23,7 @@ class SearchResult(BaseModel):
 
 class SearchResponse(BaseModel):
     """Schema for search response."""
+
     results: list[SearchResult]
     total: int
     query: str

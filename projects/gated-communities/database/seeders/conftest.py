@@ -416,6 +416,7 @@ def queue_factory():
 @pytest.fixture
 def priority_score_factory():
     from .factories import PriorityScoreFactory
+
     return PriorityScoreFactory
 
 
@@ -598,6 +599,7 @@ def sla_breaches():
 @pytest.fixture
 def priorities():
     from .seeders import seed_priorities
+
     return seed_priorities()
 
 

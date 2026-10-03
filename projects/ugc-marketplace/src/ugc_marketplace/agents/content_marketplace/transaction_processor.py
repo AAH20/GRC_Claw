@@ -9,8 +9,7 @@ from uuid import UUID
 
 from langchain_core.language_models import BaseChatModel
 
-from ugc_marketplace.models.schemas import (Transaction, TransactionCreate,
-                                            TransactionStatus)
+from ugc_marketplace.models.schemas import Transaction, TransactionCreate, TransactionStatus
 
 logger = logging.getLogger(__name__)
 

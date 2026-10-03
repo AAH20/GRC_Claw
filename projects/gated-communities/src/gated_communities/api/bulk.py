@@ -1,4 +1,5 @@
 """Bulk operations API."""
+
 from __future__ import annotations
 
 import logging
@@ -12,6 +13,7 @@ router = APIRouter()
 
 class BulkMemberUpdate(BaseModel):
     """Schema for bulk member update."""
+
     member_ids: list[str] = Field(..., min_length=1, max_length=1000)
     action: str = Field(..., regex="^(update_role|ban|unban|remove)$")
     value: str | None = None
@@ -19,6 +21,7 @@ class BulkMemberUpdate(BaseModel):
 
 class BulkOperationResponse(BaseModel):
     """Schema for bulk operation response."""
+
     success: int
     failed: int
     errors: list[str]

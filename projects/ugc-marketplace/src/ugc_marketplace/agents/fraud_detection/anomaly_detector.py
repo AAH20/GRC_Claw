@@ -8,6 +8,7 @@ from typing import Any
 
 from deepagents import create_deep_agent
 
+from ugc_marketplace.agents.fraud_detection.types import Anomaly, Transaction
 from ugc_marketplace.config.logging_config import get_logger
 
 logger = get_logger(__name__)

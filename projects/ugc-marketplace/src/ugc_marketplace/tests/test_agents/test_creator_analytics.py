@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.creator_analytics import (AudienceAnalyzerAgent,
-                                                      ContentPerformanceAgent,
-                                                      EngagementAnalyzerAgent,
-                                                      GrowthPredictorAgent,
-                                                      RevenueTrackerAgent)
+from ugc_marketplace.agents.creator_analytics import (
+    AudienceAnalyzerAgent,
+    ContentPerformanceAgent,
+    EngagementAnalyzerAgent,
+    GrowthPredictorAgent,
+    RevenueTrackerAgent,
+)
 
 
 @pytest.mark.asyncio

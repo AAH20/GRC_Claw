@@ -1,12 +1,10 @@
 """Database query optimization utilities."""
+
 from __future__ import annotations
 
 import logging
-from typing import Any
 from contextlib import asynccontextmanager
-
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

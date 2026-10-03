@@ -20,9 +20,8 @@ async def optimize_slots(data: dict[str, Any]) -> dict[str, Any]:
         Optimal time slots.
     """
     try:
-        from recruitment_platform.agents.interview_scheduler.availability_optimizer import (
-            AvailabilityOptimizer,
-        )
+        from recruitment_platform.agents.interview_scheduler.availability_optimizer import \
+            AvailabilityOptimizer
 
         agent = AvailabilityOptimizer()
         result = await agent.process(data)
@@ -41,7 +40,8 @@ async def detect_conflicts(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Detected conflicts.
     """
-    from recruitment_platform.agents.interview_scheduler.conflict_detector import ConflictDetector
+    from recruitment_platform.agents.interview_scheduler.conflict_detector import \
+        ConflictDetector
 
     agent = ConflictDetector()
     result = await agent.process(data)
@@ -58,7 +58,8 @@ async def send_reminder(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Reminder delivery status.
     """
-    from recruitment_platform.agents.interview_scheduler.reminder import Reminder
+    from recruitment_platform.agents.interview_scheduler.reminder import \
+        Reminder
 
     agent = Reminder()
     result = await agent.process(data)

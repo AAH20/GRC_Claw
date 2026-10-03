@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-class NotificationChannel(str, Enum):
+class NotificationChannel(StrEnum):
     """Supported notification channels."""
+
     EMAIL = "email"
     SMS = "sms"
     PUSH = "push"
@@ -19,8 +20,9 @@ class NotificationChannel(str, Enum):
     WEBHOOK = "webhook"
 
 
-class NotificationPriority(str, Enum):
+class NotificationPriority(StrEnum):
     """Notification priority levels."""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -35,8 +37,8 @@ class NotificationService:
         to: str,
         subject: str,
         body: str,
-        html_body: Optional[str] = None,
-        attachments: Optional[list[dict[str, Any]]] = None,
+        html_body: str | None = None,
+        attachments: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Send an email notification."""
         logger.info(f"Sending email to {to}: {subject}")
@@ -52,7 +54,7 @@ class NotificationService:
         user_id: str,
         title: str,
         body: str,
-        data: Optional[dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Send a push notification."""
         logger.info(f"Sending push notification to {user_id}")
@@ -64,7 +66,7 @@ class NotificationService:
         title: str,
         message: str,
         notification_type: str = "info",
-        action_url: Optional[str] = None,
+        action_url: str | None = None,
     ) -> dict[str, Any]:
         """Send an in-app notification."""
         logger.info(f"Sending in-app notification to {user_id}")
@@ -74,7 +76,7 @@ class NotificationService:
         self,
         channel: str,
         message: str,
-        blocks: Optional[list[dict[str, Any]]] = None,
+        blocks: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Send a Slack notification."""
         logger.info(f"Sending Slack message to {channel}")
@@ -84,7 +86,7 @@ class NotificationService:
         self,
         url: str,
         payload: dict[str, Any],
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Send a webhook notification."""
         logger.info(f"Sending webhook to {url}")
@@ -97,7 +99,7 @@ class NotificationService:
         subject: str,
         message: str,
         priority: NotificationPriority = NotificationPriority.NORMAL,
-        data: Optional[dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Send notification across multiple channels."""
         results = {}

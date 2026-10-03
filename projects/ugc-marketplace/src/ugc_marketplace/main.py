@@ -13,12 +13,10 @@ from fastapi.responses import JSONResponse
 from ugc_marketplace import __version__
 from ugc_marketplace.api.community_curation import router as curation_router
 from ugc_marketplace.api.content_discovery import router as discovery_router
-from ugc_marketplace.api.content_marketplace import \
-    router as marketplace_router
+from ugc_marketplace.api.content_marketplace import router as marketplace_router
 from ugc_marketplace.api.content_moderation import router as moderation_router
 from ugc_marketplace.api.creator_analytics import router as analytics_router
-from ugc_marketplace.api.creator_monetization import \
-    router as monetization_router
+from ugc_marketplace.api.creator_monetization import router as monetization_router
 from ugc_marketplace.api.fraud_detection import router as fraud_router
 from ugc_marketplace.api.health import router as health_router
 from ugc_marketplace.api.licensing_engine import router as licensing_router

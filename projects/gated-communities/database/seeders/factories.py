@@ -546,7 +546,21 @@ class EscalationAnalysisFactory(factory.Factory):
     escalation_id = None
     analysis_type = FuzzyChoice(["single", "batch", "trend"])
     summary = Faker("paragraph", nb_sentences=2)
-    patterns = LazyFunction(lambda: [FuzzyChoice(["recurring", "seasonal", "dependency", "capacity", "configuration", "external"]).fuzz() for _ in range(FuzzyInteger(1, 3).fuzz())])
+    patterns = LazyFunction(
+        lambda: [
+            FuzzyChoice(
+                [
+                    "recurring",
+                    "seasonal",
+                    "dependency",
+                    "capacity",
+                    "configuration",
+                    "external",
+                ]
+            ).fuzz()
+            for _ in range(FuzzyInteger(1, 3).fuzz())
+        ]
+    )
     risk_score = FuzzyFloat(0.0, 1.0)
     impact_assessment = Faker("sentence", nb_words=10)
     recommendations = Faker("sentences", nb=2)
@@ -896,7 +910,9 @@ class IdentityDataFactory(factory.Factory):
         model = Any
 
     full_name = Faker("name")
-    date_of_birth = LazyFunction(lambda: f"{FuzzyInteger(1935, 2007).fuzz()}-{FuzzyInteger(1, 12).fuzz():02d}-{FuzzyInteger(1, 28).fuzz():02d}")
+    date_of_birth = LazyFunction(
+        lambda: f"{FuzzyInteger(1935, 2007).fuzz()}-{FuzzyInteger(1, 12).fuzz():02d}-{FuzzyInteger(1, 28).fuzz():02d}"
+    )
     email = Faker("email")
     phone = Faker("phone_number")
     address = Faker("address")
@@ -1073,7 +1089,14 @@ class QueueFactory(factory.Factory):
     id = LazyFunction(uuid4)
     name = Sequence(lambda n: f"Queue {n}")
     description = Faker("sentence", nb_words=8)
-    content_types = LazyFunction(lambda: [FuzzyChoice(["text", "image", "video", "audio", "comment", "post", "message"]).fuzz() for _ in range(FuzzyInteger(1, 4).fuzz())])
+    content_types = LazyFunction(
+        lambda: [
+            FuzzyChoice(
+                ["text", "image", "video", "audio", "comment", "post", "message"]
+            ).fuzz()
+            for _ in range(FuzzyInteger(1, 4).fuzz())
+        ]
+    )
     max_size = FuzzyInteger(100, 10_000)
     priority_weights = LazyFunction(dict)
     assigned_reviewers = LazyFunction(lambda: [_uuid()])

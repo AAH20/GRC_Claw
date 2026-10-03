@@ -5,8 +5,12 @@ from __future__ import annotations
 import pytest
 
 from ugc_marketplace.agents.rights_management import (
-    InfringementDetectorAgent, LicenseDetectorAgent, RightsValidatorAgent,
-    TakedownAgent, UsageTrackerAgent)
+    InfringementDetectorAgent,
+    LicenseDetectorAgent,
+    RightsValidatorAgent,
+    TakedownAgent,
+    UsageTrackerAgent,
+)
 
 
 @pytest.mark.asyncio

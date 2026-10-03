@@ -20,7 +20,8 @@ async def match_candidates(data: dict[str, Any]) -> dict[str, Any]:
         Ranked candidate matches.
     """
     try:
-        from recruitment_platform.agents.candidate_matcher.bias_aware_ranker import BiasAwareRanker
+        from recruitment_platform.agents.candidate_matcher.bias_aware_ranker import \
+            BiasAwareRanker
 
         agent = BiasAwareRanker()
         result = await agent.process(data)
@@ -39,7 +40,8 @@ async def explain_match(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Match explanation.
     """
-    from recruitment_platform.agents.candidate_matcher.match_explainer import MatchExplainer
+    from recruitment_platform.agents.candidate_matcher.match_explainer import \
+        MatchExplainer
 
     agent = MatchExplainer()
     result = await agent.process(data)
@@ -56,7 +58,8 @@ async def analyze_gap(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Gap analysis results.
     """
-    from recruitment_platform.agents.candidate_matcher.skills_gap_analyzer import SkillsGapAnalyzer
+    from recruitment_platform.agents.candidate_matcher.skills_gap_analyzer import \
+        SkillsGapAnalyzer
 
     agent = SkillsGapAnalyzer()
     result = await agent.process(data)

@@ -5,8 +5,12 @@ from __future__ import annotations
 import pytest
 
 from ugc_marketplace.agents.content_marketplace import (
-    ListingManagerAgent, MarketplaceAnalyticsAgent, PricingOptimizerAgent,
-    TransactionProcessorAgent, TrustScorerAgent)
+    ListingManagerAgent,
+    MarketplaceAnalyticsAgent,
+    PricingOptimizerAgent,
+    TransactionProcessorAgent,
+    TrustScorerAgent,
+)
 
 
 @pytest.mark.asyncio

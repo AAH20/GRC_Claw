@@ -8,8 +8,8 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 
-from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
-                                                         BaseScoringAgent)
+from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.types import ImprovementPlan
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -64,8 +64,7 @@ class ImprovementSuggesterAgent(BaseScoringAgent["ImprovementPlan"]):
         Returns:
             Improvement plan with suggestions.
         """
-        from ugc_marketplace.models.schemas import (ImprovementPlan,
-                                                    ImprovementSuggestion)
+        from ugc_marketplace.models.schemas import ImprovementPlan, ImprovementSuggestion
 
         suggestions: list[ImprovementSuggestion] = []
 

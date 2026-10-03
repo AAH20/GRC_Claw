@@ -1,7 +1,9 @@
 """Integration tests for transaction isolation and rollback."""
+
+import asyncio
+
 import pytest
 import pytest_asyncio
-import asyncio
 
 pytestmark = pytest.mark.asyncio
 
@@ -9,6 +11,7 @@ pytestmark = pytest.mark.asyncio
 @pytest_asyncio.fixture
 async def db_pool():
     from recruitment_platform.db import create_pool
+
     pool = await create_pool(min_size=4, max_size=10)
     yield pool
     await pool.close()
@@ -27,12 +30,10 @@ async def tx_table(db_pool):
         """)
         await conn.execute("TRUNCATE tx_accounts")
         await conn.execute(
-            "INSERT INTO tx_accounts (owner, balance) VALUES ($1, $2)",
-            "Alice", 1000
+            "INSERT INTO tx_accounts (owner, balance) VALUES ($1, $2)", "Alice", 1000
         )
         await conn.execute(
-            "INSERT INTO tx_accounts (owner, balance) VALUES ($1, $2)",
-            "Bob", 500
+            "INSERT INTO tx_accounts (owner, balance) VALUES ($1, $2)", "Bob", 500
         )
     yield
     async with db_pool.acquire() as conn:
@@ -46,11 +47,11 @@ async def test_rollback_on_error(db_pool, tx_table):
             async with conn.transaction():
                 await conn.execute(
                     "UPDATE tx_accounts SET balance = balance - 100 WHERE owner = $1",
-                    "Alice"
+                    "Alice",
                 )
                 await conn.execute(
                     "UPDATE tx_accounts SET balance = balance + 100 WHERE owner = $1",
-                    "Bob"
+                    "Bob",
                 )
                 raise ValueError("Simulated failure")
         except ValueError:
@@ -71,11 +72,10 @@ async def test_commit_persists_changes(db_pool, tx_table):
         async with conn.transaction():
             await conn.execute(
                 "UPDATE tx_accounts SET balance = balance - 200 WHERE owner = $1",
-                "Alice"
+                "Alice",
             )
             await conn.execute(
-                "UPDATE tx_accounts SET balance = balance + 200 WHERE owner = $1",
-                "Bob"
+                "UPDATE tx_accounts SET balance = balance + 200 WHERE owner = $1", "Bob"
             )
         alice = await conn.fetchval(
             "SELECT balance FROM tx_accounts WHERE owner = $1", "Alice"
@@ -113,16 +113,19 @@ async def test_serializable_prevents_lost_update(db_pool, tx_table):
 
     async def transfer():
         try:
-            async with db_pool.acquire() as conn:
-                async with conn.transaction(isolation="serializable"):
-                    bal = await conn.fetchval(
-                        "SELECT balance FROM tx_accounts WHERE owner = $1", "Alice"
-                    )
-                    await asyncio.sleep(0.01)
-                    await conn.execute(
-                        "UPDATE tx_accounts SET balance = $1 WHERE owner = $2",
-                        bal - 50, "Alice"
-                    )
+            async with (
+                db_pool.acquire() as conn,
+                conn.transaction(isolation="serializable"),
+            ):
+                bal = await conn.fetchval(
+                    "SELECT balance FROM tx_accounts WHERE owner = $1", "Alice"
+                )
+                await asyncio.sleep(0.01)
+                await conn.execute(
+                    "UPDATE tx_accounts SET balance = $1 WHERE owner = $2",
+                    bal - 50,
+                    "Alice",
+                )
         except Exception as e:
             errors.append(e)
 
@@ -140,7 +143,7 @@ async def test_savepoint_partial_rollback(db_pool, tx_table):
             await conn.execute(
                 "UPDATE tx_accounts SET balance = 999 WHERE owner = $1", "Alice"
             )
-            sp = await conn.execute("SAVEPOINT sp1")
+            await conn.execute("SAVEPOINT sp1")
             await conn.execute(
                 "UPDATE tx_accounts SET balance = 888 WHERE owner = $1", "Alice"
             )

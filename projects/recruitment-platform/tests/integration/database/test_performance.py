@@ -1,7 +1,9 @@
 """Integration tests for query performance benchmarks."""
+
+import time
+
 import pytest
 import pytest_asyncio
-import time
 
 pytestmark = pytest.mark.asyncio
 
@@ -12,6 +14,7 @@ MAX_BULK_INSERT_TIME_S = 5.0
 @pytest_asyncio.fixture
 async def db_pool():
     from recruitment_platform.db import create_pool
+
     pool = await create_pool(min_size=2, max_size=10)
     yield pool
     await pool.close()
@@ -32,7 +35,7 @@ async def seeded_data(db_pool):
         await conn.execute("TRUNCATE perf_candidates")
         await conn.executemany(
             "INSERT INTO perf_candidates (name, email) VALUES ($1, $2)",
-            [(f"User {i}", f"user{i}@perf.com") for i in range(1000)]
+            [(f"User {i}", f"user{i}@perf.com") for i in range(1000)],
         )
     yield
     async with db_pool.acquire() as conn:
@@ -70,7 +73,7 @@ async def test_bulk_insert_performance(db_pool, seeded_data):
         start = time.monotonic()
         await conn.executemany(
             "INSERT INTO perf_candidates (name, email) VALUES ($1, $2)",
-            [(f"Bulk {i}", f"bulk{i}@perf.com") for i in range(500)]
+            [(f"Bulk {i}", f"bulk{i}@perf.com") for i in range(500)],
         )
         elapsed = time.monotonic() - start
         assert elapsed < MAX_BULK_INSERT_TIME_S
@@ -90,7 +93,7 @@ async def test_join_query_performance(db_pool, seeded_data):
         await conn.execute("TRUNCATE perf_applications")
         await conn.executemany(
             "INSERT INTO perf_applications (candidate_id, status) VALUES ($1, $2)",
-            [(i, "applied") for i in range(1, 501)]
+            [(i, "applied") for i in range(1, 501)],
         )
         start = time.monotonic()
         rows = await conn.fetch("""

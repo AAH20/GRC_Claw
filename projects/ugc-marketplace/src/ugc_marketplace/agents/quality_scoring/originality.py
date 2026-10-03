@@ -9,8 +9,8 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 
-from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
-                                                         BaseScoringAgent)
+from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.types import DimensionScore
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -65,8 +65,7 @@ class OriginalityScorerAgent(BaseScoringAgent["DimensionScore"]):
         Returns:
             Dimension score with originality metrics.
         """
-        from ugc_marketplace.models.schemas import (DimensionScore,
-                                                    ScoreDimension, ScoreLevel)
+        from ugc_marketplace.models.schemas import DimensionScore, ScoreDimension, ScoreLevel
 
         content_hash = hashlib.sha256(content.encode()).hexdigest()
         unique_words = set(content.lower().split())
