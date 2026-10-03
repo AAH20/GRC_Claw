@@ -8,11 +8,12 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, ...props }, ref) => {
+  ({ className, error, name, ...props }, ref) => {
     return (
       <div className="w-full">
         <input
           ref={ref}
+          name={name}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? `${props.id}-error` : undefined}
           className={cn(

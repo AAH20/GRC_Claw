@@ -48,11 +48,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="settings-name" className="text-sm font-medium">Full Name</label>
-              <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="settings-name" name="name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <label htmlFor="settings-email" className="text-sm font-medium">Email</label>
-              <Input id="settings-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="settings-email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <Button onClick={handleSave}>Save</Button>
           </CardContent>

@@ -12,62 +12,41 @@
 # Error details
 
 ```
-TimeoutError: locator.fill: Timeout 15000ms exceeded.
+Error: expect(page).toHaveURL(expected) failed
+
+Expected pattern: /\/dashboard/
+Received string:  "http://localhost:3000/login"
+Timeout: 5000ms
+
 Call log:
-  - waiting for getByLabel('Email')
+  - Expect "toHaveURL" with timeout 5000ms
+    14 × locator resolved to <html lang="en">…</html>
+       - unexpected value "http://localhost:3000/login"
 
 ```
 
-# Page snapshot
-
 ```yaml
-- generic:
-  - generic [active]:
-    - generic [ref=e3]:
-      - generic [ref=e4]:
-        - navigation [ref=e6]:
-          - button [disabled] [ref=e7]:
-            - img "previous" [ref=e8]
-          - generic [ref=e10]:
-            - generic [ref=e11]: 1/
-            - generic [ref=e12]: "1"
-          - button [disabled] [ref=e13]:
-            - img "next" [ref=e14]
-        - generic [ref=e17]:
-          - generic "Latest available version is detected (16.3.8)." [ref=e20]: Next.js 16.3.8
-          - generic [ref=e21]: Turbopack
-      - dialog "Runtime Error" [ref=e23]:
-        - generic [ref=e26]:
-          - generic [ref=e28]:
-            - generic [ref=e29]:
-              - generic [ref=e30]: Runtime Error
-              - generic [ref=e32]:
-                - button "Copy Error Info" [ref=e33] [cursor=pointer]
-                - button "No related documentation found" [disabled] [ref=e36]
-                - button "Attach Node.js inspector" [ref=e39] [cursor=pointer]
-            - generic [ref=e48]: The default export is not a React Component in "/login/layout"
-          - generic [ref=e52]:
-            - paragraph [ref=e53]:
-              - text: Call Stack
-              - generic [ref=e54]: "24"
-            - button "Show 24 ignore-listed frame(s)" [ref=e55] [cursor=pointer]
-      - contentinfo [ref=e58]:
-        - region "Error feedback" [ref=e59]:
-          - paragraph [ref=e60]:
-            - link "Was this helpful?" [ref=e61] [cursor=pointer]:
-              - /url: https://nextjs.org/telemetry#error-feedback
-          - button "Mark as helpful" [ref=e62] [cursor=pointer]
-          - button "Mark as not helpful" [ref=e66] [cursor=pointer]
-    - generic [ref=e73] [cursor=pointer]:
-      - button "Open Next.js Dev Tools" [ref=e74]
-      - generic [ref=e78]:
-        - button "Open issues overlay" [ref=e79]:
-          - generic [ref=e80]:
-            - generic [aria-hidden] [ref=e81]: "0"
-            - generic [ref=e82]: "1"
-          - generic [ref=e83]: Issue
-        - button "Collapse issues badge" [ref=e84]
-  - alert [ref=e87]
+- link "Skip to main content":
+  - /url: "#main-content"
+- alert
+- img
+- heading "Welcome Back" [level=3]
+- paragraph: Sign in to your RecruitHub account
+- text: Not Found Email
+- img
+- textbox "Email":
+  - /placeholder: you@company.com
+  - text: admin@example.com
+- text: Password
+- img
+- textbox "Password":
+  - /placeholder: Enter your password
+  - text: admin123
+- button "Sign In"
+- paragraph:
+  - text: Don't have an account?
+  - link "Sign up":
+    - /url: /register
 ```
 
 # Test source
@@ -84,11 +63,11 @@ Call log:
   9   | 
   10  | async function loginAndNavigateToAnalytics(page: Page): Promise<void> {
   11  |   await page.goto("/login");
-> 12  |   await page.getByLabel("Email").fill("admin@example.com");
-      |                                  ^ TimeoutError: locator.fill: Timeout 15000ms exceeded.
+  12  |   await page.getByLabel("Email").fill("admin@example.com");
   13  |   await page.getByLabel("Password").fill("admin123");
   14  |   await page.getByRole("button", { name: /sign in|log in/i }).click();
-  15  |   await expect(page).toHaveURL(/\/dashboard/);
+> 15  |   await expect(page).toHaveURL(/\/dashboard/);
+      |                      ^ Error: expect(page).toHaveURL(expected) failed
   16  |   await page.getByRole("link", { name: /analytics|reports|insights/i }).click();
   17  |   await expect(page).toHaveURL(/\/analytics/);
   18  | }
@@ -186,4 +165,7 @@ Call log:
   110 |     await expect(
   111 |       page.getByText(/funnel|pipeline|conversion/i).first()
   112 |     ).toBeVisible();
+  113 |   });
+  114 | 
+  115 |   test("should display time-to-hire trend", async ({ page }) => {
 ```

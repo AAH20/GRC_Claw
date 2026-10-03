@@ -53,10 +53,10 @@ export default function ContentPage() {
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search content..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input name="search" placeholder="Search content..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "published", label: "Published" }, { value: "pending_review", label: "Pending" }, { value: "draft", label: "Draft" }, { value: "rejected", label: "Rejected" }]} />
-        <Select value={type} onChange={(e) => setType(e.target.value)} options={[{ value: "", label: "All Types" }, { value: "video", label: "Video" }, { value: "image", label: "Image" }, { value: "story", label: "Story" }, { value: "reel", label: "Reel" }, { value: "blog", label: "Blog" }]} />
+        <Select name="status" value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "published", label: "Published" }, { value: "pending_review", label: "Pending" }, { value: "draft", label: "Draft" }, { value: "rejected", label: "Rejected" }]} />
+        <Select name="type" value={type} onChange={(e) => setType(e.target.value)} options={[{ value: "", label: "All Types" }, { value: "video", label: "Video" }, { value: "image", label: "Image" }, { value: "story", label: "Story" }, { value: "reel", label: "Reel" }, { value: "blog", label: "Blog" }]} />
       </div>
       <ContentGrid content={content} isLoading={isLoading} />
     </div>

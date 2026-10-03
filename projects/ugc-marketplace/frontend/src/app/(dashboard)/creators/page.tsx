@@ -49,9 +49,9 @@ export default function CreatorsPage() {
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search creators..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input name="search" placeholder="Search creators..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "active", label: "Active" }, { value: "pending", label: "Pending" }, { value: "suspended", label: "Suspended" }]} />
+        <Select name="status" value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "active", label: "Active" }, { value: "pending", label: "Pending" }, { value: "suspended", label: "Suspended" }]} />
         <Select value={category} onChange={(e) => setCategory(e.target.value)} options={[{ value: "", label: "All Categories" }, { value: "fashion", label: "Fashion" }, { value: "tech", label: "Tech" }, { value: "food", label: "Food" }, { value: "travel", label: "Travel" }]} />
       </div>
       <CreatorGrid creators={creators} isLoading={isLoading} />

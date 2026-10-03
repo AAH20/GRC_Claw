@@ -57,10 +57,10 @@ export default function TransactionsPage() {
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search transactions..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input name="search" placeholder="Search transactions..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={type} onChange={(e) => setType(e.target.value)} options={[{ value: "", label: "All Types" }, { value: "sale", label: "Sales" }, { value: "purchase", label: "Purchases" }, { value: "refund", label: "Refunds" }, { value: "payout", label: "Payouts" }, { value: "fee", label: "Fees" }]} />
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "pending", label: "Pending" }, { value: "completed", label: "Completed" }, { value: "failed", label: "Failed" }, { value: "cancelled", label: "Cancelled" }]} />
+        <Select name="type" value={type} onChange={(e) => setType(e.target.value)} options={[{ value: "", label: "All Types" }, { value: "sale", label: "Sales" }, { value: "purchase", label: "Purchases" }, { value: "refund", label: "Refunds" }, { value: "payout", label: "Payouts" }, { value: "fee", label: "Fees" }]} />
+        <Select name="status" value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "pending", label: "Pending" }, { value: "completed", label: "Completed" }, { value: "failed", label: "Failed" }, { value: "cancelled", label: "Cancelled" }]} />
       </div>
       <TransactionList transactions={transactions} isLoading={isLoading} />
     </div>

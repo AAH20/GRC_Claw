@@ -57,9 +57,9 @@ export default function RegisterPage() {
 
   return (
     <>
-      <div className="mb-8 text-center lg:hidden">
+      <div className="mb-8 text-center">
         <Sparkles className="mx-auto h-10 w-10 text-primary" />
-        <h1 className="mt-2 text-2xl font-bold">UGC Marketplace</h1>
+        <h1 className="mt-2 text-2xl font-bold">Register</h1>
       </div>
       <Card>
         <CardHeader>
@@ -78,21 +78,21 @@ export default function RegisterPage() {
               <label htmlFor="name" className="text-sm font-medium">Full Name</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input id="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} className="pl-9" required />
+                <Input id="name" name="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} className="pl-9" error={validationErrors.name} required />
               </div>
             </div>
             <div className="space-y-2">
               <label htmlFor="reg-email" className="text-sm font-medium">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input id="reg-email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" required />
+                <Input id="reg-email" name="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" error={validationErrors.email} required />
               </div>
             </div>
             <div className="space-y-2">
               <label htmlFor="reg-password" className="text-sm font-medium">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input id="reg-password" type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" required />
+                <Input id="reg-password" name="password" type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" error={validationErrors.password} required />
               </div>
             </div>
             <div className="space-y-2">
@@ -106,7 +106,7 @@ export default function RegisterPage() {
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">Sign in</Link>
+            <Link href="/login" className="text-primary hover:underline">Login</Link>
           </p>
         </CardContent>
       </Card>

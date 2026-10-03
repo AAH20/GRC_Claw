@@ -47,9 +47,9 @@ export default function ListingsPage() {
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search listings..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input name="search" placeholder="Search listings..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "active", label: "Active" }, { value: "draft", label: "Draft" }, { value: "paused", label: "Paused" }, { value: "sold", label: "Sold" }, { value: "expired", label: "Expired" }]} />
+        <Select name="status" value={status} onChange={(e) => setStatus(e.target.value)} options={[{ value: "", label: "All Status" }, { value: "active", label: "Active" }, { value: "draft", label: "Draft" }, { value: "paused", label: "Paused" }, { value: "sold", label: "Sold" }, { value: "expired", label: "Expired" }]} />
       </div>
       <ListingTable listings={listings} isLoading={isLoading} />
     </div>

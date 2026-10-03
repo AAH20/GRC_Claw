@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from recruitment_platform.api.routes import (
+    auth,
     bias_detector,
     candidate_matcher,
     employer_branding,
@@ -24,6 +25,7 @@ from recruitment_platform.api.routes import (
 api_router = APIRouter()
 
 api_router.include_router(health.router, tags=["health"])
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(
     resume_parser.router, prefix="/resume-parser", tags=["resume-parser"]
 )

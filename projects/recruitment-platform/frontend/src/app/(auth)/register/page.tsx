@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Briefcase, Mail, Lock, User } from "lucide-react";
 import Link from "next/link";
 
-export function RegisterPage() {
+export default function RegisterPage() {
   const { register, isLoading } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

@@ -46,9 +46,9 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="mb-8 text-center lg:hidden">
+      <div className="mb-8 text-center">
         <Sparkles className="mx-auto h-10 w-10 text-primary" />
-        <h1 className="mt-2 text-2xl font-bold">UGC Marketplace</h1>
+        <h1 className="mt-2 text-2xl font-bold">Login</h1>
       </div>
       <Card>
         <CardHeader>
@@ -67,21 +67,21 @@ export default function LoginPage() {
               <label htmlFor="email" className="text-sm font-medium">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" required />
+                <Input id="email" name="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" error={validationErrors.email} required />
               </div>
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" required />
+                <Input id="password" name="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" error={validationErrors.password} required />
               </div>
             </div>
             <Button type="submit" className="w-full" isLoading={isLoading}>Sign In</Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline">Sign up</Link>
+            <Link href="/register" className="text-primary hover:underline">Register</Link>
           </p>
         </CardContent>
       </Card>
