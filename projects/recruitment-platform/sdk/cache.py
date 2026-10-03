@@ -41,6 +41,13 @@ class RedisCache:
         ttl: int = 300,
         prefix: str = "rpc:cache:",
     ) -> None:
+        """Initialize the Redis cache.
+
+        Args:
+            redis_url: Redis connection URL.
+            ttl: Cache TTL in seconds.
+            prefix: Key prefix for cache entries.
+        """
         self._ttl: int = ttl
         self._prefix: str = prefix
         self._redis: Any = None
@@ -49,7 +56,11 @@ class RedisCache:
         self._connect(redis_url)
 
     def _connect(self, redis_url: str) -> None:
-        """Attempt to connect to Redis."""
+        """Attempt to connect to Redis.
+
+        Args:
+            redis_url: Redis connection URL.
+        """
         try:
             import redis
 
@@ -76,7 +87,16 @@ class RedisCache:
         return self._ttl
 
     def _make_key(self, method: str, path: str, params: dict[str, Any] | None) -> str:
-        """Generate a cache key from request parameters."""
+        """Generate a cache key from request parameters.
+
+        Args:
+            method: HTTP method.
+            path: API path.
+            params: Query parameters.
+
+        Returns:
+            Hashed cache key string.
+        """
         data = (
             f"{method}:{path}:{json.dumps(params or {}, sort_keys=True, default=str)}"
         )
@@ -108,7 +128,14 @@ class RedisCache:
         return self._memory_get(key)
 
     def _memory_get(self, key: str) -> Any | None:
-        """Get from in-memory cache."""
+        """Get from in-memory cache.
+
+        Args:
+            key: Cache key.
+
+        Returns:
+            Cached value or None if not found or expired.
+        """
         if key in self._memory_cache:
             expiry, value = self._memory_cache[key]
             if time.time() < expiry:

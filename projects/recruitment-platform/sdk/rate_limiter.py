@@ -28,6 +28,15 @@ class TokenBucketRateLimiter:
     """
 
     def __init__(self, rate: float, capacity: int) -> None:
+        """Initialize the token bucket rate limiter.
+
+        Args:
+            rate: Token refill rate in tokens per second.
+            capacity: Maximum number of tokens the bucket can hold.
+
+        Raises:
+            ValueError: If rate or capacity is not positive.
+        """
         if rate <= 0:
             raise ValueError("Rate must be positive")
         if capacity <= 0:
@@ -85,7 +94,15 @@ class TokenBucketRateLimiter:
             return False
 
     def _acquire_blocking(self, tokens: int, timeout: float | None) -> bool:
-        """Blocking token acquisition with optional timeout."""
+        """Blocking token acquisition with optional timeout.
+
+        Args:
+            tokens: Number of tokens to acquire.
+            timeout: Maximum time to wait in seconds (None = forever).
+
+        Returns:
+            True if tokens were acquired, False if timeout exceeded.
+        """
         start = time.monotonic()
         while True:
             with self._lock:
@@ -139,6 +156,15 @@ class AsyncTokenBucketRateLimiter:
     """
 
     def __init__(self, rate: float, capacity: int) -> None:
+        """Initialize the async token bucket rate limiter.
+
+        Args:
+            rate: Token refill rate in tokens per second.
+            capacity: Maximum number of tokens the bucket can hold.
+
+        Raises:
+            ValueError: If rate or capacity is not positive.
+        """
         if rate <= 0:
             raise ValueError("Rate must be positive")
         if capacity <= 0:
@@ -202,7 +228,15 @@ class AsyncTokenBucketRateLimiter:
             return False
 
     async def _acquire_blocking(self, tokens: int, timeout: float | None) -> bool:
-        """Blocking token acquisition with optional timeout."""
+        """Blocking token acquisition with optional timeout.
+
+        Args:
+            tokens: Number of tokens to acquire.
+            timeout: Maximum time to wait in seconds (None = forever).
+
+        Returns:
+            True if tokens were acquired, False if timeout exceeded.
+        """
         start = time.monotonic()
         while True:
             async with self._lock:
