@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, TypeVar
+from typing import Any, Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 
-class BaseAgent(ABC[T, R]):
+class BaseAgent(ABC, Generic[T, R]):
     """Abstract base class for all recruitment agents.
 
     All agents must inherit from this class and implement the `process` method.
