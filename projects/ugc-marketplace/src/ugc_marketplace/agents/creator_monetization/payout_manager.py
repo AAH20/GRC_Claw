@@ -48,7 +48,9 @@ class PayoutManagerAgent:
             Schedule confirmation data.
         """
         self._schedules[creator_id] = schedule
-        logger.info("Payout scheduled", creator_id=creator_id, frequency=schedule.frequency)
+        logger.info(
+            "Payout scheduled", creator_id=creator_id, frequency=schedule.frequency
+        )
         return {
             "creator_id": creator_id,
             "schedule": schedule.model_dump(),
@@ -96,7 +98,12 @@ class PayoutManagerAgent:
         }
 
         self._payouts[payout_id] = payout
-        logger.info("Payout created", payout_id=payout_id, creator_id=creator_id, amount=str(amount))
+        logger.info(
+            "Payout created",
+            payout_id=payout_id,
+            creator_id=creator_id,
+            amount=str(amount),
+        )
         return payout
 
     async def process_payout(self, payout_id: str) -> dict[str, Any]:
@@ -143,7 +150,9 @@ class PayoutManagerAgent:
         logger.info("Payout completed", payout_id=payout_id)
         return payout
 
-    async def fail_payout(self, payout_id: str, reason: str = "Processing failed") -> dict[str, Any]:
+    async def fail_payout(
+        self, payout_id: str, reason: str = "Processing failed"
+    ) -> dict[str, Any]:
         """Mark a payout as failed.
 
         Args:
@@ -208,9 +217,15 @@ class PayoutManagerAgent:
         Returns:
             Balance summary data.
         """
-        creator_payouts = [p for p in self._payouts.values() if p["creator_id"] == creator_id]
-        total = sum(Decimal(p["amount"]) for p in creator_payouts if p["status"] == "completed")
-        pending = sum(Decimal(p["amount"]) for p in creator_payouts if p["status"] == "pending")
+        creator_payouts = [
+            p for p in self._payouts.values() if p["creator_id"] == creator_id
+        ]
+        total = sum(
+            Decimal(p["amount"]) for p in creator_payouts if p["status"] == "completed"
+        )
+        pending = sum(
+            Decimal(p["amount"]) for p in creator_payouts if p["status"] == "pending"
+        )
 
         return {
             "creator_id": creator_id,

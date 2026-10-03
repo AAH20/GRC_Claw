@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-
 from tier_management.config.settings import Settings, get_settings
 from tier_management.models.schemas import HealthResponse
 

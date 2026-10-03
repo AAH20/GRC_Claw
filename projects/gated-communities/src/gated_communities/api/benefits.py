@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from tier_management.agents.benefit_manager import BenefitManagerAgent
 from tier_management.config.settings import Settings, get_settings
 from tier_management.models.schemas import Benefit
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 benefits_router = APIRouter()
 
@@ -18,7 +19,9 @@ _benefits_store: dict[UUID, Benefit] = {}
 _agent_instance: BenefitManagerAgent | None = None
 
 
-async def _get_agent(settings: Settings = Depends(get_settings)) -> BenefitManagerAgent:  # noqa: B008
+async def _get_agent(
+    settings: Settings = Depends(get_settings),
+) -> BenefitManagerAgent:  # noqa: B008
     """Get or create the benefit manager agent singleton.
 
     Args:
@@ -57,10 +60,12 @@ async def create_benefit(
         The created benefit.
     """
     try:
-        result = await agent.execute({
-            "operation": "create",
-            "benefit_data": benefit_data,
-        })
+        result = await agent.execute(
+            {
+                "operation": "create",
+                "benefit_data": benefit_data,
+            }
+        )
         _benefits_store[result.id] = result
         return result
     except ValueError as e:
@@ -142,11 +147,13 @@ async def update_benefit(
         HTTPException: If benefit not found.
     """
     try:
-        result = await agent.execute({
-            "operation": "update",
-            "benefit_id": str(benefit_id),
-            "benefit_data": benefit_data,
-        })
+        result = await agent.execute(
+            {
+                "operation": "update",
+                "benefit_id": str(benefit_id),
+                "benefit_data": benefit_data,
+            }
+        )
         _benefits_store[result.id] = result
         return result
     except ValueError as e:
@@ -176,10 +183,12 @@ async def deactivate_benefit(
         HTTPException: If benefit not found.
     """
     try:
-        result = await agent.execute({
-            "operation": "deactivate",
-            "benefit_id": str(benefit_id),
-        })
+        result = await agent.execute(
+            {
+                "operation": "deactivate",
+                "benefit_id": str(benefit_id),
+            }
+        )
         _benefits_store[result.id] = result
         return result
     except ValueError as e:
@@ -211,11 +220,13 @@ async def assign_benefit_to_tiers(
         HTTPException: If benefit not found.
     """
     try:
-        result = await agent.execute({
-            "operation": "assign",
-            "benefit_id": str(benefit_id),
-            "tier_ids": [str(t) for t in tier_ids],
-        })
+        result = await agent.execute(
+            {
+                "operation": "assign",
+                "benefit_id": str(benefit_id),
+                "tier_ids": [str(t) for t in tier_ids],
+            }
+        )
         _benefits_store[result.id] = result
         return result
     except ValueError as e:

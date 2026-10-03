@@ -9,9 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseLanguageModel
-from pydantic import BaseModel, Field
-
 from access_control.agents.base import AgentContext, BaseAgent
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from access_control.config import Settings
@@ -61,10 +60,12 @@ Consider policy priority, deny-override semantics, and obligation requirements.
 Respond with a JSON object containing: decision, enforced_policies, violations, obligations,
         reason."""
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", "{input}"),
+            ]
+        )
 
         chain = prompt | self.llm
         return chain
@@ -84,11 +85,13 @@ Respond with a JSON object containing: decision, enforced_policies, violations, 
         agent = self._build_agent()
 
         input_data = {
-            "input": json.dumps({
-                "request": payload.request.model_dump(mode="json"),
-                "policies": payload.policies,
-                "context": payload.context,
-            })
+            "input": json.dumps(
+                {
+                    "request": payload.request.model_dump(mode="json"),
+                    "policies": payload.policies,
+                    "context": payload.context,
+                }
+            )
         }
 
         response = await agent.ainvoke(input_data)
@@ -133,9 +136,7 @@ Respond with a JSON object containing: decision, enforced_policies, violations, 
             policy_ids=output.enforced_policies,
         )
 
-    async def check_compliance(
-        self, policies: list[Policy]
-    ) -> list[str]:
+    async def check_compliance(self, policies: list[Policy]) -> list[str]:
         """Check a set of policies for compliance issues.
 
         Args:

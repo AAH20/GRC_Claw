@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
-
 from access_control.models.enums import AccessDecision, AuditSeverity, PolicyEffect, RoleStatus
 from access_control.models.schemas import (
     AccessAudit,
@@ -18,6 +16,7 @@ from access_control.models.schemas import (
     RoleCreate,
     RoleUpdate,
 )
+from pydantic import ValidationError
 
 
 class TestModels:

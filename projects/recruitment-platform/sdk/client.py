@@ -1,7 +1,18 @@
-"""Recruitment Platform API client with authentication and error handling."""
+"""Recruitment Platform API client with authentication, caching, rate limiting, and error handling.
 
+Provides both synchronous and asynchronous clients with:
+- Async/await support via AsyncRecruitmentPlatformClient
+- Exponential backoff retry logic
+- Token bucket rate limiting
+- Redis-backed response caching
+- Structured JSON logging
+- Custom exception hierarchy
+- Full type hints for mypy compliance
+- Comprehensive docstrings
+"""
 from __future__ import annotations
 
+import logging
 from types import TracebackType
 from typing import Any, Type
 
@@ -13,14 +24,18 @@ from tenacity import (
     wait_exponential,
 )
 
+from .cache import RedisCache
 from .exceptions import (
     AuthenticationError,
+    ConnectionError,
     NotFoundError,
     RateLimitError,
     RecruitmentPlatformError,
     ServerError,
+    TimeoutError,
     ValidationError,
 )
+from .logging_config import get_logger, setup_logging
 from .models import (
     APIResponse,
     ATSCompatibilityRequest,
@@ -103,19 +118,30 @@ from .models import (
     WelcomeMessageRequest,
     WelcomeMessageResponse,
 )
+from .rate_limiter import AsyncTokenBucketRateLimiter, TokenBucketRateLimiter
+
+logger = get_logger()
 
 
 class RecruitmentPlatformClient:
-    """Production-grade client for the Recruitment Platform REST API.
+    """Production-grade synchronous client for the Recruitment Platform REST API.
 
     Provides typed access to all 42 endpoints across 10 recruitment domains
-    with automatic retries, authentication, and comprehensive error handling.
+    with automatic retries, rate limiting, caching, authentication, and
+    comprehensive error handling.
 
     Args:
         base_url: The base URL of the Recruitment Platform API.
         api_key: Optional API key for authentication.
         timeout: Request timeout in seconds (default: 30).
         max_retries: Maximum number of retry attempts (default: 3).
+        rate_limit_rate: Token bucket refill rate in tokens/second (default: 10).
+        rate_limit_capacity: Token bucket capacity (default: 100).
+        cache_ttl: Cache TTL in seconds (default: 300).
+        cache_redis_url: Redis URL for response caching (default: redis://localhost:6379).
+        enable_cache: Whether to enable response caching (default: True).
+        enable_rate_limit: Whether to enable rate limiting (default: True).
+        log_level: Logging level (default: logging.INFO).
 
     Example:
         >>> client = RecruitmentPlatformClient(
@@ -125,6 +151,11 @@ class RecruitmentPlatformClient:
         >>> health = client.health_check()
         >>> print(health.status)
         'healthy'
+
+    Example with context manager:
+        >>> with RecruitmentPlatformClient(base_url="http://localhost:8000") as client:
+        ...     health = client.health_check()
+        ...     print(health.status)
     """
 
     def __init__(
@@ -133,24 +164,51 @@ class RecruitmentPlatformClient:
         api_key: str | None = None,
         timeout: float = 30.0,
         max_retries: int = 3,
+        rate_limit_rate: float = 10.0,
+        rate_limit_capacity: int = 100,
+        cache_ttl: int = 300,
+        cache_redis_url: str = "redis://localhost:6379",
+        enable_cache: bool = True,
+        enable_rate_limit: bool = True,
+        log_level: int = logging.INFO,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
         self._timeout = timeout
         self._max_retries = max_retries
+        self._enable_cache = enable_cache
+        self._enable_rate_limit = enable_rate_limit
+
+        setup_logging(log_level)
+
         self._client = httpx.Client(
             base_url=self._base_url,
             timeout=timeout,
             headers=self._build_headers(),
         )
 
+        self._rate_limiter: TokenBucketRateLimiter | None = None
+        if enable_rate_limit:
+            self._rate_limiter = TokenBucketRateLimiter(
+                rate=rate_limit_rate,
+                capacity=rate_limit_capacity,
+            )
+
+        self._cache: RedisCache | None = None
+        if enable_cache:
+            self._cache = RedisCache(
+                redis_url=cache_redis_url,
+                ttl=cache_ttl,
+            )
+
     def _build_headers(self) -> dict[str, str]:
         """Build request headers with optional authentication.
 
         Returns:
-            Dictionary of HTTP headers.
+            Dictionary of HTTP headers including Content-Type, Accept,
+            and Authorization if an API key is configured.
         """
-        headers = {
+        headers: dict[str, str] = {
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
@@ -191,17 +249,52 @@ class RecruitmentPlatformClient:
             message = f"HTTP {response.status_code}: {response.reason_phrase}"
 
         status = response.status_code
+        request_id = response.headers.get("x-request-id")
+
         if status == 401:
-            raise AuthenticationError(message, status, error_body)
+            raise AuthenticationError(message, status, error_body, request_id)
         if status == 404:
-            raise NotFoundError(message, status, error_body)
+            raise NotFoundError(message, status, error_body, request_id)
         if status == 422:
-            raise ValidationError(message, status, error_body)
+            raise ValidationError(message, status, error_body, request_id)
         if status == 429:
-            raise RateLimitError(message, status, error_body)
+            raise RateLimitError(message, status, error_body, request_id)
         if status >= 500:
-            raise ServerError(message, status, error_body)
-        raise RecruitmentPlatformError(message, status, error_body)
+            raise ServerError(message, status, error_body, request_id)
+        raise RecruitmentPlatformError(message, status, error_body, request_id)
+
+    def _get_cached(self, method: str, path: str, params: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Get cached response if available.
+
+        Args:
+            method: HTTP method.
+            path: API path.
+            params: Query parameters.
+
+        Returns:
+            Cached response data or None.
+        """
+        if self._cache is None:
+            return None
+        return self._cache.get(method, path, params)
+
+    def _set_cached(self, method: str, path: str, params: dict[str, Any] | None, data: dict[str, Any]) -> None:
+        """Cache a response.
+
+        Args:
+            method: HTTP method.
+            path: API path.
+            params: Query parameters.
+            data: Response data to cache.
+        """
+        if self._cache is None:
+            return
+        self._cache.set(method, path, params, data)
+
+    def _acquire_rate_limit(self) -> None:
+        """Acquire a rate limit token, blocking if necessary."""
+        if self._rate_limiter is not None:
+            self._rate_limiter.acquire(blocking=True)
 
     @retry(
         retry=retry_if_exception_type((RateLimitError, ServerError)),
@@ -217,7 +310,7 @@ class RecruitmentPlatformClient:
         json: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Execute an HTTP request with retry logic.
+        """Execute an HTTP request with retry logic, rate limiting, and caching.
 
         Args:
             method: HTTP method (GET, POST, etc.).
@@ -230,25 +323,49 @@ class RecruitmentPlatformClient:
 
         Raises:
             RecruitmentPlatformError: If the request fails after retries.
+            TimeoutError: If the request times out.
+            ConnectionError: If the connection fails.
         """
+        # Check cache for GET requests
+        if method == "GET" and self._cache is not None:
+            cached = self._get_cached(method, path, params)
+            if cached is not None:
+                logger.debug("Cache hit", extra={"method": method, "path": path})
+                return cached
+
+        # Rate limiting
+        self._acquire_rate_limit()
+
         try:
+            logger.debug(
+                "Making request",
+                extra={"method": method, "path": path},
+            )
             response = self._client.request(
                 method,
                 path,
                 json=json,
                 params=params,
             )
-            return self._handle_response(response)
+            data = self._handle_response(response)
+
+            # Cache successful GET responses
+            if method == "GET" and self._cache is not None:
+                self._set_cached(method, path, params, data)
+
+            return data
         except httpx.TimeoutException as e:
-            raise RecruitmentPlatformError(f"Request timed out: {e}") from e
+            raise TimeoutError(f"Request timed out: {e}") from e
         except httpx.ConnectError as e:
-            raise RecruitmentPlatformError(f"Connection failed: {e}") from e
+            raise ConnectionError(f"Connection failed: {e}") from e
         except httpx.HTTPError as e:
             raise RecruitmentPlatformError(f"HTTP error: {e}") from e
 
     def close(self) -> None:
-        """Close the underlying HTTP client."""
+        """Close the underlying HTTP client and cache connections."""
         self._client.close()
+        if self._cache is not None:
+            self._cache.close()
 
     def __enter__(self) -> RecruitmentPlatformClient:
         """Enter context manager."""
@@ -269,7 +386,12 @@ class RecruitmentPlatformClient:
         """Check the health status of the API.
 
         Returns:
-            Health status response.
+            Health status response with status and service name.
+
+        Example:
+            >>> health = client.health_check()
+            >>> print(health.status)
+            'healthy'
         """
         data = self._request("GET", "/api/v1/health")
         return HealthResponse(**data)
@@ -278,7 +400,13 @@ class RecruitmentPlatformClient:
         """Check the readiness status of the API.
 
         Returns:
-            Readiness status response.
+            Readiness status response indicating if the API is ready
+            to accept traffic.
+
+        Example:
+            >>> ready = client.readiness_check()
+            >>> print(ready.status)
+            'ready'
         """
         data = self._request("GET", "/api/v1/ready")
         return HealthResponse(**data)
@@ -292,22 +420,31 @@ class RecruitmentPlatformClient:
             request: Resume parse request with text content.
 
         Returns:
-            Structured resume data.
+            Structured resume data including name, email, phone,
+            skills, experience, and education.
+
+        Example:
+            >>> result = client.parse_resume(
+            ...     ResumeParseRequest(text="John Doe\\nSoftware Engineer\\nPython, AWS")
+            ... )
+            >>> print(result.skills)
+            ['Python', 'AWS']
         """
         data = self._request("POST", "/api/v1/resume-parser/parse", json=request.model_dump())
         return ResumeParseResponse(**data.get("data", data))
 
-    def extract_contact(self, request: ContactExtractionRequest) -> ContactExtractionResponse:
+    def extract_contact(self, request: ResumeParseRequest) -> Any:
         """Extract contact information from resume text.
 
         Args:
             request: Contact extraction request with text content.
 
         Returns:
-            Extracted contact information.
+            Extracted contact information including email, phone,
+            address, and LinkedIn profile.
         """
         data = self._request("POST", "/api/v1/resume-parser/extract-contact", json=request.model_dump())
-        return ContactExtractionResponse(**data.get("data", data))
+        return data.get("data", data)
 
     def extract_skills(self, request: SkillsExtractionRequest) -> SkillsExtractionResponse:
         """Extract skills from resume text.
@@ -316,7 +453,7 @@ class RecruitmentPlatformClient:
             request: Skills extraction request with text content.
 
         Returns:
-            List of extracted skills.
+            List of extracted skills from the resume.
         """
         data = self._request("POST", "/api/v1/resume-parser/extract-skills", json=request.model_dump())
         return SkillsExtractionResponse(**data.get("data", data))
@@ -330,7 +467,7 @@ class RecruitmentPlatformClient:
             request: Candidate match request with candidates and job requirements.
 
         Returns:
-            Ranked candidate matches.
+            Ranked candidate matches with scores.
         """
         data = self._request("POST", "/api/v1/candidate-matcher/match", json=request.model_dump())
         return CandidateMatchResponse(**data.get("data", data))
@@ -342,7 +479,7 @@ class RecruitmentPlatformClient:
             request: Match explanation request with candidate, job, and match result.
 
         Returns:
-            Match explanation.
+            Human-readable explanation of the match decision.
         """
         data = self._request("POST", "/api/v1/candidate-matcher/explain", json=request.model_dump())
         return MatchExplanationResponse(**data.get("data", data))
@@ -354,7 +491,7 @@ class RecruitmentPlatformClient:
             request: Gap analysis request with candidate and required skills.
 
         Returns:
-            Gap analysis results.
+            Gap analysis results showing missing skills, matches, and coverage.
         """
         data = self._request("POST", "/api/v1/candidate-matcher/gap-analysis", json=request.model_dump())
         return GapAnalysisResponse(**data.get("data", data))
@@ -368,7 +505,7 @@ class RecruitmentPlatformClient:
             request: Interview slot request with participants and availabilities.
 
         Returns:
-            Optimal time slots.
+            Optimal time slots for the interview.
         """
         data = self._request("POST", "/api/v1/interview-scheduler/optimize-slots", json=request.model_dump())
         return InterviewSlotResponse(**data.get("data", data))
@@ -380,7 +517,7 @@ class RecruitmentPlatformClient:
             request: Conflict detection request with proposed slot and existing events.
 
         Returns:
-            Detected conflicts.
+            Detected scheduling conflicts.
         """
         data = self._request("POST", "/api/v1/interview-scheduler/detect-conflicts", json=request.model_dump())
         return ConflictDetectionResponse(**data.get("data", data))
@@ -430,7 +567,7 @@ class RecruitmentPlatformClient:
             request: Skill validation request with claimed skills and evidence.
 
         Returns:
-            Validation results.
+            Validation results for each claimed skill.
         """
         data = self._request("POST", "/api/v1/skills-assessor/validate-skills", json=request.model_dump())
         return SkillValidationResponse(**data.get("data", data))
@@ -444,7 +581,7 @@ class RecruitmentPlatformClient:
             request: Bias language request with text to analyze.
 
         Returns:
-            Detected biased phrases with suggestions.
+            Detected biased phrases with suggestions for alternatives.
         """
         data = self._request("POST", "/api/v1/bias-detector/analyze-language", json=request.model_dump())
         return BiasLanguageResponse(**data.get("data", data))
@@ -456,7 +593,7 @@ class RecruitmentPlatformClient:
             request: Fairness score request with decisions and protected attributes.
 
         Returns:
-            Fairness metric scores.
+            Fairness metric scores across protected attributes.
         """
         data = self._request("POST", "/api/v1/bias-detector/fairness-score", json=request.model_dump())
         return FairnessScoreResponse(**data.get("data", data))
@@ -480,7 +617,7 @@ class RecruitmentPlatformClient:
             request: Bias recommendation request with bias analysis results.
 
         Returns:
-            Actionable recommendations.
+            Actionable recommendations for mitigating bias.
         """
         data = self._request("POST", "/api/v1/bias-detector/recommendations", json=request.model_dump())
         return BiasRecommendationResponse(**data.get("data", data))
@@ -506,7 +643,7 @@ class RecruitmentPlatformClient:
             request: Pool analysis request with pool data and hiring needs.
 
         Returns:
-            Pool analysis results.
+            Pool analysis results with health score and insights.
         """
         data = self._request("POST", "/api/v1/talent-pool/analyze-pool", json=request.model_dump())
         return PoolAnalysisResponse(**data.get("data", data))
@@ -518,7 +655,7 @@ class RecruitmentPlatformClient:
             request: Talent recommendation request with job and pool members.
 
         Returns:
-            Ranked recommendations.
+            Ranked talent recommendations.
         """
         data = self._request("POST", "/api/v1/talent-pool/recommend", json=request.model_dump())
         return TalentRecommendResponse(**data.get("data", data))
@@ -530,7 +667,7 @@ class RecruitmentPlatformClient:
             request: Engagement track request with candidate ID and interactions.
 
         Returns:
-            Engagement metrics.
+            Engagement metrics and score.
         """
         data = self._request("POST", "/api/v1/talent-pool/track-engagement", json=request.model_dump())
         return EngagementTrackResponse(**data.get("data", data))
@@ -544,7 +681,7 @@ class RecruitmentPlatformClient:
             request: Cost analysis request with hiring data and cost data.
 
         Returns:
-            Cost analysis results.
+            Cost analysis results with total cost and breakdown.
         """
         data = self._request("POST", "/api/v1/analytics/cost-analysis", json=request.model_dump())
         return CostAnalysisResponse(**data.get("data", data))
@@ -556,7 +693,7 @@ class RecruitmentPlatformClient:
             request: Funnel analysis request with funnel stage data.
 
         Returns:
-            Funnel analysis results.
+            Funnel analysis results with conversion rates and bottlenecks.
         """
         data = self._request("POST", "/api/v1/analytics/funnel-analysis", json=request.model_dump())
         return FunnelAnalysisResponse(**data.get("data", data))
@@ -568,7 +705,7 @@ class RecruitmentPlatformClient:
             request: Diversity metrics request with pipeline data and demographics.
 
         Returns:
-            Diversity metrics.
+            Diversity metrics across the recruitment pipeline.
         """
         data = self._request("POST", "/api/v1/analytics/diversity-metrics", json=request.model_dump())
         return DiversityMetricsResponse(**data.get("data", data))
@@ -580,7 +717,7 @@ class RecruitmentPlatformClient:
             request: Hiring prediction request with historical data and current pipeline.
 
         Returns:
-            Predictive metrics.
+            Predictive metrics for hiring outcomes.
         """
         data = self._request("POST", "/api/v1/analytics/predict", json=request.model_dump())
         return HiringPredictionResponse(**data.get("data", data))
@@ -606,7 +743,7 @@ class RecruitmentPlatformClient:
             request: Compliance check request with employee data and jurisdiction.
 
         Returns:
-            Compliance status.
+            Compliance status with any violations.
         """
         data = self._request("POST", "/api/v1/onboarding/check-compliance", json=request.model_dump())
         return ComplianceCheckResponse(**data.get("data", data))
@@ -618,7 +755,7 @@ class RecruitmentPlatformClient:
             request: Document generation request with employee and template config.
 
         Returns:
-            Generated documents.
+            Generated onboarding documents.
         """
         data = self._request("POST", "/api/v1/onboarding/generate-documents", json=request.model_dump())
         return DocumentGenerationResponse(**data.get("data", data))
@@ -630,7 +767,7 @@ class RecruitmentPlatformClient:
             request: Progress track request with employee ID and onboarding plan.
 
         Returns:
-            Progress status.
+            Progress status with completed and pending tasks.
         """
         data = self._request("POST", "/api/v1/onboarding/track-progress", json=request.model_dump())
         return ProgressTrackResponse(**data.get("data", data))
@@ -642,7 +779,7 @@ class RecruitmentPlatformClient:
             request: Task schedule request with employee and start date.
 
         Returns:
-            Scheduled tasks.
+            Scheduled onboarding tasks.
         """
         data = self._request("POST", "/api/v1/onboarding/schedule-tasks", json=request.model_dump())
         return TaskScheduleResponse(**data.get("data", data))
@@ -668,7 +805,7 @@ class RecruitmentPlatformClient:
             request: ATS compatibility request with job description text.
 
         Returns:
-            Compatibility results.
+            Compatibility results with any issues found.
         """
         data = self._request("POST", "/api/v1/job-description/check-ats", json=request.model_dump())
         return ATSCompatibilityResponse(**data.get("data", data))
@@ -716,7 +853,7 @@ class RecruitmentPlatformClient:
             request: Tone analysis request with job description and brand voice.
 
         Returns:
-            Tone analysis.
+            Tone analysis with brand voice alignment score.
         """
         data = self._request("POST", "/api/v1/job-description/analyze-tone", json=request.model_dump())
         return ToneAnalysisResponse(**data.get("data", data))
@@ -730,7 +867,7 @@ class RecruitmentPlatformClient:
             request: Brand strategy request with company data and target audience.
 
         Returns:
-            Brand strategy.
+            Brand strategy recommendations.
         """
         data = self._request("POST", "/api/v1/employer-branding/brand-strategy", json=request.model_dump())
         return BrandStrategyResponse(**data.get("data", data))
@@ -754,7 +891,7 @@ class RecruitmentPlatformClient:
             request: Reputation management request with platform data and metrics.
 
         Returns:
-            Reputation status.
+            Reputation status and recommended actions.
         """
         data = self._request("POST", "/api/v1/employer-branding/manage-reputation", json=request.model_dump())
         return ReputationManagementResponse(**data.get("data", data))
@@ -766,7 +903,7 @@ class RecruitmentPlatformClient:
             request: Review analysis request with reviews and platform.
 
         Returns:
-            Review analysis.
+            Review analysis with summary and themes.
         """
         data = self._request("POST", "/api/v1/employer-branding/analyze-reviews", json=request.model_dump())
         return ReviewAnalysisResponse(**data.get("data", data))
@@ -778,7 +915,7 @@ class RecruitmentPlatformClient:
             request: Sentiment analysis request with texts to analyze.
 
         Returns:
-            Sentiment analysis.
+            Sentiment analysis with overall sentiment and scores.
         """
         data = self._request("POST", "/api/v1/employer-branding/analyze-sentiment", json=request.model_dump())
         return SentimentAnalysisResponse(**data.get("data", data))

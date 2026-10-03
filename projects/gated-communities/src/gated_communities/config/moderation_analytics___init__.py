@@ -31,7 +31,9 @@ class Settings(BaseSettings):
     workers: int = 1
 
     # LangChain / LLM
-    openai_api_key: str = Field(default="", description="OpenAI API key for LangChain agents")
+    openai_api_key: str = Field(
+        default="", description="OpenAI API key for LangChain agents"
+    )
     langchain_model: str = "gpt-4o-mini"
     langchain_temperature: float = 0.1
     langchain_max_tokens: int = 4096
@@ -43,8 +45,12 @@ class Settings(BaseSettings):
     min_confidence_threshold: float = 0.7
 
     # Integrations
-    moderation_api_url: str = Field(default="", description="External moderation API URL")
-    moderation_api_key: str = Field(default="", description="External moderation API key")
+    moderation_api_url: str = Field(
+        default="", description="External moderation API URL"
+    )
+    moderation_api_key: str = Field(
+        default="", description="External moderation API key"
+    )
     analytics_db_url: str = Field(default="", description="Analytics database URL")
 
     # Observability
@@ -81,7 +87,9 @@ class Settings(BaseSettings):
     def validate_confidence(cls, v: float) -> float:
         """Validate confidence threshold is in valid range."""
         if not 0.0 <= v <= 1.0:
-            raise ValueError(f"Confidence threshold must be between 0.0 and 1.0, got {v}")
+            raise ValueError(
+                f"Confidence threshold must be between 0.0 and 1.0, got {v}"
+            )
         return v
 
 

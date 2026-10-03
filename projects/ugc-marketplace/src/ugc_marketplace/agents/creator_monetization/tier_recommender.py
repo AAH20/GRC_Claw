@@ -43,7 +43,9 @@ class TierRecommenderAgent:
         """Initialize the tier recommender agent."""
         self._tiers: dict[str, list[dict[str, Any]]] = {}
 
-    async def recommend_tiers(self, profile: CreatorProfile) -> list[TierRecommendation]:
+    async def recommend_tiers(
+        self, profile: CreatorProfile
+    ) -> list[TierRecommendation]:
         """Generate tier recommendations for a creator.
 
         Args:
@@ -56,56 +58,68 @@ class TierRecommenderAgent:
 
         # Bronze tier - entry level
         bronze_price = self._calculate_base_price(profile, 0.5)
-        recommendations.append(TierRecommendation(
-            tier_name="Bronze Supporter",
-            level="bronze",
-            monthly_price=bronze_price,
-            yearly_price=bronze_price * Decimal("10"),
-            benefits=[
-                "Access to exclusive content",
-                "Community badge",
-                "Monthly Q&A access",
-            ],
-            rationale="Entry-level tier to capture broad audience support",
-        ))
+        recommendations.append(
+            TierRecommendation(
+                tier_name="Bronze Supporter",
+                level="bronze",
+                monthly_price=bronze_price,
+                yearly_price=bronze_price * Decimal("10"),
+                benefits=[
+                    "Access to exclusive content",
+                    "Community badge",
+                    "Monthly Q&A access",
+                ],
+                rationale="Entry-level tier to capture broad audience support",
+            )
+        )
 
         # Silver tier - mid level
         silver_price = self._calculate_base_price(profile, 1.0)
-        recommendations.append(TierRecommendation(
-            tier_name="Silver Member",
-            level="silver",
-            monthly_price=silver_price,
-            yearly_price=silver_price * Decimal("10"),
-            benefits=[
-                "All Bronze benefits",
-                "Early access to content",
-                "Monthly behind-the-scenes",
-                "Discord community access",
-            ],
-            rationale="Core tier for engaged fans seeking deeper connection",
-        ))
+        recommendations.append(
+            TierRecommendation(
+                tier_name="Silver Member",
+                level="silver",
+                monthly_price=silver_price,
+                yearly_price=silver_price * Decimal("10"),
+                benefits=[
+                    "All Bronze benefits",
+                    "Early access to content",
+                    "Monthly behind-the-scenes",
+                    "Discord community access",
+                ],
+                rationale="Core tier for engaged fans seeking deeper connection",
+            )
+        )
 
         # Gold tier - premium
         gold_price = self._calculate_base_price(profile, 2.5)
-        recommendations.append(TierRecommendation(
-            tier_name="Gold Patron",
-            level="gold",
-            monthly_price=gold_price,
-            yearly_price=gold_price * Decimal("10"),
-            benefits=[
-                "All Silver benefits",
-                "One-on-one monthly call",
-                "Exclusive merchandise discounts",
-                "Name in credits",
-                "Priority support",
-            ],
-            rationale="Premium tier for dedicated supporters willing to pay more",
-        ))
+        recommendations.append(
+            TierRecommendation(
+                tier_name="Gold Patron",
+                level="gold",
+                monthly_price=gold_price,
+                yearly_price=gold_price * Decimal("10"),
+                benefits=[
+                    "All Silver benefits",
+                    "One-on-one monthly call",
+                    "Exclusive merchandise discounts",
+                    "Name in credits",
+                    "Priority support",
+                ],
+                rationale="Premium tier for dedicated supporters willing to pay more",
+            )
+        )
 
-        logger.info("Tier recommendations generated", creator_id=profile.creator_id, count=len(recommendations))
+        logger.info(
+            "Tier recommendations generated",
+            creator_id=profile.creator_id,
+            count=len(recommendations),
+        )
         return recommendations
 
-    def _calculate_base_price(self, profile: CreatorProfile, multiplier: float) -> Decimal:
+    def _calculate_base_price(
+        self, profile: CreatorProfile, multiplier: float
+    ) -> Decimal:
         """Calculate base price for a tier.
 
         Args:
@@ -198,7 +212,13 @@ class TierRecommenderAgent:
             "tiers": selected,
             "count": len(selected),
             "price_range": {
-                "min": min((Decimal(t["monthly_price"]) for t in selected), default=Decimal("0")),
-                "max": max((Decimal(t["monthly_price"]) for t in selected), default=Decimal("0")),
+                "min": min(
+                    (Decimal(t["monthly_price"]) for t in selected),
+                    default=Decimal("0"),
+                ),
+                "max": max(
+                    (Decimal(t["monthly_price"]) for t in selected),
+                    default=Decimal("0"),
+                ),
             },
         }

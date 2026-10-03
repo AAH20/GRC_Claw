@@ -27,4 +27,8 @@ class PredictiveHiring(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Predictive metrics and forecasts.
         """
-        return {"time_to_hire_days": 0, "quality_forecast": 0.0, "success_probability": 0.0}
+        return {
+            "time_to_hire_days": 0,
+            "quality_forecast": 0.0,
+            "success_probability": 0.0,
+        }

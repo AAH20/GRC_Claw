@@ -17,7 +17,9 @@ class NotificationService:
             license_id: License identifier.
             content_id: Content identifier.
         """
-        logger.info("License created notification", license_id=license_id, content_id=content_id)
+        logger.info(
+            "License created notification", license_id=license_id, content_id=content_id
+        )
 
     async def notify_infringement_detected(
         self,

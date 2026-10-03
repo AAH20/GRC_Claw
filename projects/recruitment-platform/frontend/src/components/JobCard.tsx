@@ -46,13 +46,13 @@ export function JobCard({ job, onView, onEdit, onDelete, className }: JobCardPro
         <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">{job.description}</p>
         <div className="flex flex-wrap gap-3 text-sm text-gray-500 dark:text-gray-400">
           <span className="inline-flex items-center gap-1">
-            <MapPin className="h-4 w-4" /> {job.location}
+            <MapPin className="h-4 w-4" aria-hidden="true" /> {job.location}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Clock className="h-4 w-4" /> {typeLabels[job.type]}
+            <Clock className="h-4 w-4" aria-hidden="true" /> {typeLabels[job.type]}
           </span>
           <span className="inline-flex items-center gap-1">
-            <DollarSign className="h-4 w-4" /> {formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)}
+            <DollarSign className="h-4 w-4" aria-hidden="true" /> {formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)}
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -68,16 +68,16 @@ export function JobCard({ job, onView, onEdit, onDelete, className }: JobCardPro
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
             <span className="inline-flex items-center gap-1">
-              <Users className="h-4 w-4" /> {job.applicants} applicants
+              <Users className="h-4 w-4" aria-hidden="true" /> {job.applicants} applicants
             </span>
             <span className="inline-flex items-center gap-1">
-              <Eye className="h-4 w-4" /> {job.views} views
+              <Eye className="h-4 w-4" aria-hidden="true" /> {job.views} views
             </span>
           </div>
           <div className="flex gap-2">
-            {onView && <Button variant="ghost" size="sm" onClick={() => onView(job)}>View</Button>}
-            {onEdit && <Button variant="outline" size="sm" onClick={() => onEdit(job)}>Edit</Button>}
-            {onDelete && <Button variant="destructive" size="sm" onClick={() => onDelete(job)}>Delete</Button>}
+            {onView && <Button variant="ghost" size="sm" onClick={() => onView(job)} aria-label={`View job: ${job.title}`}>View</Button>}
+            {onEdit && <Button variant="outline" size="sm" onClick={() => onEdit(job)} aria-label={`Edit job: ${job.title}`}>Edit</Button>}
+            {onDelete && <Button variant="destructive" size="sm" onClick={() => onDelete(job)} aria-label={`Delete job: ${job.title}`}>Delete</Button>}
           </div>
         </div>
       </CardFooter>

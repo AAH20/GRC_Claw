@@ -521,7 +521,7 @@ BEGIN
         table_name, record_id, action, old_data, new_data,
         changed_fields, performed_by, performed_by_type
     ) VALUES (
-        TG_TABLE_NAME, v_record_id, TG_OP, v_old_data, v_new_data,
+        TG_TABLE_NAME, v_record_id, TG_OP::audit_action, v_old_data, v_new_data,
         v_changed_fields, NULL, 'system'
     );
 

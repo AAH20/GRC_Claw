@@ -55,7 +55,9 @@ class BaseScoringAgent(ABC, Generic[T]):
         return self._llm
 
     @abstractmethod
-    async def score(self, content: str, context: dict[str, Any] | None = None) -> AgentResult[T]:
+    async def score(
+        self, content: str, context: dict[str, Any] | None = None
+    ) -> AgentResult[T]:
         """Score content quality.
 
         Args:

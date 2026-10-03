@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Heart, MessageCircle, Share2, Eye, DollarSign, MoreVertical, Play } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/Card";
 import { Badge } from "../ui/Badge";
@@ -14,7 +15,7 @@ interface ContentCardProps {
   onDelete?: (id: string) => void;
 }
 
-export function ContentCard({ content, onView, onEdit, onDelete }: ContentCardProps) {
+export const ContentCard = memo(function ContentCard({ content, onView, onEdit, onDelete }: ContentCardProps) {
   const statusColors = {
     draft: "secondary",
     pending_review: "warning",
@@ -26,7 +27,7 @@ export function ContentCard({ content, onView, onEdit, onDelete }: ContentCardPr
   const typeIcons = { video: Play, image: Eye, story: Eye, reel: Play, blog: Eye };
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-md">
+    <Card data-testid="content-card" className="overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-video bg-muted">
         {content.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -77,4 +78,4 @@ export function ContentCard({ content, onView, onEdit, onDelete }: ContentCardPr
       </CardFooter>
     </Card>
   );
-}
+});

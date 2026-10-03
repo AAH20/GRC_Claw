@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-
 from community_governance.api.dependencies import get_rule_enforcer
 from community_governance.config.logging_config import get_logger
 from community_governance.models.governance_action import GovernanceAction, GovernanceActionCreate
 from community_governance.models.rule import Rule, RuleCreate, RuleEnforcementResult, RuleUpdate
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -27,7 +26,7 @@ _rules_store: dict[UUID, Rule] = {}
 @router.post("", response_model=Rule, status_code=status.HTTP_201_CREATED)
 async def create_rule(
     rule_data: RuleCreate,
-    agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
+    agent: RuleEnforcerAgent = Depends(get_rule_enforcer),  # noqa: B008,
 ) -> Rule:
     """Create a new governance rule.
 
@@ -58,7 +57,7 @@ async def create_rule(
 async def list_rules(
     category: str | None = Query(default=None, description="Filter by category"),
     active_only: bool = Query(default=True, description="Show only active rules"),
-    agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
+    agent: RuleEnforcerAgent = Depends(get_rule_enforcer),  # noqa: B008,
 ) -> list[Rule]:
     """List all governance rules.
 
@@ -80,8 +79,7 @@ async def list_rules(
 
 @router.get("/{rule_id}", response_model=Rule)
 async def get_rule(
-    rule_id: UUID,
-    agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
+    rule_id: UUID, agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
 ) -> Rule:
     """Get a specific rule by ID.
 
@@ -108,7 +106,7 @@ async def get_rule(
 async def update_rule(
     rule_id: UUID,
     rule_data: RuleUpdate,
-    agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
+    agent: RuleEnforcerAgent = Depends(get_rule_enforcer),  # noqa: B008,
 ) -> Rule:
     """Update an existing rule.
 
@@ -138,14 +136,15 @@ async def update_rule(
     from datetime import datetime
 
     rule.updated_at = datetime.utcnow()
-    logger.info(f"Rule updated: {rule.name}", rule_id=str(rule.id), version=rule.version)
+    logger.info(
+        f"Rule updated: {rule.name}", rule_id=str(rule.id), version=rule.version
+    )
     return rule
 
 
 @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_rule(
-    rule_id: UUID,
-    agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
+    rule_id: UUID, agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
 ) -> None:
     """Delete a rule.
 
@@ -170,7 +169,7 @@ async def delete_rule(
 async def enforce_rules(
     action_data: GovernanceActionCreate,
     context: dict[str, Any] | None = None,
-    agent: RuleEnforcerAgent = Depends(get_rule_enforcer)  # noqa: B008,
+    agent: RuleEnforcerAgent = Depends(get_rule_enforcer),  # noqa: B008,
 ) -> list[RuleEnforcementResult]:
     """Enforce rules against a governance action.
 

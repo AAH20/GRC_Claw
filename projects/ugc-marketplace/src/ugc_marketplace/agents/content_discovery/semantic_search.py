@@ -6,12 +6,11 @@ import time
 from typing import TYPE_CHECKING, Any
 
 import structlog
-from langchain_core.tools import tool
 
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
 
 if TYPE_CHECKING:
-    from ugc_marketplace.models.schemas import SearchRequest, SearchResponse, SearchResult
+    from ugc_marketplace.models.schemas import SearchRequest, SearchResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -47,7 +46,7 @@ class SemanticSearchAgent(BaseAgent["SearchRequest", "SearchResponse"]):
         )
         return agent
 
-    async def execute(self, input_data: "SearchRequest") -> "SearchResponse":
+    async def execute(self, input_data: SearchRequest) -> SearchResponse:
         """Execute semantic search.
 
         Args:

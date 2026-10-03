@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from access_control.agents import (
     AccessAuditorAgent,
     AccessRecommenderAgent,
@@ -16,9 +15,7 @@ from access_control.agents import (
 from access_control.agents.base import AgentContext
 from access_control.config import Settings
 from access_control.models.enums import AccessDecision, AuditSeverity
-from access_control.models.schemas import (
-    AccessRequest,
-)
+from access_control.models.schemas import AccessRequest
 
 
 @pytest.fixture
@@ -104,7 +101,9 @@ class TestAgents:
         """Test permission evaluator agent run method."""
         # Mock the chain response
         mock_response = MagicMock()
-        mock_response.content = '{"decision": "allow", "reason": "Test allow", "confidence": 0.9}'
+        mock_response.content = (
+            '{"decision": "allow", "reason": "Test allow", "confidence": 0.9}'
+        )
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -127,7 +126,9 @@ class TestAgents:
     ) -> None:
         """Test access auditor agent run method."""
         mock_response = MagicMock()
-        mock_response.content = '{"severity": "info", "flagged": false, "anomaly_score": 0.1}'
+        mock_response.content = (
+            '{"severity": "info", "flagged": false, "anomaly_score": 0.1}'
+        )
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 
@@ -151,7 +152,9 @@ class TestAgents:
     ) -> None:
         """Test role manager agent run method."""
         mock_response = MagicMock()
-        mock_response.content = '{"success": true, "role": {"name": "test"}, "message": "Created"}'
+        mock_response.content = (
+            '{"success": true, "role": {"name": "test"}, "message": "Created"}'
+        )
         mock_chain = MagicMock()
         mock_chain.ainvoke = AsyncMock(return_value=mock_response)
 

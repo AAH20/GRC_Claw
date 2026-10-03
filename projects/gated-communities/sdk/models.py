@@ -6,11 +6,13 @@ serialization, and documentation.
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 T = TypeVar("T")
 
@@ -71,9 +73,13 @@ class User(BaseSchema):
     """A user in the Gated Communities platform."""
 
     id: str = Field(..., description="Unique user identifier")
-    username: str = Field(..., min_length=1, max_length=50, description="Display username")
+    username: str = Field(
+        ..., min_length=1, max_length=50, description="Display username"
+    )
     email: str = Field(..., description="User email address")
-    display_name: str | None = Field(None, max_length=100, description="Optional display name")
+    display_name: str | None = Field(
+        None, max_length=100, description="Optional display name"
+    )
     avatar_url: str | None = Field(None, description="URL to user avatar image")
     is_active: bool = Field(True, description="Whether the user account is active")
     created_at: datetime = Field(..., description="Account creation timestamp")
@@ -87,8 +93,12 @@ class Community(TimestampedSchema):
 
     id: str = Field(..., description="Unique community identifier")
     name: str = Field(..., min_length=1, max_length=100, description="Community name")
-    slug: str = Field(..., min_length=1, max_length=100, description="URL-friendly slug")
-    description: str | None = Field(None, max_length=5000, description="Community description")
+    slug: str = Field(
+        ..., min_length=1, max_length=100, description="URL-friendly slug"
+    )
+    description: str | None = Field(
+        None, max_length=5000, description="Community description"
+    )
     visibility: CommunityVisibility = Field(
         default=CommunityVisibility.PRIVATE,
         description="Community visibility level",
@@ -105,8 +115,12 @@ class CommunityCreate(BaseSchema):
     """Payload for creating a new community."""
 
     name: str = Field(..., min_length=1, max_length=100, description="Community name")
-    slug: str = Field(..., min_length=1, max_length=100, description="URL-friendly slug")
-    description: str | None = Field(None, max_length=5000, description="Community description")
+    slug: str = Field(
+        ..., min_length=1, max_length=100, description="URL-friendly slug"
+    )
+    description: str | None = Field(
+        None, max_length=5000, description="Community description"
+    )
     visibility: CommunityVisibility = Field(
         default=CommunityVisibility.PRIVATE,
         description="Community visibility level",
@@ -150,7 +164,9 @@ class Member(BaseSchema, TimestampedSchema):
     community_id: str = Field(..., description="ID of the community")
     user_id: str = Field(..., description="ID of the user")
     role: MemberRole = Field(default=MemberRole.MEMBER, description="Member role")
-    status: MemberStatus = Field(default=MemberStatus.ACTIVE, description="Membership status")
+    status: MemberStatus = Field(
+        default=MemberStatus.ACTIVE, description="Membership status"
+    )
     joined_at: datetime = Field(..., description="When the user joined the community")
     user: User | None = Field(None, description="Embedded user object, if requested")
 
@@ -196,8 +212,12 @@ class ApiKey(BaseSchema, TimestampedSchema):
     """An API key for programmatic access."""
 
     id: str = Field(..., description="Unique API key identifier")
-    name: str = Field(..., min_length=1, max_length=100, description="Human-readable key name")
-    prefix: str = Field(..., description="Key prefix (first 8 chars, for identification)")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Human-readable key name"
+    )
+    prefix: str = Field(
+        ..., description="Key prefix (first 8 chars, for identification)"
+    )
     last_used_at: datetime | None = Field(None, description="Last usage timestamp")
     expires_at: datetime | None = Field(None, description="Expiration timestamp")
     is_active: bool = Field(True, description="Whether the key is active")

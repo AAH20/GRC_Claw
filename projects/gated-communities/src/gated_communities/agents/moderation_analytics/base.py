@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import structlog
-from langchain_core.language_models import BaseLanguageModel
 from langchain_openai import ChatOpenAI
-
 from moderation_analytics.config import get_settings
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 logger = structlog.get_logger(__name__)
 

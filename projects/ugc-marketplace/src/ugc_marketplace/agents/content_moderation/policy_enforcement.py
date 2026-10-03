@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from ugc_marketplace.agents.content_moderation.base import BaseModerationAgent
-from ugc_marketplace.models.schemas import ContentType, Policy, PolicyRule
+from ugc_marketplace.models.schemas import ContentType, Policy
 
 
 class PolicyEnforcementAgent(BaseModerationAgent):
@@ -45,7 +45,9 @@ class PolicyEnforcementAgent(BaseModerationAgent):
                     violations.append(str(rule.id))
                     categories.append(rule.name)
                     reasons.append(f"Policy rule triggered: {rule.name}")
-                    if severity_order.get(rule.severity.value, 0) > severity_order.get(max_severity, 0):
+                    if severity_order.get(rule.severity.value, 0) > severity_order.get(
+                        max_severity, 0
+                    ):
                         max_severity = rule.severity.value
 
         if violations:

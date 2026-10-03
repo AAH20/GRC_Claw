@@ -3,7 +3,6 @@
 from typing import Any
 
 from pydantic import BaseModel, Field
-
 from reputation_system.agents.base import BaseAgent
 from reputation_system.models.schemas import TrustTierLevel
 
@@ -12,10 +11,14 @@ class ExplanationInput(BaseModel):
     """Input for reputation explanation generation."""
 
     member_id: str = Field(..., description="Member identifier")
-    current_score: int = Field(..., ge=0, le=1000, description="Current reputation score")
+    current_score: int = Field(
+        ..., ge=0, le=1000, description="Current reputation score"
+    )
     trust_tier: TrustTierLevel = Field(..., description="Current trust tier")
     factors: list[dict[str, Any]] = Field(..., description="Scoring factors")
-    recent_actions: list[dict[str, Any]] = Field(default_factory=list, description="Recent actions")
+    recent_actions: list[dict[str, Any]] = Field(
+        default_factory=list, description="Recent actions"
+    )
     badge_count: int = Field(default=0, description="Number of badges")
     account_age_days: int = Field(default=0, description="Account age in days")
 
@@ -97,8 +100,12 @@ class ReputationExplainerAgent(BaseAgent[ExplanationInput, ExplanationOutput]):
 
         # Recent activity summary
         if data.recent_actions:
-            positive = sum(1 for a in data.recent_actions if a.get("score_change", 0) > 0)
-            negative = sum(1 for a in data.recent_actions if a.get("score_change", 0) < 0)
+            positive = sum(
+                1 for a in data.recent_actions if a.get("score_change", 0) > 0
+            )
+            negative = sum(
+                1 for a in data.recent_actions if a.get("score_change", 0) < 0
+            )
             parts.append(
                 f"\nRecent activity: {positive} positive, {negative} negative actions"
             )
@@ -117,13 +124,19 @@ class ReputationExplainerAgent(BaseAgent[ExplanationInput, ExplanationOutput]):
         recommendations: list[str] = []
 
         if data.current_score < 300:
-            recommendations.append("Focus on increasing contributions to improve your score")
+            recommendations.append(
+                "Focus on increasing contributions to improve your score"
+            )
             recommendations.append("Engage positively with the community")
         elif data.current_score < 500:
-            recommendations.append("Continue consistent contributions to reach Gold tier")
+            recommendations.append(
+                "Continue consistent contributions to reach Gold tier"
+            )
             recommendations.append("Maintain positive feedback ratio")
         elif data.current_score < 700:
-            recommendations.append("Verify your identity to unlock Platinum tier benefits")
+            recommendations.append(
+                "Verify your identity to unlock Platinum tier benefits"
+            )
             recommendations.append("Mentor other members to increase your impact")
         elif data.current_score < 900:
             recommendations.append("Maintain your excellent standing")

@@ -8,7 +8,8 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 
-from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
+                                                         BaseScoringAgent)
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,9 @@ class ImprovementSuggesterAgent(BaseScoringAgent["ImprovementPlan"]):
         self.settings = get_settings()
         self._llm: BaseLanguageModel | None = None
 
-    async def score(self, content: str, context: dict[str, Any] | None = None) -> AgentResult["ImprovementPlan"]:
+    async def score(
+        self, content: str, context: dict[str, Any] | None = None
+    ) -> AgentResult[ImprovementPlan]:
         """Generate improvement suggestions for content.
 
         Args:
@@ -52,7 +55,7 @@ class ImprovementSuggesterAgent(BaseScoringAgent["ImprovementPlan"]):
                 reasoning="Failed to generate improvement suggestions.",
             )
 
-    def _generate_improvements(self, content: str) -> "ImprovementPlan":
+    def _generate_improvements(self, content: str) -> ImprovementPlan:
         """Generate improvement suggestions.
 
         Args:
@@ -61,37 +64,44 @@ class ImprovementSuggesterAgent(BaseScoringAgent["ImprovementPlan"]):
         Returns:
             Improvement plan with suggestions.
         """
-        from ugc_marketplace.models.schemas import ImprovementPlan, ImprovementSuggestion
+        from ugc_marketplace.models.schemas import (ImprovementPlan,
+                                                    ImprovementSuggestion)
 
         suggestions: list[ImprovementSuggestion] = []
 
         word_count = len(content.split())
         if word_count < 100:
-            suggestions.append(ImprovementSuggestion(
-                id=uuid.uuid4(),
-                category="length",
-                title="Increase Content Length",
-                description="Content is relatively short. Consider expanding with more detail and examples.",
-                priority="medium",
-            ))
+            suggestions.append(
+                ImprovementSuggestion(
+                    id=uuid.uuid4(),
+                    category="length",
+                    title="Increase Content Length",
+                    description="Content is relatively short. Consider expanding with more detail and examples.",
+                    priority="medium",
+                )
+            )
 
         if "?" not in content:
-            suggestions.append(ImprovementSuggestion(
-                id=uuid.uuid4(),
-                category="engagement",
-                title="Add Questions",
-                description="Including questions can boost engagement and encourage comments.",
-                priority="high",
-            ))
+            suggestions.append(
+                ImprovementSuggestion(
+                    id=uuid.uuid4(),
+                    category="engagement",
+                    title="Add Questions",
+                    description="Including questions can boost engagement and encourage comments.",
+                    priority="high",
+                )
+            )
 
         if not any(word in content.lower() for word in ["you", "your"]):
-            suggestions.append(ImprovementSuggestion(
-                id=uuid.uuid4(),
-                category="tone",
-                title="Use Second Person",
-                description="Using 'you' and 'your' can make content more relatable and engaging.",
-                priority="medium",
-            ))
+            suggestions.append(
+                ImprovementSuggestion(
+                    id=uuid.uuid4(),
+                    category="tone",
+                    title="Use Second Person",
+                    description="Using 'you' and 'your' can make content more relatable and engaging.",
+                    priority="medium",
+                )
+            )
 
         return ImprovementPlan(
             id=uuid.uuid4(),

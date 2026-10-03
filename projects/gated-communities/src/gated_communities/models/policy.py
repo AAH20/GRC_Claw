@@ -38,7 +38,9 @@ class Policy(BaseModel):
     id: UUID = Field(default_factory=uuid4, description="Unique policy identifier")
     name: str = Field(..., min_length=1, max_length=200, description="Policy name")
     description: str = Field(..., min_length=1, description="Policy description")
-    status: PolicyStatus = Field(default=PolicyStatus.DRAFT, description="Policy status")
+    status: PolicyStatus = Field(
+        default=PolicyStatus.DRAFT, description="Policy status"
+    )
     scope: PolicyScope = Field(..., description="Policy scope")
     scope_target: str | None = Field(
         default=None, description="Target of the policy scope"
@@ -46,12 +48,8 @@ class Policy(BaseModel):
     rules: list[UUID] = Field(
         default_factory=list, description="IDs of associated rules"
     )
-    guidelines: list[str] = Field(
-        default_factory=list, description="Policy guidelines"
-    )
-    enforcement_level: str = Field(
-        default="standard", description="Enforcement level"
-    )
+    guidelines: list[str] = Field(default_factory=list, description="Policy guidelines")
+    enforcement_level: str = Field(default="standard", description="Enforcement level")
     effective_date: datetime | None = Field(
         default=None, description="Policy effective date"
     )
@@ -83,12 +81,8 @@ class PolicyCreate(BaseModel):
     rules: list[UUID] = Field(
         default_factory=list, description="IDs of associated rules"
     )
-    guidelines: list[str] = Field(
-        default_factory=list, description="Policy guidelines"
-    )
-    enforcement_level: str = Field(
-        default="standard", description="Enforcement level"
-    )
+    guidelines: list[str] = Field(default_factory=list, description="Policy guidelines")
+    enforcement_level: str = Field(default="standard", description="Enforcement level")
     effective_date: datetime | None = Field(
         default=None, description="Policy effective date"
     )

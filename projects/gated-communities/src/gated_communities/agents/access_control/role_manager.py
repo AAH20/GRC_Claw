@@ -9,12 +9,13 @@ from langchain_core.prompts import ChatPromptTemplate
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseLanguageModel
-from pydantic import BaseModel, Field
 
 from access_control.agents.base import AgentContext, BaseAgent
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from access_control.config import Settings
+
 from access_control.models.schemas import Permission, Role, RoleCreate, RoleUpdate
 
 
@@ -22,7 +23,8 @@ class RoleManagerInput(BaseModel):
     """Input for the role manager agent."""
 
     operation: str = Field(
-        ..., description="Operation to perform: create, update, delete, validate, suggest"
+        ...,
+        description="Operation to perform: create, update, delete, validate, suggest",
     )
     role_data: dict[str, Any] = Field(default_factory=dict)
     existing_roles: list[dict[str, Any]] = Field(default_factory=list)
@@ -63,10 +65,12 @@ When creating roles, ensure permissions are minimal and necessary.
 When validating, check for conflicts, redundancies, and security issues.
 Respond with a JSON object containing: success, role, message, suggestions, validation_errors."""
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", "{input}"),
+            ]
+        )
 
         chain = prompt | self.llm
         return chain
@@ -86,12 +90,14 @@ Respond with a JSON object containing: success, role, message, suggestions, vali
         agent = self._build_agent()
 
         input_data = {
-            "input": json.dumps({
-                "operation": payload.operation,
-                "role_data": payload.role_data,
-                "existing_roles": payload.existing_roles,
-                "context": payload.context,
-            })
+            "input": json.dumps(
+                {
+                    "operation": payload.operation,
+                    "role_data": payload.role_data,
+                    "existing_roles": payload.existing_roles,
+                    "context": payload.context,
+                }
+            )
         }
 
         response = await agent.ainvoke(input_data)
@@ -139,7 +145,10 @@ Respond with a JSON object containing: success, role, message, suggestions, vali
         """
         payload = RoleManagerInput(
             operation="update",
-            role_data={"id": role_id, **role_update.model_dump(mode="json", exclude_unset=True)},
+            role_data={
+                "id": role_id,
+                **role_update.model_dump(mode="json", exclude_unset=True),
+            },
         )
         output = await self.run(payload)
 

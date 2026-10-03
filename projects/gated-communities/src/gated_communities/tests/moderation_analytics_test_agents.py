@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from moderation_analytics.agents import (
     AnalyticsExplainerAgent,
     ModerationPredictorAgent,

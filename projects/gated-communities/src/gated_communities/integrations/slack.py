@@ -6,7 +6,6 @@ from typing import Any
 
 import httpx
 import structlog
-
 from escalation_workflow.integrations.notifications import NotificationChannel
 
 logger = structlog.get_logger(__name__)

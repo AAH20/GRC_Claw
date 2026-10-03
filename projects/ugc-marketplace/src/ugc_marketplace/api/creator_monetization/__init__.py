@@ -35,7 +35,9 @@ class ForecastRequest(BaseModel):
     """Request model for forecasting a metric."""
 
     name: str = Field(..., description="Metric name to forecast")
-    days: int = Field(default=30, ge=1, le=365, description="Number of days to forecast")
+    days: int = Field(
+        default=30, ge=1, le=365, description="Number of days to forecast"
+    )
 
 
 class RevenueReportResponse(BaseModel):
@@ -76,7 +78,9 @@ async def record_metric(request: MetricRecordRequest) -> dict[str, Any]:
         _metrics[request.name] = []
     _metrics[request.name].append(point)
 
-    logger.debug("Metric recorded", extra={"name": request.name, "value": request.value})
+    logger.debug(
+        "Metric recorded", extra={"name": request.name, "value": request.value}
+    )
     return {"name": request.name, "recorded": True, "point": point}
 
 
@@ -89,7 +93,9 @@ async def list_metrics() -> dict[str, Any]:
     }
 
 
-@router.post("/reports", response_model=dict[str, Any], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/reports", response_model=dict[str, Any], status_code=status.HTTP_201_CREATED
+)
 async def generate_report(request: ReportRequest) -> dict[str, Any]:
     """Generate an analytics report."""
     if request.report_id in _reports:
@@ -107,8 +113,11 @@ async def generate_report(request: ReportRequest) -> dict[str, Any]:
     period_metrics: dict[str, list[dict[str, Any]]] = {}
     for name, points in _metrics.items():
         filtered = [
-            p for p in points
-            if request.period_start <= datetime.fromisoformat(p["timestamp"]) <= request.period_end
+            p
+            for p in points
+            if request.period_start
+            <= datetime.fromisoformat(p["timestamp"])
+            <= request.period_end
         ]
         if filtered:
             period_metrics[name] = filtered
@@ -176,9 +185,7 @@ async def forecast_metric(request: ForecastRequest) -> dict[str, Any]:
     x_mean = (n - 1) / 2
     y_mean = sum(p["value"] for p in points) / n
 
-    numerator = sum(
-        (i - x_mean) * (p["value"] - y_mean) for i, p in enumerate(points)
-    )
+    numerator = sum((i - x_mean) * (p["value"] - y_mean) for i, p in enumerate(points))
     denominator = sum((i - x_mean) ** 2 for i in range(n))
 
     slope = numerator / denominator if denominator != 0 else 0

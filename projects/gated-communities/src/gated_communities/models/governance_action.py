@@ -73,7 +73,9 @@ class GovernanceAction(GovernanceActionBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID = Field(default_factory=uuid4, description="Unique action identifier")
-    status: ActionStatus = Field(default=ActionStatus.PENDING, description="Action status")
+    status: ActionStatus = Field(
+        default=ActionStatus.PENDING, description="Action status"
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow, description="Creation timestamp"
     )

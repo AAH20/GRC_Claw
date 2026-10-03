@@ -62,7 +62,9 @@ class CalendarIntegration(BaseIntegration):
         )
         return response.json().get("slots", [])
 
-    async def update_event(self, event_id: str, event_data: dict[str, Any]) -> dict[str, Any]:
+    async def update_event(
+        self, event_id: str, event_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Update a calendar event.
 
         Args:

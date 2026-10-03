@@ -47,7 +47,9 @@ class TwitterIntegration(BaseIntegration):
             "engagement_rate": 0.0,
         }
 
-    async def fetch_content_performance(self, content_ids: list[str]) -> list[dict[str, Any]]:
+    async def fetch_content_performance(
+        self, content_ids: list[str]
+    ) -> list[dict[str, Any]]:
         """Fetch performance data for tweets.
 
         Args:
@@ -57,4 +59,6 @@ class TwitterIntegration(BaseIntegration):
             List of tweet performance data.
         """
         logger.info("Fetching Twitter content performance", count=len(content_ids))
-        return [{"tweet_id": tid, "impressions": 0, "engagements": 0} for tid in content_ids]
+        return [
+            {"tweet_id": tid, "impressions": 0, "engagements": 0} for tid in content_ids
+        ]

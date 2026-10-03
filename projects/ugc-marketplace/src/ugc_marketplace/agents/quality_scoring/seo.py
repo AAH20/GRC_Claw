@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 import re
 from typing import Any
-from urllib.parse import urlparse
 
 from langchain_core.language_models import BaseLanguageModel
 
-from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
+                                                         BaseScoringAgent)
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,9 @@ class SEOScorerAgent(BaseScoringAgent["DimensionScore"]):
         self.settings = get_settings()
         self._llm: BaseLanguageModel | None = None
 
-    async def score(self, content: str, context: dict[str, Any] | None = None) -> AgentResult["DimensionScore"]:
+    async def score(
+        self, content: str, context: dict[str, Any] | None = None
+    ) -> AgentResult[DimensionScore]:
         """Score content for SEO.
 
         Args:
@@ -53,7 +55,9 @@ class SEOScorerAgent(BaseScoringAgent["DimensionScore"]):
                 reasoning="Failed to calculate SEO score.",
             )
 
-    def _calculate_seo_score(self, content: str, context: dict[str, Any] | None = None) -> "DimensionScore":
+    def _calculate_seo_score(
+        self, content: str, context: dict[str, Any] | None = None
+    ) -> DimensionScore:
         """Calculate SEO score for content.
 
         Args:
@@ -63,19 +67,22 @@ class SEOScorerAgent(BaseScoringAgent["DimensionScore"]):
         Returns:
             Dimension score with SEO metrics.
         """
-        from ugc_marketplace.models.schemas import DimensionScore, ScoreDimension, ScoreLevel
+        from ugc_marketplace.models.schemas import (DimensionScore,
+                                                    ScoreDimension, ScoreLevel)
 
         target_keywords = (context or {}).get("target_keywords", [])
         word_count = len(content.split())
 
-        has_headings = bool(re.search(r'^#{1,6}\s', content, re.MULTILINE))
-        has_links = bool(re.search(r'\[.*?\]\(.*?\)', content))
-        has_images = bool(re.search(r'!\[.*?\]\(.*?\)', content))
+        has_headings = bool(re.search(r"^#{1,6}\s", content, re.MULTILINE))
+        has_links = bool(re.search(r"\[.*?\]\(.*?\)", content))
+        has_images = bool(re.search(r"!\[.*?\]\(.*?\)", content))
         has_meta_description = (context or {}).get("meta_description", "") != ""
 
         keyword_score = 0.0
         if target_keywords:
-            keyword_matches = sum(1 for kw in target_keywords if kw.lower() in content.lower())
+            keyword_matches = sum(
+                1 for kw in target_keywords if kw.lower() in content.lower()
+            )
             keyword_score = keyword_matches / len(target_keywords)
 
         score_value = 0.3

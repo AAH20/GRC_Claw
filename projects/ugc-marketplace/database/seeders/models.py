@@ -3,6 +3,7 @@
 These models mirror the production schema defined in database/schema.sql
 and are used by factory_boy factories and seeder scripts.
 """
+
 from __future__ import annotations
 
 import enum
@@ -11,21 +12,11 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    CheckConstraint,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    String,
-    Text,
-    func,
-)
-from sqlalchemy.dialects.postgresql import ARRAY, INET, TSVECTOR, UUID as PGUUID
+from sqlalchemy import (JSON, Boolean, CheckConstraint, DateTime, Enum,
+                        ForeignKey, Index, Integer, Numeric, String, Text,
+                        func)
+from sqlalchemy.dialects.postgresql import ARRAY, INET, TSVECTOR
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -122,7 +113,9 @@ class Creator(Base):
     bio: Mapped[str | None] = mapped_column(Text)
     avatar_url: Mapped[str | None] = mapped_column(Text)
     website_url: Mapped[str | None] = mapped_column(Text)
-    social_links: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    social_links: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, nullable=False
+    )
     verification_status: Mapped[VerificationStatus] = mapped_column(
         Enum(VerificationStatus, name="verification_status"),
         default=VerificationStatus.UNVERIFIED,
@@ -144,8 +137,12 @@ class Creator(Base):
     )
 
     # Relationships
-    content: Mapped[list[Content]] = relationship(back_populates="creator", cascade="all, delete-orphan")
-    listings: Mapped[list[Listing]] = relationship(back_populates="creator", cascade="all, delete-orphan")
+    content: Mapped[list[Content]] = relationship(
+        back_populates="creator", cascade="all, delete-orphan"
+    )
+    listings: Mapped[list[Listing]] = relationship(
+        back_populates="creator", cascade="all, delete-orphan"
+    )
     transactions_as_buyer: Mapped[list[Transaction]] = relationship(
         foreign_keys="Transaction.buyer_id", back_populates="buyer"
     )
@@ -206,7 +203,9 @@ class Content(Base):
     content_type: Mapped[str] = mapped_column(String(50), nullable=False)
     media_urls: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     tags: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, nullable=False)
-    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict, nullable=False)
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSON, default=dict, nullable=False
+    )
     status: Mapped[ContentStatus] = mapped_column(
         Enum(ContentStatus, name="content_status"),
         default=ContentStatus.DRAFT,
@@ -225,14 +224,23 @@ class Content(Base):
 
     # Relationships
     creator: Mapped[Creator] = relationship(back_populates="content")
-    listings: Mapped[list[Listing]] = relationship(back_populates="content", cascade="all, delete-orphan")
-    quality_scores: Mapped[list[QualityScore]] = relationship(back_populates="content", cascade="all, delete-orphan")
-    moderation_actions: Mapped[list[ModerationAction]] = relationship(back_populates="content")
+    listings: Mapped[list[Listing]] = relationship(
+        back_populates="content", cascade="all, delete-orphan"
+    )
+    quality_scores: Mapped[list[QualityScore]] = relationship(
+        back_populates="content", cascade="all, delete-orphan"
+    )
+    moderation_actions: Mapped[list[ModerationAction]] = relationship(
+        back_populates="content"
+    )
     fraud_reports: Mapped[list[FraudReport]] = relationship(
-        foreign_keys="FraudReport.reported_content_id", back_populates="reported_content"
+        foreign_keys="FraudReport.reported_content_id",
+        back_populates="reported_content",
     )
     licenses: Mapped[list[License]] = relationship(back_populates="content")
-    analytics_events: Mapped[list[AnalyticsEvent]] = relationship(back_populates="content")
+    analytics_events: Mapped[list[AnalyticsEvent]] = relationship(
+        back_populates="content"
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -266,7 +274,9 @@ class Listing(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="USD", nullable=False)
     license_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    usage_rights: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    usage_rights: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     sales_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -280,11 +290,16 @@ class Listing(Base):
     content: Mapped[Content] = relationship(back_populates="listings")
     creator: Mapped[Creator] = relationship(back_populates="listings")
     transactions: Mapped[list[Transaction]] = relationship(back_populates="listing")
-    moderation_actions: Mapped[list[ModerationAction]] = relationship(back_populates="listing")
-    fraud_reports: Mapped[list[FraudReport]] = relationship(
-        foreign_keys="FraudReport.reported_listing_id", back_populates="reported_listing"
+    moderation_actions: Mapped[list[ModerationAction]] = relationship(
+        back_populates="listing"
     )
-    analytics_events: Mapped[list[AnalyticsEvent]] = relationship(back_populates="listing")
+    fraud_reports: Mapped[list[FraudReport]] = relationship(
+        foreign_keys="FraudReport.reported_listing_id",
+        back_populates="reported_listing",
+    )
+    analytics_events: Mapped[list[AnalyticsEvent]] = relationship(
+        back_populates="listing"
+    )
 
     __table_args__ = (
         CheckConstraint("price >= 0.00", name="listings_price_check"),
@@ -323,7 +338,9 @@ class Transaction(Base):
         nullable=False,
     )
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255))
-    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict, nullable=False)
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSON, default=dict, nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), nullable=False
     )
@@ -339,7 +356,9 @@ class Transaction(Base):
     seller: Mapped[Creator] = relationship(
         foreign_keys=[seller_id], back_populates="transactions_as_seller"
     )
-    licenses: Mapped[list[License]] = relationship(back_populates="transaction", cascade="all, delete-orphan")
+    licenses: Mapped[list[License]] = relationship(
+        back_populates="transaction", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint("amount >= 0.00", name="transactions_amount_check"),
@@ -349,7 +368,9 @@ class Transaction(Base):
             "payment_status IN ('pending', 'completed', 'failed', 'refunded', 'disputed')",
             name="transactions_status_check",
         ),
-        CheckConstraint("buyer_id != seller_id", name="transactions_buyer_seller_check"),
+        CheckConstraint(
+            "buyer_id != seller_id", name="transactions_buyer_seller_check"
+        ),
         Index("idx_transactions_listing_id", "listing_id"),
         Index("idx_transactions_buyer_id", "buyer_id"),
         Index("idx_transactions_seller_id", "seller_id"),
@@ -377,7 +398,9 @@ class License(Base):
         PGUUID, ForeignKey("content.id"), nullable=False
     )
     license_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    usage_scope: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    usage_scope: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, nullable=False
+    )
     valid_from: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), nullable=False
     )
@@ -600,7 +623,9 @@ class AnalyticsEvent(Base):
     ip_address: Mapped[str | None] = mapped_column(INET)
     user_agent: Mapped[str | None] = mapped_column(Text)
     referrer: Mapped[str | None] = mapped_column(Text)
-    event_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    event_data: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), nullable=False
     )

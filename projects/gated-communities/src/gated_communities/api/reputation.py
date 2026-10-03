@@ -1,8 +1,8 @@
 """Reputation Score API routes."""
+
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-
 from reputation_system.agents.reputation_scorer import ReputationScorerAgent, ScoringInput
 from reputation_system.config.settings import Settings, get_settings
 from reputation_system.models.schemas import (
@@ -17,7 +17,9 @@ router = APIRouter(prefix="/reputation", tags=["reputation"])
 _scores: dict[str, ReputationScore] = {}
 
 
-@router.post("/scores", response_model=ReputationScore, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/scores", response_model=ReputationScore, status_code=status.HTTP_201_CREATED
+)
 async def create_reputation_score(
     data: ReputationScoreCreate,
     settings: Annotated[Settings, Depends(get_settings)],

@@ -5,8 +5,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from pydantic import ValidationError
-
 from moderation_queue.models import (
     ContentType,
     Escalation,
@@ -17,6 +15,7 @@ from moderation_queue.models import (
     Queue,
     ReviewDecision,
 )
+from pydantic import ValidationError
 
 
 class TestModerationItem:

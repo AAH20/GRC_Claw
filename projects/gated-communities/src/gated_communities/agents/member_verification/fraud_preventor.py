@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from member_verification.agents.base import AgentConfig, BaseAgent
 from member_verification.models.schemas import RiskLevel
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class FraudPreventorAgent(BaseAgent):
@@ -71,22 +72,26 @@ class FraudPreventorAgent(BaseAgent):
             velocity_risk = self._check_velocity(member_id)
             if velocity_risk > 0:
                 risk_score += velocity_risk * 0.3
-                flags.append({
-                    "type": "velocity",
-                    "severity": "medium" if velocity_risk < 0.5 else "high",
-                    "details": "Multiple verification attempts detected",
-                })
+                flags.append(
+                    {
+                        "type": "velocity",
+                        "severity": "medium" if velocity_risk < 0.5 else "high",
+                        "details": "Multiple verification attempts detected",
+                    }
+                )
                 matched_patterns.append("rapid_re_attempts")
 
             # Check 2: Identity consistency
             identity_risk = self._check_identity_consistency(identity)
             if identity_risk > 0:
                 risk_score += identity_risk * 0.4
-                flags.append({
-                    "type": "identity_consistency",
-                    "severity": "high" if identity_risk > 0.5 else "medium",
-                    "details": "Identity data inconsistencies detected",
-                })
+                flags.append(
+                    {
+                        "type": "identity_consistency",
+                        "severity": "high" if identity_risk > 0.5 else "medium",
+                        "details": "Identity data inconsistencies detected",
+                    }
+                )
                 matched_patterns.append("identity_mismatch")
 
             # Check 3: Document patterns (deep check only)
@@ -94,11 +99,13 @@ class FraudPreventorAgent(BaseAgent):
                 doc_risk = self._check_document_patterns(member_id)
                 if doc_risk > 0:
                     risk_score += doc_risk * 0.3
-                    flags.append({
-                        "type": "document_pattern",
-                        "severity": "high",
-                        "details": "Document reuse pattern detected",
-                    })
+                    flags.append(
+                        {
+                            "type": "document_pattern",
+                            "severity": "high",
+                            "details": "Document reuse pattern detected",
+                        }
+                    )
                     matched_patterns.append("document_reuse")
 
             risk_score = min(risk_score, 1.0)

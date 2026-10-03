@@ -18,7 +18,9 @@ spec:
         app: ugc-marketplace
         component: api
     spec:
-      containers:
+                securityContext:
+            readOnlyRootFilesystem: true
+        containers:
         - name: api
           image: ugc-marketplace:latest
           imagePullPolicy: Always

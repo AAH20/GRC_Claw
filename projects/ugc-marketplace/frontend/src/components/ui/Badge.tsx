@@ -11,8 +11,8 @@ export function Badge({ className, variant = "default", ...props }: BadgeProps) 
     secondary: "border-transparent bg-secondary text-secondary-foreground",
     destructive: "border-transparent bg-destructive text-destructive-foreground",
     outline: "text-foreground",
-    success: "border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
-    warning: "border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100",
+    success: "border-transparent bg-success/10 text-success dark:bg-success/20",
+    warning: "border-transparent bg-warning/10 text-warning dark:bg-warning/20",
   };
   return (
     <span

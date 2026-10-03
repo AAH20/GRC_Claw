@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -12,17 +11,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from ugc_marketplace import __version__
-from ugc_marketplace.api.health import router as health_router
-from ugc_marketplace.api.content_moderation import router as moderation_router
-from ugc_marketplace.api.creator_monetization import router as monetization_router
-from ugc_marketplace.api.content_discovery import router as discovery_router
-from ugc_marketplace.api.rights_management import router as rights_router
-from ugc_marketplace.api.quality_scoring import router as quality_router
-from ugc_marketplace.api.fraud_detection import router as fraud_router
-from ugc_marketplace.api.creator_analytics import router as analytics_router
-from ugc_marketplace.api.licensing_engine import router as licensing_router
 from ugc_marketplace.api.community_curation import router as curation_router
-from ugc_marketplace.api.content_marketplace import router as marketplace_router
+from ugc_marketplace.api.content_discovery import router as discovery_router
+from ugc_marketplace.api.content_marketplace import \
+    router as marketplace_router
+from ugc_marketplace.api.content_moderation import router as moderation_router
+from ugc_marketplace.api.creator_analytics import router as analytics_router
+from ugc_marketplace.api.creator_monetization import \
+    router as monetization_router
+from ugc_marketplace.api.fraud_detection import router as fraud_router
+from ugc_marketplace.api.health import router as health_router
+from ugc_marketplace.api.licensing_engine import router as licensing_router
+from ugc_marketplace.api.quality_scoring import router as quality_router
+from ugc_marketplace.api.rights_management import router as rights_router
 from ugc_marketplace.config import get_settings
 from ugc_marketplace.config.logging_config import configure_logging
 
@@ -105,16 +106,30 @@ def create_app() -> FastAPI:
     api_prefix = settings.api_prefix
 
     app.include_router(health_router, prefix=api_prefix, tags=["Health"])
-    app.include_router(moderation_router, prefix=f"{api_prefix}/moderation", tags=["Moderation"])
-    app.include_router(monetization_router, prefix=f"{api_prefix}/monetization", tags=["Monetization"])
-    app.include_router(discovery_router, prefix=f"{api_prefix}/discovery", tags=["Discovery"])
+    app.include_router(
+        moderation_router, prefix=f"{api_prefix}/moderation", tags=["Moderation"]
+    )
+    app.include_router(
+        monetization_router, prefix=f"{api_prefix}/monetization", tags=["Monetization"]
+    )
+    app.include_router(
+        discovery_router, prefix=f"{api_prefix}/discovery", tags=["Discovery"]
+    )
     app.include_router(rights_router, prefix=f"{api_prefix}/rights", tags=["Rights"])
     app.include_router(quality_router, prefix=f"{api_prefix}/quality", tags=["Quality"])
     app.include_router(fraud_router, prefix=f"{api_prefix}/fraud", tags=["Fraud"])
-    app.include_router(analytics_router, prefix=f"{api_prefix}/analytics", tags=["Analytics"])
-    app.include_router(licensing_router, prefix=f"{api_prefix}/licensing", tags=["Licensing"])
-    app.include_router(curation_router, prefix=f"{api_prefix}/curation", tags=["Curation"])
-    app.include_router(marketplace_router, prefix=f"{api_prefix}/marketplace", tags=["Marketplace"])
+    app.include_router(
+        analytics_router, prefix=f"{api_prefix}/analytics", tags=["Analytics"]
+    )
+    app.include_router(
+        licensing_router, prefix=f"{api_prefix}/licensing", tags=["Licensing"]
+    )
+    app.include_router(
+        curation_router, prefix=f"{api_prefix}/curation", tags=["Curation"]
+    )
+    app.include_router(
+        marketplace_router, prefix=f"{api_prefix}/marketplace", tags=["Marketplace"]
+    )
 
     return app
 

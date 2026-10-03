@@ -121,7 +121,11 @@ class UpgradeNotEligibleError(TierManagementError):
                 f"'{target_tier_id}': {reason}"
             ),
             status_code=400,
-            details={"member_id": member_id, "target_tier_id": target_tier_id, "reason": reason},
+            details={
+                "member_id": member_id,
+                "target_tier_id": target_tier_id,
+                "reason": reason,
+            },
         )
 
 

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from datetime import UTC
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from tier_management.agents.upgrade_recommender import UpgradeRecommenderAgent
 from tier_management.config.settings import Settings, get_settings
 from tier_management.models.schemas import UpgradeRequest
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 upgrades_router = APIRouter()
 
@@ -18,7 +19,9 @@ upgrades_router = APIRouter()
 _upgrades_store: dict[UUID, UpgradeRequest] = {}
 
 
-@upgrades_router.post("", response_model=UpgradeRequest, status_code=status.HTTP_201_CREATED)
+@upgrades_router.post(
+    "", response_model=UpgradeRequest, status_code=status.HTTP_201_CREATED
+)
 async def create_upgrade_request(
     request_data: dict[str, Any],
     settings: Settings = Depends(get_settings),  # noqa: B008
@@ -86,10 +89,7 @@ async def get_member_upgrades(
     Returns:
         List of upgrade requests for the member.
     """
-    return [
-        r for r in _upgrades_store.values()
-        if r.member_id == member_id
-    ]
+    return [r for r in _upgrades_store.values() if r.member_id == member_id]
 
 
 @upgrades_router.post("/{request_id}/approve", response_model=UpgradeRequest)

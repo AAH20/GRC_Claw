@@ -23,8 +23,8 @@ export function StatCard({ title, value, change, icon: Icon, description }: Stat
         <div className="text-2xl font-bold">{value}</div>
         {change !== undefined && (
           <div className="mt-1 flex items-center gap-1 text-sm">
-            {isPositive ? <TrendingUp className="h-4 w-4 text-green-600" /> : <TrendingDown className="h-4 w-4 text-red-600" />}
-            <span className={isPositive ? "text-green-600" : "text-red-600"}>{Math.abs(change)}%</span>
+            {isPositive ? <TrendingUp className="h-4 w-4 text-success" aria-hidden="true" /> : <TrendingDown className="h-4 w-4 text-destructive" aria-hidden="true" />}
+            <span className={isPositive ? "text-success" : "text-destructive"}>{Math.abs(change)}%</span>
             {description && <span className="text-muted-foreground">{description}</span>}
           </div>
         )}

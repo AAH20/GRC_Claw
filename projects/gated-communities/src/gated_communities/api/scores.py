@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from compliance_monitor.agents import ComplianceScorerAgent
 from compliance_monitor.api.dependencies import get_compliance_scorer
 from compliance_monitor.api.store import store
 from compliance_monitor.models.schemas import ComplianceScore, ScoreRequest
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from compliance_monitor.agents import ComplianceScorerAgent
 
 router = APIRouter()
 
@@ -27,7 +30,7 @@ async def list_scores() -> list[ComplianceScore]:
 @router.post("", response_model=ComplianceScore, status_code=status.HTTP_201_CREATED)
 async def compute_score(
     data: ScoreRequest,
-    agent: ComplianceScorerAgent = Depends(get_compliance_scorer)  # noqa: B008,
+    agent: ComplianceScorerAgent = Depends(get_compliance_scorer),  # noqa: B008,
 ) -> ComplianceScore:
     """Compute a compliance score.
 
@@ -57,5 +60,7 @@ async def get_score(score_id: UUID) -> ComplianceScore:
     """
     score = store.get_score(score_id)
     if not score:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Compliance score not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Compliance score not found"
+        )
     return score

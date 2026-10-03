@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from community_health_scorer.config import get_settings
 from community_health_scorer.models import EngagementLevel, EngagementMetrics
+from langchain_core.prompts import ChatPromptTemplate
 
 
 class EngagementMetricsAgent:
@@ -18,7 +17,9 @@ class EngagementMetricsAgent:
     """
 
     name: str = "engagement_metrics_agent"
-    description: str = "Analyzes community engagement patterns and produces engagement scores"
+    description: str = (
+        "Analyzes community engagement patterns and produces engagement scores"
+    )
 
     def __init__(self) -> None:
         """Initialize the Engagement Metrics Agent."""
@@ -38,7 +39,7 @@ class EngagementMetricsAgent:
                         """You are a community engagement analyst. Analyze the provided engagement metrics
                         and produce a comprehensive engagement assessment. Consider DAU/MAU ratio (stickiness),
                         session duration, interaction depth, content creation rate, response rate, and retention rates.
-                        Provide a score from 0-100 and classify the engagement level."""  # noqa: E501,
+                        Provide a score from 0-100 and classify the engagement level.""",  # noqa: E501,
                     ),
                     ("human", "{input}"),
                 ]
@@ -133,7 +134,9 @@ class EngagementMetricsAgent:
             score=round(score, 2),
         )
 
-    async def run(self, community_id: str, metrics_data: dict[str, Any]) -> EngagementMetrics:
+    async def run(
+        self, community_id: str, metrics_data: dict[str, Any]
+    ) -> EngagementMetrics:
         """Run the engagement metrics analysis.
 
         Args:

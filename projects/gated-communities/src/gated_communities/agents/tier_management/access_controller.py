@@ -7,11 +7,7 @@ configured policies and make grant/deny decisions with reasoning.
 from __future__ import annotations
 
 from datetime import UTC
-from typing import Any
-from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.tools import BaseTool
+from typing import TYPE_CHECKING, Any
 
 from tier_management.agents.base import BaseAgent
 from tier_management.config.logging_config import get_logger
@@ -21,6 +17,12 @@ from tier_management.models.schemas import (
     AccessDecision,
     AccessPolicy,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from langchain_core.language_models import BaseLanguageModel
+    from langchain_core.tools import BaseTool
 
 logger = get_logger(__name__)
 
@@ -140,7 +142,8 @@ class AccessControllerAgent(BaseAgent[AccessCheckRequest, AccessCheckResponse]):
             List of applicable policies sorted by priority.
         """
         applicable = [
-            p for p in self.policies.values()
+            p
+            for p in self.policies.values()
             if p.resource == resource and p.action == action and p.enabled
         ]
         return sorted(applicable, key=lambda p: p.priority, reverse=True)

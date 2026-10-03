@@ -6,17 +6,19 @@ import time
 from typing import TYPE_CHECKING, Any
 
 import structlog
-from langchain_core.tools import tool
 
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
 
 if TYPE_CHECKING:
-    from ugc_marketplace.models.schemas import Recommendation, RecommendationRequest, RecommendationResponse
+    from ugc_marketplace.models.schemas import (RecommendationRequest,
+                                                RecommendationResponse)
 
 logger = structlog.get_logger(__name__)
 
 
-class PersonalizationAgent(BaseAgent["RecommendationRequest", "RecommendationResponse"]):
+class PersonalizationAgent(
+    BaseAgent["RecommendationRequest", "RecommendationResponse"]
+):
     """Agent that personalizes content recommendations for users.
 
     Uses user behavior, preferences, and context to generate
@@ -48,7 +50,9 @@ class PersonalizationAgent(BaseAgent["RecommendationRequest", "RecommendationRes
         )
         return agent
 
-    async def execute(self, input_data: "RecommendationRequest") -> "RecommendationResponse":
+    async def execute(
+        self, input_data: RecommendationRequest
+    ) -> RecommendationResponse:
         """Execute personalization for a user.
 
         Args:
@@ -92,7 +96,9 @@ class PersonalizationAgent(BaseAgent["RecommendationRequest", "RecommendationRes
         return {"content_id": content_id, "metadata": {}}
 
     @staticmethod
-    async def _rank_content(content_ids: list[str], preferences: dict[str, Any]) -> list[str]:
+    async def _rank_content(
+        content_ids: list[str], preferences: dict[str, Any]
+    ) -> list[str]:
         """Rank content based on preferences.
 
         Args:

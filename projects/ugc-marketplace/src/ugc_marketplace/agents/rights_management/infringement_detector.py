@@ -10,7 +10,9 @@ from langchain.agents import create_agent
 from ugc_marketplace.agents.rights_management.base import BaseAgent
 
 
-class InfringementDetectorAgent(BaseAgent["InfringementDetectionRequest", "InfringementDetectionResult"]):
+class InfringementDetectorAgent(
+    BaseAgent["InfringementDetectionRequest", "InfringementDetectionResult"]
+):
     """Agent that detects copyright and content infringement.
 
     Uses AI to analyze content for potential copyright violations,
@@ -39,7 +41,9 @@ class InfringementDetectorAgent(BaseAgent["InfringementDetectionRequest", "Infri
         )
         return agent
 
-    async def execute(self, input_data: "InfringementDetectionRequest") -> "InfringementDetectionResult":
+    async def execute(
+        self, input_data: InfringementDetectionRequest
+    ) -> InfringementDetectionResult:
         """Execute infringement detection.
 
         Args:

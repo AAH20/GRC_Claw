@@ -7,15 +7,16 @@ appropriate tier upgrades based on activity, value, and potential.
 from __future__ import annotations
 
 from datetime import UTC
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.tools import BaseTool
 
 from tier_management.agents.base import BaseAgent
 from tier_management.config.logging_config import get_logger
 from tier_management.models.schemas import TierLevel, UpgradeEligibility, UpgradeRequest
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+    from langchain_core.tools import BaseTool
 
 logger = get_logger(__name__)
 
@@ -124,10 +125,16 @@ class UpgradeRecommenderAgent(BaseAgent[dict[str, Any], UpgradeRequest]):
             id=uuid4(),
             member_id=UUID(str(member_id)),
             current_tier_id=UUID(str(current_tier_id)),
-            target_tier_id=UUID(str(target_tier_id)) if target_tier_id else current_tier_id,
+            target_tier_id=(
+                UUID(str(target_tier_id)) if target_tier_id else current_tier_id
+            ),
             reason=reason,
             eligibility=eligibility,
-            status="recommended" if eligibility == UpgradeEligibility.ELIGIBLE else "pending",
+            status=(
+                "recommended"
+                if eligibility == UpgradeEligibility.ELIGIBLE
+                else "pending"
+            ),
             requested_at=datetime.now(UTC),
         )
 

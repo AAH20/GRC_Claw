@@ -19,7 +19,7 @@ export function TopCreators({ creators, isLoading }: TopCreatorsProps) {
     );
   }
   return (
-    <Card>
+    <Card data-testid="top-creators">
       <CardHeader><CardTitle>Top Creators</CardTitle></CardHeader>
       <CardContent>
         <div className="space-y-3">

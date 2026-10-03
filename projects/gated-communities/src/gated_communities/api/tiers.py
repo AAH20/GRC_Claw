@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from datetime import UTC
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-
 from tier_management.config.settings import Settings, get_settings
 from tier_management.models.schemas import Tier, TierLevel, TierStatus
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 tiers_router = APIRouter()
 

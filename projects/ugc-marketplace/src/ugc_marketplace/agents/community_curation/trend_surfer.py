@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from collections import Counter
-from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
 
 from ugc_marketplace.agents.community_curation.base import BaseCurationAgent
-from ugc_marketplace.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -43,7 +41,7 @@ class TrendSurferAgent(BaseCurationAgent[list["ContentItem"], list["Trend"]]):
         )
         return agent
 
-    async def execute(self, input_data: list["ContentItem"]) -> list["Trend"]:
+    async def execute(self, input_data: list[ContentItem]) -> list[Trend]:
         """Execute trend detection.
 
         Args:
@@ -84,7 +82,9 @@ class TrendSurferAgent(BaseCurationAgent[list["ContentItem"], list["Trend"]]):
         return []
 
     @staticmethod
-    async def _analyze_engagement_velocity(items: list[dict[str, Any]]) -> dict[str, float]:
+    async def _analyze_engagement_velocity(
+        items: list[dict[str, Any]],
+    ) -> dict[str, float]:
         """Analyze engagement velocity.
 
         Args:

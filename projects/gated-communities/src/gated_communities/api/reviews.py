@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, Field
-
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import ModerationStatus
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -18,10 +20,16 @@ class SubmitReviewRequest(BaseModel):
 
     item_id: UUID = Field(..., description="Item being reviewed")
     reviewer_id: str = Field(..., description="Reviewer ID")
-    decision: str = Field(..., description="Decision: approve, reject, escalate, request_info")
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Reviewer confidence")
+    decision: str = Field(
+        ..., description="Decision: approve, reject, escalate, request_info"
+    )
+    confidence: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Reviewer confidence"
+    )
     notes: str = Field(default="", description="Review notes")
-    categories: list[str] = Field(default_factory=list, description="Violation categories")
+    categories: list[str] = Field(
+        default_factory=list, description="Violation categories"
+    )
 
 
 class ReviewResponse(BaseModel):

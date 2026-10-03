@@ -7,15 +7,16 @@ assigned to tiers, ensuring proper allocation and tracking.
 from __future__ import annotations
 
 from datetime import UTC
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.tools import BaseTool
 
 from tier_management.agents.base import BaseAgent
 from tier_management.config.logging_config import get_logger
 from tier_management.models.schemas import Benefit, BenefitType
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+    from langchain_core.tools import BaseTool
 
 logger = get_logger(__name__)
 
@@ -95,7 +96,9 @@ class BenefitManagerAgent(BaseAgent[dict[str, Any], Benefit]):
         benefit = Benefit(
             id=uuid4(),
             name=benefit_data.get("name", "Unnamed Benefit"),
-            benefit_type=BenefitType(benefit_data.get("benefit_type", "percentage_discount")),
+            benefit_type=BenefitType(
+                benefit_data.get("benefit_type", "percentage_discount")
+            ),
             description=benefit_data.get("description"),
             value=float(benefit_data.get("value", 0.0)),
             tier_ids=[UUID(str(t)) for t in benefit_data.get("tier_ids", [])],
@@ -190,7 +193,4 @@ class BenefitManagerAgent(BaseAgent[dict[str, Any], Benefit]):
         Returns:
             List of active benefits for the tier.
         """
-        return [
-            b for b in self.benefits.values()
-            if b.active and tier_id in b.tier_ids
-        ]
+        return [b for b in self.benefits.values() if b.active and tier_id in b.tier_ids]

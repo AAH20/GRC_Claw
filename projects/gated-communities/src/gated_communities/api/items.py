@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
-
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import ContentType, ModerationItem, ModerationStatus
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/items", tags=["items"])
 
@@ -20,7 +22,9 @@ class CreateItemRequest(BaseModel):
     """Request model for creating a moderation item."""
 
     content: str = Field(..., min_length=1, description="Content to moderate")
-    content_type: ContentType = Field(default=ContentType.TEXT, description="Content type")
+    content_type: ContentType = Field(
+        default=ContentType.TEXT, description="Content type"
+    )
     author_id: str = Field(..., description="Author ID")
     metadata: dict = Field(default_factory=dict, description="Additional metadata")
     tags: list[str] = Field(default_factory=list, description="Content tags")
@@ -30,7 +34,9 @@ class UpdateItemRequest(BaseModel):
     """Request model for updating a moderation item."""
 
     status: ModerationStatus | None = Field(default=None, description="New status")
-    priority_score: float | None = Field(default=None, ge=0.0, le=1.0, description="Priority score")
+    priority_score: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Priority score"
+    )
     queue_id: UUID | None = Field(default=None, description="Queue assignment")
     review_notes: str | None = Field(default=None, description="Review notes")
     reviewer_id: str | None = Field(default=None, description="Reviewer ID")
@@ -84,7 +90,9 @@ async def create_item(
     description="Get a paginated list of moderation items",
 )
 async def list_items(
-    status_filter: ModerationStatus | None = Query(default=None, alias="status"),  # noqa: B008
+    status_filter: ModerationStatus | None = Query(
+        default=None, alias="status"
+    ),  # noqa: B008
     content_type: ContentType | None = Query(default=None),  # noqa: B008
     author_id: str | None = Query(default=None),  # noqa: B008
     page: int = Query(default=1, ge=1),  # noqa: B008
@@ -118,7 +126,9 @@ async def list_items(
     end = start + page_size
     paginated = items[start:end]
 
-    return ItemListResponse(items=paginated, total=total, page=page, page_size=page_size)
+    return ItemListResponse(
+        items=paginated, total=total, page=page, page_size=page_size
+    )
 
 
 @router.get(

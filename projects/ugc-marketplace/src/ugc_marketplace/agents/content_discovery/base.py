@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
 import structlog
-from deepagents import create_deep_agent
 
 logger = structlog.get_logger(__name__)
 
@@ -18,7 +17,9 @@ OutputT = TypeVar("OutputT")
 class AgentExecutionError(Exception):
     """Exception raised when agent execution fails."""
 
-    def __init__(self, message: str, agent_name: str, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, message: str, agent_name: str, details: dict[str, Any] | None = None
+    ) -> None:
         """Initialize the execution error.
 
         Args:

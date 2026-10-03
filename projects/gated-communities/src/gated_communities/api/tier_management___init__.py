@@ -1,8 +1,8 @@
 """API route modules for tier management."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter
-
 from tier_management.api.routes.access import access_router
 from tier_management.api.routes.analytics import analytics_router
 from tier_management.api.routes.benefits import benefits_router

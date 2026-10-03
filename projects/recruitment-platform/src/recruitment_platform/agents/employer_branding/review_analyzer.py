@@ -27,4 +27,9 @@ class ReviewAnalyzer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Review analysis with themes and sentiment.
         """
-        return {"themes": [], "sentiment": {}, "actionable_insights": [], "response_suggestions": []}
+        return {
+            "themes": [],
+            "sentiment": {},
+            "actionable_insights": [],
+            "response_suggestions": [],
+        }

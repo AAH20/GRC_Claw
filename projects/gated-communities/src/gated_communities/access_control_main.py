@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from structlog import get_logger
-
 from access_control import __version__
 from access_control.api.routes import router
 from access_control.config import get_settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from structlog import get_logger
 
 logger = get_logger(__name__)
 

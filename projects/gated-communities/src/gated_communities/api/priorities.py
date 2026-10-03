@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import TYPE_CHECKING
 
 from escalation_workflow.agents.priority_router import PriorityRouterAgent, PriorityRouterInput
 from escalation_workflow.config import Settings, get_settings
 from escalation_workflow.models.priority import Priority, PriorityAssessment, PriorityLevel
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/priorities", tags=["priorities"])
 

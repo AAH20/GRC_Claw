@@ -1,0 +1,250 @@
+# Prometheus alerting rules for recruitment-platform
+# Routes to PagerDuty (critical) and Slack (warning/info)
+
+groups:
+  - name: recruitment-business-critical
+    interval: 30s
+    rules:
+      - alert: HighApplicationErrorRate
+        expr: |
+          sum(rate(recruitment_api_requests_total{status_code=~"5.."}[5m])) by (service)
+          / sum(rate(recruitment_api_requests_total[5m])) by (service) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "High 5xx error rate on {{ $labels.service }}"
+          description: "Error rate for {{ $labels.service }} is {{ $value | humanizePercentage }} over the last 5 minutes."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/high-error-rate"
+          dashboard: "https://grafana.internal/d/recruitment-overview"
+
+      - alert: ApplicationProcessingStalled
+        expr: |
+          recruitment_applications_in_flight{stage="screening"} > 50
+          and
+          rate(recruitment_applications_total{status="screened"}[10m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "Application screening pipeline stalled"
+          description: "{{ $value }} applications stuck in screening with no progress for 5 minutes."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/processing-stalled"
+
+      - alert: OfferAcceptanceDrop
+        expr: |
+          recruitment_offer_acceptance_ratio < 0.3
+        for: 1h
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "Offer acceptance ratio critically low in {{ $labels.department }}"
+          description: "Acceptance ratio dropped to {{ $value | humanizePercentage }} for {{ $labels.department }}."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/offer-acceptance-drop"
+
+      - alert: NotificationDeliveryFailure
+        expr: |
+          sum(rate(recruitment_notification_delivery_total{status="failed"}[5m])) by (channel)
+          / sum(rate(recruitment_notification_delivery_total[5m])) by (channel) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "Notification delivery failing on {{ $labels.channel }}"
+          description: "{{ $value | humanizePercentage }} of notifications failing on {{ $labels.channel }}."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/notification-failure"
+
+  - name: recruitment-business-warning
+    interval: 30s
+    rules:
+      - alert: ElevatedSearchLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(recruitment_search_latency_seconds_bucket[5m])) by (le, query_type)) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "Search latency elevated for {{ $labels.query_type }}"
+          description: "p95 search latency is {{ $value }}s for {{ $labels.query_type }} queries."
+          channel: "#recruitment-alerts"
+
+      - alert: QueueBacklogGrowing
+        expr: |
+          recruitment_queue_depth{queue_name="application-processing"} > 100
+        for: 10m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "Application processing queue backlog"
+          description: "{{ $value }} items queued in application-processing."
+          channel: "#recruitment-alerts"
+
+      - alert: LowCacheHitRatio
+        expr: |
+          recruitment_cache_hit_ratio < 0.5
+        for: 15m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "Cache hit ratio low for {{ $labels.cache_name }}"
+          description: "Cache hit ratio is {{ $value | humanizePercentage }} for {{ $labels.cache_name }}."
+          channel: "#recruitment-alerts"
+
+      - alert: DBConnectionPoolNearExhaustion
+        expr: |
+          recruitment_db_connection_pool_usage{state="active"}
+          / (recruitment_db_connection_pool_usage{state="active"} + recruitment_db_connection_pool_usage{state="idle"}) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "DB connection pool near exhaustion: {{ $labels.pool_name }}"
+          description: "Pool {{ $labels.pool_name }} is {{ $value | humanizePercentage }} utilized."
+          channel: "#recruitment-alerts"
+
+      - alert: CandidateFeedbackScoreDrop
+        expr: |
+          recruitment_candidate_feedback_score{quantile="0.9"} < 3.0
+        for: 30m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "Candidate feedback score dropped in {{ $labels.stage }}"
+          description: "p90 feedback score is {{ $value }} for {{ $labels.stage }}."
+          channel: "#recruitment-alerts"
+
+  - name: recruitment-infrastructure
+    interval: 30s
+    rules:
+      - alert: HighMemoryUsage
+        expr: |
+          process_resident_memory_bytes / 1024 / 1024 / 1024 > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}GB on {{ $labels.instance }}."
+          channel: "#recruitment-alerts"
+
+      - alert: DiskSpaceLow
+        expr: |
+          node_filesystem_avail_bytes / node_filesystem_size_bytes < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "Disk space critically low on {{ $labels.instance }}"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining on {{ $labels.instance }}."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/disk-space"
+
+      - alert: PodCrashLooping
+        expr: |
+          rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.pod }} in {{ $labels.namespace }} has restarted {{ $value }} times in 15 minutes."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/crash-loop"
+
+  - name: recruitment-compliance
+    interval: 60s
+    rules:
+      - alert: ComplianceAuditEventSpike
+        expr: |
+          sum(rate(recruitment_compliance_audit_events_total{severity="high"}[5m])) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: recruitment-platform
+          integration: pagerduty
+        annotations:
+          summary: "Spike in high-severity compliance audit events"
+          description: "{{ $value }} high-severity compliance events per second."
+          runbook: "https://wiki.internal/recruitment-platform/runbooks/compliance-spike"
+
+      - alert: DataExportAnomaly
+        expr: |
+          sum(rate(recruitment_data_export_requests_total[5m])) by (requested_by_role) > 50
+        for: 5m
+        labels:
+          severity: warning
+          team: recruitment-platform
+          integration: slack
+        annotations:
+          summary: "Unusual data export volume by {{ $labels.requested_by_role }}"
+          description: "{{ $value }} export requests/sec from {{ $labels.requested_by_role }}."
+          channel: "#recruitment-alerts"
+
+# Alertmanager routing configuration
+alertmanager:
+  route:
+    receiver: "slack-default"
+    group_by: ["alertname", "service"]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      - matchers:
+          - severity = "critical"
+        receiver: "pagerduty-critical"
+        group_wait: 0s
+        repeat_interval: 1h
+        continue: true
+      - matchers:
+          - severity = "warning"
+        receiver: "slack-warnings"
+        group_wait: 30s
+        repeat_interval: 2h
+
+  receivers:
+    - name: "pagerduty-critical"
+      pagerduty_configs:
+        - service_key: "${PAGERDUTY_SERVICE_KEY}"
+          severity: critical
+          description: "{{ .CommonAnnotations.summary }}"
+          details:
+            firing: "{{ .Alerts.Firing }}"
+            runbook: "{{ .CommonAnnotations.runbook }}"
+
+    - name: "slack-warnings"
+      slack_configs:
+        - api_url: "${SLACK_WEBHOOK_URL}"
+          channel: "#recruitment-alerts"
+          title: "{{ .CommonAnnotations.summary }}"
+          text: "{{ .CommonAnnotations.description }}"
+          send_resolved: true
+
+    - name: "slack-default"
+      slack_configs:
+        - api_url: "${SLACK_WEBHOOK_URL}"
+          channel: "#recruitment-alerts"
+          title: "{{ .CommonAnnotations.summary }}"
+          text: "{{ .CommonAnnotations.description }}"
+          send_resolved: true

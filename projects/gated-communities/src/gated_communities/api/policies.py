@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from compliance_monitor.agents import PolicyTrackerAgent
 from compliance_monitor.api.dependencies import get_policy_tracker
 from compliance_monitor.api.store import store
 from compliance_monitor.models.schemas import Policy, PolicyCreate
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from compliance_monitor.agents import PolicyTrackerAgent
 
 router = APIRouter()
 
@@ -27,7 +30,7 @@ async def list_policies() -> list[Policy]:
 @router.post("", response_model=Policy, status_code=status.HTTP_201_CREATED)
 async def create_policy(
     data: PolicyCreate,
-    agent: PolicyTrackerAgent = Depends(get_policy_tracker)  # noqa: B008,
+    agent: PolicyTrackerAgent = Depends(get_policy_tracker),  # noqa: B008,
 ) -> Policy:
     """Create a new compliance policy.
 
@@ -57,7 +60,9 @@ async def get_policy(policy_id: UUID) -> Policy:
     """
     policy = store.get_policy(policy_id)
     if not policy:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
+        )
     return policy
 
 
@@ -72,4 +77,6 @@ async def delete_policy(policy_id: UUID) -> None:
         HTTPException: If policy not found.
     """
     if not store.delete_policy(policy_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
+        )

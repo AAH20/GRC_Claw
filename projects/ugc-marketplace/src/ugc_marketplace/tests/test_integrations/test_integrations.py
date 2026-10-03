@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.integrations.content_moderation import InMemoryStorage, WebhookClient
+from ugc_marketplace.integrations.content_moderation import (InMemoryStorage,
+                                                             WebhookClient)
 from ugc_marketplace.integrations.quality_scoring import CacheClient
 
 

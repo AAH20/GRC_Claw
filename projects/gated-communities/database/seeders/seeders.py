@@ -16,11 +16,10 @@ Usage
 >>> from database.seeders.seeders import seed_all
 >>> data = seed_all()
 """
+
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import uuid4
 
 from .factories import (
     AccessAuditFactory,
@@ -28,7 +27,6 @@ from .factories import (
     AccessRecommendationFactory,
     AccessRequestFactory,
     AccessResultFactory,
-    ActionStatus,
     AnalyticsSummaryFactory,
     AuditReportFactory,
     BadgeFactory,
@@ -65,7 +63,6 @@ from .factories import (
     PriorityFactory,
     QueueFactory,
     QueueMetricsFactory,
-    RecommendationFactory,
     RemediationActionFactory,
     ReputationExplanationFactory,
     ReputationHistoryFactory,
@@ -91,7 +88,6 @@ from .factories import (
     VerificationResultFactory,
     ViolationFactory,
 )
-
 
 # ===========================================================================
 # Tier Management seeders
@@ -393,6 +389,7 @@ def seed_queues(count: int = 5, **kwargs: Any) -> list[Any]:
 
 def seed_priority_scores(count: int = 50, **kwargs: Any) -> list[Any]:
     """Seed priority scores."""
+    from .factories import PriorityScoreFactory
     return PriorityScoreFactory.create_batch(count, **kwargs)
 
 
@@ -598,7 +595,9 @@ def seed_all(
         "badges": seed_badges(badges),
         "trust_tiers": seed_trust_tiers(trust_tiers),
         "reputation_history": seed_reputation_history(reputation_history),
-        "reputation_explanations": seed_reputation_explanations(reputation_explanations),
+        "reputation_explanations": seed_reputation_explanations(
+            reputation_explanations
+        ),
         # Compliance Monitor
         "compliance_policies": seed_compliance_policies(compliance_policies),
         "violations": seed_violations(violations),
@@ -613,8 +612,12 @@ def seed_all(
         "verification_results": seed_verification_results(verification_results),
         "trust_scores": seed_trust_scores(trust_scores),
         "fraud_reports": seed_fraud_reports(fraud_reports),
-        "document_verification_results": seed_document_verification_results(document_verification_results),
-        "verification_explanations": seed_verification_explanations(verification_explanations),
+        "document_verification_results": seed_document_verification_results(
+            document_verification_results
+        ),
+        "verification_explanations": seed_verification_explanations(
+            verification_explanations
+        ),
         # Moderation Queue
         "moderation_items": seed_moderation_items(moderation_items),
         "queues": seed_queues(queues),

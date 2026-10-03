@@ -37,10 +37,14 @@ class DatabaseClient:
             if db_url.startswith("postgresql://"):
                 db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-            self._engine = create_async_engine(db_url, echo=self.settings.is_development)
+            self._engine = create_async_engine(
+                db_url, echo=self.settings.is_development
+            )
             logger.info("database_connected")
         except ImportError:
-            logger.warning("sqlalchemy_not_available", detail="Database features disabled")
+            logger.warning(
+                "sqlalchemy_not_available", detail="Database features disabled"
+            )
 
     async def disconnect(self) -> None:
         """Close database connection."""

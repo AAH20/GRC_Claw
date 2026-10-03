@@ -6,9 +6,8 @@ import logging
 from uuid import UUID
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage
 
-from ugc_marketplace.models.schemas import Pricing, PricingCreate, PricingUpdate
+from ugc_marketplace.models.schemas import Pricing, PricingCreate
 
 logger = logging.getLogger(__name__)
 

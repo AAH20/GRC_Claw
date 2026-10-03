@@ -27,4 +27,9 @@ class SEOOptimizer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             SEO recommendations and optimized metadata.
         """
-        return {"title_suggestions": [], "meta_description": "", "structured_data": {}, "score": 0.0}
+        return {
+            "title_suggestions": [],
+            "meta_description": "",
+            "structured_data": {},
+            "score": 0.0,
+        }

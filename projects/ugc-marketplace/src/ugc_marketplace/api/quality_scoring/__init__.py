@@ -4,12 +4,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from ugc_marketplace.models.schemas import (
-    ContentType,
-    DimensionScore,
-    ScoreDimension,
-    ScoreLevel,
-)
+from ugc_marketplace.models.schemas import (ContentType, DimensionScore,
+                                            ScoreDimension, ScoreLevel)
 
 router = APIRouter(prefix="/quality", tags=["quality"])
 
@@ -27,7 +23,9 @@ async def metrics() -> dict:
 
 
 @router.post("/score")
-async def score_content(content: str, content_type: ContentType = ContentType.TEXT) -> dict:
+async def score_content(
+    content: str, content_type: ContentType = ContentType.TEXT
+) -> dict:
     """Score content quality across all dimensions.
 
     Args:

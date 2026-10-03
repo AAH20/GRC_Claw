@@ -27,4 +27,9 @@ class BrandStrategy(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Brand strategy with positioning and messaging.
         """
-        return {"positioning": "", "value_proposition": "", "channels": [], "messaging": {}}
+        return {
+            "positioning": "",
+            "value_proposition": "",
+            "channels": [],
+            "messaging": {},
+        }

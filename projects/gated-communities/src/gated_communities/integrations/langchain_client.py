@@ -1,12 +1,13 @@
 """LangChain integration client for LLM interactions."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel
-
 from reputation_system.config.settings import Settings, get_settings
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class LangChainClient:

@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from community_governance.agents import (
-    DisputeResolverAgent,
-    GovernanceAnalyticsAgent,
-    GovernanceExplainerAgent,
-    PolicyManagerAgent,
-    RuleEnforcerAgent,
-)
+        DisputeResolverAgent,
+        GovernanceAnalyticsAgent,
+        GovernanceExplainerAgent,
+        PolicyManagerAgent,
+        RuleEnforcerAgent,
+    )
 
 from community_governance.integrations import MetricsIntegration
 

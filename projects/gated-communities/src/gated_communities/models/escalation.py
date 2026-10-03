@@ -28,8 +28,12 @@ class Escalation(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID = Field(default_factory=uuid4, description="Unique escalation identifier")
-    title: str = Field(..., min_length=1, max_length=500, description="Escalation title")
-    description: str = Field(..., min_length=1, max_length=5000, description="Detailed description")
+    title: str = Field(
+        ..., min_length=1, max_length=500, description="Escalation title"
+    )
+    description: str = Field(
+        ..., min_length=1, max_length=5000, description="Detailed description"
+    )
     status: EscalationStatus = Field(default=EscalationStatus.PENDING)
     priority: str = Field(
         default="medium", description="Priority level (critical, high, medium, low)"
@@ -37,11 +41,17 @@ class Escalation(BaseModel):
     category: str = Field(default="general", description="Escalation category")
     source: str = Field(default="api", description="Source of the escalation")
     assignee: str | None = Field(default=None, description="Assigned agent or team")
-    requester: str = Field(..., description="Person or system that created the escalation")
+    requester: str = Field(
+        ..., description="Person or system that created the escalation"
+    )
     tags: list[str] = Field(default_factory=list, description="Tags for categorization")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
     sla_id: UUID | None = Field(default=None, description="Associated SLA identifier")
-    resolution_id: UUID | None = Field(default=None, description="Associated resolution identifier")
+    resolution_id: UUID | None = Field(
+        default=None, description="Associated resolution identifier"
+    )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     resolved_at: datetime | None = Field(default=None)

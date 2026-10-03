@@ -18,6 +18,7 @@ Usage
 >>> # Create a batch:
 >>> tiers = TierFactory.create_batch(5)
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -25,12 +26,13 @@ from typing import Any
 from uuid import uuid4
 
 import factory
-from factory import Faker, LazyAttribute, LazyFunction, Sequence, SubFactory
+from factory import Faker, LazyFunction, Sequence, SubFactory
 from factory.fuzzy import FuzzyChoice, FuzzyFloat, FuzzyInteger
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
@@ -57,7 +59,7 @@ class TierFactory(factory.Factory):
     status = FuzzyChoice(["active", "inactive", "suspended", "pending", "expired"])
     description = Faker("sentence", nb_words=8)
     requirements = LazyFunction(lambda: {"min_score": FuzzyInteger(0, 100).fuzz()})
-    benefits = LazyFunction(lambda: Faker("words", nb=3).generate())
+    benefits = Faker("words", nb=3)
     max_members = FuzzyInteger(10, 10_000)
     monthly_fee = FuzzyFloat(0.0, 500.0)
     created_at = LazyFunction(_utcnow)
@@ -78,8 +80,8 @@ class TierEvaluationFactory(factory.Factory):
     eligible = Faker("boolean")
     score = FuzzyFloat(0.0, 100.0)
     criteria_results = LazyFunction(dict)
-    gaps = LazyFunction(lambda: Faker("words", nb=2).generate())
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    gaps = Faker("words", nb=2)
+    recommendations = Faker("sentences", nb=2)
     evaluated_at = LazyFunction(_utcnow)
     evaluated_by = "TierEvaluatorAgent"
     confidence = FuzzyFloat(0.0, 1.0)
@@ -96,7 +98,9 @@ class UpgradeRequestFactory(factory.Factory):
     current_tier_id = LazyFunction(uuid4)
     target_tier_id = LazyFunction(uuid4)
     reason = Faker("sentence", nb_words=10)
-    eligibility = FuzzyChoice(["eligible", "not_eligible", "pending", "cooldown", "max_tier"])
+    eligibility = FuzzyChoice(
+        ["eligible", "not_eligible", "pending", "cooldown", "max_tier"]
+    )
     status = "pending"
     requested_at = LazyFunction(_utcnow)
     processed_at = None
@@ -132,10 +136,16 @@ class BenefitFactory(factory.Factory):
 
     id = LazyFunction(uuid4)
     name = Sequence(lambda n: f"Benefit {n}")
-    benefit_type = FuzzyChoice([
-        "percentage_discount", "fixed_discount", "free_shipping",
-        "priority_support", "exclusive_access", "bonus_credits",
-    ])
+    benefit_type = FuzzyChoice(
+        [
+            "percentage_discount",
+            "fixed_discount",
+            "free_shipping",
+            "priority_support",
+            "exclusive_access",
+            "bonus_credits",
+        ]
+    )
     description = Faker("sentence", nb_words=6)
     value = FuzzyFloat(0.0, 100.0)
     tier_ids = LazyFunction(lambda: [uuid4()])
@@ -165,7 +175,7 @@ class TierAnalyticsFactory(factory.Factory):
     avg_engagement_score = FuzzyFloat(0.0, 100.0)
     revenue = FuzzyFloat(0.0, 100_000.0)
     metrics = LazyFunction(dict)
-    insights = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    insights = Faker("sentences", nb=2)
     generated_at = LazyFunction(_utcnow)
     generated_by = "TierAnalyticsAgent"
 
@@ -188,7 +198,7 @@ class GovernancePolicyFactory(factory.Factory):
     scope = FuzzyChoice(["global", "community", "category", "user", "custom"])
     scope_target = None
     rules = LazyFunction(lambda: [uuid4()])
-    guidelines = LazyFunction(lambda: Faker("sentences", nb=3).generate())
+    guidelines = Faker("sentences", nb=3)
     enforcement_level = "standard"
     effective_date = None
     expiration_date = None
@@ -208,13 +218,20 @@ class RuleFactory(factory.Factory):
     id = LazyFunction(uuid4)
     name = Sequence(lambda n: f"Rule {n}")
     description = Faker("sentence", nb_words=8)
-    category = FuzzyChoice([
-        "content_moderation", "user_conduct", "privacy",
-        "security", "access_control", "compliance", "custom",
-    ])
+    category = FuzzyChoice(
+        [
+            "content_moderation",
+            "user_conduct",
+            "privacy",
+            "security",
+            "access_control",
+            "compliance",
+            "custom",
+        ]
+    )
     severity = FuzzyChoice(["low", "medium", "high", "critical"])
     conditions = LazyFunction(dict)
-    actions = LazyFunction(lambda: Faker("words", nb=3).generate())
+    actions = Faker("words", nb=3)
     is_active = True
     priority = FuzzyInteger(0, 100)
     created_at = LazyFunction(_utcnow)
@@ -237,7 +254,7 @@ class RuleEnforcementResultFactory(factory.Factory):
     message = Faker("sentence", nb_words=10)
     details = LazyFunction(dict)
     enforced_at = LazyFunction(_utcnow)
-    recommended_actions = LazyFunction(lambda: Faker("words", nb=2).generate())
+    recommended_actions = Faker("words", nb=2)
 
 
 class DisputeFactory(factory.Factory):
@@ -249,7 +266,9 @@ class DisputeFactory(factory.Factory):
     id = LazyFunction(uuid4)
     title = Faker("sentence", nb_words=6)
     description = Faker("paragraph", nb_sentences=2)
-    status = FuzzyChoice(["open", "under_review", "mediation", "resolved", "closed", "escalated"])
+    status = FuzzyChoice(
+        ["open", "under_review", "mediation", "resolved", "closed", "escalated"]
+    )
     priority = FuzzyChoice(["low", "medium", "high", "urgent"])
     category = Faker("word")
     initiator_id = LazyFunction(_uuid)
@@ -269,10 +288,12 @@ class DisputeResolutionFactory(factory.Factory):
     class Meta:
         model = Any
 
-    resolution_type = FuzzyChoice(["mediation", "arbitration", "vote", "admin_decision"])
+    resolution_type = FuzzyChoice(
+        ["mediation", "arbitration", "vote", "admin_decision"]
+    )
     outcome = Faker("sentence", nb_words=8)
     rationale = Faker("paragraph", nb_sentences=2)
-    conditions = LazyFunction(lambda: Faker("words", nb=3).generate())
+    conditions = Faker("words", nb=3)
     resolved_by = LazyFunction(_uuid)
     resolved_at = LazyFunction(_utcnow)
     follow_up_required = Faker("boolean")
@@ -286,16 +307,26 @@ class GovernanceActionFactory(factory.Factory):
         model = Any
 
     id = LazyFunction(uuid4)
-    action_type = FuzzyChoice([
-        "create", "update", "delete", "approve",
-        "reject", "flag", "escalate", "resolve",
-    ])
+    action_type = FuzzyChoice(
+        [
+            "create",
+            "update",
+            "delete",
+            "approve",
+            "reject",
+            "flag",
+            "escalate",
+            "resolve",
+        ]
+    )
     target_id = LazyFunction(_uuid)
     target_type = Faker("word")
     actor_id = LazyFunction(_uuid)
     reason = Faker("sentence", nb_words=8)
     metadata = LazyFunction(dict)
-    status = FuzzyChoice(["pending", "in_review", "approved", "rejected", "escalated", "resolved"])
+    status = FuzzyChoice(
+        ["pending", "in_review", "approved", "rejected", "escalated", "resolved"]
+    )
     created_at = LazyFunction(_utcnow)
     updated_at = LazyFunction(_utcnow)
     resolved_at = None
@@ -336,7 +367,7 @@ class GovernanceAnalyticsFactory(factory.Factory):
     top_violated_rules = LazyFunction(list)
     resolution_time_trend = LazyFunction(list)
     health_score = SubFactory(GovernanceHealthScoreFactory)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     generated_at = LazyFunction(_utcnow)
 
 
@@ -369,13 +400,23 @@ class EscalationFactory(factory.Factory):
     id = LazyFunction(uuid4)
     title = Faker("sentence", nb_words=8)
     description = Faker("paragraph", nb_sentences=3)
-    status = FuzzyChoice(["pending", "routed", "in_progress", "waiting", "resolved", "closed", "cancelled"])
+    status = FuzzyChoice(
+        [
+            "pending",
+            "routed",
+            "in_progress",
+            "waiting",
+            "resolved",
+            "closed",
+            "cancelled",
+        ]
+    )
     priority = FuzzyChoice(["critical", "high", "medium", "low"])
     category = Faker("word")
     source = FuzzyChoice(["api", "webhook", "manual", "system"])
     assignee = None
     requester = LazyFunction(_uuid)
-    tags = LazyFunction(lambda: Faker("words", nb=3).generate())
+    tags = Faker("words", nb=3)
     metadata = LazyFunction(dict)
     sla_id = None
     resolution_id = None
@@ -395,10 +436,20 @@ class ResolutionFactory(factory.Factory):
     escalation_id = LazyFunction(uuid4)
     title = Faker("sentence", nb_words=8)
     description = Faker("paragraph", nb_sentences=2)
-    status = FuzzyChoice(["proposed", "approved", "in_progress", "implemented", "verified", "rejected", "rolled_back"])
+    status = FuzzyChoice(
+        [
+            "proposed",
+            "approved",
+            "in_progress",
+            "implemented",
+            "verified",
+            "rejected",
+            "rolled_back",
+        ]
+    )
     resolution_type = FuzzyChoice(["manual", "automated", "hybrid"])
     root_cause = Faker("sentence", nb_words=10)
-    steps = LazyFunction(lambda: Faker("sentences", nb=3).generate())
+    steps = Faker("sentences", nb=3)
     automated = Faker("boolean")
     confidence = FuzzyFloat(0.0, 1.0)
     verified_by = None
@@ -464,7 +515,7 @@ class PriorityFactory(factory.Factory):
     description = Faker("sentence", nb_words=6)
     sla_minutes = FuzzyInteger(1, 1440)
     escalation_threshold = FuzzyInteger(1, 10)
-    notification_channels = LazyFunction(lambda: Faker("words", nb=2).generate())
+    notification_channels = Faker("words", nb=2)
     routing_rules = LazyFunction(dict)
     created_at = LazyFunction(_utcnow)
     updated_at = LazyFunction(_utcnow)
@@ -495,10 +546,10 @@ class EscalationAnalysisFactory(factory.Factory):
     escalation_id = None
     analysis_type = FuzzyChoice(["single", "batch", "trend"])
     summary = Faker("paragraph", nb_sentences=2)
-    patterns = LazyFunction(lambda: Faker("words", nb=2).generate())
+    patterns = LazyFunction(lambda: [FuzzyChoice(["recurring", "seasonal", "dependency", "capacity", "configuration", "external"]).fuzz() for _ in range(FuzzyInteger(1, 3).fuzz())])
     risk_score = FuzzyFloat(0.0, 1.0)
     impact_assessment = Faker("sentence", nb_words=10)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     related_escalations = LazyFunction(lambda: [uuid4()])
     metrics = LazyFunction(dict)
     analyzed_at = LazyFunction(_utcnow)
@@ -578,7 +629,7 @@ class AccessResultFactory(factory.Factory):
     request = SubFactory(AccessRequestFactory)
     decision = FuzzyChoice(["allow", "deny", "conditional", "abstain"])
     reason = Faker("sentence", nb_words=8)
-    obligations = LazyFunction(lambda: Faker("words", nb=2).generate())
+    obligations = Faker("words", nb=2)
     evaluated_at = LazyFunction(_utcnow)
     policy_ids = LazyFunction(lambda: [str(uuid4())])
     confidence = FuzzyFloat(0.0, 1.0)
@@ -652,7 +703,9 @@ class BadgeFactory(factory.Factory):
     id = LazyFunction(uuid4)
     name = Sequence(lambda n: f"Badge {n}")
     description = Faker("sentence", nb_words=8)
-    category = FuzzyChoice(["contribution", "quality", "community", "expertise", "special"])
+    category = FuzzyChoice(
+        ["contribution", "quality", "community", "expertise", "special"]
+    )
     icon_url = None
     criteria = LazyFunction(dict)
     points = FuzzyInteger(0, 100)
@@ -673,7 +726,7 @@ class TrustTierFactory(factory.Factory):
     description = Faker("sentence", nb_words=8)
     min_score = FuzzyInteger(0, 500)
     max_score = FuzzyInteger(501, 1000)
-    benefits = LazyFunction(lambda: Faker("words", nb=3).generate())
+    benefits = Faker("words", nb=3)
     requirements = LazyFunction(dict)
     created_at = LazyFunction(_utcnow)
     updated_at = LazyFunction(_utcnow)
@@ -707,7 +760,7 @@ class ReputationExplanationFactory(factory.Factory):
     member_id = LazyFunction(_uuid)
     explanation = Faker("paragraph", nb_sentences=2)
     factors = LazyFunction(list)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     confidence = FuzzyFloat(0.0, 1.0)
     created_at = LazyFunction(_utcnow)
 
@@ -730,7 +783,7 @@ class CompliancePolicyFactory(factory.Factory):
     status = FuzzyChoice(["draft", "active", "suspended", "archived"])
     version = "1.0.0"
     effective_date = LazyFunction(_utcnow)
-    rules = LazyFunction(lambda: Faker("words", nb=3).generate())
+    rules = Faker("words", nb=3)
     metadata = LazyFunction(dict)
     created_at = LazyFunction(_utcnow)
     updated_at = LazyFunction(_utcnow)
@@ -747,10 +800,12 @@ class ViolationFactory(factory.Factory):
     title = Faker("sentence", nb_words=8)
     description = Faker("paragraph", nb_sentences=2)
     severity = FuzzyChoice(["low", "medium", "high", "critical"])
-    status = FuzzyChoice(["open", "acknowledged", "in_remediation", "resolved", "closed"])
+    status = FuzzyChoice(
+        ["open", "acknowledged", "in_remediation", "resolved", "closed"]
+    )
     detected_at = LazyFunction(_utcnow)
     resolved_at = None
-    evidence = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    evidence = Faker("sentences", nb=2)
     remediation_actions = LazyFunction(lambda: [uuid4()])
     assignee = None
     metadata = LazyFunction(dict)
@@ -767,11 +822,11 @@ class AuditReportFactory(factory.Factory):
     description = Faker("paragraph", nb_sentences=2)
     period_start = LazyFunction(lambda: _utcnow() - timedelta(days=30))
     period_end = LazyFunction(_utcnow)
-    findings = LazyFunction(lambda: Faker("sentences", nb=3).generate())
+    findings = Faker("sentences", nb=3)
     policies_reviewed = LazyFunction(lambda: [uuid4()])
     violations_found = LazyFunction(lambda: [uuid4()])
     overall_score = FuzzyFloat(0.0, 100.0)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     generated_at = LazyFunction(_utcnow)
     generated_by = "AuditReporterAgent"
 
@@ -841,7 +896,7 @@ class IdentityDataFactory(factory.Factory):
         model = Any
 
     full_name = Faker("name")
-    date_of_birth = Faker("date_of_birth", minimum_age=18, maximum_age=90)
+    date_of_birth = LazyFunction(lambda: f"{FuzzyInteger(1935, 2007).fuzz()}-{FuzzyInteger(1, 12).fuzz():02d}-{FuzzyInteger(1, 28).fuzz():02d}")
     email = Faker("email")
     phone = Faker("phone_number")
     address = Faker("address")
@@ -854,10 +909,15 @@ class DocumentDataFactory(factory.Factory):
     class Meta:
         model = Any
 
-    document_type = FuzzyChoice([
-        "passport", "drivers_license", "national_id",
-        "utility_bill", "bank_statement",
-    ])
+    document_type = FuzzyChoice(
+        [
+            "passport",
+            "drivers_license",
+            "national_id",
+            "utility_bill",
+            "bank_statement",
+        ]
+    )
     document_number = Faker("bothify", text="??-########")
     issuing_country = Faker("country_code")
     issue_date = None
@@ -888,14 +948,16 @@ class VerificationResultFactory(factory.Factory):
 
     request_id = LazyFunction(uuid4)
     member_id = LazyFunction(_uuid)
-    status = FuzzyChoice(["pending", "in_progress", "verified", "rejected", "needs_review", "expired"])
+    status = FuzzyChoice(
+        ["pending", "in_progress", "verified", "rejected", "needs_review", "expired"]
+    )
     confidence = FuzzyFloat(0.0, 1.0)
     trust_score = FuzzyFloat(0.0, 1.0)
     fraud_risk = FuzzyFloat(0.0, 1.0)
     risk_level = FuzzyChoice(["low", "medium", "high", "critical"])
     verified_at = LazyFunction(_utcnow)
     expires_at = None
-    checks_performed = LazyFunction(lambda: Faker("words", nb=3).generate())
+    checks_performed = Faker("words", nb=3)
     failure_reasons = LazyFunction(list)
     metadata = LazyFunction(dict)
 
@@ -925,7 +987,7 @@ class FraudReportFactory(factory.Factory):
     risk_score = FuzzyFloat(0.0, 1.0)
     risk_level = FuzzyChoice(["low", "medium", "high", "critical"])
     flags = LazyFunction(list)
-    matched_patterns = LazyFunction(lambda: Faker("words", nb=2).generate())
+    matched_patterns = Faker("words", nb=2)
     recommendation = FuzzyChoice(["allow", "review", "block"])
     checked_at = LazyFunction(_utcnow)
     check_depth = FuzzyChoice(["basic", "standard", "deep"])
@@ -937,10 +999,15 @@ class DocumentVerificationResultFactory(factory.Factory):
     class Meta:
         model = Any
 
-    document_type = FuzzyChoice([
-        "passport", "drivers_license", "national_id",
-        "utility_bill", "bank_statement",
-    ])
+    document_type = FuzzyChoice(
+        [
+            "passport",
+            "drivers_license",
+            "national_id",
+            "utility_bill",
+            "bank_statement",
+        ]
+    )
     is_authentic = Faker("boolean")
     confidence = FuzzyFloat(0.0, 1.0)
     tampering_detected = False
@@ -959,7 +1026,7 @@ class VerificationExplanationFactory(factory.Factory):
     request_id = LazyFunction(uuid4)
     summary = Faker("paragraph", nb_sentences=2)
     factors = LazyFunction(list)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     appeal_process = None
     generated_at = LazyFunction(_utcnow)
     detail_level = FuzzyChoice(["summary", "detailed", "technical"])
@@ -978,14 +1045,18 @@ class ModerationItemFactory(factory.Factory):
 
     id = LazyFunction(uuid4)
     content = Faker("paragraph", nb_sentences=3)
-    content_type = FuzzyChoice(["text", "image", "video", "audio", "comment", "post", "message"])
+    content_type = FuzzyChoice(
+        ["text", "image", "video", "audio", "comment", "post", "message"]
+    )
     author_id = LazyFunction(_uuid)
-    status = FuzzyChoice(["pending", "in_review", "approved", "rejected", "escalated", "auto_moderated"])
+    status = FuzzyChoice(
+        ["pending", "in_review", "approved", "rejected", "escalated", "auto_moderated"]
+    )
     queue_id = None
     priority_score = None
     priority_level = None
     metadata = LazyFunction(dict)
-    tags = LazyFunction(lambda: Faker("words", nb=3).generate())
+    tags = Faker("words", nb=3)
     created_at = LazyFunction(_utcnow)
     updated_at = LazyFunction(_utcnow)
     reviewed_at = None
@@ -1002,7 +1073,7 @@ class QueueFactory(factory.Factory):
     id = LazyFunction(uuid4)
     name = Sequence(lambda n: f"Queue {n}")
     description = Faker("sentence", nb_words=8)
-    content_types = LazyFunction(lambda: Faker("words", nb=2).generate())
+    content_types = LazyFunction(lambda: [FuzzyChoice(["text", "image", "video", "audio", "comment", "post", "message"]).fuzz() for _ in range(FuzzyInteger(1, 4).fuzz())])
     max_size = FuzzyInteger(100, 10_000)
     priority_weights = LazyFunction(dict)
     assigned_reviewers = LazyFunction(lambda: [_uuid()])
@@ -1038,7 +1109,7 @@ class ReviewDecisionFactory(factory.Factory):
     decision = FuzzyChoice(["approve", "reject", "escalate", "request_info"])
     confidence = FuzzyFloat(0.0, 1.0)
     notes = Faker("sentence", nb_words=8)
-    categories = LazyFunction(lambda: Faker("words", nb=2).generate())
+    categories = Faker("words", nb=2)
     created_at = LazyFunction(_utcnow)
 
 
@@ -1108,7 +1179,9 @@ class TrendFactory(factory.Factory):
     direction = FuzzyChoice(["increasing", "decreasing", "stable", "volatile"])
     change_percentage = FuzzyFloat(-100.0, 100.0)
     confidence = FuzzyFloat(0.0, 1.0)
-    data_points = LazyFunction(lambda: [FuzzyFloat(0.0, 100.0).fuzz() for _ in range(5)])
+    data_points = LazyFunction(
+        lambda: [FuzzyFloat(0.0, 100.0).fuzz() for _ in range(5)]
+    )
     start_date = LazyFunction(lambda: _utcnow() - timedelta(days=30))
     end_date = LazyFunction(_utcnow)
     description = Faker("sentence", nb_words=8)
@@ -1129,9 +1202,9 @@ class ModeratorPerformanceFactory(factory.Factory):
     escalation_rate = FuzzyFloat(0.0, 1.0)
     period_start = LazyFunction(lambda: _utcnow() - timedelta(days=30))
     period_end = LazyFunction(_utcnow)
-    strengths = LazyFunction(lambda: Faker("sentences", nb=2).generate())
-    weaknesses = LazyFunction(lambda: Faker("sentences", nb=2).generate())
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    strengths = Faker("sentences", nb=2)
+    weaknesses = Faker("sentences", nb=2)
+    recommendations = Faker("sentences", nb=2)
 
 
 class PolicyEffectivenessFactory(factory.Factory):
@@ -1153,7 +1226,7 @@ class PolicyEffectivenessFactory(factory.Factory):
     period_start = LazyFunction(lambda: _utcnow() - timedelta(days=30))
     period_end = LazyFunction(_utcnow)
     effectiveness_score = FuzzyFloat(0.0, 1.0)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
 
 
 class ModerationPredictionFactory(factory.Factory):
@@ -1165,9 +1238,11 @@ class ModerationPredictionFactory(factory.Factory):
     prediction_type = FuzzyChoice(["workload", "risk", "trend"])
     target_date = LazyFunction(lambda: _utcnow() + timedelta(days=7))
     predicted_value = FuzzyFloat(0.0, 10_000.0)
-    confidence_interval = LazyFunction(lambda: (FuzzyFloat(0.0, 50.0).fuzz(), FuzzyFloat(50.0, 100.0).fuzz()))
+    confidence_interval = LazyFunction(
+        lambda: (FuzzyFloat(0.0, 50.0).fuzz(), FuzzyFloat(50.0, 100.0).fuzz())
+    )
     confidence = FuzzyFloat(0.0, 1.0)
-    factors = LazyFunction(lambda: Faker("words", nb=3).generate())
+    factors = Faker("words", nb=3)
     model_version = "v1"
     created_at = LazyFunction(_utcnow)
 
@@ -1207,10 +1282,15 @@ class EngagementMetricsFactory(factory.Factory):
     response_rate = FuzzyFloat(0.0, 1.0)
     retention_rate_7d = FuzzyFloat(0.0, 1.0)
     retention_rate_30d = FuzzyFloat(0.0, 1.0)
-    engagement_level = FuzzyChoice([
-        "highly_engaged", "engaged", "moderately_engaged",
-        "low_engagement", "disengaged",
-    ])
+    engagement_level = FuzzyChoice(
+        [
+            "highly_engaged",
+            "engaged",
+            "moderately_engaged",
+            "low_engagement",
+            "disengaged",
+        ]
+    )
     score = FuzzyFloat(0.0, 100.0)
 
 
@@ -1228,7 +1308,7 @@ class ToxicityReportFactory(factory.Factory):
     total_users = FuzzyInteger(101, 10_000)
     toxicity_categories = LazyFunction(dict)
     flagged_content = LazyFunction(list)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     score = FuzzyFloat(0.0, 100.0)
 
 
@@ -1246,10 +1326,15 @@ class GrowthAnalysisFactory(factory.Factory):
     growth_rate_7d = FuzzyFloat(-100.0, 100.0)
     growth_rate_30d = FuzzyFloat(-100.0, 100.0)
     net_growth_rate = FuzzyFloat(-100.0, 100.0)
-    growth_trend = FuzzyChoice([
-        "rapid_growth", "steady_growth", "stable",
-        "slow_decline", "rapid_decline",
-    ])
+    growth_trend = FuzzyChoice(
+        [
+            "rapid_growth",
+            "steady_growth",
+            "stable",
+            "slow_decline",
+            "rapid_decline",
+        ]
+    )
     projected_members_30d = FuzzyInteger(0, 150_000)
     projected_members_90d = FuzzyInteger(0, 200_000)
     acquisition_channels = LazyFunction(dict)
@@ -1262,7 +1347,9 @@ class ChurnPredictionFactory(factory.Factory):
     class Meta:
         model = Any
 
-    overall_churn_risk = FuzzyChoice(["very_low", "low", "moderate", "high", "very_high"])
+    overall_churn_risk = FuzzyChoice(
+        ["very_low", "low", "moderate", "high", "very_high"]
+    )
     churn_probability = FuzzyFloat(0.0, 1.0)
     at_risk_members = FuzzyInteger(0, 5_000)
     total_members = FuzzyInteger(5_001, 100_000)
@@ -1271,7 +1358,7 @@ class ChurnPredictionFactory(factory.Factory):
     predicted_churn_rate_30d = FuzzyFloat(0.0, 1.0)
     predicted_churn_rate_90d = FuzzyFloat(0.0, 1.0)
     segment_risk = LazyFunction(dict)
-    recommendations = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    recommendations = Faker("sentences", nb=2)
     score = FuzzyFloat(0.0, 100.0)
 
 
@@ -1310,8 +1397,8 @@ class HealthExplanationFactory(factory.Factory):
     toxicity_summary = Faker("sentence", nb_words=10)
     growth_summary = Faker("sentence", nb_words=10)
     churn_summary = Faker("sentence", nb_words=10)
-    key_strengths = LazyFunction(lambda: Faker("sentences", nb=2).generate())
-    key_concerns = LazyFunction(lambda: Faker("sentences", nb=2).generate())
+    key_strengths = Faker("sentences", nb=2)
+    key_concerns = Faker("sentences", nb=2)
     actionable_recommendations = LazyFunction(list)
     generated_at = LazyFunction(_utcnow)
     model_used = "gpt-4o-mini"
@@ -1325,49 +1412,98 @@ class HealthExplanationFactory(factory.Factory):
 # This avoids circular imports at module load time.
 # ===========================================================================
 
+
 def _wire_models() -> None:
     """Assign real Pydantic model classes to factory Meta.model."""
-    from tier_management.models.schemas import (
-        Tier, TierEvaluation, UpgradeRequest, AccessPolicy, Benefit, TierAnalytics,
+    import sys
+    from pathlib import Path
+
+    # Ensure src/ is on the path for model imports
+    src_path = str(Path(__file__).resolve().parents[3] / "src")
+    if src_path not in sys.path:
+        sys.path.insert(0, src_path)
+
+    from gated_communities.models.access_control_schemas import (
+        AccessAudit,
+        AccessRecommendation,
+        AccessRequest,
+        AccessResult,
+        Permission,
+        Role,
     )
-    from community_governance.models.policy import Policy as GovernancePolicy
-    from community_governance.models.rule import Rule, RuleEnforcementResult
-    from community_governance.models.dispute import Dispute, DisputeResolution
-    from community_governance.models.governance_action import GovernanceAction
-    from community_governance.models.analytics import (
-        GovernanceHealthScore, GovernanceAnalytics, GovernanceSummary,
+    from gated_communities.models.analysis import EscalationAnalysis, TrendReport
+    from gated_communities.models.analytics import (
+        GovernanceAnalytics,
+        GovernanceHealthScore,
+        GovernanceSummary,
     )
-    from escalation_workflow.models.escalation import Escalation
-    from escalation_workflow.models.resolution import Resolution
-    from escalation_workflow.models.sla import SLA, SLABreach
-    from escalation_workflow.models.priority import Priority, PriorityAssessment
-    from escalation_workflow.models.analysis import EscalationAnalysis, TrendReport
-    from access_control.models.schemas import (
-        Permission, Role, AccessRequest, AccessResult, AccessAudit, AccessRecommendation,
+    from gated_communities.models.community_health_scorer___init__ import (
+        ChurnPrediction,
+        EngagementMetrics,
+        GrowthAnalysis,
+        HealthExplanation,
+        HealthScore,
+        ToxicityReport,
     )
-    from reputation_system.models.schemas import (
-        ReputationScore, Badge, TrustTier, ReputationHistory, ReputationExplanation,
+    from gated_communities.models.compliance_monitor_schemas import (
+        AuditReport,
+        ComplianceReport,
+        ComplianceScore,
+        RemediationAction,
+        Violation,
     )
-    from compliance_monitor.models.schemas import (
-        Policy as CompliancePolicy, Violation, AuditReport, ComplianceScore,
-        ComplianceReport, RemediationAction,
+    from gated_communities.models.compliance_monitor_schemas import Policy as CompliancePolicy
+    from gated_communities.models.dispute import Dispute, DisputeResolution
+    from gated_communities.models.escalation import Escalation
+    from gated_communities.models.governance_action import GovernanceAction
+    from gated_communities.models.member_verification_schemas import (
+        DocumentData,
+        DocumentVerificationResult,
+        FraudReport,
+        IdentityData,
+        TrustScore,
+        VerificationExplanation,
+        VerificationRequest,
+        VerificationResult,
     )
-    from member_verification.models.schemas import (
-        IdentityData, DocumentData, VerificationRequest, VerificationResult,
-        TrustScore, FraudReport, DocumentVerificationResult, VerificationExplanation,
+    from gated_communities.models.moderation_analytics___init__ import (
+        AnalyticsSummary,
+        ModerationAnalytics,
+        ModerationPrediction,
+        ModeratorPerformance,
+        PolicyEffectiveness,
+        Trend,
     )
-    from moderation_queue.models import (
-        ModerationItem, Queue, PriorityScore, ReviewDecision,
-        Escalation as ModerationEscalation, QueueMetrics,
+    from gated_communities.models.moderation_queue___init__ import (
+        Escalation as ModerationEscalation,
     )
-    from moderation_analytics.models import (
-        ModerationAnalytics, Trend, ModeratorPerformance,
-        PolicyEffectiveness, ModerationPrediction, AnalyticsSummary,
+    from gated_communities.models.moderation_queue___init__ import (
+        ModerationItem,
+        PriorityScore,
+        Queue,
+        QueueMetrics,
+        ReviewDecision,
     )
-    from community_health_scorer.models import (
-        EngagementMetrics, ToxicityReport, GrowthAnalysis,
-        ChurnPrediction, HealthScore, HealthExplanation,
+    from gated_communities.models.policy import Policy as GovernancePolicy
+    from gated_communities.models.priority import Priority, PriorityAssessment
+    from gated_communities.models.reputation_system_schemas import (
+        Badge,
+        ReputationExplanation,
+        ReputationHistory,
+        ReputationScore,
+        TrustTier,
     )
+    from gated_communities.models.resolution import Resolution
+    from gated_communities.models.rule import Rule, RuleEnforcementResult
+    from gated_communities.models.schemas import (
+        AccessPolicy,
+        Benefit,
+        Tier,
+        TierAnalytics,
+        TierEvaluation,
+        UpgradeRequest,
+    )
+    from gated_communities.models.sla import SLA, SLABreach
 
     # Tier Management
     TierFactory._meta.model = Tier

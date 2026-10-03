@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends
-
 from community_governance.api.dependencies import get_governance_explainer
 from community_governance.config.logging_config import get_logger
+from fastapi import APIRouter, Depends
 
 if TYPE_CHECKING:
     from community_governance.agents import GovernanceExplainerAgent
@@ -20,7 +19,7 @@ router = APIRouter(prefix="/api/v1/explain", tags=["explain"])
 @router.post("")
 async def explain_decision(
     explanation_request: dict,
-    agent: GovernanceExplainerAgent = Depends(get_governance_explainer)  # noqa: B008,
+    agent: GovernanceExplainerAgent = Depends(get_governance_explainer),  # noqa: B008,
 ) -> dict:
     """Explain a governance decision.
 

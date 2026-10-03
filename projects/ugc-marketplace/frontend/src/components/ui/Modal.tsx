@@ -28,12 +28,17 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={cn("relative z-50 w-full rounded-lg bg-card p-6 shadow-lg", sizes[size])}>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? "modal-title" : undefined}
+        className={cn("relative z-50 w-full rounded-lg bg-card p-6 shadow-lg", sizes[size])}
+      >
         <div className="flex items-center justify-between mb-4">
-          {title && <h2 className="text-lg font-semibold">{title}</h2>}
-          <Button variant="ghost" size="icon" onClick={onClose} className="ml-auto">
-            <X className="h-4 w-4" />
+          {title && <h2 id="modal-title" className="text-lg font-semibold">{title}</h2>}
+          <Button variant="ghost" size="icon" onClick={onClose} className="ml-auto" aria-label="Close dialog">
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
         {children}

@@ -28,6 +28,7 @@ export function Skeleton({
         className
       )}
       style={styles}
+      aria-hidden="true"
       {...props}
     />
   );
@@ -35,7 +36,7 @@ export function Skeleton({
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-hidden="true">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center space-x-4">
           <Skeleton variant="circular" width={40} height={40} />
@@ -52,7 +53,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function CardSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4" aria-hidden="true">
       <div className="flex items-center space-x-4">
         <Skeleton variant="circular" width={48} height={48} />
         <div className="flex-1 space-y-2">

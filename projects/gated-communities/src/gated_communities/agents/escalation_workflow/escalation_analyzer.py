@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING, Any
 
 from escalation_workflow.agents.base import BaseAgent
 from escalation_workflow.models.analysis import EscalationAnalysis, EscalationPattern, TrendReport
-from escalation_workflow.models.escalation import Escalation
+from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from escalation_workflow.models.escalation import Escalation
 
 
 class EscalationAnalyzerInput(BaseModel):
@@ -57,7 +58,8 @@ Provide actionable recommendations for prevention and improvement."""
 
         escalations = input_data.escalations
         escalation_summaries = [
-            f"- {e.title} ({e.priority}, {e.category}, {e.status})" for e in escalations[:10]
+            f"- {e.title} ({e.priority}, {e.category}, {e.status})"
+            for e in escalations[:10]
         ]
 
         user_content = f"""
@@ -125,7 +127,10 @@ Provide:
             patterns=patterns or [EscalationPattern.RECURRING],
             risk_score=0.5,
             impact_assessment="Moderate impact detected",
-            recommendations=["Review escalation patterns", "Implement preventive measures"],
+            recommendations=[
+                "Review escalation patterns",
+                "Implement preventive measures",
+            ],
             related_escalations=[e.id for e in escalations[1:5]],
         )
 
@@ -182,6 +187,8 @@ Provide:
             resolved_count=resolved,
             breached_count=breached,
             avg_resolution_minutes=0.0,
-            top_categories=dict(sorted(categories.items(), key=lambda x: x[1], reverse=True)[:5]),
+            top_categories=dict(
+                sorted(categories.items(), key=lambda x: x[1], reverse=True)[:5]
+            ),
             priority_distribution=priorities,
         )

@@ -37,10 +37,12 @@ class EducationExtractorAgent(BaseAgent[dict[str, Any], list[dict[str, str]]]):
 
         for pattern in self._degree_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
-                education.append({
-                    "degree": match.group().strip(),
-                    "institution": "",
-                    "year": "",
-                })
+                education.append(
+                    {
+                        "degree": match.group().strip(),
+                        "institution": "",
+                        "year": "",
+                    }
+                )
 
         return education

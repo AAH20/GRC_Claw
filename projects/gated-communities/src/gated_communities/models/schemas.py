@@ -70,17 +70,29 @@ class Tier(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
     id: UUID = Field(default_factory=uuid4, description="Unique tier identifier")
-    name: str = Field(..., min_length=1, max_length=100, description="Tier display name")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Tier display name"
+    )
     level: TierLevel = Field(..., description="Tier level in the hierarchy")
-    status: TierStatus = Field(default=TierStatus.ACTIVE, description="Current tier status")
-    description: str | None = Field(default=None, max_length=500, description="Tier description")
+    status: TierStatus = Field(
+        default=TierStatus.ACTIVE, description="Current tier status"
+    )
+    description: str | None = Field(
+        default=None, max_length=500, description="Tier description"
+    )
     requirements: dict[str, Any] = Field(
         default_factory=dict,
         description="Requirements to achieve this tier",
     )
-    benefits: list[str] = Field(default_factory=list, description="List of benefit identifiers")
-    max_members: int | None = Field(default=None, ge=1, description="Maximum members allowed")
-    monthly_fee: float = Field(default=0.0, ge=0, description="Monthly subscription fee")
+    benefits: list[str] = Field(
+        default_factory=list, description="List of benefit identifiers"
+    )
+    max_members: int | None = Field(
+        default=None, ge=1, description="Maximum members allowed"
+    )
+    monthly_fee: float = Field(
+        default=0.0, ge=0, description="Monthly subscription fee"
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
@@ -89,7 +101,9 @@ class Tier(BaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Last update timestamp",
     )
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     @field_validator("name")
     @classmethod
@@ -132,7 +146,9 @@ class TierEvaluation(BaseModel):
     evaluated_by: str = Field(
         default="TierEvaluatorAgent", description="Agent that performed evaluation"
     )
-    confidence: float = Field(default=0.8, ge=0.0, le=1.0, description="Evaluation confidence")
+    confidence: float = Field(
+        default=0.8, ge=0.0, le=1.0, description="Evaluation confidence"
+    )
 
 
 class UpgradeRequest(BaseModel):
@@ -148,7 +164,9 @@ class UpgradeRequest(BaseModel):
     member_id: UUID = Field(..., description="Member requesting upgrade")
     current_tier_id: UUID = Field(..., description="Member's current tier")
     target_tier_id: UUID = Field(..., description="Desired target tier")
-    reason: str | None = Field(default=None, max_length=1000, description="Upgrade justification")
+    reason: str | None = Field(
+        default=None, max_length=1000, description="Upgrade justification"
+    )
     eligibility: UpgradeEligibility = Field(
         default=UpgradeEligibility.PENDING,
         description="Current eligibility status",
@@ -158,8 +176,12 @@ class UpgradeRequest(BaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Request timestamp",
     )
-    processed_at: datetime | None = Field(default=None, description="Processing timestamp")
-    processed_by: str | None = Field(default=None, description="Agent/admin who processed it")
+    processed_at: datetime | None = Field(
+        default=None, description="Processing timestamp"
+    )
+    processed_by: str | None = Field(
+        default=None, description="Agent/admin who processed it"
+    )
     denial_reason: str | None = Field(default=None, description="Reason if denied")
 
 
@@ -175,8 +197,12 @@ class AccessPolicy(BaseModel):
     id: UUID = Field(default_factory=uuid4, description="Unique policy identifier")
     name: str = Field(..., min_length=1, max_length=200, description="Policy name")
     tier_id: UUID = Field(..., description="Tier this policy applies to")
-    resource: str = Field(..., description="Resource being gated (e.g., 'forum', 'api')")
-    action: str = Field(..., description="Action being controlled (e.g., 'read', 'write')")
+    resource: str = Field(
+        ..., description="Resource being gated (e.g., 'forum', 'api')"
+    )
+    action: str = Field(
+        ..., description="Action being controlled (e.g., 'read', 'write')"
+    )
     effect: AccessDecision = Field(..., description="Policy effect")
     conditions: dict[str, Any] = Field(
         default_factory=dict,
@@ -208,14 +234,24 @@ class Benefit(BaseModel):
     id: UUID = Field(default_factory=uuid4, description="Unique benefit identifier")
     name: str = Field(..., min_length=1, max_length=200, description="Benefit name")
     benefit_type: BenefitType = Field(..., description="Type of benefit")
-    description: str | None = Field(default=None, max_length=500, description="Benefit description")
-    value: float = Field(default=0.0, description="Benefit value (discount %, amount, etc.)")
-    tier_ids: list[UUID] = Field(default_factory=list, description="Tiers this benefit applies to")
+    description: str | None = Field(
+        default=None, max_length=500, description="Benefit description"
+    )
+    value: float = Field(
+        default=0.0, description="Benefit value (discount %, amount, etc.)"
+    )
+    tier_ids: list[UUID] = Field(
+        default_factory=list, description="Tiers this benefit applies to"
+    )
     active: bool = Field(default=True, description="Whether benefit is active")
     start_date: datetime | None = Field(default=None, description="Benefit start date")
     end_date: datetime | None = Field(default=None, description="Benefit end date")
-    usage_limit: int | None = Field(default=None, ge=1, description="Max uses per member")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    usage_limit: int | None = Field(
+        default=None, ge=1, description="Max uses per member"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class TierAnalytics(BaseModel):
@@ -226,27 +262,41 @@ class TierAnalytics(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    id: UUID = Field(default_factory=uuid4, description="Unique analytics record identifier")
+    id: UUID = Field(
+        default_factory=uuid4, description="Unique analytics record identifier"
+    )
     tier_id: UUID = Field(..., description="Tier being analyzed")
     period_start: datetime = Field(..., description="Analysis period start")
     period_end: datetime = Field(..., description="Analysis period end")
     total_members: int = Field(default=0, ge=0, description="Total members in tier")
     active_members: int = Field(default=0, ge=0, description="Active members in tier")
     new_members: int = Field(default=0, ge=0, description="New members in period")
-    churned_members: int = Field(default=0, ge=0, description="Members who left in period")
-    upgrade_requests: int = Field(default=0, ge=0, description="Upgrade requests in period")
-    downgrade_requests: int = Field(default=0, ge=0, description="Downgrade requests in period")
+    churned_members: int = Field(
+        default=0, ge=0, description="Members who left in period"
+    )
+    upgrade_requests: int = Field(
+        default=0, ge=0, description="Upgrade requests in period"
+    )
+    downgrade_requests: int = Field(
+        default=0, ge=0, description="Downgrade requests in period"
+    )
     avg_engagement_score: float = Field(
         default=0.0, ge=0.0, le=100.0, description="Average engagement"
     )
-    revenue: float = Field(default=0.0, ge=0.0, description="Revenue generated in period")
-    metrics: dict[str, Any] = Field(default_factory=dict, description="Additional metrics")
+    revenue: float = Field(
+        default=0.0, ge=0.0, description="Revenue generated in period"
+    )
+    metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metrics"
+    )
     insights: list[str] = Field(default_factory=list, description="Generated insights")
     generated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Generation timestamp",
     )
-    generated_by: str = Field(default="TierAnalyticsAgent", description="Agent that generated this")
+    generated_by: str = Field(
+        default="TierAnalyticsAgent", description="Agent that generated this"
+    )
 
 
 class AccessCheckRequest(BaseModel):
@@ -257,7 +307,9 @@ class AccessCheckRequest(BaseModel):
     member_id: UUID = Field(..., description="Member requesting access")
     resource: str = Field(..., description="Resource being accessed")
     action: str = Field(default="read", description="Action being performed")
-    context: dict[str, Any] = Field(default_factory=dict, description="Additional context")
+    context: dict[str, Any] = Field(
+        default_factory=dict, description="Additional context"
+    )
 
 
 class AccessCheckResponse(BaseModel):
@@ -269,13 +321,17 @@ class AccessCheckResponse(BaseModel):
     resource: str = Field(..., description="Resource accessed")
     action: str = Field(..., description="Action performed")
     decision: AccessDecision = Field(..., description="Access decision")
-    tier_id: UUID | None = Field(default=None, description="Member's tier at check time")
+    tier_id: UUID | None = Field(
+        default=None, description="Member's tier at check time"
+    )
     reason: str | None = Field(default=None, description="Decision explanation")
     checked_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Check timestamp",
     )
-    policy_id: UUID | None = Field(default=None, description="Policy that determined decision")
+    policy_id: UUID | None = Field(
+        default=None, description="Policy that determined decision"
+    )
 
 
 class HealthResponse(BaseModel):
@@ -287,4 +343,6 @@ class HealthResponse(BaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Response timestamp",
     )
-    checks: dict[str, bool] = Field(default_factory=dict, description="Individual health checks")
+    checks: dict[str, bool] = Field(
+        default_factory=dict, description="Individual health checks"
+    )

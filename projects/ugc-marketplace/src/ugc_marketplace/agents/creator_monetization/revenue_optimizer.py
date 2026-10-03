@@ -15,7 +15,9 @@ class RevenueStream(BaseModel):
     """A revenue stream configuration."""
 
     name: str = Field(..., description="Revenue stream name")
-    type: str = Field(..., description="Stream type (subscription, tips, merchandise, etc.)")
+    type: str = Field(
+        ..., description="Stream type (subscription, tips, merchandise, etc.)"
+    )
     monthly_amount: Decimal = Field(default=Decimal("0"), ge=0)
     growth_rate: float = Field(default=0.0, ge=-1.0, le=10.0)
 
@@ -27,7 +29,9 @@ class OptimizationSuggestion(BaseModel):
     title: str = Field(..., description="Suggestion title")
     description: str = Field(..., description="Detailed description")
     potential_impact: Decimal = Field(..., description="Estimated monthly impact")
-    effort_level: str = Field(..., description="Implementation effort (low, medium, high)")
+    effort_level: str = Field(
+        ..., description="Implementation effort (low, medium, high)"
+    )
     priority: int = Field(default=5, ge=1, le=10)
 
 
@@ -61,7 +65,11 @@ class RevenueOptimizerAgent:
             self._streams[creator_id] = []
         self._streams[creator_id].append(stream)
         logger.info("Revenue stream added", creator_id=creator_id, stream=stream.name)
-        return {"creator_id": creator_id, "stream": stream.model_dump(), "status": "added"}
+        return {
+            "creator_id": creator_id,
+            "stream": stream.model_dump(),
+            "status": "added",
+        }
 
     async def analyze_revenue(self, creator_id: str) -> dict[str, Any]:
         """Analyze revenue streams for a creator.
@@ -86,7 +94,9 @@ class RevenueOptimizerAgent:
             "streams": [s.model_dump() for s in streams],
         }
 
-    async def generate_suggestions(self, creator_id: str) -> list[OptimizationSuggestion]:
+    async def generate_suggestions(
+        self, creator_id: str
+    ) -> list[OptimizationSuggestion]:
         """Generate optimization suggestions for a creator.
 
         Args:
@@ -101,39 +111,47 @@ class RevenueOptimizerAgent:
         stream_types = {s.type for s in streams}
 
         if "subscription" not in stream_types:
-            suggestions.append(OptimizationSuggestion(
-                category="diversification",
-                title="Add Subscription Revenue",
-                description="Consider adding a subscription tier to create predictable recurring revenue.",
-                potential_impact=Decimal("500.00"),
-                effort_level="medium",
-                priority=9,
-            ))
+            suggestions.append(
+                OptimizationSuggestion(
+                    category="diversification",
+                    title="Add Subscription Revenue",
+                    description="Consider adding a subscription tier to create predictable recurring revenue.",
+                    potential_impact=Decimal("500.00"),
+                    effort_level="medium",
+                    priority=9,
+                )
+            )
 
         if "merchandise" not in stream_types:
-            suggestions.append(OptimizationSuggestion(
-                category="diversification",
-                title="Launch Merchandise Store",
-                description="Selling merchandise can significantly boost revenue and strengthen brand loyalty.",
-                potential_impact=Decimal("300.00"),
-                effort_level="high",
-                priority=7,
-            ))
+            suggestions.append(
+                OptimizationSuggestion(
+                    category="diversification",
+                    title="Launch Merchandise Store",
+                    description="Selling merchandise can significantly boost revenue and strengthen brand loyalty.",
+                    potential_impact=Decimal("300.00"),
+                    effort_level="high",
+                    priority=7,
+                )
+            )
 
         if len(streams) > 0:
             avg_growth = sum(s.growth_rate for s in streams) / len(streams)
             if avg_growth < 0.05:
-                suggestions.append(OptimizationSuggestion(
-                    category="growth",
-                    title="Increase Content Frequency",
-                    description="Higher content frequency correlates with audience growth and revenue increase.",
-                    potential_impact=Decimal("200.00"),
-                    effort_level="low",
-                    priority=8,
-                ))
+                suggestions.append(
+                    OptimizationSuggestion(
+                        category="growth",
+                        title="Increase Content Frequency",
+                        description="Higher content frequency correlates with audience growth and revenue increase.",
+                        potential_impact=Decimal("200.00"),
+                        effort_level="low",
+                        priority=8,
+                    )
+                )
 
         self._suggestions[creator_id] = suggestions
-        logger.info("Suggestions generated", creator_id=creator_id, count=len(suggestions))
+        logger.info(
+            "Suggestions generated", creator_id=creator_id, count=len(suggestions)
+        )
         return suggestions
 
     def get_suggestions(self, creator_id: str) -> list[OptimizationSuggestion]:

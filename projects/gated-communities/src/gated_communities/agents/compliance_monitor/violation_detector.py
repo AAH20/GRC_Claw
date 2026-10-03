@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from compliance_monitor.agents.base import BaseComplianceAgent
 from compliance_monitor.models.schemas import Violation, ViolationCreate, ViolationSeverity
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 class ViolationDetectorAgent(BaseComplianceAgent[ViolationCreate, Violation]):
@@ -45,7 +47,9 @@ class ViolationDetectorAgent(BaseComplianceAgent[ViolationCreate, Violation]):
         )
         return violation
 
-    async def analyze_event(self, event: dict[str, Any], policy_rules: list[str]) -> dict[str, Any]:
+    async def analyze_event(
+        self, event: dict[str, Any], policy_rules: list[str]
+    ) -> dict[str, Any]:
         """Analyze an event for potential policy violations.
 
         Args:
@@ -55,7 +59,8 @@ class ViolationDetectorAgent(BaseComplianceAgent[ViolationCreate, Violation]):
         Returns:
             Analysis result with violation indicators.
         """
-        prompt = f"""Analyze the following event for compliance violations against these policy rules:
+        prompt = (
+            "Analyze the following event for compliance violations against these policy rules:\n\n"
 
 Policy Rules:
 {chr(10).join(f"- {rule}" for rule in policy_rules)}
@@ -69,10 +74,18 @@ Determine:
 3. What evidence supports this?
 4. Recommended actions
 """
-        result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
-        return {"analysis": result, "event_id": event.get("id"), "timestamp": datetime.now(tz=UTC).isoformat()}
+        result = await self.agent.ainvoke(
+            {"messages": [{"role": "user", "content": prompt}]}
+        )
+        return {
+            "analysis": result,
+            "event_id": event.get("id"),
+            "timestamp": datetime.now(tz=UTC).isoformat(),
+        }
 
-    async def detect_from_logs(self, logs: list[str], policy_id: UUID) -> list[Violation]:
+    async def detect_from_logs(
+        self, logs: list[str], policy_id: UUID
+    ) -> list[Violation]:
         """Detect violations from system logs.
 
         Args:

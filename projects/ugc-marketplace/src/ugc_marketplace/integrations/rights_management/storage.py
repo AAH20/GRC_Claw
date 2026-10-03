@@ -54,7 +54,9 @@ class InMemoryStorage:
         """
         licenses = list(self._licenses.values())
         if content_id:
-            licenses = [l for l in licenses if getattr(l, "content_id", None) == content_id]
+            licenses = [
+                l for l in licenses if getattr(l, "content_id", None) == content_id
+            ]
         return licenses
 
     async def save_usage_record(self, record: Any) -> None:
@@ -108,7 +110,8 @@ class InMemoryStorage:
             List of reports.
         """
         return [
-            r for r in self._infringement_reports.values()
+            r
+            for r in self._infringement_reports.values()
             if getattr(r, "content_id", None) == content_id
         ]
 
@@ -141,7 +144,8 @@ class InMemoryStorage:
             List of validations.
         """
         return [
-            v for v in self._validations.values()
+            v
+            for v in self._validations.values()
             if getattr(v, "content_id", None) == content_id
         ]
 

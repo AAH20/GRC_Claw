@@ -6,10 +6,9 @@ import json
 from typing import Any
 
 from langchain_core.messages import AIMessage
-from pydantic import BaseModel, Field
-
 from moderation_queue.agents.base import AgentConfig, BaseAgent
 from moderation_queue.models import ModerationItem, ModerationStatus
+from pydantic import BaseModel, Field
 
 
 class AutoModerationInput(BaseModel):
@@ -19,13 +18,17 @@ class AutoModerationInput(BaseModel):
     rules: dict[str, Any] = Field(
         default_factory=dict, description="Moderation rules configuration"
     )
-    threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Confidence threshold")
+    threshold: float = Field(
+        default=0.7, ge=0.0, le=1.0, description="Confidence threshold"
+    )
 
 
 class AutoModerationOutput(BaseModel):
     """Output from the Auto-Moderation Agent."""
 
-    action: str = Field(..., description="Moderation action: approve, reject, or escalate")
+    action: str = Field(
+        ..., description="Moderation action: approve, reject, or escalate"
+    )
     confidence: float = Field(..., ge=0.0, le=1.0, description="Decision confidence")
     categories: list[str] = Field(
         default_factory=list, description="Violation categories detected"

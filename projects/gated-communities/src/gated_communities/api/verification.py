@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from member_verification.api.dependencies import verify_api_key
 from member_verification.models.schemas import (
     ExplanationRequest,
@@ -13,6 +12,9 @@ from member_verification.models.schemas import (
     VerificationRequest,
     VerificationResult,
 )
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/verify", tags=["verification"])
 
@@ -139,7 +141,11 @@ async def get_verification_result(
     return result
 
 
-@router.post("/batch", response_model=list[VerificationResult], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/batch",
+    response_model=list[VerificationResult],
+    status_code=status.HTTP_201_CREATED,
+)
 async def batch_verification(
     requests: list[VerificationRequest],
     api_key: str = Depends(verify_api_key),

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from community_governance.api.dependencies import get_metrics
 from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
-
-from community_governance.api.dependencies import get_metrics
 
 if TYPE_CHECKING:
     from community_governance.integrations import MetricsIntegration
@@ -18,7 +17,7 @@ router = APIRouter(tags=["metrics"])
 
 @router.get("/metrics", response_class=PlainTextResponse)
 async def get_prometheus_metrics(
-    metrics: MetricsIntegration = Depends(get_metrics)  # noqa: B008,
+    metrics: MetricsIntegration = Depends(get_metrics),  # noqa: B008,
 ) -> str:
     """Get Prometheus-formatted metrics.
 

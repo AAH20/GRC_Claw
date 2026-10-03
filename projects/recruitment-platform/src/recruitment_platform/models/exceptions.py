@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
-
 from pydantic import BaseModel
 
 
 class ErrorDetail(BaseModel):
     """Detailed error information."""
 
-    field: Optional[str] = None
+    field: str | None = None
     message: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -20,5 +18,5 @@ class ErrorResponse(BaseModel):
 
     success: bool = False
     error: str
-    details: Optional[list[ErrorDetail]] = None
-    request_id: Optional[str] = None
+    details: list[ErrorDetail] | None = None
+    request_id: str | None = None

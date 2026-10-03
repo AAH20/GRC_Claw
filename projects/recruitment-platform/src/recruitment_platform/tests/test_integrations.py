@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from recruitment_platform.integrations.base import BaseIntegration
 from recruitment_platform.integrations.file_parsers import FileParser
 from recruitment_platform.integrations.storage import Storage
 

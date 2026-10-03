@@ -40,23 +40,23 @@ export function CandidateCard({ candidate, onView, onEdit, onDelete, className }
               <Badge variant={status.variant} size="sm">{status.label}</Badge>
             </div>
             <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-1">
-              <Mail className="h-3.5 w-3.5" />
+              <Mail className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="truncate">{candidate.email}</span>
             </div>
             <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <Phone className="h-3.5 w-3.5" />
+              <Phone className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{candidate.phone}</span>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" /> {candidate.location}
+                <MapPin className="h-3 w-3" aria-hidden="true" /> {candidate.location}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Briefcase className="h-3 w-3" /> {candidate.experience}y exp
+                <Briefcase className="h-3 w-3" aria-hidden="true" /> {candidate.experience}y exp
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5" aria-label={`Rating: ${candidate.rating} out of 5 stars`}>
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
@@ -64,6 +64,7 @@ export function CandidateCard({ candidate, onView, onEdit, onDelete, className }
                   "h-4 w-4",
                   i < candidate.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
                 )}
+                aria-hidden="true"
               />
             ))}
           </div>
@@ -84,13 +85,13 @@ export function CandidateCard({ candidate, onView, onEdit, onDelete, className }
           </span>
           <div className="flex gap-2">
             {onView && (
-              <Button variant="ghost" size="sm" onClick={() => onView(candidate)}>View</Button>
+              <Button variant="ghost" size="sm" onClick={() => onView(candidate)} aria-label={`View candidate: ${candidate.name}`}>View</Button>
             )}
             {onEdit && (
-              <Button variant="outline" size="sm" onClick={() => onEdit(candidate)}>Edit</Button>
+              <Button variant="outline" size="sm" onClick={() => onEdit(candidate)} aria-label={`Edit candidate: ${candidate.name}`}>Edit</Button>
             )}
             {onDelete && (
-              <Button variant="destructive" size="sm" onClick={() => onDelete(candidate)}>Delete</Button>
+              <Button variant="destructive" size="sm" onClick={() => onDelete(candidate)} aria-label={`Delete candidate: ${candidate.name}`}>Delete</Button>
             )}
           </div>
         </div>

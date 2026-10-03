@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
-
 from escalation_workflow.models.analysis import EscalationAnalysis, EscalationPattern, TrendReport
 from escalation_workflow.models.escalation import (
     Escalation,

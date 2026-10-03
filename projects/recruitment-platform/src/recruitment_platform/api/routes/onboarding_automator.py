@@ -20,7 +20,9 @@ async def check_compliance(data: dict[str, Any]) -> dict[str, Any]:
         Compliance status.
     """
     try:
-        from recruitment_platform.agents.onboarding_automator.compliance_checker import ComplianceChecker
+        from recruitment_platform.agents.onboarding_automator.compliance_checker import (
+            ComplianceChecker,
+        )
 
         agent = ComplianceChecker()
         result = await agent.process(data)
@@ -39,7 +41,9 @@ async def generate_documents(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Generated documents.
     """
-    from recruitment_platform.agents.onboarding_automator.document_generator import DocumentGenerator
+    from recruitment_platform.agents.onboarding_automator.document_generator import (
+        DocumentGenerator,
+    )
 
     agent = DocumentGenerator()
     result = await agent.process(data)

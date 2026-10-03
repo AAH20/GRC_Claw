@@ -51,9 +51,11 @@ class LangChainIntegration:
         """
         from langchain_core.prompts import ChatPromptTemplate
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", human_template),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", human_template),
+            ]
+        )
 
         return prompt | self.get_llm()

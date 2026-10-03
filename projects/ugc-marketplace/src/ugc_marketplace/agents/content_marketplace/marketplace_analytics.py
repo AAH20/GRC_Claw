@@ -7,13 +7,10 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage
 
-from ugc_marketplace.models.schemas import (
-    MarketplaceAnalytics,
-    MarketplaceInsight,
-    DemandPrediction,
-)
+from ugc_marketplace.models.schemas import (DemandPrediction,
+                                            MarketplaceAnalytics,
+                                            MarketplaceInsight)
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +100,14 @@ class MarketplaceAnalyticsAgent:
             Comparison data.
         """
         return {
-            "period1": {"start": period1_start.isoformat(), "end": period1_end.isoformat()},
-            "period2": {"start": period2_start.isoformat(), "end": period2_end.isoformat()},
+            "period1": {
+                "start": period1_start.isoformat(),
+                "end": period1_end.isoformat(),
+            },
+            "period2": {
+                "start": period2_start.isoformat(),
+                "end": period2_end.isoformat(),
+            },
             "changes": {},
         }
 

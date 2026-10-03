@@ -5,12 +5,13 @@ from __future__ import annotations
 import structlog
 
 from ugc_marketplace.agents.community_curation.base import BaseCurationAgent
-from ugc_marketplace.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
 
-class QualityFilterAgent(BaseCurationAgent[list["ContentItem"], list["QualityAssessment"]]):
+class QualityFilterAgent(
+    BaseCurationAgent[list["ContentItem"], list["QualityAssessment"]]
+):
     """Agent that filters content based on quality criteria.
 
     Evaluates content against quality thresholds and
@@ -39,7 +40,7 @@ class QualityFilterAgent(BaseCurationAgent[list["ContentItem"], list["QualityAss
         )
         return agent
 
-    async def execute(self, input_data: list["ContentItem"]) -> list["QualityAssessment"]:
+    async def execute(self, input_data: list[ContentItem]) -> list[QualityAssessment]:
         """Execute quality filtering.
 
         Args:
@@ -58,7 +59,7 @@ class QualityFilterAgent(BaseCurationAgent[list["ContentItem"], list["QualityAss
         logger.info("Quality filtering completed", items_assessed=len(assessments))
         return assessments
 
-    def _assess_quality(self, item: "ContentItem") -> "QualityAssessment":
+    def _assess_quality(self, item: ContentItem) -> QualityAssessment:
         """Assess quality of a content item.
 
         Args:

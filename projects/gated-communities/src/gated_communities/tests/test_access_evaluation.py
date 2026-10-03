@@ -5,10 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from access_control.agents.permission_evaluator import (
-    PermissionEvaluatorAgent,
-)
+from access_control.agents.permission_evaluator import PermissionEvaluatorAgent
 from access_control.agents.policy_enforcer import PolicyEnforcerAgent
 from access_control.config import Settings
 from access_control.models.enums import AccessDecision
@@ -99,7 +96,9 @@ class TestAccessEvaluation:
             {
                 "id": "policy-1",
                 "name": "Allow read",
-                "rules": [{"resource": "documents", "action": "read", "effect": "allow"}],
+                "rules": [
+                    {"resource": "documents", "action": "read", "effect": "allow"}
+                ],
             }
         ]
         result = await agent.evaluate(request, policies=policies)

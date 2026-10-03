@@ -39,7 +39,9 @@ class ATSClient(BaseIntegration):
         response = await self.get("/candidates", params=params)
         return response.json().get("candidates", [])
 
-    async def update_candidate(self, candidate_id: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_candidate(
+        self, candidate_id: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Update a candidate record.
 
         Args:
@@ -61,7 +63,9 @@ class ATSClient(BaseIntegration):
         response = await self.get("/jobs")
         return response.json().get("jobs", [])
 
-    async def create_application(self, application_data: dict[str, Any]) -> dict[str, Any]:
+    async def create_application(
+        self, application_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create a new application record.
 
         Args:

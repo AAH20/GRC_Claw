@@ -27,4 +27,9 @@ class KeywordOptimizer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Optimized text with keyword suggestions.
         """
-        return {"optimized": "", "added_keywords": [], "removed_keywords": [], "score": 0.0}
+        return {
+            "optimized": "",
+            "added_keywords": [],
+            "removed_keywords": [],
+            "score": 0.0,
+        }

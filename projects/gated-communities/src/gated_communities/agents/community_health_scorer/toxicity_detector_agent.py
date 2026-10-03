@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from community_health_scorer.config import get_settings
 from community_health_scorer.models import ToxicityLevel, ToxicityReport
+from langchain_core.prompts import ChatPromptTemplate
 
 
 class ToxicityDetectorAgent:
@@ -38,7 +37,7 @@ class ToxicityDetectorAgent:
                         """You are a community safety analyst specializing in toxicity detection.
                         Analyze the provided content and user behavior data to identify toxic patterns
                         including harassment, hate speech, spam, misinformation, and trolling.
-                        Provide a toxicity score from 0-100 (higher = more toxic) and classify the toxicity level."""  # noqa: E501,
+                        Provide a toxicity score from 0-100 (higher = more toxic) and classify the toxicity level.""",  # noqa: E501,
                     ),
                     ("human", "{input}"),
                 ]
@@ -101,7 +100,9 @@ class ToxicityDetectorAgent:
         if categories.get("spam", 0) > 0.3:
             recommendations.append("Strengthen spam detection and rate limiting")
         if not recommendations:
-            recommendations.append("Continue monitoring content for emerging toxicity patterns")
+            recommendations.append(
+                "Continue monitoring content for emerging toxicity patterns"
+            )
 
         return ToxicityReport(
             overall_toxicity_score=round(overall_toxicity, 2),
@@ -129,9 +130,7 @@ class ToxicityDetectorAgent:
         if self._agent is not None:
             try:
                 await self._agent.ainvoke(
-                    {
-                        "input": f"Analyze toxicity for community {community_id}: {data}"
-                    }
+                    {"input": f"Analyze toxicity for community {community_id}: {data}"}
                 )
                 return self._heuristic_score(data)
             except Exception:

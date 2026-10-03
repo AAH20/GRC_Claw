@@ -69,7 +69,9 @@ class PatreonIntegration:
         logger.info("Syncing Patreon pledges")
         return {"synced": 0, "updated": 0, "errors": []}
 
-    async def handle_webhook(self, event_type: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def handle_webhook(
+        self, event_type: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Handle Patreon webhook events.
 
         Args:

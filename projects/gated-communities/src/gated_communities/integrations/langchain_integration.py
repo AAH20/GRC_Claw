@@ -47,13 +47,19 @@ class LangChainIntegration:
             ValueError: If no API key is configured.
         """
         if not self.settings.openai_api_key:
-            raise ValueError("OPENAI_API_KEY must be configured for LangChain integration")
+            raise ValueError(
+                "OPENAI_API_KEY must be configured for LangChain integration"
+            )
 
         from langchain_openai import ChatOpenAI
 
         model = ChatOpenAI(
             model=model_name or self.settings.langchain_model,
-            temperature=temperature if temperature is not None else self.settings.langchain_temperature,  # noqa: E501
+            temperature=(
+                temperature
+                if temperature is not None
+                else self.settings.langchain_temperature
+            ),  # noqa: E501
             max_tokens=max_tokens,
             api_key=self.settings.openai_api_key,
         )
@@ -104,7 +110,8 @@ class LangChainIntegration:
                 last_exception = exc
                 if attempt < max_retries - 1:
                     import asyncio
-                    await asyncio.sleep(2 ** attempt)
+
+                    await asyncio.sleep(2**attempt)
 
         if last_exception:
             raise last_exception

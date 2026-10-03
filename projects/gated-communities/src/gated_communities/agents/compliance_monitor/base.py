@@ -95,7 +95,9 @@ class BaseComplianceAgent(ABC, Generic[T, R]):
         Raises:
             AgentExecutionError: If agent execution fails.
         """
-        self._logger.info("Starting agent execution", input_type=type(input_data).__name__)
+        self._logger.info(
+            "Starting agent execution", input_type=type(input_data).__name__
+        )
         try:
             result = await self.run(input_data)
             self._logger.info("Agent execution completed successfully")

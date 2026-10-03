@@ -3,7 +3,6 @@
 from typing import Any
 
 from pydantic import BaseModel, Field
-
 from reputation_system.agents.base import BaseAgent
 from reputation_system.models.schemas import TrustTierLevel
 
@@ -17,7 +16,9 @@ class ScoringInput(BaseModel):
     negative_feedback: int = Field(default=0, description="Negative feedback count")
     account_age_days: int = Field(default=0, description="Account age in days")
     badge_count: int = Field(default=0, description="Number of badges earned")
-    recent_activity_score: float = Field(default=0.0, description="Recent activity score (0-1)")
+    recent_activity_score: float = Field(
+        default=0.0, description="Recent activity score (0-1)"
+    )
     quality_score: float = Field(default=0.0, description="Quality score (0-1)")
 
 
@@ -59,9 +60,8 @@ class ReputationScorerAgent(BaseAgent[ScoringInput, ScoringOutput]):
 
         # Calculate component scores (0-1000 scale)
         contribution_score = min(input_data.contributions * 10, 400)
-        feedback_ratio = (
-            input_data.positive_feedback
-            / max(input_data.positive_feedback + input_data.negative_feedback, 1)
+        feedback_ratio = input_data.positive_feedback / max(
+            input_data.positive_feedback + input_data.negative_feedback, 1
         )
         feedback_score = feedback_ratio * 250
         activity_score = input_data.recent_activity_score * 200

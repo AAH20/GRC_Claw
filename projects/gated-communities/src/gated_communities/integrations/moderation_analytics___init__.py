@@ -7,7 +7,6 @@ from typing import Any
 
 import httpx
 import structlog
-
 from moderation_analytics.config import get_settings
 from moderation_analytics.exceptions import IntegrationError
 

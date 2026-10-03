@@ -25,7 +25,7 @@ export function TransactionList({ transactions, isLoading }: TransactionListProp
   }
 
   return (
-    <Card>
+    <Card data-testid="transaction-list">
       <CardHeader><CardTitle>Recent Transactions</CardTitle></CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -35,7 +35,7 @@ export function TransactionList({ transactions, isLoading }: TransactionListProp
             return (
               <div key={tx.id} className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent/50">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isIncoming ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-red-100 text-red-600 dark:bg-red-900/30"}`}>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isIncoming ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
@@ -44,7 +44,7 @@ export function TransactionList({ transactions, isLoading }: TransactionListProp
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-sm font-semibold ${isIncoming ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-sm font-semibold ${isIncoming ? "text-success" : "text-destructive"}`}>
                     {isIncoming ? "+" : "-"}{formatCurrency(tx.amount, tx.currency)}
                   </p>
                   <div className="flex items-center justify-end gap-2">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, FileText, ShoppingCart, ArrowLeftRight,
-  BarChart3, Settings, Shield, Bell, LogOut, X, Sparkles,
+  BarChart3, Settings, Shield, Bell, LogOut, X, Sparkles, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "../providers/AuthProvider";
@@ -19,6 +19,7 @@ const navItems = [
   { href: "/moderation", label: "Moderation", icon: Shield },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -37,11 +38,11 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-between border-b px-6">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
+              <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
               <span className="text-lg font-bold">UGC Marketplace</span>
             </Link>
-            <button onClick={onClose} className="lg:hidden">
-              <X className="h-5 w-5" />
+            <button onClick={onClose} className="lg:hidden" aria-label="Close menu">
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
@@ -51,6 +52,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
@@ -69,7 +71,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               onClick={logout}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-5 w-5" aria-hidden="true" />
               Sign Out
             </button>
           </div>

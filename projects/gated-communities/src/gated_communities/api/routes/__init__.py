@@ -4,7 +4,7 @@ Gated Communities - API Routes.
 Consolidated router that includes all sub-project API routes.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/status")
-async def get_status() -> Dict[str, Any]:
+async def get_status() -> dict[str, Any]:
     """Get overall API status."""
     return {
         "status": "operational",

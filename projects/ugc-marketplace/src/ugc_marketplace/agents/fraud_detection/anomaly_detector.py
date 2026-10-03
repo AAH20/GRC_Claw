@@ -56,7 +56,7 @@ class AnomalyDetectorAgent:
         )
         return agent
 
-    async def detect(self, transaction: "Transaction") -> list["Anomaly"]:
+    async def detect(self, transaction: Transaction) -> list[Anomaly]:
         """Detect anomalies in a transaction.
 
         Args:
@@ -96,7 +96,7 @@ class AnomalyDetectorAgent:
             logger.error("Anomaly detection failed", error=str(exc))
             return []
 
-    def _parse_anomalies(self, result: Any) -> list["Anomaly"]:
+    def _parse_anomalies(self, result: Any) -> list[Anomaly]:
         """Parse agent output into Anomaly objects.
 
         Args:
@@ -126,7 +126,7 @@ class AnomalyDetectorAgent:
         return anomalies
 
     @staticmethod
-    async def _check_amount_anomaly(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_amount_anomaly(transaction: Transaction) -> dict[str, Any]:
         """Check for amount-based anomalies.
 
         Args:
@@ -150,7 +150,7 @@ class AnomalyDetectorAgent:
         return {}
 
     @staticmethod
-    async def _check_frequency_anomaly(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_frequency_anomaly(transaction: Transaction) -> dict[str, Any]:
         """Check for frequency-based anomalies.
 
         Args:
@@ -162,7 +162,7 @@ class AnomalyDetectorAgent:
         return {}
 
     @staticmethod
-    async def _check_time_anomaly(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_time_anomaly(transaction: Transaction) -> dict[str, Any]:
         """Check for time-based anomalies.
 
         Args:
@@ -174,7 +174,7 @@ class AnomalyDetectorAgent:
         return {}
 
     @staticmethod
-    async def _check_location_anomaly(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_location_anomaly(transaction: Transaction) -> dict[str, Any]:
         """Check for location-based anomalies.
 
         Args:
@@ -186,7 +186,7 @@ class AnomalyDetectorAgent:
         return {}
 
     @staticmethod
-    async def _check_device_anomaly(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_device_anomaly(transaction: Transaction) -> dict[str, Any]:
         """Check for device-based anomalies.
 
         Args:

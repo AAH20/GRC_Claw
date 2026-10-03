@@ -49,7 +49,9 @@ class ModerationItem(BaseModel):
 
     id: UUID = Field(default_factory=uuid4, description="Unique item identifier")
     content: str = Field(..., min_length=1, description="Content to be moderated")
-    content_type: ContentType = Field(default=ContentType.TEXT, description="Type of content")
+    content_type: ContentType = Field(
+        default=ContentType.TEXT, description="Type of content"
+    )
     author_id: str = Field(..., description="ID of the content author")
     status: ModerationStatus = Field(
         default=ModerationStatus.PENDING, description="Current moderation status"
@@ -65,9 +67,15 @@ class ModerationItem(BaseModel):
         default_factory=dict, description="Additional item metadata"
     )
     tags: list[str] = Field(default_factory=list, description="Content tags")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation time")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update time")
-    reviewed_at: datetime | None = Field(default=None, description="Review completion time")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Creation time"
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Last update time"
+    )
+    reviewed_at: datetime | None = Field(
+        default=None, description="Review completion time"
+    )
     reviewer_id: str | None = Field(default=None, description="ID of human reviewer")
     review_notes: str | None = Field(default=None, description="Reviewer notes")
 
@@ -115,8 +123,12 @@ class Queue(BaseModel):
         default_factory=list, description="IDs of assigned reviewers"
     )
     is_active: bool = Field(default=True, description="Whether queue is active")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation time")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update time")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Creation time"
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Last update time"
+    )
 
     def is_full(self, current_size: int) -> bool:
         """Check if queue is at capacity.
@@ -142,8 +154,12 @@ class PriorityScore(BaseModel):
         default_factory=dict, description="Scoring factors and their weights"
     )
     reasoning: str = Field(default="", description="AI reasoning for the score")
-    confidence: float = Field(default=0.8, ge=0.0, le=1.0, description="Model confidence")
-    scored_at: datetime = Field(default_factory=datetime.utcnow, description="Scoring time")
+    confidence: float = Field(
+        default=0.8, ge=0.0, le=1.0, description="Model confidence"
+    )
+    scored_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Scoring time"
+    )
     model_version: str = Field(default="1.0", description="Model version used")
 
 
@@ -157,12 +173,16 @@ class ReviewDecision(BaseModel):
     decision: Literal["approve", "reject", "escalate", "request_info"] = Field(
         ..., description="Review decision"
     )
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Reviewer confidence")
+    confidence: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Reviewer confidence"
+    )
     notes: str = Field(default="", description="Review notes")
     categories: list[str] = Field(
         default_factory=list, description="Violation categories if rejected"
     )
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Decision time")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Decision time"
+    )
 
 
 class Escalation(BaseModel):
@@ -176,14 +196,18 @@ class Escalation(BaseModel):
     from_queue_id: UUID | None = Field(default=None, description="Source queue ID")
     to_queue_id: UUID | None = Field(default=None, description="Destination queue ID")
     assigned_to: str | None = Field(default=None, description="Assigned reviewer ID")
-    priority: PriorityLevel = Field(default=PriorityLevel.HIGH, description="Escalation priority")
+    priority: PriorityLevel = Field(
+        default=PriorityLevel.HIGH, description="Escalation priority"
+    )
     status: Literal["open", "in_progress", "resolved", "closed"] = Field(
         default="open", description="Escalation status"
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional escalation metadata"
     )
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation time")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Creation time"
+    )
     resolved_at: datetime | None = Field(default=None, description="Resolution time")
 
 
@@ -212,7 +236,9 @@ class AgentResult(BaseModel):
     success: bool = Field(..., description="Whether the operation succeeded")
     data: dict[str, Any] = Field(default_factory=dict, description="Result data")
     error: str | None = Field(default=None, description="Error message if failed")
-    confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence score")
+    confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Confidence score"
+    )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
@@ -234,4 +260,6 @@ class QueueMetrics(BaseModel):
     oldest_item_age_seconds: float = Field(
         default=0.0, description="Age of oldest item in seconds"
     )
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Metrics time")
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Metrics time"
+    )

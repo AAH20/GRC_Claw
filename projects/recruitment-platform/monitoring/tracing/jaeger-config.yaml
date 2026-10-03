@@ -1,0 +1,42 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: recruitment-tracing
+  namespace: monitoring
+spec:
+  strategy: production
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200
+        index-prefix: jaeger
+  ingress:
+    enabled: true
+    hosts:
+      - jaeger.recruitment-platform.local
+  agent:
+    sidecar:
+      injection: true
+  sampling:
+    options:
+      default_strategy:
+        type: probabilistic
+        param: 0.1
+      service_strategies:
+        - service: candidate-service
+          type: probabilistic
+          param: 0.5
+        - service: job-matching-service
+          type: probabilistic
+          param: 0.3
+        - service: notification-service
+          type: probabilistic
+          param: 0.05
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi

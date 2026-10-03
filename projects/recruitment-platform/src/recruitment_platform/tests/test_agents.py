@@ -20,7 +20,9 @@ from recruitment_platform.agents.employer_branding.content_generator import Cont
 from recruitment_platform.agents.employer_branding.reputation_manager import ReputationManager
 from recruitment_platform.agents.employer_branding.review_analyzer import ReviewAnalyzer
 from recruitment_platform.agents.employer_branding.sentiment_analyzer import SentimentAnalyzer
-from recruitment_platform.agents.interview_scheduler.availability_optimizer import AvailabilityOptimizer
+from recruitment_platform.agents.interview_scheduler.availability_optimizer import (
+    AvailabilityOptimizer,
+)
 from recruitment_platform.agents.interview_scheduler.calendar_sync import CalendarSync
 from recruitment_platform.agents.interview_scheduler.conflict_detector import ConflictDetector
 from recruitment_platform.agents.interview_scheduler.reminder import Reminder
@@ -41,12 +43,18 @@ from recruitment_platform.agents.recruitment_analytics.funnel_analyzer import Fu
 from recruitment_platform.agents.recruitment_analytics.predictive_hiring import PredictiveHiring
 from recruitment_platform.agents.recruitment_analytics.source_tracker import SourceTracker
 from recruitment_platform.agents.resume_parser.contact_extractor_agent import ContactExtractorAgent
-from recruitment_platform.agents.resume_parser.education_extractor_agent import EducationExtractorAgent
-from recruitment_platform.agents.resume_parser.experience_extractor_agent import ExperienceExtractorAgent
+from recruitment_platform.agents.resume_parser.education_extractor_agent import (
+    EducationExtractorAgent,
+)
+from recruitment_platform.agents.resume_parser.experience_extractor_agent import (
+    ExperienceExtractorAgent,
+)
 from recruitment_platform.agents.resume_parser.resume_parser_agent import ResumeParserAgent
 from recruitment_platform.agents.resume_parser.skills_extractor_agent import SkillsExtractorAgent
 from recruitment_platform.agents.skills_assessor.gap_analyzer import GapAnalyzer
-from recruitment_platform.agents.skills_assessor.learning_path_recommender import LearningPathRecommender
+from recruitment_platform.agents.skills_assessor.learning_path_recommender import (
+    LearningPathRecommender,
+)
 from recruitment_platform.agents.skills_assessor.proficiency_scorer import ProficiencyScorer
 from recruitment_platform.agents.skills_assessor.skill_extractor import SkillExtractor
 from recruitment_platform.agents.skills_assessor.skill_validator import SkillValidator
@@ -55,7 +63,6 @@ from recruitment_platform.agents.talent_pool_manager.engagement_tracker import E
 from recruitment_platform.agents.talent_pool_manager.pool_analyzer import PoolAnalyzer
 from recruitment_platform.agents.talent_pool_manager.talent_recommender import TalentRecommender
 from recruitment_platform.agents.talent_pool_manager.talent_tagger import TalentTagger
-
 
 ALL_AGENTS = [
     ContactExtractorAgent,
@@ -117,15 +124,21 @@ class TestAgentBase:
     def test_agent_is_base_agent(self) -> None:
         """Test that all agents inherit from BaseAgent."""
         for agent_class in ALL_AGENTS:
-            assert issubclass(agent_class, BaseAgent), f"{agent_class.__name__} must inherit from BaseAgent"
+            assert issubclass(
+                agent_class, BaseAgent
+            ), f"{agent_class.__name__} must inherit from BaseAgent"
 
     def test_agent_has_name(self) -> None:
         """Test that all agents have a name."""
         for agent_class in ALL_AGENTS:
             instance = agent_class()
             assert hasattr(instance, "name"), f"{agent_class.__name__} must have a name"
-            assert isinstance(instance.name, str), f"{agent_class.__name__} name must be a string"
-            assert len(instance.name) > 0, f"{agent_class.__name__} name must not be empty"
+            assert isinstance(
+                instance.name, str
+            ), f"{agent_class.__name__} name must be a string"
+            assert (
+                len(instance.name) > 0
+            ), f"{agent_class.__name__} name must not be empty"
 
     @pytest.mark.asyncio
     async def test_agent_validate(self) -> None:
@@ -173,17 +186,21 @@ class TestCandidateMatcherAgents:
     async def test_bias_aware_ranker(self, sample_candidate: dict) -> None:
         """Test bias-aware ranking."""
         agent = BiasAwareRanker()
-        result = await agent.process({"candidates": [sample_candidate], "job_requirements": {}})
+        result = await agent.process(
+            {"candidates": [sample_candidate], "job_requirements": {}}
+        )
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_skills_gap_analyzer(self) -> None:
         """Test skills gap analysis."""
         agent = SkillsGapAnalyzer()
-        result = await agent.process({
-            "candidate_skills": ["Python", "AWS"],
-            "required_skills": ["Python", "AWS", "Kubernetes"],
-        })
+        result = await agent.process(
+            {
+                "candidate_skills": ["Python", "AWS"],
+                "required_skills": ["Python", "AWS", "Kubernetes"],
+            }
+        )
         assert "missing_skills" in result
         assert "Kubernetes" in result["missing_skills"]
 
@@ -231,7 +248,9 @@ class TestBiasDetectorAgents:
     async def test_language_bias_detector(self) -> None:
         """Test language bias detection."""
         agent = LanguageBiasDetector()
-        result = await agent.process({"text": "We need a young and energetic candidate"})
+        result = await agent.process(
+            {"text": "We need a young and energetic candidate"}
+        )
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
@@ -310,7 +329,9 @@ class TestJobDescriptionAgents:
     async def test_tone_analyzer(self) -> None:
         """Test tone analysis."""
         agent = ToneAnalyzer()
-        result = await agent.process({"job_description": "Join our team!", "brand_voice": "friendly"})
+        result = await agent.process(
+            {"job_description": "Join our team!", "brand_voice": "friendly"}
+        )
         assert isinstance(result, dict)
 
 

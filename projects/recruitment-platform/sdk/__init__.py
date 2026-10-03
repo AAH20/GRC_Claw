@@ -1,18 +1,28 @@
 """Recruitment Platform Python SDK.
 
 A production-grade Python client for the Recruitment Platform REST API.
-Provides typed access to all 42 endpoints across 10 recruitment domains.
+Provides typed access to all 42 endpoints across 10 recruitment domains
+with automatic retries, rate limiting, caching, and comprehensive error handling.
+
+Supports both synchronous and asynchronous usage:
+- RecruitmentPlatformClient: synchronous client
+- AsyncRecruitmentPlatformClient: asynchronous client with full async/await support
 """
 
+from .async_client import AsyncRecruitmentPlatformClient
+from .cache import RedisCache
 from .client import RecruitmentPlatformClient
 from .exceptions import (
-    RecruitmentPlatformError,
     AuthenticationError,
+    ConnectionError,
     NotFoundError,
     RateLimitError,
+    RecruitmentPlatformError,
     ServerError,
+    TimeoutError,
     ValidationError,
 )
+from .logging_config import get_logger, setup_logging
 from .models import (
     HealthResponse,
     APIResponse,
@@ -97,13 +107,16 @@ from .models import (
     SentimentAnalysisRequest,
     SentimentAnalysisResponse,
 )
+from .rate_limiter import AsyncTokenBucketRateLimiter, TokenBucketRateLimiter
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __author__ = "Ahmed Hassan"
 __license__ = "MIT"
 
 __all__ = [
+    # Clients
     "RecruitmentPlatformClient",
+    "AsyncRecruitmentPlatformClient",
     # Exceptions
     "RecruitmentPlatformError",
     "AuthenticationError",
@@ -111,6 +124,8 @@ __all__ = [
     "RateLimitError",
     "ServerError",
     "ValidationError",
+    "TimeoutError",
+    "ConnectionError",
     # Models
     "HealthResponse",
     "APIResponse",
@@ -194,4 +209,12 @@ __all__ = [
     "ReviewAnalysisResponse",
     "SentimentAnalysisRequest",
     "SentimentAnalysisResponse",
+    # Rate Limiting
+    "TokenBucketRateLimiter",
+    "AsyncTokenBucketRateLimiter",
+    # Caching
+    "RedisCache",
+    # Logging
+    "get_logger",
+    "setup_logging",
 ]

@@ -1,0 +1,294 @@
+# SLO/SLA Definitions for UGC Marketplace
+# Service Level Objectives and Service Level Agreements
+
+# ============================================================
+# SLO Definitions
+# ============================================================
+# SLOs define the target reliability for each service.
+# Error budget = 1 - SLO target (e.g., 99.9% SLO = 0.1% error budget)
+
+slos:
+  # --- API Service ---
+  - name: ugc-marketplace-api-availability
+    description: "API service availability"
+    target: 0.999  # 99.9% availability
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4  # 2% budget in 1 hour
+        severity: critical
+      - name: slow-burn
+        multiplier: 2  # 5% budget in 6 hours
+        severity: warning
+    sli: |
+      sum(rate(http_requests_total{job="ugc-marketplace-api", status!~"5.."}[5m]))
+      /
+      sum(rate(http_requests_total{job="ugc-marketplace-api"}[5m]))
+
+  - name: ugc-marketplace-api-latency
+    description: "API request latency (P99)"
+    target: 0.99  # 99% of requests under threshold
+    threshold: 2.0  # 2 seconds
+    window: 30d
+    sli: |
+      histogram_quantile(0.99,
+        sum(rate(http_request_duration_seconds_bucket{job="ugc-marketplace-api"}[5m])) by (le)
+      ) < 2.0
+
+  - name: ugc-marketplace-api-error-rate
+    description: "API error rate (5xx)"
+    target: 0.995  # 99.5% success rate
+    window: 30d
+    sli: |
+      sum(rate(http_requests_total{job="ugc-marketplace-api", status=~"5.."}[5m]))
+      /
+      sum(rate(http_requests_total{job="ugc-marketplace-api"}[5m])) < 0.005
+
+  # --- Database ---
+  - name: ugc-marketplace-database-availability
+    description: "PostgreSQL availability"
+    target: 0.9995  # 99.95% availability
+    window: 30d
+    sli: |
+      up{job="postgres-exporter"} == 1
+
+  - name: ugc-marketplace-database-latency
+    description: "Database query latency (P99)"
+    target: 0.99
+    threshold: 0.5  # 500ms
+    window: 30d
+    sli: |
+      histogram_quantile(0.99,
+        sum(rate(pg_query_duration_seconds_bucket[5m])) by (le)
+      ) < 0.5
+
+  # --- Cache ---
+  - name: ugc-marketplace-redis-availability
+    description: "Redis availability"
+    target: 0.999
+    window: 30d
+    sli: |
+      up{job="redis-exporter"} == 1
+
+  - name: ugc-marketplace-redis-hit-rate
+    description: "Redis cache hit rate"
+    target: 0.90  # 90% hit rate
+    window: 30d
+    sli: |
+      rate(redis_keyspace_hits_total[5m])
+      /
+      (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) > 0.90
+
+  # --- Messaging ---
+  - name: ugc-marketplace-kafka-availability
+    description: "Kafka availability"
+    target: 0.999
+    window: 30d
+    sli: |
+      up{job="kafka-exporter"} == 1
+
+  - name: ugc-marketplace-kafka-consumer-lag
+    description: "Kafka consumer lag"
+    target: 0.99  # 99% of time lag < threshold
+    threshold: 10000
+    window: 30d
+    sli: |
+      kafka_consumergroup_lag < 10000
+
+  # --- Moderation Pipeline ---
+  - name: ugc-marketplace-moderation-throughput
+    description: "Moderation pipeline throughput"
+    target: 0.95  # 95% of items processed within SLA
+    threshold: 30  # 30 seconds
+    window: 30d
+    sli: |
+      histogram_quantile(0.95,
+        sum(rate(ugc_content_moderation_duration_seconds_bucket[5m])) by (le)
+      ) < 30
+
+  - name: ugc-marketplace-moderation-accuracy
+    description: "Moderation model accuracy"
+    target: 0.90  # 90% accuracy
+    window: 30d
+    sli: |
+      ugc_moderation_accuracy > 0.90
+
+  # --- Search ---
+  - name: ugc-marketplace-search-availability
+    description: "Search service availability"
+    target: 0.995
+    window: 30d
+    sli: |
+      up{job="ugc-marketplace-search"} == 1
+
+  - name: ugc-marketplace-search-latency
+    description: "Search query latency (P95)"
+    target: 0.95
+    threshold: 0.5  # 500ms
+    window: 30d
+    sli: |
+      histogram_quantile(0.95,
+        sum(rate(ugc_search_latency_seconds_bucket[5m])) by (le)
+      ) < 0.5
+
+  # --- Webhook Delivery ---
+  - name: ugc-marketplace-webhook-delivery
+    description: "Webhook delivery success rate"
+    target: 0.99
+    window: 30d
+    sli: |
+      sum(rate(ugc_webhook_deliveries_total{status="success"}[5m]))
+      /
+      sum(rate(ugc_webhook_deliveries_total[5m])) > 0.99
+
+  # --- Content ID ---
+  - name: ugc-marketplace-content-id-match-rate
+    description: "Content ID match rate"
+    target: 0.80  # 80% of queries return a match
+    window: 30d
+    sli: |
+      sum(rate(ugc_content_id_resolves_total{match_type!="none"}[5m]))
+      /
+      sum(rate(ugc_content_id_resolves_total[5m])) > 0.80
+
+  # --- Overall Platform ---
+  - name: ugc-marketplace-platform-availability
+    description: "Overall platform availability (all services)"
+    target: 0.999  # 99.9% availability
+    window: 30d
+    sli: |
+      min(
+        up{job="ugc-marketplace-api"},
+        up{job="postgres-exporter"},
+        up{job="redis-exporter"},
+        up{job="kafka-exporter"}
+      ) == 1
+
+# ============================================================
+# SLA Definitions
+# ============================================================
+# SLAs define the contractual agreement with customers.
+# These are typically more conservative than SLOs.
+
+slas:
+  - name: ugc-marketplace-api-sla
+    description: "API service level agreement"
+    availability: 0.995  # 99.5% monthly uptime
+    latency_p99: 5.0  # 5 seconds
+    error_rate: 0.01  # 1% max error rate
+    support_response_time: 4h  # 4 hour response for P1
+    support_resolution_time: 24h  # 24 hour resolution for P1
+    credits:
+      - availability: 0.99
+        credit: 10  # 10% service credit
+      - availability: 0.95
+        credit: 25  # 25% service credit
+      - availability: 0.90
+        credit: 50  # 50% service credit
+
+  - name: ugc-marketplace-data-sla
+    description: "Data service level agreement"
+    availability: 0.999  # 99.9% monthly uptime
+    rpo: 1h  # Recovery Point Objective: 1 hour max data loss
+    rto: 4h  # Recovery Time Objective: 4 hour max downtime
+    support_response_time: 1h
+    support_resolution_time: 8h
+
+  - name: ugc-marketplace-moderation-sla
+    description: "Moderation service level agreement"
+    availability: 0.99  # 99% monthly uptime
+    processing_time: 60  # 60 seconds max processing time
+    accuracy: 0.85  # 85% minimum accuracy
+    support_response_time: 2h
+    support_resolution_time: 12h
+
+# ============================================================
+# Error Budget Policies
+# ============================================================
+error_budget_policies:
+  - name: api-error-budget
+    slo: ugc-marketplace-api-availability
+    window: 30d
+    budget: 0.001  # 0.1% error budget
+    actions:
+      - threshold: 0.5  # 50% budget consumed
+        action: alert
+        severity: warning
+      - threshold: 0.75  # 75% budget consumed
+        action: alert
+        severity: critical
+      - threshold: 1.0  # 100% budget consumed
+        action: freeze_deployments
+        notify: ["platform-team", "engineering-manager"]
+
+  - name: database-error-budget
+    slo: ugc-marketplace-database-availability
+    window: 30d
+    budget: 0.0005  # 0.05% error budget
+    actions:
+      - threshold: 0.5
+        action: alert
+        severity: warning
+      - threshold: 1.0
+        action: freeze_deployments
+        notify: ["data-team", "engineering-manager"]
+
+  - name: moderation-error-budget
+    slo: ugc-marketplace-moderation-accuracy
+    window: 30d
+    budget: 0.10  # 10% error budget
+    actions:
+      - threshold: 0.5
+        action: alert
+        severity: warning
+      - threshold: 1.0
+        action: rollback_model
+        notify: ["ml-team", "trust-and-safety-team"]
+
+# ============================================================
+# SLO Dashboard Panels (for Grafana)
+# ============================================================
+# These queries can be used to build SLO dashboards in Grafana
+
+slo_dashboard_queries:
+  - name: API Availability (30d)
+    query: |
+      1 - (
+        sum(rate(http_requests_total{job="ugc-marketplace-api", status=~"5.."}[30d]))
+        /
+        sum(rate(http_requests_total{job="ugc-marketplace-api"}[30d]))
+      )
+    target: 0.999
+
+  - name: API Latency P99 (30d)
+    query: |
+      histogram_quantile(0.99,
+        sum(rate(http_request_duration_seconds_bucket{job="ugc-marketplace-api"}[30d])) by (le)
+      )
+    target: 2.0
+
+  - name: Database Availability (30d)
+    query: |
+      avg_over_time(up{job="postgres-exporter"}[30d])
+    target: 0.9995
+
+  - name: Redis Hit Rate (30d)
+    query: |
+      rate(redis_keyspace_hits_total[30d])
+      /
+      (rate(redis_keyspace_hits_total[30d]) + rate(redis_keyspace_misses_total[30d]))
+    target: 0.90
+
+  - name: Moderation Accuracy (30d)
+    query: |
+      avg_over_time(ugc_moderation_accuracy[30d])
+    target: 0.90
+
+  - name: Error Budget Remaining (API)
+    query: |
+      0.001 - (
+        sum(rate(http_requests_total{job="ugc-marketplace-api", status=~"5.."}[30d]))
+        /
+        sum(rate(http_requests_total{job="ugc-marketplace-api"}[30d]))
+      )
+    target: 0.0

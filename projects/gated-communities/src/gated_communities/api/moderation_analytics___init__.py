@@ -6,9 +6,6 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, status
-from prometheus_client import Counter, Histogram, generate_latest
-from starlette.responses import Response
-
 from moderation_analytics.agents import (
     AnalyticsExplainerAgent,
     ModerationPredictorAgent,
@@ -26,6 +23,8 @@ from moderation_analytics.models import (
     PolicyEffectiveness,
     Trend,
 )
+from prometheus_client import Counter, Histogram, generate_latest
+from starlette.responses import Response
 
 router = APIRouter()
 
@@ -109,7 +108,7 @@ async def metrics() -> Response:
 )
 async def get_analytics_summary(
     days: int = Query(default=30, ge=1, le=365),
-    settings: Settings = Depends(get_settings)  # noqa: B008,
+    settings: Settings = Depends(get_settings),  # noqa: B008,
 ) -> AnalyticsSummary:
     """Get complete analytics summary.
 
@@ -128,7 +127,12 @@ async def get_analytics_summary(
         total_events=15000,
         total_actions=12500,
         action_breakdown={"approve": 8000, "reject": 3000, "flag": 1500},
-        severity_distribution={"low": 5000, "medium": 4000, "high": 2000, "critical": 500},
+        severity_distribution={
+            "low": 5000,
+            "medium": 4000,
+            "high": 2000,
+            "critical": 500,
+        },
         average_response_time_seconds=2.5,
         period_start=start,
         period_end=end,
@@ -147,7 +151,7 @@ async def get_analytics_summary(
 @router.get("/api/v1/trends", response_model=list[Trend], tags=["trends"])
 async def get_trends(
     days: int = Query(default=30, ge=1, le=365),
-    agent: TrendAnalyzerAgent = Depends(get_trend_analyzer)  # noqa: B008,
+    agent: TrendAnalyzerAgent = Depends(get_trend_analyzer),  # noqa: B008,
 ) -> list[Trend]:
     """Get moderation trends.
 
@@ -177,7 +181,7 @@ async def get_trends(
 @router.post("/api/v1/trends/analyze", response_model=list[Trend], tags=["trends"])
 async def analyze_trends(
     data: list[dict[str, Any]],
-    agent: TrendAnalyzerAgent = Depends(get_trend_analyzer)  # noqa: B008,
+    agent: TrendAnalyzerAgent = Depends(get_trend_analyzer),  # noqa: B008,
 ) -> list[Trend]:
     """Analyze trends with AI agent.
 
@@ -191,7 +195,9 @@ async def analyze_trends(
     return await agent.run(data=data)
 
 
-@router.get("/api/v1/moderators", response_model=list[dict[str, Any]], tags=["moderators"])
+@router.get(
+    "/api/v1/moderators", response_model=list[dict[str, Any]], tags=["moderators"]
+)
 async def list_moderators() -> list[dict[str, Any]]:
     """List all moderators.
 
@@ -213,7 +219,9 @@ async def list_moderators() -> list[dict[str, Any]]:
 async def get_moderator_performance(
     moderator_id: str,
     days: int = Query(default=30, ge=1, le=365),
-    agent: ModeratorPerformanceAgent = Depends(get_moderator_performance)  # noqa: B008,
+    agent: ModeratorPerformanceAgent = Depends(
+        get_moderator_performance
+    ),  # noqa: B008,
 ) -> ModeratorPerformance:
     """Get performance metrics for a specific moderator.
 
@@ -240,7 +248,9 @@ async def get_moderator_performance(
         }
     ]
 
-    results = await agent.run(moderator_data=sample_data, period_start=start, period_end=end)
+    results = await agent.run(
+        moderator_data=sample_data, period_start=start, period_end=end
+    )
     return results[0]
 
 
@@ -251,7 +261,9 @@ async def get_moderator_performance(
 )
 async def evaluate_moderators(
     moderator_data: list[dict[str, Any]],
-    agent: ModeratorPerformanceAgent = Depends(get_moderator_performance)  # noqa: B008,
+    agent: ModeratorPerformanceAgent = Depends(
+        get_moderator_performance
+    ),  # noqa: B008,
 ) -> list[ModeratorPerformance]:
     """Evaluate moderators with AI agent.
 
@@ -273,9 +285,19 @@ async def list_policies() -> list[dict[str, Any]]:
         list: List of policies.
     """
     return [
-        {"id": "policy_001", "name": "Hate Speech Policy", "version": "2.1", "active": True},
+        {
+            "id": "policy_001",
+            "name": "Hate Speech Policy",
+            "version": "2.1",
+            "active": True,
+        },
         {"id": "policy_002", "name": "Spam Policy", "version": "1.5", "active": True},
-        {"id": "policy_003", "name": "Harassment Policy", "version": "3.0", "active": True},
+        {
+            "id": "policy_003",
+            "name": "Harassment Policy",
+            "version": "3.0",
+            "active": True,
+        },
     ]
 
 
@@ -287,7 +309,7 @@ async def list_policies() -> list[dict[str, Any]]:
 async def get_policy_effectiveness(
     policy_id: str,
     days: int = Query(default=30, ge=1, le=365),
-    agent: PolicyEffectivenessAgent = Depends(get_policy_effectiveness)  # noqa: B008,
+    agent: PolicyEffectivenessAgent = Depends(get_policy_effectiveness),  # noqa: B008,
 ) -> PolicyEffectiveness:
     """Get effectiveness metrics for a specific policy.
 
@@ -316,7 +338,9 @@ async def get_policy_effectiveness(
         }
     ]
 
-    results = await agent.run(policy_data=sample_data, period_start=start, period_end=end)
+    results = await agent.run(
+        policy_data=sample_data, period_start=start, period_end=end
+    )
     return results[0]
 
 
@@ -327,7 +351,7 @@ async def get_policy_effectiveness(
 )
 async def assess_policies(
     policy_data: list[dict[str, Any]],
-    agent: PolicyEffectivenessAgent = Depends(get_policy_effectiveness)  # noqa: B008,
+    agent: PolicyEffectivenessAgent = Depends(get_policy_effectiveness),  # noqa: B008,
 ) -> list[PolicyEffectiveness]:
     """Assess policies with AI agent.
 
@@ -350,7 +374,7 @@ async def generate_predictions(
     historical_data: list[dict[str, Any]],
     target_date: datetime | None = None,
     prediction_types: list[str] | None = None,
-    agent: ModerationPredictorAgent = Depends(get_moderation_predictor)  # noqa: B008,
+    agent: ModerationPredictorAgent = Depends(get_moderation_predictor),  # noqa: B008,
 ) -> list[ModerationPrediction]:
     """Generate predictions with AI agent.
 
@@ -374,7 +398,7 @@ async def generate_predictions(
 async def explain_analytics(
     analytics_data: dict[str, Any],
     audience: str = Query(default="general"),
-    agent: AnalyticsExplainerAgent = Depends(get_analytics_explainer)  # noqa: B008,
+    agent: AnalyticsExplainerAgent = Depends(get_analytics_explainer),  # noqa: B008,
 ) -> dict[str, str]:
     """Explain analytics results with AI agent.
 

@@ -1,0 +1,271 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "recruitment-overview",
+    "title": "Recruitment Platform — Business Overview",
+    "tags": ["recruitment", "business", "overview"],
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 1,
+    "refresh": "30s",
+    "time": {"from": "now-24h", "to": "now"},
+    "panels": [
+      {
+        "id": 1,
+        "title": "Applications Submitted (rate)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "sum(rate(recruitment_applications_total[5m])) by (status)",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "ops", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 2,
+        "title": "Active Job Postings",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "sum(recruitment_active_jobs)",
+            "legendFormat": "Total Active",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}},
+          "overrides": []
+        },
+        "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+      },
+      {
+        "id": 3,
+        "title": "Application Processing Duration (p95)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(recruitment_application_processing_duration_seconds_bucket[5m])) by (le, stage))",
+            "legendFormat": "{{stage}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 4,
+        "title": "Pipeline Conversion Funnel",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "recruitment_pipeline_conversion_ratio * 100",
+            "legendFormat": "{{from_stage}} → {{to_stage}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 30}, {"color": "green", "value": 60}]}},
+          "overrides": []
+        },
+        "options": {"orientation": "horizontal", "displayMode": "gradient", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+      },
+      {
+        "id": 5,
+        "title": "Offer Acceptance Ratio",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "recruitment_offer_acceptance_ratio * 100",
+            "legendFormat": "{{department}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "percent", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 6,
+        "title": "Search Latency (p99)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(recruitment_search_latency_seconds_bucket[5m])) by (le, query_type))",
+            "legendFormat": "{{query_type}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 7,
+        "title": "Notification Delivery Success Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "sum(rate(recruitment_notification_delivery_total{status=\"delivered\"}[5m])) by (channel) / sum(rate(recruitment_notification_delivery_total[5m])) by (channel) * 100",
+            "legendFormat": "{{channel}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "percent", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 8,
+        "title": "Queue Depth by Priority",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "sum(recruitment_queue_depth) by (queue_name, priority)",
+            "legendFormat": "{{queue_name}} — {{priority}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "short", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 9,
+        "title": "Error Rate by Service",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "sum(rate(recruitment_api_requests_total{status_code=~\"5..\"}[5m])) by (service) / sum(rate(recruitment_api_requests_total[5m])) by (service) * 100",
+            "legendFormat": "{{service}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "percent", "custom": {"drawStyle": "line", "fillOpacity": 10}},
+          "overrides": []
+        },
+        "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+      },
+      {
+        "id": 10,
+        "title": "DB Connection Pool Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 32},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "recruitment_db_connection_pool_usage{state=\"active\"} / (recruitment_db_connection_pool_usage{state=\"active\"} + recruitment_db_connection_pool_usage{state=\"idle\"}) * 100",
+            "legendFormat": "{{pool_name}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]}},
+          "overrides": []
+        },
+        "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true}
+      },
+      {
+        "id": 11,
+        "title": "Cache Hit Ratio",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 32},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "recruitment_cache_hit_ratio * 100",
+            "legendFormat": "{{cache_name}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 50}, {"color": "green", "value": 80}]}},
+          "overrides": []
+        },
+        "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true}
+      },
+      {
+        "id": 12,
+        "title": "Active User Sessions",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 32},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "targets": [
+          {
+            "expr": "sum(recruitment_user_sessions_active)",
+            "legendFormat": "Total Sessions",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}},
+          "overrides": []
+        },
+        "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "department",
+          "label": "Department",
+          "type": "query",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "query": "label_values(recruitment_active_jobs, department)",
+          "refresh": 1,
+          "sort": 1,
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*"
+        },
+        {
+          "name": "service",
+          "label": "Service",
+          "type": "query",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "query": "label_values(recruitment_api_requests_total, service)",
+          "refresh": 1,
+          "sort": 1,
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*"
+        }
+      ]
+    }
+  }
+}

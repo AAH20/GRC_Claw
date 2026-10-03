@@ -1,0 +1,64 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: recruitment-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: recruitment-error-alerts
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="recruitment",status=~"5.."}[5m]))
+            / sum(rate(http_requests_total{namespace="recruitment"}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "High error rate in recruitment platform"
+            description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.service }}"
+            runbook: "https://wiki.internal/runbooks/high-error-rate"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace="recruitment"}[5m])) > 2
+          for: 10m
+          labels:
+            severity: warning
+            team: platform
+          annotations:
+            summary: "P95 latency above 2s"
+            description: "Service {{ $labels.service }} P95 latency is {{ $value }}s"
+
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="recruitment"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash looping"
+            description: "Pod has restarted {{ $value }} times in 15 minutes"
+
+        - alert: DatabaseConnectionsHigh
+          expr: |
+            db_connections_active{namespace="recruitment"} / db_connections_max{namespace="recruitment"} > 0.85
+          for: 3m
+          labels:
+            severity: critical
+            team: dba
+          annotations:
+            summary: "Database connection pool near exhaustion"
+            description: "{{ $value | humanizePercentage }} of connections in use"
+
+        - alert: DiskSpaceLow
+          expr: |
+            kubelet_volume_stats_available_bytes{namespace="recruitment"} / kubelet_volume_stats_capacity_bytes{namespace="recruitment"} < 0.15
+          for: 5m
+          labels:
+            severity: warning
+            team: platform
+          annotations:
+            summary: "PV {{ $labels.persistentvolumeclaim }} below 15% free space"

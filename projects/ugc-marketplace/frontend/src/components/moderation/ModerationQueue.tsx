@@ -31,7 +31,7 @@ export function ModerationQueue({ items, isLoading, onApprove, onReject, onEscal
   }
 
   return (
-    <Card>
+    <Card data-testid="moderation-queue">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Moderation Queue</CardTitle>
@@ -61,14 +61,14 @@ export function ModerationQueue({ items, isLoading, onApprove, onReject, onEscal
                   </div>
                   {item.status === "pending" && (
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => onApprove?.(item.id)} className="text-green-600 hover:text-green-700">
-                        <CheckCircle className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" onClick={() => onApprove?.(item.id)} className="text-success hover:text-success/80" aria-label={`Approve ${item.target_name}`}>
+                        <CheckCircle className="h-4 w-4" aria-hidden="true" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onReject?.(item.id)} className="text-red-600 hover:text-red-700">
-                        <XCircle className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" onClick={() => onReject?.(item.id)} className="text-destructive hover:text-destructive/80" aria-label={`Reject ${item.target_name}`}>
+                        <XCircle className="h-4 w-4" aria-hidden="true" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onEscalate?.(item.id)}>
-                        <AlertTriangle className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" onClick={() => onEscalate?.(item.id)} aria-label={`Escalate ${item.target_name}`}>
+                        <AlertTriangle className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   )}

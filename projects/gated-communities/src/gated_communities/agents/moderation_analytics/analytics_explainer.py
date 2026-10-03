@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
-
 from moderation_analytics.agents.base import BaseAgent
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class AnalyticsExplainerAgent(BaseAgent[str]):

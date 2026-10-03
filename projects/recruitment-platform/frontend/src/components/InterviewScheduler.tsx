@@ -27,11 +27,11 @@ const statusColors: Record<Interview["status"], { variant: "success" | "error" |
 };
 
 const typeIcons: Record<Interview["type"], React.ReactNode> = {
-  phone: <Clock className="h-4 w-4" />,
-  video: <Video className="h-4 w-4" />,
-  onsite: <MapPin className="h-4 w-4" />,
-  technical: <Users className="h-4 w-4" />,
-  behavioral: <Users className="h-4 w-4" />,
+  phone: <Clock className="h-4 w-4" aria-hidden="true" />,
+  video: <Video className="h-4 w-4" aria-hidden="true" />,
+  onsite: <MapPin className="h-4 w-4" aria-hidden="true" />,
+  technical: <Users className="h-4 w-4" aria-hidden="true" />,
+  behavioral: <Users className="h-4 w-4" aria-hidden="true" />,
 };
 
 export function InterviewScheduler({
@@ -78,7 +78,7 @@ export function InterviewScheduler({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" aria-hidden="true">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
         ))}
@@ -91,7 +91,7 @@ export function InterviewScheduler({
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Interviews</h2>
         {onSchedule && (
-          <Button onClick={() => setShowModal(true)} leftIcon={<Plus className="h-4 w-4" />}>
+          <Button onClick={() => setShowModal(true)} leftIcon={<Plus className="h-4 w-4" aria-hidden="true" />}>
             Schedule Interview
           </Button>
         )}
@@ -100,7 +100,7 @@ export function InterviewScheduler({
       {interviews.length === 0 ? (
         <Card>
           <div className="py-12 text-center">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" aria-hidden="true" />
             <p className="text-gray-500 dark:text-gray-400">No interviews scheduled</p>
           </div>
         </Card>
@@ -122,23 +122,23 @@ export function InterviewScheduler({
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{interview.jobTitle}</p>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
                       <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" /> {formatDate(interview.date)}
+                        <Calendar className="h-3.5 w-3.5" aria-hidden="true" /> {formatDate(interview.date)}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" /> {interview.time} ({interview.duration}min)
+                        <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {interview.time} ({interview.duration}min)
                       </span>
                       <span className="inline-flex items-center gap-1">
                         {typeIcons[interview.type]} {interview.type}
                       </span>
                       {interview.location && (
                         <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" /> {interview.location}
+                          <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> {interview.location}
                         </span>
                       )}
                     </div>
                     {interview.interviewers.length > 0 && (
                       <div className="mt-2 flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 text-gray-400" />
+                        <Users className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           {interview.interviewers.join(", ")}
                         </span>
@@ -147,13 +147,13 @@ export function InterviewScheduler({
                   </div>
                   <div className="flex items-center gap-2">
                     {onReschedule && interview.status === "scheduled" && (
-                      <Button variant="outline" size="sm" onClick={() => setSelectedInterview(interview)}>
+                      <Button variant="outline" size="sm" onClick={() => setSelectedInterview(interview)} aria-label={`Reschedule interview with ${interview.candidateName}`}>
                         Reschedule
                       </Button>
                     )}
                     {onCancel && interview.status === "scheduled" && (
-                      <Button variant="destructive" size="sm" onClick={() => onCancel(interview.id)}>
-                        <X className="h-3.5 w-3.5" />
+                      <Button variant="destructive" size="sm" onClick={() => onCancel(interview.id)} aria-label={`Cancel interview with ${interview.candidateName}`}>
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
                       </Button>
                     )}
                   </div>
@@ -170,8 +170,8 @@ export function InterviewScheduler({
             <Input label="Candidate Name" value={formData.candidateName} onChange={(e) => setFormData({ ...formData, candidateName: e.target.value })} required />
             <Input label="Job Title" value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} required />
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Type</label>
-              <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as Interview["type"] })} className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm">
+              <label htmlFor="interview-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Type</label>
+              <select id="interview-type" value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as Interview["type"] })} className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
                 <option value="phone">Phone</option>
                 <option value="video">Video</option>
                 <option value="onsite">On-site</option>

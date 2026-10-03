@@ -6,7 +6,6 @@ from typing import Any
 
 import structlog
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.tools import tool
 
 from ugc_marketplace.agents.creator_analytics.base import BaseCreatorAgent
 

@@ -9,9 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseLanguageModel
-from pydantic import BaseModel, Field
-
 from access_control.agents.base import AgentContext, BaseAgent
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from access_control.config import Settings
@@ -37,7 +36,9 @@ class PermissionEvaluatorOutput(BaseModel):
     policy_ids: list[str] = Field(default_factory=list)
 
 
-class PermissionEvaluatorAgent(BaseAgent[PermissionEvaluatorInput, PermissionEvaluatorOutput]):
+class PermissionEvaluatorAgent(
+    BaseAgent[PermissionEvaluatorInput, PermissionEvaluatorOutput]
+):
     """Agent that evaluates whether a principal should be granted access.
 
     Uses LangChain DeepAgents to perform contextual reasoning about the
@@ -61,10 +62,12 @@ Consider contextual factors such as time, location, and risk indicators.
 Respond with a JSON object containing: decision, reason, obligations, confidence, policy_ids.
 Decisions must be one of: allow, deny, conditional, abstain."""
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", "{input}"),
+            ]
+        )
 
         chain = prompt | self.llm
         return chain
@@ -84,11 +87,13 @@ Decisions must be one of: allow, deny, conditional, abstain."""
         agent = self._build_agent()
 
         input_data = {
-            "input": json.dumps({
-                "request": payload.request.model_dump(mode="json"),
-                "policies": payload.policies,
-                "roles": payload.roles,
-            })
+            "input": json.dumps(
+                {
+                    "request": payload.request.model_dump(mode="json"),
+                    "policies": payload.policies,
+                    "roles": payload.roles,
+                }
+            )
         }
 
         response = await agent.ainvoke(input_data)
@@ -108,7 +113,9 @@ Decisions must be one of: allow, deny, conditional, abstain."""
             )
 
     async def evaluate(
-        self, request: AccessRequest, policies: list[dict[str, Any]] | None = None,
+        self,
+        request: AccessRequest,
+        policies: list[dict[str, Any]] | None = None,
         roles: list[dict[str, Any]] | None = None,
     ) -> AccessResult:
         """Convenience method to evaluate a request and return a full AccessResult.

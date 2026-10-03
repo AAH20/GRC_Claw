@@ -68,7 +68,9 @@ Provide a prioritized list of remediation actions with:
 3. Estimated effort
 4. Expected outcome
 """
-        result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
+        result = await self.agent.ainvoke(
+            {"messages": [{"role": "user", "content": prompt}]}
+        )
         return [{"recommendation": result, "violation_id": str(violation.id)}]
 
     async def execute_remediation(self, action: RemediationAction) -> RemediationAction:

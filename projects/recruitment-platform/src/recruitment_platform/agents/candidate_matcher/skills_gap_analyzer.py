@@ -34,5 +34,6 @@ class SkillsGapAnalyzer(BaseAgent[dict[str, Any], dict[str, Any]]):
             "missing_skills": list(required_skills - candidate_skills),
             "matching_skills": list(candidate_skills & required_skills),
             "transferable_skills": [],
-            "gap_score": len(required_skills - candidate_skills) / max(len(required_skills), 1),
+            "gap_score": len(required_skills - candidate_skills)
+            / max(len(required_skills), 1),
         }

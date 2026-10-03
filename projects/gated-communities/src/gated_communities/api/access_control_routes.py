@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-
 from access_control.api.dependencies import (
     get_access_auditor,
     get_access_recommender,
@@ -17,9 +15,11 @@ from access_control.api.dependencies import (
     get_role_manager,
     get_settings,
 )
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 if TYPE_CHECKING:
     from access_control.config import Settings
+
 from access_control.models.schemas import (
     AccessAudit,
     AccessRecommendation,
@@ -40,7 +40,9 @@ router = APIRouter()
 
 
 @router.get("/health", tags=["health"])
-async def health_check(settings: Settings = Depends(get_settings)) -> dict[str, str]:  # noqa: B008
+async def health_check(
+    settings: Settings = Depends(get_settings),
+) -> dict[str, str]:  # noqa: B008
     """Health check endpoint.
 
     Returns:

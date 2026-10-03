@@ -19,7 +19,7 @@ export function ContentPerformance({ data, isLoading }: ContentPerformanceProps)
   }
   const maxViews = Math.max(...data.map((d) => d.views), 1);
   return (
-    <Card>
+    <Card data-testid="content-performance">
       <CardHeader><CardTitle>Content Performance</CardTitle></CardHeader>
       <CardContent>
         <div className="space-y-4">

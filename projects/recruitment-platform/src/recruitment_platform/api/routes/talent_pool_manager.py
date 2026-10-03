@@ -20,7 +20,9 @@ async def source_candidates(data: dict[str, Any]) -> dict[str, Any]:
         Sourced candidates with match scores.
     """
     try:
-        from recruitment_platform.agents.talent_pool_manager.candidate_sourcer import CandidateSourcer
+        from recruitment_platform.agents.talent_pool_manager.candidate_sourcer import (
+            CandidateSourcer,
+        )
 
         agent = CandidateSourcer()
         result = await agent.process(data)

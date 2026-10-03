@@ -7,7 +7,6 @@ import sys
 from typing import Any
 
 import structlog
-
 from community_governance.config.settings import get_settings
 
 

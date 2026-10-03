@@ -6,10 +6,9 @@ import json
 from typing import Any
 
 from langchain_core.messages import AIMessage
-from pydantic import BaseModel, Field
-
 from moderation_queue.agents.base import AgentConfig, BaseAgent
 from moderation_queue.models import ModerationItem, PriorityLevel, PriorityScore
+from pydantic import BaseModel, Field
 
 
 class PriorityScorerInput(BaseModel):

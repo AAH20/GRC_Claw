@@ -27,7 +27,7 @@ export default function NotificationsPage() {
       {notifications.length === 0 ? (
         <EmptyState icon={Bell} title="No notifications" description="You're all caught up!" />
       ) : (
-        <div className="space-y-2">
+        <div data-testid="notification-list" className="space-y-2">
           {notifications.map((notification) => (
             <Card key={notification.id} className={!notification.read ? "border-primary/50" : ""}>
               <CardContent className="flex items-start justify-between p-4">

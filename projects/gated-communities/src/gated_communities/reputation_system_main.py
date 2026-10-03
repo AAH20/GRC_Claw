@@ -7,7 +7,6 @@ import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
 from reputation_system.api.routes import api_router
 from reputation_system.config.settings import Settings, get_settings
 from reputation_system.integrations.langchain_client import LangChainClient
@@ -29,8 +28,11 @@ def setup_logging(settings: Settings) -> None:
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.add_log_level,
-            structlog.processors.JSONRenderer() if settings.LOG_FORMAT == "json"
-            else structlog.dev.ConsoleRenderer(),
+            (
+                structlog.processors.JSONRenderer()
+                if settings.LOG_FORMAT == "json"
+                else structlog.dev.ConsoleRenderer()
+            ),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
             getattr(logging, settings.LOG_LEVEL.upper())
@@ -92,7 +94,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Exception handlers
     @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def global_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         """Handle uncaught exceptions.
 
         Args:

@@ -32,10 +32,14 @@ class Resolution(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: str = Field(..., min_length=1)
     status: ResolutionStatus = Field(default=ResolutionStatus.PROPOSED)
-    resolution_type: str = Field(default="manual", description="Type: manual, automated, hybrid")
+    resolution_type: str = Field(
+        default="manual", description="Type: manual, automated, hybrid"
+    )
     root_cause: str | None = Field(default=None)
     steps: list[str] = Field(default_factory=list, description="Resolution steps taken")
-    automated: bool = Field(default=False, description="Whether resolution was automated")
+    automated: bool = Field(
+        default=False, description="Whether resolution was automated"
+    )
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     verified_by: str | None = Field(default=None)
     verified_at: datetime | None = Field(default=None)

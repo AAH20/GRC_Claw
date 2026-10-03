@@ -1,39 +1,39 @@
 """Pydantic models for the community governance application."""
 
 from community_governance.models.analytics import (
-    GovernanceAnalytics,
-    GovernanceHealthScore,
-    GovernanceSummary,
+                                                   GovernanceAnalytics,
+                                                   GovernanceHealthScore,
+                                                   GovernanceSummary,
 )
 from community_governance.models.dispute import (
-    Dispute,
-    DisputeCreate,
-    DisputePriority,
-    DisputeResolution,
-    DisputeStatus,
-    DisputeUpdate,
+                                                   Dispute,
+                                                   DisputeCreate,
+                                                   DisputePriority,
+                                                   DisputeResolution,
+                                                   DisputeStatus,
+                                                   DisputeUpdate,
 )
 from community_governance.models.governance_action import (
-    ActionStatus,
-    ActionType,
-    GovernanceAction,
-    GovernanceActionCreate,
-    GovernanceActionUpdate,
+                                                   ActionStatus,
+                                                   ActionType,
+                                                   GovernanceAction,
+                                                   GovernanceActionCreate,
+                                                   GovernanceActionUpdate,
 )
 from community_governance.models.policy import (
-    Policy,
-    PolicyCreate,
-    PolicyScope,
-    PolicyStatus,
-    PolicyUpdate,
+                                                   Policy,
+                                                   PolicyCreate,
+                                                   PolicyScope,
+                                                   PolicyStatus,
+                                                   PolicyUpdate,
 )
 from community_governance.models.rule import (
-    Rule,
-    RuleCategory,
-    RuleCreate,
-    RuleEnforcementResult,
-    RuleSeverity,
-    RuleUpdate,
+                                                   Rule,
+                                                   RuleCategory,
+                                                   RuleCreate,
+                                                   RuleEnforcementResult,
+                                                   RuleSeverity,
+                                                   RuleUpdate,
 )
 
 __all__ = [

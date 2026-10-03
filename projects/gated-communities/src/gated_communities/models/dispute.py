@@ -38,7 +38,9 @@ class Dispute(BaseModel):
     id: UUID = Field(default_factory=uuid4, description="Unique dispute identifier")
     title: str = Field(..., min_length=1, max_length=300, description="Dispute title")
     description: str = Field(..., min_length=1, description="Dispute description")
-    status: DisputeStatus = Field(default=DisputeStatus.OPEN, description="Dispute status")
+    status: DisputeStatus = Field(
+        default=DisputeStatus.OPEN, description="Dispute status"
+    )
     priority: DisputePriority = Field(
         default=DisputePriority.MEDIUM, description="Dispute priority"
     )

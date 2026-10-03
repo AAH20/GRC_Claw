@@ -1,13 +1,10 @@
 """Reputation Explanation API routes."""
+
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-
-from reputation_system.agents.reputation_explainer import (
-    ExplanationInput,
-    ReputationExplainerAgent,
-)
+from reputation_system.agents.reputation_explainer import ExplanationInput, ReputationExplainerAgent
 from reputation_system.config.settings import Settings, get_settings
 from reputation_system.models.schemas import ReputationExplanation, ReputationExplanationCreate
 
@@ -17,7 +14,9 @@ router = APIRouter(prefix="/explanations", tags=["explanations"])
 _explanations: dict[UUID, ReputationExplanation] = {}
 
 
-@router.post("", response_model=ReputationExplanation, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ReputationExplanation, status_code=status.HTTP_201_CREATED
+)
 async def create_explanation(
     data: ReputationExplanationCreate,
     settings: Annotated[Settings, Depends(get_settings)],
@@ -112,8 +111,12 @@ async def generate_explanation(
     from reputation_system.models.schemas import TrustTierLevel
 
     agent = ReputationExplainerAgent(settings=settings)
-    factors_list = [{"name": f, "value": 0, "impact": 0.0} for f in factors.split(",") if f]
-    actions_list = [{"action": a, "score_change": 0} for a in recent_actions.split(",") if a]
+    factors_list = [
+        {"name": f, "value": 0, "impact": 0.0} for f in factors.split(",") if f
+    ]
+    actions_list = [
+        {"action": a, "score_change": 0} for a in recent_actions.split(",") if a
+    ]
     input_data = ExplanationInput(
         member_id=member_id,
         current_score=current_score,

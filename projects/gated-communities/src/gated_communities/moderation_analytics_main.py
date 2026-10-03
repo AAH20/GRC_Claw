@@ -8,7 +8,6 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
 from moderation_analytics.api import router
 from moderation_analytics.config import get_settings
 from moderation_analytics.exceptions import ModerationAnalyticsError
@@ -111,7 +110,9 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def general_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         """Handle general exceptions.
 
         Args:

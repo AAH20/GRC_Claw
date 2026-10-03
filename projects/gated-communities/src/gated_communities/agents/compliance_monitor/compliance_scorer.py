@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from compliance_monitor.agents.base import BaseComplianceAgent
 from compliance_monitor.models.schemas import ComplianceScore, ScoreRequest
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 class ComplianceScorerAgent(BaseComplianceAgent[ScoreRequest, ComplianceScore]):
@@ -76,8 +78,14 @@ Provide:
 3. Strengths
 4. Improvement recommendations
 """
-        result = await self.agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
-        return {"evaluation": result, "policy_id": str(policy_id), "timestamp": datetime.now(tz=UTC).isoformat()}
+        result = await self.agent.ainvoke(
+            {"messages": [{"role": "user", "content": prompt}]}
+        )
+        return {
+            "evaluation": result,
+            "policy_id": str(policy_id),
+            "timestamp": datetime.now(tz=UTC).isoformat(),
+        }
 
     async def compute_trend(
         self,

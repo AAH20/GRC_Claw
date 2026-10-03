@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -30,29 +30,71 @@ export function Modal({
   showCloseButton = true,
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  // Focus trap
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && contentRef.current) {
+        const focusableElements = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement;
       document.body.style.overflow = "hidden";
+      document.addEventListener("keydown", handleKeyDown);
+
+      // Focus the first focusable element in the modal
+      setTimeout(() => {
+        if (contentRef.current) {
+          const firstFocusable = contentRef.current.querySelector<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          firstFocusable?.focus();
+        }
+      }, 50);
     } else {
       document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement.current?.focus();
     }
+
     return () => {
       document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (isOpen) {
-      document.addEventListener("keydown", handleEsc);
-    }
-    return () => document.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
+
+  const titleId = title ? `modal-title-${Math.random().toString(36).slice(2, 9)}` : undefined;
+  const descId = description ? `modal-desc-${Math.random().toString(36).slice(2, 9)}` : undefined;
 
   return (
     <div
@@ -61,8 +103,13 @@ export function Modal({
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
     >
       <div
+        ref={contentRef}
         className={cn(
           "relative w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto scrollbar-thin",
           sizes[size]
@@ -72,12 +119,18 @@ export function Modal({
           <div className="flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div>
               {title && (
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <h2
+                  id={titleId}
+                  className="text-xl font-semibold text-gray-900 dark:text-gray-100"
+                >
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p
+                  id={descId}
+                  className="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                >
                   {description}
                 </p>
               )}
@@ -86,6 +139,7 @@ export function Modal({
               <button
                 onClick={onClose}
                 className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-colors"
+                aria-label="Close dialog"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

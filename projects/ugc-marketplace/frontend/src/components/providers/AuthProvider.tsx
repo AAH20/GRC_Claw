@@ -16,6 +16,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const setAuthCookie = (token: string) => {
+  document.cookie = `auth_token=${token}; path=/; max-age=86400; samesite=lax`;
+};
+
+const removeAuthCookie = () => {
+  document.cookie = "auth_token=; path=/; max-age=0";
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
     if (token) {
+      setAuthCookie(token);
       apiClient.setToken(token);
       apiClient
         .get<User>("/auth/me")
@@ -43,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
     localStorage.setItem("auth_token", response.token);
+    setAuthCookie(response.token);
     apiClient.setToken(response.token);
     setUser(response.user);
   }, []);
@@ -54,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
     localStorage.setItem("auth_token", response.token);
+    setAuthCookie(response.token);
     apiClient.setToken(response.token);
     setUser(response.user);
   }, []);
@@ -63,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiClient.post("/auth/logout");
     } finally {
       localStorage.removeItem("auth_token");
+      removeAuthCookie();
       apiClient.setToken(null);
       setUser(null);
     }

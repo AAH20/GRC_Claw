@@ -9,7 +9,8 @@ from typing import Any
 from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
-from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
+                                                         BaseScoringAgent)
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,9 @@ class ReadabilityScorerAgent(BaseScoringAgent["DimensionScore"]):
         self.settings = get_settings()
         self._llm: BaseLanguageModel | None = None
 
-    async def score(self, content: str, context: dict[str, Any] | None = None) -> AgentResult["DimensionScore"]:
+    async def score(
+        self, content: str, context: dict[str, Any] | None = None
+    ) -> AgentResult[DimensionScore]:
         """Score content readability.
 
         Args:
@@ -63,7 +66,7 @@ class ReadabilityScorerAgent(BaseScoringAgent["DimensionScore"]):
                 reasoning="Failed to calculate readability score.",
             )
 
-    def _calculate_readability_score(self, content: str) -> "DimensionScore":
+    def _calculate_readability_score(self, content: str) -> DimensionScore:
         """Calculate readability score for content.
 
         Args:
@@ -72,9 +75,10 @@ class ReadabilityScorerAgent(BaseScoringAgent["DimensionScore"]):
         Returns:
             Dimension score with readability metrics.
         """
-        from ugc_marketplace.models.schemas import DimensionScore, ScoreDimension, ScoreLevel
+        from ugc_marketplace.models.schemas import (DimensionScore,
+                                                    ScoreDimension, ScoreLevel)
 
-        sentences = re.split(r'[.!?]+', content)
+        sentences = re.split(r"[.!?]+", content)
         sentences = [s.strip() for s in sentences if s.strip()]
         words = content.split()
 
@@ -82,10 +86,14 @@ class ReadabilityScorerAgent(BaseScoringAgent["DimensionScore"]):
         total_sentences = len(sentences)
         total_syllables = sum(self._count_syllables(w) for w in words)
 
-        avg_sentence_length = total_words / total_sentences if total_sentences > 0 else 0
+        avg_sentence_length = (
+            total_words / total_sentences if total_sentences > 0 else 0
+        )
         avg_syllables_per_word = total_syllables / total_words if total_words > 0 else 0
 
-        flesch = 206.835 - (1.015 * avg_sentence_length) - (84.6 * avg_syllables_per_word)
+        flesch = (
+            206.835 - (1.015 * avg_sentence_length) - (84.6 * avg_syllables_per_word)
+        )
         flesch = max(0, min(100, flesch))
 
         complex_words = sum(1 for w in words if self._count_syllables(w) > 2)

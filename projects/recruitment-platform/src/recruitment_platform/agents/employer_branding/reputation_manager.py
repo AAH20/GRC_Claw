@@ -27,4 +27,9 @@ class ReputationManager(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Reputation status and action items.
         """
-        return {"overall_score": 0.0, "platform_scores": {}, "trends": [], "action_items": []}
+        return {
+            "overall_score": 0.0,
+            "platform_scores": {},
+            "trends": [],
+            "action_items": [],
+        }

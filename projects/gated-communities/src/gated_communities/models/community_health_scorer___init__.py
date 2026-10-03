@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class HealthCategory(StrEnum):
@@ -67,14 +67,28 @@ class EngagementMetrics(BaseModel):
     avg_session_duration_minutes: float = Field(
         ..., ge=0, description="Average session duration in minutes"
     )
-    avg_sessions_per_user: float = Field(..., ge=0, description="Average sessions per user per day")
-    interaction_depth: float = Field(..., ge=0, le=1, description="Interaction depth score (0-1)")
-    content_creation_rate: float = Field(..., ge=0, description="Content creation rate per user")
+    avg_sessions_per_user: float = Field(
+        ..., ge=0, description="Average sessions per user per day"
+    )
+    interaction_depth: float = Field(
+        ..., ge=0, le=1, description="Interaction depth score (0-1)"
+    )
+    content_creation_rate: float = Field(
+        ..., ge=0, description="Content creation rate per user"
+    )
     response_rate: float = Field(..., ge=0, le=1, description="Response rate (0-1)")
-    retention_rate_7d: float = Field(..., ge=0, le=1, description="7-day retention rate")
-    retention_rate_30d: float = Field(..., ge=0, le=1, description="30-day retention rate")
-    engagement_level: EngagementLevel = Field(default=EngagementLevel.MODERATELY_ENGAGED)
-    score: float = Field(default=0.0, ge=0, le=100, description="Engagement score (0-100)")
+    retention_rate_7d: float = Field(
+        ..., ge=0, le=1, description="7-day retention rate"
+    )
+    retention_rate_30d: float = Field(
+        ..., ge=0, le=1, description="30-day retention rate"
+    )
+    engagement_level: EngagementLevel = Field(
+        default=EngagementLevel.MODERATELY_ENGAGED
+    )
+    score: float = Field(
+        default=0.0, ge=0, le=100, description="Engagement score (0-100)"
+    )
 
     @field_validator("mau")
     @classmethod
@@ -96,13 +110,18 @@ class ToxicityReport(BaseModel):
     """Toxicity analysis report for a community."""
 
     overall_toxicity_score: float = Field(
-        ..., ge=0, le=100, description="Overall toxicity score (0-100, higher = more toxic)"
+        ...,
+        ge=0,
+        le=100,
+        description="Overall toxicity score (0-100, higher = more toxic)",
     )
     toxicity_level: ToxicityLevel = Field(default=ToxicityLevel.NONE)
     toxic_content_count: int = Field(
         default=0, ge=0, description="Number of toxic content items detected"
     )
-    total_content_analyzed: int = Field(default=0, ge=0, description="Total content items analyzed")
+    total_content_analyzed: int = Field(
+        default=0, ge=0, description="Total content items analyzed"
+    )
     toxic_user_count: int = Field(
         default=0, ge=0, description="Number of users flagged for toxic behavior"
     )
@@ -120,7 +139,10 @@ class ToxicityReport(BaseModel):
         description="Recommendations for reducing toxicity",
     )
     score: float = Field(
-        default=0.0, ge=0, le=100, description="Toxicity health score (0-100, higher = healthier)"
+        default=0.0,
+        ge=0,
+        le=100,
+        description="Toxicity health score (0-100, higher = healthier)",
     )
 
     @property
@@ -135,32 +157,52 @@ class GrowthAnalysis(BaseModel):
     """Growth analysis for a community."""
 
     current_members: int = Field(..., ge=0, description="Current number of members")
-    new_members_7d: int = Field(default=0, ge=0, description="New members in last 7 days")
-    new_members_30d: int = Field(default=0, ge=0, description="New members in last 30 days")
-    churned_members_7d: int = Field(default=0, ge=0, description="Churned members in last 7 days")
-    churned_members_30d: int = Field(default=0, ge=0, description="Churned members in last 30 days")
+    new_members_7d: int = Field(
+        default=0, ge=0, description="New members in last 7 days"
+    )
+    new_members_30d: int = Field(
+        default=0, ge=0, description="New members in last 30 days"
+    )
+    churned_members_7d: int = Field(
+        default=0, ge=0, description="Churned members in last 7 days"
+    )
+    churned_members_30d: int = Field(
+        default=0, ge=0, description="Churned members in last 30 days"
+    )
     growth_rate_7d: float = Field(default=0.0, description="7-day growth rate")
     growth_rate_30d: float = Field(default=0.0, description="30-day growth rate")
-    net_growth_rate: float = Field(default=0.0, description="Net growth rate (acquisition - churn)")
+    net_growth_rate: float = Field(
+        default=0.0, description="Net growth rate (acquisition - churn)"
+    )
     growth_trend: GrowthTrend = Field(default=GrowthTrend.STABLE)
-    projected_members_30d: int = Field(default=0, ge=0, description="Projected members in 30 days")
-    projected_members_90d: int = Field(default=0, ge=0, description="Projected members in 90 days")
+    projected_members_30d: int = Field(
+        default=0, ge=0, description="Projected members in 30 days"
+    )
+    projected_members_90d: int = Field(
+        default=0, ge=0, description="Projected members in 90 days"
+    )
     acquisition_channels: dict[str, int] = Field(
         default_factory=dict,
         description="Member acquisition by channel",
     )
-    score: float = Field(default=0.0, ge=0, le=100, description="Growth health score (0-100)")
+    score: float = Field(
+        default=0.0, ge=0, le=100, description="Growth health score (0-100)"
+    )
 
 
 class ChurnPrediction(BaseModel):
     """Churn prediction for a community."""
 
     overall_churn_risk: ChurnRisk = Field(default=ChurnRisk.LOW)
-    churn_probability: float = Field(..., ge=0, le=1, description="Overall churn probability (0-1)")
+    churn_probability: float = Field(
+        ..., ge=0, le=1, description="Overall churn probability (0-1)"
+    )
     at_risk_members: int = Field(
         default=0, ge=0, description="Number of members at risk of churning"
     )
-    total_members: int = Field(default=0, ge=0, description="Total members in community")
+    total_members: int = Field(
+        default=0, ge=0, description="Total members in community"
+    )
     risk_factors: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Identified risk factors with severity and affected members",
@@ -184,7 +226,10 @@ class ChurnPrediction(BaseModel):
         description="Recommendations for reducing churn",
     )
     score: float = Field(
-        default=0.0, ge=0, le=100, description="Churn health score (0-100, higher = healthier)"
+        default=0.0,
+        ge=0,
+        le=100,
+        description="Churn health score (0-100, higher = healthier)",
     )
 
     @property
@@ -199,10 +244,16 @@ class HealthScore(BaseModel):
     """Overall community health score."""
 
     community_id: str = Field(..., description="Unique community identifier")
-    overall_score: float = Field(..., ge=0, le=100, description="Overall health score (0-100)")
+    overall_score: float = Field(
+        ..., ge=0, le=100, description="Overall health score (0-100)"
+    )
     category: HealthCategory | None = Field(default=None, description="Health category")
-    engagement_score: float = Field(..., ge=0, le=100, description="Engagement component score")
-    toxicity_score: float = Field(..., ge=0, le=100, description="Toxicity component score")
+    engagement_score: float = Field(
+        ..., ge=0, le=100, description="Engagement component score"
+    )
+    toxicity_score: float = Field(
+        ..., ge=0, le=100, description="Toxicity component score"
+    )
     growth_score: float = Field(..., ge=0, le=100, description="Growth component score")
     churn_score: float = Field(..., ge=0, le=100, description="Churn component score")
     engagement_weight: float = Field(default=0.30)
@@ -210,12 +261,16 @@ class HealthScore(BaseModel):
     growth_weight: float = Field(default=0.25)
     churn_weight: float = Field(default=0.20)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    period_start: datetime | None = Field(default=None, description="Analysis period start")
+    period_start: datetime | None = Field(
+        default=None, description="Analysis period start"
+    )
     period_end: datetime | None = Field(default=None, description="Analysis period end")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     @model_validator(mode="after")
-    def set_category(self) -> "HealthScore":
+    def set_category(self) -> HealthScore:
         """Auto-derive category from overall_score if not provided."""
         if self.category is None:
             score = self.overall_score
@@ -237,26 +292,38 @@ class HealthExplanation(BaseModel):
 
     community_id: str = Field(..., description="Community identifier")
     summary: str = Field(..., description="Executive summary of community health")
-    engagement_summary: str = Field(..., description="Explanation of engagement metrics")
+    engagement_summary: str = Field(
+        ..., description="Explanation of engagement metrics"
+    )
     toxicity_summary: str = Field(..., description="Explanation of toxicity findings")
     growth_summary: str = Field(..., description="Explanation of growth analysis")
     churn_summary: str = Field(..., description="Explanation of churn predictions")
-    key_strengths: list[str] = Field(default_factory=list, description="Key community strengths")
-    key_concerns: list[str] = Field(default_factory=list, description="Key areas of concern")
+    key_strengths: list[str] = Field(
+        default_factory=list, description="Key community strengths"
+    )
+    key_concerns: list[str] = Field(
+        default_factory=list, description="Key areas of concern"
+    )
     actionable_recommendations: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Prioritized actionable recommendations",
     )
     generated_at: datetime = Field(default_factory=datetime.utcnow)
-    model_used: str = Field(default="gpt-4o-mini", description="LLM model used for explanation")
+    model_used: str = Field(
+        default="gpt-4o-mini", description="LLM model used for explanation"
+    )
 
 
 class ScoreRequest(BaseModel):
     """Request model for health score calculation."""
 
     community_id: str = Field(..., min_length=1, description="Community identifier")
-    period_days: int = Field(default=30, ge=1, le=365, description="Analysis period in days")
-    include_explanation: bool = Field(default=True, description="Whether to include AI explanation")
+    period_days: int = Field(
+        default=30, ge=1, le=365, description="Analysis period in days"
+    )
+    include_explanation: bool = Field(
+        default=True, description="Whether to include AI explanation"
+    )
     metrics_data: dict[str, Any] | None = Field(
         default=None,
         description="Optional pre-fetched metrics data",
@@ -278,9 +345,15 @@ class AgentRunResponse(BaseModel):
     agent_name: str = Field(..., description="Name of the executed agent")
     community_id: str = Field(..., description="Community identifier")
     status: str = Field(..., description="Execution status")
-    result: dict[str, Any] = Field(default_factory=dict, description="Agent execution result")
-    execution_time_ms: float = Field(..., ge=0, description="Execution time in milliseconds")
-    error: str | None = Field(default=None, description="Error message if execution failed")
+    result: dict[str, Any] = Field(
+        default_factory=dict, description="Agent execution result"
+    )
+    execution_time_ms: float = Field(
+        ..., ge=0, description="Execution time in milliseconds"
+    )
+    error: str | None = Field(
+        default=None, description="Error message if execution failed"
+    )
 
 
 class HealthResponse(BaseModel):
@@ -304,5 +377,7 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
-    details: dict[str, Any] | None = Field(default=None, description="Additional error details")
+    details: dict[str, Any] | None = Field(
+        default=None, description="Additional error details"
+    )
     timestamp: datetime = Field(default_factory=datetime.utcnow)

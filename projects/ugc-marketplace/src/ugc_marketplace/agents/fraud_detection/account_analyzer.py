@@ -51,7 +51,7 @@ class AccountAnalyzerAgent:
         )
         return agent
 
-    async def analyze(self, account_id: str) -> "AccountAnalysis":
+    async def analyze(self, account_id: str) -> AccountAnalysis:
         """Analyze an account for fraud risk.
 
         Args:
@@ -65,8 +65,7 @@ class AccountAnalyzerAgent:
             result = await self._agent.ainvoke(
                 {
                     "input": (
-                        f"Analyze account for fraud risk: "
-                        f"Account ID={account_id}"
+                        f"Analyze account for fraud risk: " f"Account ID={account_id}"
                     )
                 }
             )
@@ -76,14 +75,20 @@ class AccountAnalyzerAgent:
             logger.info(
                 "Account analysis completed",
                 account_id=account_id,
-                risk_level=analysis.risk_level.value if hasattr(analysis.risk_level, 'value') else analysis.risk_level,
+                risk_level=(
+                    analysis.risk_level.value
+                    if hasattr(analysis.risk_level, "value")
+                    else analysis.risk_level
+                ),
             )
             return analysis
 
         except Exception as exc:
             self._error_count += 1
             logger.error("Account analysis failed", error=str(exc))
-            from ugc_marketplace.models.schemas import AccountAnalysis, RiskLevel
+            from ugc_marketplace.models.schemas import (AccountAnalysis,
+                                                        RiskLevel)
+
             return AccountAnalysis(
                 analysis_id=str(uuid.uuid4()),
                 account_id=account_id,
@@ -93,7 +98,7 @@ class AccountAnalyzerAgent:
                 recommendations=[f"Analysis failed: {exc}"],
             )
 
-    def _parse_analysis(self, result: Any, account_id: str) -> "AccountAnalysis":
+    def _parse_analysis(self, result: Any, account_id: str) -> AccountAnalysis:
         """Parse agent output into AccountAnalysis.
 
         Args:

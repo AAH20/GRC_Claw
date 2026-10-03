@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from escalation_workflow.agents.base import BaseAgent
+from escalation_workflow.models.resolution import ResolutionCreate
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
-from escalation_workflow.agents.base import BaseAgent
-from escalation_workflow.models.escalation import Escalation
-from escalation_workflow.models.resolution import ResolutionCreate
+if TYPE_CHECKING:
+    from escalation_workflow.models.escalation import Escalation
 
 
 class ResolutionOptimizerInput(BaseModel):
@@ -119,7 +120,11 @@ Propose an optimized resolution strategy with:
             title="Manual Resolution Required",
             description="Automated resolution optimization failed. Manual intervention required.",
             resolution_type="manual",
-            steps=["Review escalation details", "Assign to specialist", "Develop resolution plan"],
+            steps=[
+                "Review escalation details",
+                "Assign to specialist",
+                "Develop resolution plan",
+            ],
             automated=False,
             confidence=0.3,
         )

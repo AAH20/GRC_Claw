@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 import structlog
-from langchain_core.tools import tool
 
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
 
 if TYPE_CHECKING:
-    from ugc_marketplace.models.schemas import Trend, TrendDirection, TrendRequest, TrendResponse
+    from ugc_marketplace.models.schemas import TrendRequest, TrendResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -49,7 +48,7 @@ class TrendDetectorAgent(BaseAgent["TrendRequest", "TrendResponse"]):
         )
         return agent
 
-    async def execute(self, input_data: "TrendRequest") -> "TrendResponse":
+    async def execute(self, input_data: TrendRequest) -> TrendResponse:
         """Execute trend detection.
 
         Args:
@@ -80,7 +79,9 @@ class TrendDetectorAgent(BaseAgent["TrendRequest", "TrendResponse"]):
         return {"content_ids": content_ids, "engagement": {}}
 
     @staticmethod
-    async def _detect_patterns(time_window: timedelta = timedelta(hours=24)) -> list[dict[str, Any]]:
+    async def _detect_patterns(
+        time_window: timedelta = timedelta(hours=24),
+    ) -> list[dict[str, Any]]:
         """Detect content patterns.
 
         Args:

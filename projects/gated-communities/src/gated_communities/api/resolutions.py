@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import TYPE_CHECKING
 
 from escalation_workflow.agents.resolution_optimizer import (
     ResolutionOptimizerAgent,
@@ -12,6 +10,10 @@ from escalation_workflow.agents.resolution_optimizer import (
 )
 from escalation_workflow.config import Settings, get_settings
 from escalation_workflow.models.resolution import Resolution, ResolutionCreate, ResolutionStatus
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 router = APIRouter(prefix="/resolutions", tags=["resolutions"])
 
@@ -32,6 +34,7 @@ async def create_resolution(data: ResolutionCreate) -> Resolution:
     _resolutions[resolution.id] = resolution
 
     from escalation_workflow.api.escalations import _escalations
+
     if data.escalation_id in _escalations:
         _escalations[data.escalation_id].resolution_id = resolution.id
 
@@ -104,6 +107,7 @@ async def optimize_resolution(
     agent = ResolutionOptimizerAgent()
 
     from escalation_workflow.api.escalations import _escalations
+
     escalation = _escalations.get(resolution.escalation_id)
 
     if not escalation:

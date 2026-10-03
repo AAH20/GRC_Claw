@@ -27,7 +27,9 @@ class ContentFetcher:
             self._client = httpx.AsyncClient(timeout=30.0)
         return self._client
 
-    async def _fetch_reddit(self, subreddit: str, limit: int = 25) -> list[dict[str, Any]]:
+    async def _fetch_reddit(
+        self, subreddit: str, limit: int = 25
+    ) -> list[dict[str, Any]]:
         """Fetch content from Reddit.
 
         Args:

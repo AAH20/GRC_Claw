@@ -52,7 +52,7 @@ export function Sidebar() {
         <span className="text-lg font-bold text-gray-900 dark:text-gray-100">RecruitHub</span>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin" aria-label="Main navigation">
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
@@ -66,6 +66,7 @@ export function Sidebar() {
                   ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
               )}
+              aria-current={isActive ? "page" : undefined}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
               {item.name}
@@ -78,6 +79,7 @@ export function Sidebar() {
         <button
           onClick={toggle}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 w-full transition-colors"
+          aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           {resolvedTheme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           {resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}
@@ -99,6 +101,8 @@ export function Sidebar() {
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700"
+        aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={mobileOpen}
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
@@ -108,6 +112,7 @@ export function Sidebar() {
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/50"
           onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
         />
       )}
 
@@ -117,6 +122,7 @@ export function Sidebar() {
           "fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
+        aria-label="Sidebar"
       >
         {sidebarContent}
       </aside>

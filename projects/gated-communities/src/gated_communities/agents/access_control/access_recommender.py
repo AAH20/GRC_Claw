@@ -9,9 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseLanguageModel
-from pydantic import BaseModel, Field
-
 from access_control.agents.base import AgentContext, BaseAgent
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from access_control.config import Settings
@@ -35,7 +34,9 @@ class AccessRecommenderOutput(BaseModel):
     summary: str = ""
 
 
-class AccessRecommenderAgent(BaseAgent[AccessRecommenderInput, AccessRecommenderOutput]):
+class AccessRecommenderAgent(
+    BaseAgent[AccessRecommenderInput, AccessRecommenderOutput]
+):
     """Agent that generates access recommendations.
 
     Uses LangChain DeepAgents to analyze access patterns, peer behavior,
@@ -59,10 +60,12 @@ Follow least-privilege principles: recommend revoking unused access, granting on
 and flagging suspicious patterns for review.
 Respond with a JSON object containing: recommendations (list of {resource, action, recommendation, reason, confidence}), summary."""  # noqa: E501
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", "{input}"),
+            ]
+        )
 
         chain = prompt | self.llm
         return chain
@@ -82,13 +85,15 @@ Respond with a JSON object containing: recommendations (list of {resource, actio
         agent = self._build_agent()
 
         input_data = {
-            "input": json.dumps({
-                "principal_id": payload.principal_id,
-                "access_history": payload.access_history,
-                "peer_access": payload.peer_access,
-                "current_roles": payload.current_roles,
-                "context": payload.context,
-            })
+            "input": json.dumps(
+                {
+                    "principal_id": payload.principal_id,
+                    "access_history": payload.access_history,
+                    "peer_access": payload.peer_access,
+                    "current_roles": payload.current_roles,
+                    "context": payload.context,
+                }
+            )
         }
 
         response = await agent.ainvoke(input_data)

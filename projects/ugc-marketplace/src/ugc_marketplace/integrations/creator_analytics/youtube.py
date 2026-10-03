@@ -39,7 +39,9 @@ class YouTubeIntegration(BaseIntegration):
             "videos": 0,
         }
 
-    async def fetch_content_performance(self, content_ids: list[str]) -> list[dict[str, Any]]:
+    async def fetch_content_performance(
+        self, content_ids: list[str]
+    ) -> list[dict[str, Any]]:
         """Fetch performance data for videos.
 
         Args:

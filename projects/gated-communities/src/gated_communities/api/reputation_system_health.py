@@ -1,9 +1,9 @@
 """Health check API routes."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-
 from reputation_system.config.settings import Settings, get_settings
 
 router = APIRouter(tags=["health"])

@@ -37,6 +37,8 @@ export function Avatar({
           sizes[size],
           className
         )}
+        role="img"
+        aria-label={alt || "User avatar"}
         {...props}
       >
         {initials}
@@ -50,6 +52,7 @@ export function Avatar({
       alt={alt}
       className={cn("rounded-full object-cover", sizes[size], className)}
       onError={() => setError(true)}
+      loading="lazy"
       {...props}
     />
   );

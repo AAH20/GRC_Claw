@@ -70,9 +70,7 @@ class BaseAgent(ABC):
         """
         ...
 
-    async def _invoke_llm(
-        self, system_prompt: str, user_message: str
-    ) -> str:
+    async def _invoke_llm(self, system_prompt: str, user_message: str) -> str:
         """Invoke the LLM with system and user prompts.
 
         Args:

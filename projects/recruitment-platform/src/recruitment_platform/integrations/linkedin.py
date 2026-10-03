@@ -17,7 +17,9 @@ class LinkedInIntegration(BaseIntegration):
     employer brand presence on LinkedIn.
     """
 
-    def __init__(self, api_key: str, base_url: str = "https://api.linkedin.com/v2") -> None:
+    def __init__(
+        self, api_key: str, base_url: str = "https://api.linkedin.com/v2"
+    ) -> None:
         """Initialize the LinkedIn integration.
 
         Args:

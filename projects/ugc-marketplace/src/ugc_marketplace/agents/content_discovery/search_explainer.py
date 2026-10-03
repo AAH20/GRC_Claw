@@ -6,14 +6,15 @@ import time
 from typing import Any
 
 import structlog
-from langchain_core.tools import tool
 
 from ugc_marketplace.agents.content_discovery.base import BaseAgent
 
 logger = structlog.get_logger(__name__)
 
 
-class SearchExplainerAgent(BaseAgent[tuple["SearchRequest", "SearchResponse"], "SearchExplanation"]):
+class SearchExplainerAgent(
+    BaseAgent[tuple["SearchRequest", "SearchResponse"], "SearchExplanation"]
+):
     """Agent that explains search results to users.
 
     Provides transparency into why specific results were returned,
@@ -45,7 +46,9 @@ class SearchExplainerAgent(BaseAgent[tuple["SearchRequest", "SearchResponse"], "
         )
         return agent
 
-    async def execute(self, input_data: tuple["SearchRequest", "SearchResponse"]) -> "SearchExplanation":
+    async def execute(
+        self, input_data: tuple[SearchRequest, SearchResponse]
+    ) -> SearchExplanation:
         """Execute search explanation.
 
         Args:

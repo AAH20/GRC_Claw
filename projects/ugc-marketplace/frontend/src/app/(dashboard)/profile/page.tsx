@@ -18,17 +18,19 @@ export default function ProfilePage() {
       </div>
       <Card>
         <CardContent className="flex items-center gap-6 pt-6">
-          <Avatar src={user?.avatar} alt={user?.name} size="xl" />
+          <Avatar data-testid="user-avatar" src={user?.avatar} alt={user?.name} size="xl" />
           <div>
-            <h2 className="text-2xl font-bold">{user?.name}</h2>
+            <h2 data-testid="user-name" className="text-2xl font-bold">{user?.name}</h2>
             <p className="text-muted-foreground">{user?.email}</p>
             <div className="mt-2 flex items-center gap-2">
               <Badge variant="default">{user?.role}</Badge>
               <Badge variant="success">{user?.status}</Badge>
             </div>
+            <p data-testid="user-bio" className="mt-2 text-muted-foreground">No bio available</p>
           </div>
         </CardContent>
       </Card>
+      <Button>Edit Profile</Button>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader><CardTitle>Account Details</CardTitle></CardHeader>

@@ -47,7 +47,7 @@ export default function ContentPage() {
           <h1 className="text-3xl font-bold">Content</h1>
           <p className="text-muted-foreground">Manage all user-generated content</p>
         </div>
-        <Button><Plus className="mr-2 h-4 w-4" />Add Content</Button>
+        <Button><Plus className="mr-2 h-4 w-4" />Create Content</Button>
       </div>
       <Tabs tabs={[{ id: "all", label: "All" }, { id: "published", label: "Published" }, { id: "pending_review", label: "Pending" }, { id: "draft", label: "Drafts" }]} activeTab={activeTab} onChange={setActiveTab} />
       <div className="flex flex-col gap-4 sm:flex-row">

@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from escalation_workflow.config import Settings
+if TYPE_CHECKING:
+    from escalation_workflow.config import Settings
 
 logger = structlog.get_logger(__name__)
 

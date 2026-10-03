@@ -1,0 +1,129 @@
+# Custom Prometheus metrics for recruitment-platform
+# Exposed via /metrics endpoint on port 9090
+
+metrics:
+  # Application-level business metrics
+  - name: recruitment_applications_total
+    type: counter
+    help: Total number of job applications submitted
+    labels: [job_id, status, source]
+
+  - name: recruitment_applications_in_flight
+    type: gauge
+    help: Number of applications currently being processed
+    labels: [stage]
+
+  - name: recruitment_application_processing_duration_seconds
+    type: histogram
+    help: Time spent processing each application
+    labels: [stage]
+    buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60]
+
+  - name: recruitment_active_jobs
+    type: gauge
+    help: Number of currently active job postings
+    labels: [department, location_type]
+
+  - name: recruitment_search_queries_total
+    type: counter
+    help: Total job search queries executed
+    labels: [query_type, result_count_bucket]
+
+  - name: recruitment_search_latency_seconds
+    type: histogram
+    help: Job search query latency
+    labels: [query_type]
+    buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5]
+
+  - name: recruitment_interviews_scheduled_total
+    type: counter
+    help: Total interviews scheduled
+    labels: [interview_type, interviewer_id]
+
+  - name: recruitment_offers_extended_total
+    type: counter
+    help: Total offers extended to candidates
+    labels: [department, level]
+
+  - name: recruitment_offer_acceptance_ratio
+    type: gauge
+    help: Ratio of offers accepted vs extended
+    labels: [department]
+
+  - name: recruitment_pipeline_conversion_ratio
+    type: gauge
+    help: Conversion ratio between pipeline stages
+    labels: [from_stage, to_stage]
+
+  - name: recruitment_candidate_feedback_score
+    type: summary
+    help: Candidate experience feedback scores
+    labels: [stage]
+    quantiles: [0.5, 0.9, 0.95, 0.99]
+
+  - name: recruitment_notification_delivery_total
+    type: counter
+    help: Notifications delivered to candidates and recruiters
+    labels: [channel, notification_type, status]
+
+  - name: recruitment_notification_latency_seconds
+    type: histogram
+    help: Time to deliver notifications
+    labels: [channel]
+    buckets: [0.1, 0.5, 1, 5, 15, 30, 60]
+
+  - name: recruitment_db_connection_pool_usage
+    type: gauge
+    help: Database connection pool utilization
+    labels: [pool_name, state]
+
+  - name: recruitment_cache_hit_ratio
+    type: gauge
+    help: Cache hit ratio for frequently accessed data
+    labels: [cache_name]
+
+  - name: recruitment_api_requests_total
+    type: counter
+    help: Total API requests
+    labels: [method, endpoint, status_code]
+
+  - name: recruitment_api_request_duration_seconds
+    type: histogram
+    help: API request duration
+    labels: [method, endpoint]
+    buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10]
+
+  - name: recruitment_error_rate
+    type: gauge
+    help: Error rate per service endpoint
+    labels: [service, endpoint, error_type]
+
+  - name: recruitment_queue_depth
+    type: gauge
+    help: Background job queue depth
+    labels: [queue_name, priority]
+
+  - name: recruitment_queue_processing_lag_seconds
+    type: gauge
+    help: Time between job enqueued and processing started
+    labels: [queue_name]
+
+  - name: recruitment_user_sessions_active
+    type: gauge
+    help: Active user sessions by role
+    labels: [role, auth_method]
+
+  - name: recruitment_feature_flag_evaluations_total
+    type: counter
+    help: Feature flag evaluation count
+    labels: [flag_name, variant]
+
+  - name: recruitment_data_export_requests_total
+    type: counter
+    help: Data export requests by type
+    labels: [export_type, format, requested_by_role]
+
+  - name: recruitment_compliance_audit_events_total
+    type: counter
+    help: Compliance-related audit events
+    labels: [event_type, severity, data_subject_type]

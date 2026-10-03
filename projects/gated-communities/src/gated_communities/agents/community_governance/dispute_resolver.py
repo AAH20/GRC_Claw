@@ -263,7 +263,9 @@ Propose a fair and balanced resolution. Respond with JSON only."""
             Health status dictionary.
         """
         base_health = await super().health_check()
-        open_disputes = len([d for d in self.disputes if d.status == DisputeStatus.OPEN])
+        open_disputes = len(
+            [d for d in self.disputes if d.status == DisputeStatus.OPEN]
+        )
         base_health.update(
             {
                 "total_disputes": len(self.disputes),

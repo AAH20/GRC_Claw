@@ -7,23 +7,20 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, status
 from structlog import get_logger
 
-from ugc_marketplace.agents.content_moderation import (
-    ImageModerationAgent,
-    TextModerationAgent,
-    VideoModerationAgent,
-)
-from ugc_marketplace.models.schemas import (
-    BatchModerationRequest,
-    BatchModerationResult,
-    ContentType,
-    ModerationRequest,
-    ModerationResult,
-)
+from ugc_marketplace.agents.content_moderation import (ImageModerationAgent,
+                                                       TextModerationAgent,
+                                                       VideoModerationAgent)
+from ugc_marketplace.models.schemas import (BatchModerationRequest,
+                                            BatchModerationResult, ContentType,
+                                            ModerationRequest,
+                                            ModerationResult)
 
 logger = get_logger(__name__)
 router = APIRouter()
 
-_agents: dict[ContentType, TextModerationAgent | ImageModerationAgent | VideoModerationAgent] = {}
+_agents: dict[
+    ContentType, TextModerationAgent | ImageModerationAgent | VideoModerationAgent
+] = {}
 
 
 def _get_agent(

@@ -16,6 +16,9 @@ from recruitment_platform.api.routes import (
     resume_parser,
     skills_assessor,
     talent_pool_manager,
+    export,
+    search,
+    notifications,
 )
 
 api_router = APIRouter()
@@ -31,3 +34,6 @@ api_router.include_router(recruitment_analytics.router, prefix="/analytics", tag
 api_router.include_router(onboarding_automator.router, prefix="/onboarding", tags=["onboarding"])
 api_router.include_router(job_description_optimizer.router, prefix="/job-description", tags=["job-description"])
 api_router.include_router(employer_branding.router, prefix="/employer-branding", tags=["employer-branding"])
+api_router.include_router(export.router, prefix="/export", tags=["export"])
+api_router.include_router(search.router, prefix="/search", tags=["search"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

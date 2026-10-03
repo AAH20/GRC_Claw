@@ -42,8 +42,12 @@ class ResumeParseResponse(BaseModel):
     email: str | None = Field(None, description="Candidate email")
     phone: str | None = Field(None, description="Candidate phone")
     skills: list[str] = Field(default_factory=list, description="Extracted skills")
-    experience: list[dict[str, Any]] = Field(default_factory=list, description="Work experience")
-    education: list[dict[str, Any]] = Field(default_factory=list, description="Education history")
+    experience: list[dict[str, Any]] = Field(
+        default_factory=list, description="Work experience"
+    )
+    education: list[dict[str, Any]] = Field(
+        default_factory=list, description="Education history"
+    )
 
 
 class ContactExtractionRequest(BaseModel):
@@ -70,7 +74,9 @@ class SkillsExtractionRequest(BaseModel):
 class SkillsExtractionResponse(BaseModel):
     """Extracted skills list."""
 
-    skills: list[str] = Field(default_factory=list, description="List of extracted skills")
+    skills: list[str] = Field(
+        default_factory=list, description="List of extracted skills"
+    )
 
 
 # ─── Candidate Matcher ───────────────────────────────────────────────────────
@@ -79,14 +85,18 @@ class SkillsExtractionResponse(BaseModel):
 class CandidateMatchRequest(BaseModel):
     """Request to match candidates to a job."""
 
-    candidates: list[dict[str, Any]] = Field(..., description="List of candidate profiles")
+    candidates: list[dict[str, Any]] = Field(
+        ..., description="List of candidate profiles"
+    )
     job_requirements: dict[str, Any] = Field(..., description="Job requirements")
 
 
 class CandidateMatchResponse(BaseModel):
     """Ranked candidate matches."""
 
-    matches: list[dict[str, Any]] = Field(default_factory=list, description="Ranked matches")
+    matches: list[dict[str, Any]] = Field(
+        default_factory=list, description="Ranked matches"
+    )
 
 
 class MatchExplanationRequest(BaseModel):
@@ -101,7 +111,9 @@ class MatchExplanationResponse(BaseModel):
     """Match explanation."""
 
     explanation: str = Field(..., description="Human-readable explanation")
-    factors: list[dict[str, Any]] = Field(default_factory=list, description="Contributing factors")
+    factors: list[dict[str, Any]] = Field(
+        default_factory=list, description="Contributing factors"
+    )
 
 
 class GapAnalysisRequest(BaseModel):
@@ -125,26 +137,34 @@ class GapAnalysisResponse(BaseModel):
 class InterviewSlotRequest(BaseModel):
     """Request to optimize interview slots."""
 
-    participants: list[dict[str, Any]] = Field(..., description="Participants and their availabilities")
+    participants: list[dict[str, Any]] = Field(
+        ..., description="Participants and their availabilities"
+    )
 
 
 class InterviewSlotResponse(BaseModel):
     """Optimal interview time slots."""
 
-    slots: list[dict[str, Any]] = Field(default_factory=list, description="Optimal time slots")
+    slots: list[dict[str, Any]] = Field(
+        default_factory=list, description="Optimal time slots"
+    )
 
 
 class ConflictDetectionRequest(BaseModel):
     """Request to detect scheduling conflicts."""
 
     proposed_slot: dict[str, Any] = Field(..., description="Proposed time slot")
-    existing_events: list[dict[str, Any]] = Field(..., description="Existing calendar events")
+    existing_events: list[dict[str, Any]] = Field(
+        ..., description="Existing calendar events"
+    )
 
 
 class ConflictDetectionResponse(BaseModel):
     """Detected conflicts."""
 
-    conflicts: list[dict[str, Any]] = Field(default_factory=list, description="Detected conflicts")
+    conflicts: list[dict[str, Any]] = Field(
+        default_factory=list, description="Detected conflicts"
+    )
 
 
 class ReminderRequest(BaseModel):
@@ -167,13 +187,17 @@ class ReminderResponse(BaseModel):
 class SkillsAssessmentRequest(BaseModel):
     """Request to assess candidate skills."""
 
-    skill_assessments: list[dict[str, Any]] = Field(..., description="Skill assessment data")
+    skill_assessments: list[dict[str, Any]] = Field(
+        ..., description="Skill assessment data"
+    )
 
 
 class SkillsAssessmentResponse(BaseModel):
     """Assessment results with proficiency scores."""
 
-    assessments: list[dict[str, Any]] = Field(default_factory=list, description="Assessment results")
+    assessments: list[dict[str, Any]] = Field(
+        default_factory=list, description="Assessment results"
+    )
 
 
 class LearningPathRequest(BaseModel):
@@ -186,7 +210,9 @@ class LearningPathRequest(BaseModel):
 class LearningPathResponse(BaseModel):
     """Learning path recommendations."""
 
-    path: list[dict[str, Any]] = Field(default_factory=list, description="Recommended learning path")
+    path: list[dict[str, Any]] = Field(
+        default_factory=list, description="Recommended learning path"
+    )
 
 
 class SkillValidationRequest(BaseModel):
@@ -199,7 +225,9 @@ class SkillValidationRequest(BaseModel):
 class SkillValidationResponse(BaseModel):
     """Skill validation results."""
 
-    validated: list[dict[str, Any]] = Field(default_factory=list, description="Validation results")
+    validated: list[dict[str, Any]] = Field(
+        default_factory=list, description="Validation results"
+    )
 
 
 # ─── Bias Detector ───────────────────────────────────────────────────────────
@@ -214,21 +242,29 @@ class BiasLanguageRequest(BaseModel):
 class BiasLanguageResponse(BaseModel):
     """Detected biased phrases with suggestions."""
 
-    biased_phrases: list[dict[str, Any]] = Field(default_factory=list, description="Biased phrases found")
-    suggestions: list[str] = Field(default_factory=list, description="Suggested alternatives")
+    biased_phrases: list[dict[str, Any]] = Field(
+        default_factory=list, description="Biased phrases found"
+    )
+    suggestions: list[str] = Field(
+        default_factory=list, description="Suggested alternatives"
+    )
 
 
 class FairnessScoreRequest(BaseModel):
     """Request to compute fairness metrics."""
 
     decisions: list[dict[str, Any]] = Field(..., description="Hiring decisions")
-    protected_attributes: list[str] = Field(..., description="Protected attributes to check")
+    protected_attributes: list[str] = Field(
+        ..., description="Protected attributes to check"
+    )
 
 
 class FairnessScoreResponse(BaseModel):
     """Fairness metric scores."""
 
-    scores: dict[str, float] = Field(default_factory=dict, description="Fairness metric scores")
+    scores: dict[str, float] = Field(
+        default_factory=dict, description="Fairness metric scores"
+    )
 
 
 class DemographicAnalysisRequest(BaseModel):
@@ -241,7 +277,9 @@ class DemographicAnalysisRequest(BaseModel):
 class DemographicAnalysisResponse(BaseModel):
     """Demographic analysis results."""
 
-    analysis: dict[str, Any] = Field(default_factory=dict, description="Demographic analysis")
+    analysis: dict[str, Any] = Field(
+        default_factory=dict, description="Demographic analysis"
+    )
 
 
 class BiasRecommendationRequest(BaseModel):
@@ -253,7 +291,9 @@ class BiasRecommendationRequest(BaseModel):
 class BiasRecommendationResponse(BaseModel):
     """Actionable bias mitigation recommendations."""
 
-    recommendations: list[dict[str, Any]] = Field(default_factory=list, description="Recommendations")
+    recommendations: list[dict[str, Any]] = Field(
+        default_factory=list, description="Recommendations"
+    )
 
 
 # ─── Talent Pool Manager ─────────────────────────────────────────────────────
@@ -269,7 +309,9 @@ class TalentSourceRequest(BaseModel):
 class TalentSourceResponse(BaseModel):
     """Sourced candidates with match scores."""
 
-    candidates: list[dict[str, Any]] = Field(default_factory=list, description="Sourced candidates")
+    candidates: list[dict[str, Any]] = Field(
+        default_factory=list, description="Sourced candidates"
+    )
 
 
 class PoolAnalysisRequest(BaseModel):
@@ -290,13 +332,17 @@ class TalentRecommendRequest(BaseModel):
     """Request to recommend talent for a position."""
 
     job: dict[str, Any] = Field(..., description="Job description")
-    pool_members: list[dict[str, Any]] = Field(..., description="Pool members to consider")
+    pool_members: list[dict[str, Any]] = Field(
+        ..., description="Pool members to consider"
+    )
 
 
 class TalentRecommendResponse(BaseModel):
     """Ranked talent recommendations."""
 
-    recommendations: list[dict[str, Any]] = Field(default_factory=list, description="Ranked recommendations")
+    recommendations: list[dict[str, Any]] = Field(
+        default_factory=list, description="Ranked recommendations"
+    )
 
 
 class EngagementTrackRequest(BaseModel):
@@ -310,7 +356,9 @@ class EngagementTrackResponse(BaseModel):
     """Engagement metrics."""
 
     engagement_score: float = Field(..., description="Engagement score")
-    metrics: dict[str, Any] = Field(default_factory=dict, description="Engagement metrics")
+    metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Engagement metrics"
+    )
 
 
 # ─── Recruitment Analytics ───────────────────────────────────────────────────
@@ -327,7 +375,9 @@ class CostAnalysisResponse(BaseModel):
     """Cost analysis results."""
 
     total_cost: float = Field(..., description="Total recruitment cost")
-    breakdown: dict[str, float] = Field(default_factory=dict, description="Cost breakdown")
+    breakdown: dict[str, float] = Field(
+        default_factory=dict, description="Cost breakdown"
+    )
 
 
 class FunnelAnalysisRequest(BaseModel):
@@ -339,8 +389,12 @@ class FunnelAnalysisRequest(BaseModel):
 class FunnelAnalysisResponse(BaseModel):
     """Funnel analysis results."""
 
-    conversion_rates: dict[str, float] = Field(default_factory=dict, description="Stage conversion rates")
-    bottlenecks: list[str] = Field(default_factory=list, description="Identified bottlenecks")
+    conversion_rates: dict[str, float] = Field(
+        default_factory=dict, description="Stage conversion rates"
+    )
+    bottlenecks: list[str] = Field(
+        default_factory=list, description="Identified bottlenecks"
+    )
 
 
 class DiversityMetricsRequest(BaseModel):
@@ -353,20 +407,26 @@ class DiversityMetricsRequest(BaseModel):
 class DiversityMetricsResponse(BaseModel):
     """Diversity metrics."""
 
-    metrics: dict[str, float] = Field(default_factory=dict, description="Diversity metrics")
+    metrics: dict[str, float] = Field(
+        default_factory=dict, description="Diversity metrics"
+    )
 
 
 class HiringPredictionRequest(BaseModel):
     """Request to generate hiring predictions."""
 
-    historical_data: list[dict[str, Any]] = Field(..., description="Historical hiring data")
+    historical_data: list[dict[str, Any]] = Field(
+        ..., description="Historical hiring data"
+    )
     current_pipeline: dict[str, Any] = Field(..., description="Current pipeline data")
 
 
 class HiringPredictionResponse(BaseModel):
     """Predictive metrics."""
 
-    predictions: dict[str, Any] = Field(default_factory=dict, description="Hiring predictions")
+    predictions: dict[str, Any] = Field(
+        default_factory=dict, description="Hiring predictions"
+    )
 
 
 class SourceEffectivenessRequest(BaseModel):
@@ -379,7 +439,9 @@ class SourceEffectivenessRequest(BaseModel):
 class SourceEffectivenessResponse(BaseModel):
     """Source effectiveness metrics."""
 
-    effectiveness: dict[str, float] = Field(default_factory=dict, description="Source effectiveness scores")
+    effectiveness: dict[str, float] = Field(
+        default_factory=dict, description="Source effectiveness scores"
+    )
 
 
 # ─── Onboarding Automator ───────────────────────────────────────────────────
@@ -396,7 +458,9 @@ class ComplianceCheckResponse(BaseModel):
     """Compliance status."""
 
     compliant: bool = Field(..., description="Whether onboarding is compliant")
-    violations: list[str] = Field(default_factory=list, description="Compliance violations")
+    violations: list[str] = Field(
+        default_factory=list, description="Compliance violations"
+    )
 
 
 class DocumentGenerationRequest(BaseModel):
@@ -409,7 +473,9 @@ class DocumentGenerationRequest(BaseModel):
 class DocumentGenerationResponse(BaseModel):
     """Generated documents."""
 
-    documents: list[dict[str, Any]] = Field(default_factory=list, description="Generated documents")
+    documents: list[dict[str, Any]] = Field(
+        default_factory=list, description="Generated documents"
+    )
 
 
 class ProgressTrackRequest(BaseModel):
@@ -423,7 +489,9 @@ class ProgressTrackResponse(BaseModel):
     """Progress status."""
 
     progress_percentage: float = Field(..., description="Progress percentage")
-    completed_tasks: list[str] = Field(default_factory=list, description="Completed tasks")
+    completed_tasks: list[str] = Field(
+        default_factory=list, description="Completed tasks"
+    )
     pending_tasks: list[str] = Field(default_factory=list, description="Pending tasks")
 
 
@@ -437,7 +505,9 @@ class TaskScheduleRequest(BaseModel):
 class TaskScheduleResponse(BaseModel):
     """Scheduled tasks."""
 
-    tasks: list[dict[str, Any]] = Field(default_factory=list, description="Scheduled tasks")
+    tasks: list[dict[str, Any]] = Field(
+        default_factory=list, description="Scheduled tasks"
+    )
 
 
 class WelcomeMessageRequest(BaseModel):
@@ -506,7 +576,9 @@ class SEOOptimizationRequest(BaseModel):
 class SEOOptimizationResponse(BaseModel):
     """SEO recommendations."""
 
-    recommendations: list[str] = Field(default_factory=list, description="SEO recommendations")
+    recommendations: list[str] = Field(
+        default_factory=list, description="SEO recommendations"
+    )
 
 
 class ToneAnalysisRequest(BaseModel):
@@ -590,4 +662,6 @@ class SentimentAnalysisResponse(BaseModel):
     """Sentiment analysis."""
 
     sentiment: str = Field(..., description="Overall sentiment")
-    scores: dict[str, float] = Field(default_factory=dict, description="Sentiment scores")
+    scores: dict[str, float] = Field(
+        default_factory=dict, description="Sentiment scores"
+    )

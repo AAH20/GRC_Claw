@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from member_verification.api.dependencies import verify_api_key
 from member_verification.models.schemas import FraudCheckRequest, FraudReport
 

@@ -8,8 +8,6 @@ import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_client import make_asgi_app
-
 from moderation_queue.api import (
     agents_router,
     escalations_router,
@@ -18,6 +16,7 @@ from moderation_queue.api import (
     reviews_router,
 )
 from moderation_queue.config import get_settings
+from prometheus_client import make_asgi_app
 
 # Configure structured logging
 structlog.configure(

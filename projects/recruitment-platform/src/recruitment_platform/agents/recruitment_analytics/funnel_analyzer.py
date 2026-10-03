@@ -27,4 +27,9 @@ class FunnelAnalyzer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Funnel analysis with conversion rates and bottlenecks.
         """
-        return {"stages": [], "conversion_rates": {}, "bottlenecks": [], "drop_off_points": []}
+        return {
+            "stages": [],
+            "conversion_rates": {},
+            "bottlenecks": [],
+            "drop_off_points": [],
+        }

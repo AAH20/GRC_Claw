@@ -56,7 +56,9 @@ async def diversity_metrics(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Diversity metrics.
     """
-    from recruitment_platform.agents.recruitment_analytics.diversity_analyzer import DiversityAnalyzer
+    from recruitment_platform.agents.recruitment_analytics.diversity_analyzer import (
+        DiversityAnalyzer,
+    )
 
     agent = DiversityAnalyzer()
     result = await agent.process(data)

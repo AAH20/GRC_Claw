@@ -9,9 +9,7 @@ from ugc_marketplace.agents.community_curation.base import BaseCurationAgent
 logger = structlog.get_logger(__name__)
 
 
-class CurationExplainerAgent(
-    BaseCurationAgent[list["ContentItem"], dict[str, str]]
-):
+class CurationExplainerAgent(BaseCurationAgent[list["ContentItem"], dict[str, str]]):
     """Agent that explains curation decisions to users.
 
     Provides transparency into why specific content was
@@ -40,7 +38,7 @@ class CurationExplainerAgent(
         )
         return agent
 
-    async def execute(self, input_data: list["ContentItem"]) -> dict[str, str]:
+    async def execute(self, input_data: list[ContentItem]) -> dict[str, str]:
         """Execute curation explanation.
 
         Args:
@@ -54,15 +52,15 @@ class CurationExplainerAgent(
 
         for item in input_data:
             explanations[item.content_id] = (
-                f"This content was selected based on its engagement metrics, "
-                f"quality score, and relevance to community interests."
+                "This content was selected based on its engagement metrics, "
+                "quality score, and relevance to community interests."
             )
 
         logger.info("Curation explanation completed", items_explained=len(explanations))
         return explanations
 
     @staticmethod
-    async def _explain_ranking(item: "ContentItem") -> str:
+    async def _explain_ranking(item: ContentItem) -> str:
         """Explain ranking decision.
 
         Args:
@@ -71,10 +69,10 @@ class CurationExplainerAgent(
         Returns:
             Ranking explanation.
         """
-        return f"Ranked based on engagement and quality metrics."
+        return "Ranked based on engagement and quality metrics."
 
     @staticmethod
-    async def _explain_filtering(item: "ContentItem") -> str:
+    async def _explain_filtering(item: ContentItem) -> str:
         """Explain filtering decision.
 
         Args:
@@ -83,10 +81,10 @@ class CurationExplainerAgent(
         Returns:
             Filtering explanation.
         """
-        return f"Passed quality and policy filters."
+        return "Passed quality and policy filters."
 
     @staticmethod
-    async def _explain_diversity(items: list["ContentItem"]) -> str:
+    async def _explain_diversity(items: list[ContentItem]) -> str:
         """Explain diversity in selection.
 
         Args:
@@ -95,4 +93,4 @@ class CurationExplainerAgent(
         Returns:
             Diversity explanation.
         """
-        return f"Selected to ensure diverse content representation."
+        return "Selected to ensure diverse content representation."

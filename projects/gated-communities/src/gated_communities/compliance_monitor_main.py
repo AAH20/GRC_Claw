@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 import structlog
+from compliance_monitor.api.routes import audits, policies, remediation, scores, violations
+from compliance_monitor.config.settings import get_settings
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from compliance_monitor.api.routes import audits, policies, remediation, scores, violations
-from compliance_monitor.config.settings import get_settings
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 logger = structlog.get_logger(__name__)
 
@@ -20,7 +22,9 @@ logger = structlog.get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager for startup/shutdown events."""
     settings = get_settings()
-    logger.info("Starting compliance monitor", env=settings.app_env, debug=settings.debug)
+    logger.info(
+        "Starting compliance monitor", env=settings.app_env, debug=settings.debug
+    )
     yield
     logger.info("Shutting down compliance monitor")
 
@@ -33,7 +37,7 @@ def create_app() -> FastAPI:
     """
     app = FastAPI(
         title="Compliance Monitor",
-        description="Agentic AI compliance monitoring with policy tracking, violation detection, and audit reporting",
+        description="Agentic AI compliance monitoring with policy tracking, violation detection, and audit reporting",  # noqa: E501
         version="0.1.0",
         lifespan=lifespan,
         docs_url="/docs",
@@ -49,7 +53,9 @@ def create_app() -> FastAPI:
     )
 
     @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def global_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         """Handle unexpected exceptions globally."""
         logger.error("Unhandled exception", error=str(exc), path=request.url.path)
         return JSONResponse(
@@ -64,7 +70,9 @@ def create_app() -> FastAPI:
 
     # API routes
     app.include_router(policies.router, prefix="/api/v1/policies", tags=["policies"])
-    app.include_router(violations.router, prefix="/api/v1/violations", tags=["violations"])
+    app.include_router(
+        violations.router, prefix="/api/v1/violations", tags=["violations"]
+    )
     app.include_router(audits.router, prefix="/api/v1/audits", tags=["audits"])
     app.include_router(scores.router, prefix="/api/v1/scores", tags=["scores"])
     app.include_router(remediation.router, prefix="/api/v1", tags=["remediation"])

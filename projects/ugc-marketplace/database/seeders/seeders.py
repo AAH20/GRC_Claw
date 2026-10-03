@@ -13,59 +13,33 @@ Usage:
     from ugc_marketplace.database.seeders.seeders import seed_all_async
     await seed_all_async(async_session, num_creators=50, num_content_per_creator=5)
 """
+
 from __future__ import annotations
 
 import logging
 import random
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
-from typing import Any, Sequence
-from uuid import UUID, uuid4
+from collections.abc import Sequence
+from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ugc_marketplace.database.seeders.factories import (
-    ActiveListingFactory,
-    AnalyticsEventFactory,
-    AuditLogFactory,
-    CommercialLicenseFactory,
-    CompletedTransactionFactory,
-    ContentFactory,
-    CreatorFactory,
-    DraftContentFactory,
-    FraudReportFactory,
-    LicenseFactory,
-    ListingFactory,
-    ModerationActionFactory,
-    OpenFraudReportFactory,
-    PendingTransactionFactory,
-    PublishedContentFactory,
-    QualityScoreFactory,
-    RefundedTransactionFactory,
-    ResolvedFraudReportFactory,
-    SuspendedCreatorFactory,
-    TransactionFactory,
-    VerifiedCreatorFactory,
-)
-from ugc_marketplace.database.seeders.models import (
-    AnalyticsEvent,
-    AuditLog,
-    Content,
-    ContentStatus,
-    Creator,
-    FraudReport,
-    FraudReportStatus,
-    License,
-    LicenseType,
-    Listing,
-    ModerationAction,
-    PaymentStatus,
-    QualityScore,
-    Transaction,
-    VerificationStatus,
-)
+    ActiveListingFactory, AnalyticsEventFactory, AuditLogFactory,
+    CommercialLicenseFactory, CompletedTransactionFactory, ContentFactory,
+    CreatorFactory, DraftContentFactory, FraudReportFactory, LicenseFactory,
+    ListingFactory, ModerationActionFactory, OpenFraudReportFactory,
+    PendingTransactionFactory, PublishedContentFactory, QualityScoreFactory,
+    RefundedTransactionFactory, ResolvedFraudReportFactory,
+    SuspendedCreatorFactory, TransactionFactory, VerifiedCreatorFactory)
+from ugc_marketplace.database.seeders.models import (AnalyticsEvent, AuditLog,
+                                                     Content, ContentStatus,
+                                                     Creator, FraudReport,
+                                                     FraudReportStatus,
+                                                     License, LicenseType,
+                                                     Listing, ModerationAction,
+                                                     PaymentStatus,
+                                                     QualityScore, Transaction)
 
 logger = logging.getLogger(__name__)
 
@@ -112,8 +86,13 @@ def seed_creators(
         creators.append(creator)
 
     session.flush()
-    logger.info("Seeded %d creators (%d verified, %d suspended, %d unverified)",
-                count, verified_count, suspended_count, unverified_count)
+    logger.info(
+        "Seeded %d creators (%d verified, %d suspended, %d unverified)",
+        count,
+        verified_count,
+        suspended_count,
+        unverified_count,
+    )
     return creators
 
 
@@ -160,7 +139,9 @@ def seed_content(
             content_items.append(content)
 
     session.flush()
-    logger.info("Seeded %d content items for %d creators", len(content_items), len(creators))
+    logger.info(
+        "Seeded %d content items for %d creators", len(content_items), len(creators)
+    )
     return content_items
 
 
@@ -197,12 +178,16 @@ def seed_listings(
             listings.append(listing)
 
         for _ in range(inactive_count):
-            listing = ListingFactory(content=content, creator=content.creator, is_active=False)
+            listing = ListingFactory(
+                content=content, creator=content.creator, is_active=False
+            )
             session.add(listing)
             listings.append(listing)
 
     session.flush()
-    logger.info("Seeded %d listings for %d content items", len(listings), len(content_items))
+    logger.info(
+        "Seeded %d listings for %d content items", len(listings), len(content_items)
+    )
     return listings
 
 
@@ -245,7 +230,9 @@ def seed_transactions(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = CompletedTransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = CompletedTransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -253,7 +240,9 @@ def seed_transactions(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = PendingTransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = PendingTransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -261,7 +250,9 @@ def seed_transactions(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = RefundedTransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = RefundedTransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -269,12 +260,16 @@ def seed_transactions(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = TransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = TransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
     session.flush()
-    logger.info("Seeded %d transactions for %d listings", len(transactions), len(listings))
+    logger.info(
+        "Seeded %d transactions for %d listings", len(transactions), len(listings)
+    )
     return transactions
 
 
@@ -312,7 +307,9 @@ def seed_licenses(
             licenses.append(license_obj)
 
     session.flush()
-    logger.info("Seeded %d licenses for %d transactions", len(licenses), len(transactions))
+    logger.info(
+        "Seeded %d licenses for %d transactions", len(licenses), len(transactions)
+    )
     return licenses
 
 
@@ -381,7 +378,9 @@ def seed_quality_scores(
             scores.append(score)
 
     session.flush()
-    logger.info("Seeded %d quality scores for %d content items", len(scores), len(content_items))
+    logger.info(
+        "Seeded %d quality scores for %d content items", len(scores), len(content_items)
+    )
     return scores
 
 
@@ -457,8 +456,14 @@ def seed_analytics_events(
 
     for _ in range(count):
         user = random.choice(creators) if creators and random.random() > 0.3 else None
-        content = random.choice(content_items) if content_items and random.random() > 0.5 else None
-        listing = random.choice(listings) if listings and random.random() > 0.6 else None
+        content = (
+            random.choice(content_items)
+            if content_items and random.random() > 0.5
+            else None
+        )
+        listing = (
+            random.choice(listings) if listings and random.random() > 0.6 else None
+        )
 
         event = AnalyticsEventFactory(user=user, content=content, listing=listing)
         session.add(event)
@@ -488,7 +493,9 @@ def seed_audit_logs(
     logs: list[AuditLog] = []
 
     for _ in range(count):
-        changed_by = random.choice(creators) if creators and random.random() > 0.3 else None
+        changed_by = (
+            random.choice(creators) if creators and random.random() > 0.3 else None
+        )
         log = AuditLogFactory(changed_by=changed_by)
         session.add(log)
         logs.append(log)
@@ -537,13 +544,21 @@ def seed_all(
 
     creators = seed_creators(session, num_creators)
     content_items = seed_content(session, creators, per_creator=num_content_per_creator)
-    listings = seed_listings(session, content_items, per_content=num_listings_per_content)
+    listings = seed_listings(
+        session, content_items, per_content=num_listings_per_content
+    )
     transactions = seed_transactions(
         session, listings, buyers=creators, per_listing=num_transactions_per_listing
     )
-    licenses = seed_licenses(session, transactions, per_transaction=num_licenses_per_transaction)
+    licenses = seed_licenses(
+        session, transactions, per_transaction=num_licenses_per_transaction
+    )
     moderation_actions = seed_moderation_actions(
-        session, content_items, listings, moderators=creators, count=num_moderation_actions
+        session,
+        content_items,
+        listings,
+        moderators=creators,
+        count=num_moderation_actions,
     )
     quality_scores = seed_quality_scores(
         session, content_items, per_content=num_quality_scores_per_content
@@ -668,7 +683,9 @@ async def seed_listings_async(
             listings.append(listing)
 
         for _ in range(inactive_count):
-            listing = ListingFactory(content=content, creator=content.creator, is_active=False)
+            listing = ListingFactory(
+                content=content, creator=content.creator, is_active=False
+            )
             session.add(listing)
             listings.append(listing)
 
@@ -703,7 +720,9 @@ async def seed_transactions_async(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = CompletedTransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = CompletedTransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -711,7 +730,9 @@ async def seed_transactions_async(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = PendingTransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = PendingTransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -719,7 +740,9 @@ async def seed_transactions_async(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = RefundedTransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = RefundedTransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -727,7 +750,9 @@ async def seed_transactions_async(
             buyer = random.choice(buyers)
             if buyer.id == listing.creator_id:
                 continue
-            transaction = TransactionFactory(listing=listing, buyer=buyer, seller=listing.creator)
+            transaction = TransactionFactory(
+                listing=listing, buyer=buyer, seller=listing.creator
+            )
             session.add(transaction)
             transactions.append(transaction)
 
@@ -864,8 +889,14 @@ async def seed_analytics_events_async(
 
     for _ in range(count):
         user = random.choice(creators) if creators and random.random() > 0.3 else None
-        content = random.choice(content_items) if content_items and random.random() > 0.5 else None
-        listing = random.choice(listings) if listings and random.random() > 0.6 else None
+        content = (
+            random.choice(content_items)
+            if content_items and random.random() > 0.5
+            else None
+        )
+        listing = (
+            random.choice(listings) if listings and random.random() > 0.6 else None
+        )
 
         event = AnalyticsEventFactory(user=user, content=content, listing=listing)
         session.add(event)
@@ -886,7 +917,9 @@ async def seed_audit_logs_async(
     logs: list[AuditLog] = []
 
     for _ in range(count):
-        changed_by = random.choice(creators) if creators and random.random() > 0.3 else None
+        changed_by = (
+            random.choice(creators) if creators and random.random() > 0.3 else None
+        )
         log = AuditLogFactory(changed_by=changed_by)
         session.add(log)
         logs.append(log)
@@ -934,14 +967,24 @@ async def seed_all_async(
     logger.info("Starting async database seed with %d creators", num_creators)
 
     creators = await seed_creators_async(session, num_creators)
-    content_items = await seed_content_async(session, creators, per_creator=num_content_per_creator)
-    listings = await seed_listings_async(session, content_items, per_content=num_listings_per_content)
+    content_items = await seed_content_async(
+        session, creators, per_creator=num_content_per_creator
+    )
+    listings = await seed_listings_async(
+        session, content_items, per_content=num_listings_per_content
+    )
     transactions = await seed_transactions_async(
         session, listings, buyers=creators, per_listing=num_transactions_per_listing
     )
-    licenses = await seed_licenses_async(session, transactions, per_transaction=num_licenses_per_transaction)
+    licenses = await seed_licenses_async(
+        session, transactions, per_transaction=num_licenses_per_transaction
+    )
     moderation_actions = await seed_moderation_actions_async(
-        session, content_items, listings, moderators=creators, count=num_moderation_actions
+        session,
+        content_items,
+        listings,
+        moderators=creators,
+        count=num_moderation_actions,
     )
     quality_scores = await seed_quality_scores_async(
         session, content_items, per_content=num_quality_scores_per_content
@@ -977,25 +1020,65 @@ async def seed_all_async(
 def main() -> None:
     """CLI entry point for running seeders from command line."""
     import argparse
+
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
     from ugc_marketplace.database.seeders.models import Base
 
-    parser = argparse.ArgumentParser(description="Seed UGC Marketplace database with test data")
-    parser.add_argument("--database-url", default="postgresql+asyncpg://postgres:postgres@localhost:5432/ugc_marketplace",
-                        help="Database connection URL")
-    parser.add_argument("--creators", type=int, default=50, help="Number of creators to create")
-    parser.add_argument("--content-per-creator", type=int, default=5, help="Content items per creator")
-    parser.add_argument("--listings-per-content", type=int, default=2, help="Listings per content item")
-    parser.add_argument("--transactions-per-listing", type=int, default=3, help="Transactions per listing")
-    parser.add_argument("--licenses-per-transaction", type=int, default=1, help="Licenses per transaction")
-    parser.add_argument("--moderation-actions", type=int, default=100, help="Moderation actions to create")
-    parser.add_argument("--quality-scores-per-content", type=int, default=1, help="Quality scores per content item")
-    parser.add_argument("--fraud-reports", type=int, default=50, help="Fraud reports to create")
-    parser.add_argument("--analytics-events", type=int, default=1000, help="Analytics events to create")
-    parser.add_argument("--audit-logs", type=int, default=200, help="Audit log entries to create")
-    parser.add_argument("--drop-all", action="store_true", help="Drop all tables before seeding")
+    parser = argparse.ArgumentParser(
+        description="Seed UGC Marketplace database with test data"
+    )
+    parser.add_argument(
+        "--database-url",
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/ugc_marketplace",
+        help="Database connection URL",
+    )
+    parser.add_argument(
+        "--creators", type=int, default=50, help="Number of creators to create"
+    )
+    parser.add_argument(
+        "--content-per-creator", type=int, default=5, help="Content items per creator"
+    )
+    parser.add_argument(
+        "--listings-per-content", type=int, default=2, help="Listings per content item"
+    )
+    parser.add_argument(
+        "--transactions-per-listing",
+        type=int,
+        default=3,
+        help="Transactions per listing",
+    )
+    parser.add_argument(
+        "--licenses-per-transaction",
+        type=int,
+        default=1,
+        help="Licenses per transaction",
+    )
+    parser.add_argument(
+        "--moderation-actions",
+        type=int,
+        default=100,
+        help="Moderation actions to create",
+    )
+    parser.add_argument(
+        "--quality-scores-per-content",
+        type=int,
+        default=1,
+        help="Quality scores per content item",
+    )
+    parser.add_argument(
+        "--fraud-reports", type=int, default=50, help="Fraud reports to create"
+    )
+    parser.add_argument(
+        "--analytics-events", type=int, default=1000, help="Analytics events to create"
+    )
+    parser.add_argument(
+        "--audit-logs", type=int, default=200, help="Audit log entries to create"
+    )
+    parser.add_argument(
+        "--drop-all", action="store_true", help="Drop all tables before seeding"
+    )
 
     args = parser.parse_args()
 

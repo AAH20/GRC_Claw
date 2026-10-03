@@ -16,7 +16,9 @@ class PayPalIntegration:
     and payment capture for creator monetization.
     """
 
-    def __init__(self, client_id: str, client_secret: str, sandbox: bool = True) -> None:
+    def __init__(
+        self, client_id: str, client_secret: str, sandbox: bool = True
+    ) -> None:
         """Initialize the PayPal integration.
 
         Args:

@@ -2,10 +2,10 @@
 
 from escalation_workflow.models.analysis import EscalationAnalysis, EscalationPattern
 from escalation_workflow.models.escalation import (
-    Escalation,
-    EscalationCreate,
-    EscalationStatus,
-    EscalationUpdate,
+                                                 Escalation,
+                                                 EscalationCreate,
+                                                 EscalationStatus,
+                                                 EscalationUpdate,
 )
 from escalation_workflow.models.priority import Priority, PriorityLevel
 from escalation_workflow.models.resolution import Resolution, ResolutionCreate, ResolutionStatus

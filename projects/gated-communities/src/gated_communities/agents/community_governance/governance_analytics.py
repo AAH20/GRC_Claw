@@ -19,9 +19,8 @@ from community_governance.models.governance_action import ActionStatus, Governan
 from community_governance.models.policy import Policy, PolicyStatus
 
 if TYPE_CHECKING:
-    from langchain_core.language_models import BaseLanguageModel
-
     from community_governance.models.rule import Rule
+    from langchain_core.language_models import BaseLanguageModel
 
 
 logger = get_logger(__name__)
@@ -103,14 +102,22 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
                 focus_areas=focus_areas,
             )
 
-            period_actions = self._filter_by_period(self.actions, period_start, period_end)
-            period_disputes = self._filter_by_period(self.disputes, period_start, period_end)
+            period_actions = self._filter_by_period(
+                self.actions, period_start, period_end
+            )
+            period_disputes = self._filter_by_period(
+                self.disputes, period_start, period_end
+            )
 
-            violations_by_category = self._calculate_violations_by_category(period_actions)
+            violations_by_category = self._calculate_violations_by_category(
+                period_actions
+            )
             disputes_by_status = self._calculate_disputes_by_status(period_disputes)
             actions_by_type = self._calculate_actions_by_type(period_actions)
             top_violated_rules = self._get_top_violated_rules(period_actions)
-            resolution_time_trend = self._calculate_resolution_time_trend(period_disputes)
+            resolution_time_trend = self._calculate_resolution_time_trend(
+                period_disputes
+            )
 
             health_score = self._calculate_health_score(
                 period_actions, period_disputes, violations_by_category
@@ -131,7 +138,9 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
                 total_actions=len(period_actions),
                 total_rules=len([r for r in self.rules if r.is_active]),
                 total_disputes=len(period_disputes),
-                total_policies=len([p for p in self.policies if p.status == PolicyStatus.ACTIVE]),
+                total_policies=len(
+                    [p for p in self.policies if p.status == PolicyStatus.ACTIVE]
+                ),
                 violations_by_category=violations_by_category,
                 disputes_by_status=disputes_by_status,
                 actions_by_type=actions_by_type,
@@ -182,7 +191,9 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
             status_counts[status] = status_counts.get(status, 0) + 1
         return status_counts
 
-    def _calculate_actions_by_type(self, actions: list[GovernanceAction]) -> dict[str, int]:
+    def _calculate_actions_by_type(
+        self, actions: list[GovernanceAction]
+    ) -> dict[str, int]:
         """Calculate actions grouped by type."""
         type_counts: dict[str, int] = {}
         for action in actions:
@@ -200,8 +211,13 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
                 rule_id = action.metadata.get("rule_id", "unknown")
                 rule_violations[rule_id] = rule_violations.get(rule_id, 0) + 1
 
-        sorted_rules = sorted(rule_violations.items(), key=lambda x: x[1], reverse=True)[:5]
-        return [{"rule_id": rule_id, "violation_count": count} for rule_id, count in sorted_rules]
+        sorted_rules = sorted(
+            rule_violations.items(), key=lambda x: x[1], reverse=True
+        )[:5]
+        return [
+            {"rule_id": rule_id, "violation_count": count}
+            for rule_id, count in sorted_rules
+        ]
 
     def _calculate_resolution_time_trend(
         self, disputes: list[Dispute]
@@ -217,8 +233,8 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
         for dispute in resolved_disputes:
             week_key = dispute.created_at.strftime("%Y-W%U")
             resolution_hours = (
-                (dispute.resolved_at - dispute.created_at).total_seconds() / 3600
-            )
+                dispute.resolved_at - dispute.created_at
+            ).total_seconds() / 3600
             weekly_data.setdefault(week_key, []).append(resolution_hours)
 
         trend = []
@@ -244,11 +260,15 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
         total_actions = len(actions)
 
         if total_actions > 0:
-            rule_compliance_rate = ((total_actions - total_violations) / total_actions) * 100
+            rule_compliance_rate = (
+                (total_actions - total_violations) / total_actions
+            ) * 100
         else:
             rule_compliance_rate = 100.0
 
-        resolved_disputes = len([d for d in disputes if d.status == DisputeStatus.RESOLVED])
+        resolved_disputes = len(
+            [d for d in disputes if d.status == DisputeStatus.RESOLVED]
+        )
         total_disputes = len(disputes)
         if total_disputes > 0:
             dispute_resolution_rate = (resolved_disputes / total_disputes) * 100
@@ -283,7 +303,9 @@ class GovernanceAnalyticsAgent(BaseAgent[dict[str, Any], GovernanceAnalytics]):
             policy_adherence_rate=round(policy_adherence_rate, 2),
             average_resolution_time_hours=round(avg_resolution_time, 2),
             active_violations_count=total_violations,
-            pending_disputes_count=len([d for d in disputes if d.status == DisputeStatus.OPEN]),
+            pending_disputes_count=len(
+                [d for d in disputes if d.status == DisputeStatus.OPEN]
+            ),
         )
 
     async def _generate_recommendations_with_llm(
@@ -327,7 +349,9 @@ Provide 3-5 specific, actionable recommendations."""
             return self._generate_recommendations(health_score, violations_by_category)
 
     def _generate_recommendations(
-        self, health_score: GovernanceHealthScore, violations_by_category: dict[str, int]
+        self,
+        health_score: GovernanceHealthScore,
+        violations_by_category: dict[str, int],
     ) -> list[str]:
         """Generate recommendations using programmatic logic."""
         recommendations: list[str] = []
@@ -368,8 +392,12 @@ Provide 3-5 specific, actionable recommendations."""
     async def get_summary(self) -> GovernanceSummary:
         """Get a quick summary of governance state."""
         active_rules = len([r for r in self.rules if r.is_active])
-        active_policies = len([p for p in self.policies if p.status == PolicyStatus.ACTIVE])
-        open_disputes = len([d for d in self.disputes if d.status == DisputeStatus.OPEN])
+        active_policies = len(
+            [p for p in self.policies if p.status == PolicyStatus.ACTIVE]
+        )
+        open_disputes = len(
+            [d for d in self.disputes if d.status == DisputeStatus.OPEN]
+        )
         pending_actions = len(
             [a for a in self.actions if a.status == ActionStatus.PENDING]
         )

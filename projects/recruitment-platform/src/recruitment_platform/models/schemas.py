@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -21,17 +21,17 @@ class HealthResponse(BaseSchema):
 
     status: str
     service: str
-    version: Optional[str] = None
-    timestamp: Optional[datetime] = None
+    version: str | None = None
+    timestamp: datetime | None = None
 
 
 class AgentResponse(BaseSchema, Generic[T]):
     """Generic agent response wrapper."""
 
     success: bool = True
-    data: Optional[T] = None
-    error: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    data: T | None = None
+    error: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class ResumeParseRequest(BaseSchema):
@@ -56,7 +56,9 @@ class ResumeParseResponse(BaseSchema):
 class MatchRequest(BaseSchema):
     """Candidate matching request schema."""
 
-    candidates: list[dict[str, Any]] = Field(..., description="List of candidate profiles")
+    candidates: list[dict[str, Any]] = Field(
+        ..., description="List of candidate profiles"
+    )
     job_requirements: dict[str, Any] = Field(..., description="Job requirements")
 
 
@@ -71,7 +73,9 @@ class MatchResponse(BaseSchema):
 class InterviewSlotRequest(BaseSchema):
     """Interview slot optimization request schema."""
 
-    participants: list[dict[str, Any]] = Field(..., description="Participant availability data")
+    participants: list[dict[str, Any]] = Field(
+        ..., description="Participant availability data"
+    )
     duration_minutes: int = Field(default=60, ge=15, le=480)
     preferred_days: list[str] = Field(default_factory=list)
 
@@ -80,22 +84,22 @@ class SkillsAssessmentRequest(BaseSchema):
     """Skills assessment request schema."""
 
     skill_assessments: dict[str, Any] = Field(..., description="Skill assessment data")
-    target_level: Optional[str] = None
+    target_level: str | None = None
 
 
 class BiasAnalysisRequest(BaseSchema):
     """Bias analysis request schema."""
 
-    text: Optional[str] = None
-    hiring_data: Optional[dict[str, Any]] = None
+    text: str | None = None
+    hiring_data: dict[str, Any] | None = None
     analysis_type: str = Field(default="language", description="Type of bias analysis")
 
 
 class TalentPoolRequest(BaseSchema):
     """Talent pool request schema."""
 
-    job_requirements: Optional[dict[str, Any]] = None
-    pool_criteria: Optional[dict[str, Any]] = None
+    job_requirements: dict[str, Any] | None = None
+    pool_criteria: dict[str, Any] | None = None
     action: str = Field(default="source", description="Action to perform")
 
 
@@ -103,15 +107,15 @@ class AnalyticsRequest(BaseSchema):
     """Analytics request schema."""
 
     analysis_type: str = Field(..., description="Type of analytics")
-    date_range: Optional[dict[str, str]] = None
-    filters: Optional[dict[str, Any]] = None
+    date_range: dict[str, str] | None = None
+    filters: dict[str, Any] | None = None
 
 
 class OnboardingRequest(BaseSchema):
     """Onboarding request schema."""
 
-    employee_id: Optional[str] = None
-    employee_data: Optional[dict[str, Any]] = None
+    employee_id: str | None = None
+    employee_data: dict[str, Any] | None = None
     action: str = Field(default="track_progress", description="Onboarding action")
 
 
@@ -119,15 +123,15 @@ class JobDescriptionRequest(BaseSchema):
     """Job description optimization request schema."""
 
     job_description: str = Field(..., description="Job description text")
-    target_role: Optional[str] = None
-    brand_voice: Optional[str] = None
-    platform: Optional[str] = None
+    target_role: str | None = None
+    brand_voice: str | None = None
+    platform: str | None = None
 
 
 class EmployerBrandingRequest(BaseSchema):
     """Employer branding request schema."""
 
     action: str = Field(..., description="Branding action to perform")
-    company_data: Optional[dict[str, Any]] = None
-    content_type: Optional[str] = None
-    texts: Optional[list[str]] = None
+    company_data: dict[str, Any] | None = None
+    content_type: str | None = None
+    texts: list[str] | None = None

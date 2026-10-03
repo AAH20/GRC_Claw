@@ -7,13 +7,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from ugc_marketplace.agents.fraud_detection import (
-    AccountAnalyzerAgent,
-    AnomalyDetectorAgent,
-    PatternDetectorAgent,
-    RiskScorerAgent,
-    TransactionMonitorAgent,
-)
+from ugc_marketplace.agents.fraud_detection import (AccountAnalyzerAgent,
+                                                    AnomalyDetectorAgent,
+                                                    PatternDetectorAgent,
+                                                    RiskScorerAgent,
+                                                    TransactionMonitorAgent)
 from ugc_marketplace.config.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -101,7 +99,11 @@ async def analyze_batch(
 ) -> dict:
     """Analyze a batch of transactions for fraud."""
     transactions = request.get("transactions", [])
-    return {"batch_id": str(uuid.uuid4()), "reports": [], "summary": {"total": len(transactions)}}
+    return {
+        "batch_id": str(uuid.uuid4()),
+        "reports": [],
+        "summary": {"total": len(transactions)},
+    }
 
 
 @router.post("/patterns/detect", response_model=list)
@@ -163,7 +165,11 @@ async def start_monitoring(
 ) -> dict:
     """Start monitoring transactions for an account."""
     agent = get_monitor_agent()
-    return {"session_id": str(uuid.uuid4()), "account_id": account_id, "status": "active"}
+    return {
+        "session_id": str(uuid.uuid4()),
+        "account_id": account_id,
+        "status": "active",
+    }
 
 
 @router.post("/monitoring/stop", response_model=dict)
@@ -179,7 +185,13 @@ async def stop_monitoring(
 async def get_agents_status() -> dict:
     """Get status of all fraud detection agents."""
     agents = []
-    for agent in [get_pattern_agent(), get_anomaly_agent(), get_risk_agent(), get_account_agent(), get_monitor_agent()]:
+    for agent in [
+        get_pattern_agent(),
+        get_anomaly_agent(),
+        get_risk_agent(),
+        get_account_agent(),
+        get_monitor_agent(),
+    ]:
         agents.append(agent.get_status())
     return {"agents": agents}
 

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-
 from community_governance.api.dependencies import get_dispute_resolver
 from community_governance.config.logging_config import get_logger
 from community_governance.models.dispute import (
@@ -15,6 +13,7 @@ from community_governance.models.dispute import (
     DisputeStatus,
     DisputeUpdate,
 )
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -31,7 +30,7 @@ _disputes_store: dict[UUID, Dispute] = {}
 @router.post("", response_model=Dispute, status_code=status.HTTP_201_CREATED)
 async def create_dispute(
     dispute_data: DisputeCreate,
-    agent: DisputeResolverAgent = Depends(get_dispute_resolver)  # noqa: B008
+    agent: DisputeResolverAgent = Depends(get_dispute_resolver),  # noqa: B008
 ) -> Dispute:
     """Create a new dispute.
 
@@ -64,7 +63,7 @@ async def list_disputes(
         default=None, alias="status", description="Filter by status"
     ),
     priority: str | None = Query(default=None, description="Filter by priority"),
-    agent: DisputeResolverAgent = Depends(get_dispute_resolver)  # noqa: B008
+    agent: DisputeResolverAgent = Depends(get_dispute_resolver),  # noqa: B008
 ) -> list[Dispute]:
     """List all disputes.
 
@@ -87,7 +86,7 @@ async def list_disputes(
 @router.get("/{dispute_id}", response_model=Dispute)
 async def get_dispute(
     dispute_id: UUID,
-    agent: DisputeResolverAgent = Depends(get_dispute_resolver)  # noqa: B008
+    agent: DisputeResolverAgent = Depends(get_dispute_resolver),  # noqa: B008
 ) -> Dispute:
     """Get a specific dispute by ID.
 
@@ -114,7 +113,7 @@ async def get_dispute(
 async def update_dispute(
     dispute_id: UUID,
     dispute_data: DisputeUpdate,
-    agent: DisputeResolverAgent = Depends(get_dispute_resolver)  # noqa: B008
+    agent: DisputeResolverAgent = Depends(get_dispute_resolver),  # noqa: B008
 ) -> Dispute:
     """Update an existing dispute.
 
@@ -151,7 +150,7 @@ async def update_dispute(
 async def resolve_dispute(
     dispute_id: UUID,
     context: dict | None = None,
-    agent: DisputeResolverAgent = Depends(get_dispute_resolver)  # noqa: B008
+    agent: DisputeResolverAgent = Depends(get_dispute_resolver),  # noqa: B008
 ) -> DisputeResolution:
     """Resolve a dispute.
 

@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
-from compliance_monitor.models.schemas import (
-    AuditReport,
-    ComplianceScore,
-    Policy,
-    RemediationAction,
-    Violation,
-)
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from compliance_monitor.models.schemas import (
+        AuditReport,
+        ComplianceScore,
+        Policy,
+        RemediationAction,
+        Violation,
+    )
 
 
 class ComplianceStore:
@@ -122,7 +124,9 @@ class ComplianceStore:
         """
         return list(self._violations.values())
 
-    def update_violation(self, violation_id: UUID, updates: dict[str, Any]) -> Violation | None:
+    def update_violation(
+        self, violation_id: UUID, updates: dict[str, Any]
+    ) -> Violation | None:
         """Update a violation.
 
         Args:

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+from escalation_workflow.config import Settings, get_settings
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-
-from escalation_workflow.config import Settings, get_settings
 
 router = APIRouter(tags=["health"])
 

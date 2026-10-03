@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from recruitment_platform.integrations.base import BaseIntegration
 
@@ -17,7 +16,9 @@ class EmbeddingClient(BaseIntegration):
     similarity between candidates and job descriptions.
     """
 
-    def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1") -> None:
+    def __init__(
+        self, api_key: str, base_url: str = "https://api.openai.com/v1"
+    ) -> None:
         """Initialize the embedding client.
 
         Args:

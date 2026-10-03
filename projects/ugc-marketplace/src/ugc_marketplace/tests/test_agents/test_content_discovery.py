@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from ugc_marketplace.agents.content_discovery import (
-    PersonalizationAgent,
-    RecommendationAgent,
-    SearchExplainerAgent,
-    SemanticSearchAgent,
-    TrendDetectorAgent,
-)
+from ugc_marketplace.agents.content_discovery import (PersonalizationAgent,
+                                                      RecommendationAgent,
+                                                      SearchExplainerAgent,
+                                                      SemanticSearchAgent,
+                                                      TrendDetectorAgent)
 
 
 @pytest.mark.asyncio

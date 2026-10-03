@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class PolicyStatus(str, Enum):
+class PolicyStatus(StrEnum):
     """Policy lifecycle status."""
 
     DRAFT = "draft"
@@ -19,7 +19,7 @@ class PolicyStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class ViolationSeverity(str, Enum):
+class ViolationSeverity(StrEnum):
     """Violation severity levels."""
 
     LOW = "low"
@@ -28,7 +28,7 @@ class ViolationSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class ViolationStatus(str, Enum):
+class ViolationStatus(StrEnum):
     """Violation lifecycle status."""
 
     OPEN = "open"
@@ -38,7 +38,7 @@ class ViolationStatus(str, Enum):
     CLOSED = "closed"
 
 
-class RemediationStatus(str, Enum):
+class RemediationStatus(StrEnum):
     """Remediation action status."""
 
     PENDING = "pending"

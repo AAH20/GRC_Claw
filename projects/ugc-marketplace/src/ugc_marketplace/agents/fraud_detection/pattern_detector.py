@@ -52,7 +52,7 @@ class PatternDetectorAgent:
         )
         return agent
 
-    async def detect(self, transaction: "Transaction") -> list["Pattern"]:
+    async def detect(self, transaction: Transaction) -> list[Pattern]:
         """Detect fraud patterns in a transaction.
 
         Args:
@@ -89,7 +89,7 @@ class PatternDetectorAgent:
             logger.error("Pattern detection failed", error=str(exc))
             return []
 
-    def _parse_patterns(self, result: Any) -> list["Pattern"]:
+    def _parse_patterns(self, result: Any) -> list[Pattern]:
         """Parse agent output into Pattern objects.
 
         Args:
@@ -117,7 +117,7 @@ class PatternDetectorAgent:
         return patterns
 
     @staticmethod
-    async def _check_velocity_pattern(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_velocity_pattern(transaction: Transaction) -> dict[str, Any]:
         """Check for velocity-based fraud patterns.
 
         Args:
@@ -129,7 +129,7 @@ class PatternDetectorAgent:
         return {}
 
     @staticmethod
-    async def _check_round_amount_pattern(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_round_amount_pattern(transaction: Transaction) -> dict[str, Any]:
         """Check for round amount patterns.
 
         Args:
@@ -141,7 +141,7 @@ class PatternDetectorAgent:
         return {}
 
     @staticmethod
-    async def _check_geographic_pattern(transaction: "Transaction") -> dict[str, Any]:
+    async def _check_geographic_pattern(transaction: Transaction) -> dict[str, Any]:
         """Check for geographic patterns.
 
         Args:

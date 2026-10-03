@@ -5,9 +5,6 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from escalation_workflow.api import (
     escalations_router,
     health_router,
@@ -16,6 +13,8 @@ from escalation_workflow.api import (
     sla_router,
 )
 from escalation_workflow.config import get_settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 logger = structlog.get_logger(__name__)
 

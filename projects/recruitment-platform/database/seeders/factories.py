@@ -1,9 +1,9 @@
 """factory_boy factories for all recruitment platform models."""
+
 from __future__ import annotations
 
 import random
-from datetime import datetime, timedelta
-from typing import Any
+from datetime import datetime
 
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
@@ -21,7 +21,6 @@ from database.seeders.models import (
     Skill,
     TalentPool,
     User,
-    Base,
 )
 
 fake = Faker()
@@ -60,7 +59,9 @@ class UserFactory(BaseFactory):
     role = factory.LazyAttribute(
         lambda _: random.choice(["recruiter", "hiring_manager", "admin"])
     )
-    created_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-2y", end_date="now"))
+    created_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-2y", end_date="now")
+    )
     updated_at = factory.LazyAttribute(lambda _: datetime.utcnow())
 
 
@@ -72,20 +73,37 @@ class CompanyFactory(BaseFactory):
 
     name = factory.LazyAttribute(lambda _: fake.company())
     industry = factory.LazyAttribute(
-        lambda _: random.choice([
-            "Technology", "Healthcare", "Finance", "Education",
-            "Manufacturing", "Retail", "Consulting", "Media",
-        ])
+        lambda _: random.choice(
+            [
+                "Technology",
+                "Healthcare",
+                "Finance",
+                "Education",
+                "Manufacturing",
+                "Retail",
+                "Consulting",
+                "Media",
+            ]
+        )
     )
     size = factory.LazyAttribute(
-        lambda _: random.choice([
-            "1-10", "11-50", "51-200", "201-500",
-            "501-1000", "1001-5000", "5000+",
-        ])
+        lambda _: random.choice(
+            [
+                "1-10",
+                "11-50",
+                "51-200",
+                "201-500",
+                "501-1000",
+                "1001-5000",
+                "5000+",
+            ]
+        )
     )
     location = factory.LazyAttribute(lambda _: fake.city())
     website = factory.LazyAttribute(lambda _: fake.url())
-    created_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-3y", end_date="now"))
+    created_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-3y", end_date="now")
+    )
 
 
 class SkillFactory(BaseFactory):
@@ -96,10 +114,18 @@ class SkillFactory(BaseFactory):
 
     name = factory.LazyAttribute(lambda _: fake.unique.word().capitalize())
     category = factory.LazyAttribute(
-        lambda _: random.choice([
-            "programming", "framework", "database", "cloud",
-            "devops", "design", "management", "soft_skill",
-        ])
+        lambda _: random.choice(
+            [
+                "programming",
+                "framework",
+                "database",
+                "cloud",
+                "devops",
+                "design",
+                "management",
+                "soft_skill",
+            ]
+        )
     )
 
 
@@ -121,11 +147,15 @@ class JobFactory(BaseFactory):
     status = factory.LazyAttribute(
         lambda _: random.choice(["open", "closed", "draft", "on_hold"])
     )
-    posted_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-6m", end_date="now"))
-    closes_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="now", end_date="+3m"))
+    posted_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-6m", end_date="now")
+    )
+    closes_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="now", end_date="+3m")
+    )
 
     @factory.post_generation
-    def skills(obj, create, extracted, **kwargs):
+    def skills(obj, create, extracted, **kwargs):  # noqa: N805
         """Add skills to the job."""
         if not create:
             return
@@ -153,10 +183,12 @@ class CandidateFactory(BaseFactory):
     resume_text = factory.LazyAttribute(lambda _: fake.paragraph(nb_sentences=10))
     years_experience = factory.LazyAttribute(lambda _: random.uniform(0, 20))
     current_title = factory.LazyAttribute(lambda _: fake.job())
-    created_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-2y", end_date="now"))
+    created_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-2y", end_date="now")
+    )
 
     @factory.post_generation
-    def skills(obj, create, extracted, **kwargs):
+    def skills(obj, create, extracted, **kwargs):  # noqa: N805
         """Add skills to the candidate."""
         if not create:
             return
@@ -168,7 +200,7 @@ class CandidateFactory(BaseFactory):
                 obj.skills.append(SkillFactory())
 
     @factory.post_generation
-    def education(obj, create, extracted, **kwargs):
+    def education(obj, create, extracted, **kwargs):  # noqa: N805
         """Add education entries to the candidate."""
         if not create:
             return
@@ -180,7 +212,7 @@ class CandidateFactory(BaseFactory):
                 obj.education.append(EducationFactory(candidate=obj))
 
     @factory.post_generation
-    def experience(obj, create, extracted, **kwargs):
+    def experience(obj, create, extracted, **kwargs):  # noqa: N805
         """Add experience entries to the candidate."""
         if not create:
             return
@@ -201,16 +233,29 @@ class EducationFactory(BaseFactory):
     candidate = factory.SubFactory(CandidateFactory)
     institution = factory.LazyAttribute(lambda _: fake.company())
     degree = factory.LazyAttribute(
-        lambda _: random.choice([
-            "Bachelor of Science", "Master of Science", "Bachelor of Arts",
-            "Master of Arts", "PhD", "Associate Degree",
-        ])
+        lambda _: random.choice(
+            [
+                "Bachelor of Science",
+                "Master of Science",
+                "Bachelor of Arts",
+                "Master of Arts",
+                "PhD",
+                "Associate Degree",
+            ]
+        )
     )
     field_of_study = factory.LazyAttribute(
-        lambda _: random.choice([
-            "Computer Science", "Business Administration", "Engineering",
-            "Mathematics", "Physics", "Economics", "Psychology",
-        ])
+        lambda _: random.choice(
+            [
+                "Computer Science",
+                "Business Administration",
+                "Engineering",
+                "Mathematics",
+                "Physics",
+                "Economics",
+                "Psychology",
+            ]
+        )
     )
     start_year = factory.LazyAttribute(lambda _: random.randint(2000, 2020))
     end_year = factory.LazyAttribute(lambda _: random.randint(2004, 2024))
@@ -227,8 +272,12 @@ class ExperienceFactory(BaseFactory):
     company = factory.LazyAttribute(lambda _: fake.company())
     title = factory.LazyAttribute(lambda _: fake.job())
     description = factory.LazyAttribute(lambda _: fake.paragraph(nb_sentences=3))
-    start_date = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-10y", end_date="now"))
-    end_date = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-5y", end_date="now"))
+    start_date = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-10y", end_date="now")
+    )
+    end_date = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-5y", end_date="now")
+    )
     is_current = factory.LazyAttribute(lambda _: random.choice([True, False]))
 
 
@@ -241,12 +290,21 @@ class ApplicationFactory(BaseFactory):
     candidate = factory.SubFactory(CandidateFactory)
     job = factory.SubFactory(JobFactory)
     status = factory.LazyAttribute(
-        lambda _: random.choice([
-            "applied", "screening", "interview", "offer", "hired", "rejected",
-        ])
+        lambda _: random.choice(
+            [
+                "applied",
+                "screening",
+                "interview",
+                "offer",
+                "hired",
+                "rejected",
+            ]
+        )
     )
     match_score = factory.LazyAttribute(lambda _: round(random.uniform(0.0, 1.0), 2))
-    applied_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-3m", end_date="now"))
+    applied_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-3m", end_date="now")
+    )
 
 
 class InterviewFactory(BaseFactory):
@@ -256,15 +314,23 @@ class InterviewFactory(BaseFactory):
         model = Interview
 
     application = factory.SubFactory(ApplicationFactory)
-    interviewer = factory.SubFactory(UserFactory)
-    scheduled_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="now", end_date="+2w"))
+    interviewer_id = factory.LazyAttribute(lambda _: UserFactory().id)
+    scheduled_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="now", end_date="+2w")
+    )
     duration_minutes = factory.LazyAttribute(
         lambda _: random.choice([30, 45, 60, 90, 120])
     )
     interview_type = factory.LazyAttribute(
-        lambda _: random.choice([
-            "phone_screen", "technical", "behavioral", "panel", "final",
-        ])
+        lambda _: random.choice(
+            [
+                "phone_screen",
+                "technical",
+                "behavioral",
+                "panel",
+                "final",
+            ]
+        )
     )
     status = factory.LazyAttribute(
         lambda _: random.choice(["scheduled", "completed", "cancelled", "no_show"])
@@ -279,10 +345,12 @@ class NoteFactory(BaseFactory):
     class Meta:
         model = Note
 
-    candidate = factory.SubFactory(CandidateFactory)
-    author = factory.SubFactory(UserFactory)
+    candidate_id = factory.LazyAttribute(lambda _: CandidateFactory().id)
+    author_id = factory.LazyAttribute(lambda _: UserFactory().id)
     content = factory.LazyAttribute(lambda _: fake.paragraph(nb_sentences=2))
-    created_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-1y", end_date="now"))
+    created_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-1y", end_date="now")
+    )
 
 
 class TalentPoolFactory(BaseFactory):
@@ -293,11 +361,13 @@ class TalentPoolFactory(BaseFactory):
 
     name = factory.LazyAttribute(lambda _: fake.bs().title())
     description = factory.LazyAttribute(lambda _: fake.paragraph(nb_sentences=2))
-    created_by = factory.SubFactory(UserFactory)
-    created_at = factory.LazyAttribute(lambda _: fake.date_time_between(start_date="-1y", end_date="now"))
+    created_by = factory.LazyAttribute(lambda _: UserFactory().id)
+    created_at = factory.LazyAttribute(
+        lambda _: fake.date_time_between(start_date="-1y", end_date="now")
+    )
 
     @factory.post_generation
-    def members(obj, create, extracted, **kwargs):
+    def members(obj, create, extracted, **kwargs):  # noqa: N805
         """Add members to the talent pool."""
         if not create:
             return

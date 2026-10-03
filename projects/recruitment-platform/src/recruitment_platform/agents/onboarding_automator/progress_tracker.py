@@ -27,4 +27,9 @@ class ProgressTracker(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Progress status with completion metrics.
         """
-        return {"completion_percentage": 0.0, "completed_tasks": [], "pending_tasks": [], "blockers": []}
+        return {
+            "completion_percentage": 0.0,
+            "completed_tasks": [],
+            "pending_tasks": [],
+            "blockers": [],
+        }

@@ -5,7 +5,6 @@ from typing import Any, Generic, TypeVar
 
 from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel
-
 from reputation_system.config.settings import Settings, get_settings
 
 InputT = TypeVar("InputT", bound=BaseModel)
@@ -36,10 +35,12 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             from langchain_core.prompts import ChatPromptTemplate
 
             self._agent_type = "react"
-            self._prompt = ChatPromptTemplate.from_messages([
-                ("system", self._get_system_prompt()),
-                ("human", "{input}"),
-            ])
+            self._prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", self._get_system_prompt()),
+                    ("human", "{input}"),
+                ]
+            )
         except ImportError:
             self._agent_type = "simple"
 

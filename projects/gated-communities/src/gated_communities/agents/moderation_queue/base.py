@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-
-from pydantic import BaseModel, Field
-
 from moderation_queue.config import Settings, get_settings
 from moderation_queue.models import AgentResponse
+from pydantic import BaseModel, Field
 
 T = TypeVar("T", bound=BaseModel)
 R = TypeVar("R", bound=BaseModel)
@@ -25,7 +23,9 @@ class AgentConfig(BaseModel):
     name: str = Field(..., description="Agent name")
     description: str = Field(default="", description="Agent description")
     model: Any = Field(default=None, description="LangChain model")
-    temperature: float = Field(default=0.1, ge=0.0, le=2.0, description="Model temperature")
+    temperature: float = Field(
+        default=0.1, ge=0.0, le=2.0, description="Model temperature"
+    )
     max_tokens: int = Field(default=1000, ge=1, description="Max tokens for response")
     timeout_seconds: int = Field(default=30, ge=1, description="Timeout in seconds")
 
@@ -142,9 +142,7 @@ class BaseAgent(ABC, Generic[T, R]):
             HumanMessage(content=user_content),
         ]
 
-    def _parse_structured_output(
-        self, response: AIMessage, output_model: type[R]
-    ) -> R:
+    def _parse_structured_output(self, response: AIMessage, output_model: type[R]) -> R:
         """Parse structured output from AI response.
 
         Args:

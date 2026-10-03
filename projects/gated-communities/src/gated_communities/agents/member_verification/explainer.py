@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from member_verification.agents.base import AgentConfig, BaseAgent
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class VerificationExplainerAgent(BaseAgent):
@@ -111,13 +112,17 @@ class VerificationExplainerAgent(BaseAgent):
                 "You now have full access to community features."
             )
         elif status == "needs_review":
-            reasons = "; ".join(failures) if failures else "additional information required"
+            reasons = (
+                "; ".join(failures) if failures else "additional information required"
+            )
             return (
                 f"Your verification is under review. {reasons}. "
                 "This typically resolves within 1-2 business days."
             )
         else:
-            reasons = "; ".join(failures) if failures else "verification requirements not met"
+            reasons = (
+                "; ".join(failures) if failures else "verification requirements not met"
+            )
             return (
                 f"Unable to complete verification at this time. {reasons}. "
                 "Please review the requirements and try again."
@@ -138,42 +143,48 @@ class VerificationExplainerAgent(BaseAgent):
         factors = []
 
         status = result.get("status", "unknown")
-        factors.append({
-            "name": "verification_status",
-            "impact": "positive" if status == "verified" else "negative",
-            "weight": 0.4,
-            "description": f"Overall verification status: {status}",
-        })
+        factors.append(
+            {
+                "name": "verification_status",
+                "impact": "positive" if status == "verified" else "negative",
+                "weight": 0.4,
+                "description": f"Overall verification status: {status}",
+            }
+        )
 
         confidence = result.get("confidence", 0.0)
-        factors.append({
-            "name": "confidence_score",
-            "impact": "positive" if confidence >= 0.7 else "negative",
-            "weight": 0.3,
-            "description": f"Confidence score: {confidence:.0%}",
-        })
+        factors.append(
+            {
+                "name": "confidence_score",
+                "impact": "positive" if confidence >= 0.7 else "negative",
+                "weight": 0.3,
+                "description": f"Confidence score: {confidence:.0%}",
+            }
+        )
 
         checks = result.get("checks_performed", [])
-        factors.append({
-            "name": "checks_completed",
-            "impact": "positive" if len(checks) >= 3 else "neutral",
-            "weight": 0.2,
-            "description": f"Completed {len(checks)} verification checks",
-        })
+        factors.append(
+            {
+                "name": "checks_completed",
+                "impact": "positive" if len(checks) >= 3 else "neutral",
+                "weight": 0.2,
+                "description": f"Completed {len(checks)} verification checks",
+            }
+        )
 
         if detail_level == "technical":
-            factors.append({
-                "name": "processing_metadata",
-                "impact": "neutral",
-                "weight": 0.1,
-                "description": f"Agent: {result.get('agent', 'unknown')}",
-            })
+            factors.append(
+                {
+                    "name": "processing_metadata",
+                    "impact": "neutral",
+                    "weight": 0.1,
+                    "description": f"Agent: {result.get('agent', 'unknown')}",
+                }
+            )
 
         return factors
 
-    def _generate_recommendations(
-        self, status: str, failures: list[str]
-    ) -> list[str]:
+    def _generate_recommendations(self, status: str, failures: list[str]) -> list[str]:
         """Generate recommendations for the member.
 
         Args:
@@ -187,17 +198,33 @@ class VerificationExplainerAgent(BaseAgent):
 
         if status == "verified":
             recommendations.append("Keep your verification documents up to date.")
-            recommendations.append("Enable two-factor authentication for added security.")
+            recommendations.append(
+                "Enable two-factor authentication for added security."
+            )
         elif status == "needs_review":
-            recommendations.append("Ensure all submitted documents are clear and legible.")
-            recommendations.append("Verify that your personal information matches your documents.")
-            recommendations.append("Wait for the review process to complete before re-applying.")
+            recommendations.append(
+                "Ensure all submitted documents are clear and legible."
+            )
+            recommendations.append(
+                "Verify that your personal information matches your documents."
+            )
+            recommendations.append(
+                "Wait for the review process to complete before re-applying."
+            )
         else:
-            recommendations.append("Double-check that all information entered is accurate.")
-            recommendations.append("Ensure documents are not expired and are clearly visible.")
-            recommendations.append("Use a high-quality camera or scanner for document submission.")
+            recommendations.append(
+                "Double-check that all information entered is accurate."
+            )
+            recommendations.append(
+                "Ensure documents are not expired and are clearly visible."
+            )
+            recommendations.append(
+                "Use a high-quality camera or scanner for document submission."
+            )
             if failures:
-                recommendations.append(f"Address the following issues: {'; '.join(failures)}")
+                recommendations.append(
+                    f"Address the following issues: {'; '.join(failures)}"
+                )
 
         return recommendations
 

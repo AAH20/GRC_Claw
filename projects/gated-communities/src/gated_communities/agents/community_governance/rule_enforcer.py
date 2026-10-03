@@ -62,7 +62,9 @@ class RuleEnforcerAgent(BaseAgent[dict[str, Any], list[RuleEnforcementResult]]):
         """
         self.rules.append(rule)
         self._rule_index[rule.id] = rule
-        logger.info(f"Rule '{rule.name}' added to enforcement set", rule_id=str(rule.id))
+        logger.info(
+            f"Rule '{rule.name}' added to enforcement set", rule_id=str(rule.id)
+        )
 
     def remove_rule(self, rule_id: UUID) -> None:
         """Remove a rule from the enforcement set.
@@ -96,7 +98,9 @@ class RuleEnforcerAgent(BaseAgent[dict[str, Any], list[RuleEnforcementResult]]):
         try:
             action = input_data.get("action")
             if not isinstance(action, GovernanceAction):
-                raise ValueError("Input must contain a valid 'action' of type GovernanceAction")
+                raise ValueError(
+                    "Input must contain a valid 'action' of type GovernanceAction"
+                )
 
             context = input_data.get("context", {})
             results: list[RuleEnforcementResult] = []
@@ -180,12 +184,18 @@ class RuleEnforcerAgent(BaseAgent[dict[str, Any], list[RuleEnforcementResult]]):
                 if is_violation
                 else f"Action complies with rule '{rule.name}'"
             ),
-            details={"rule_category": rule.category.value, "action_type": action.action_type.value},
+            details={
+                "rule_category": rule.category.value,
+                "action_type": action.action_type.value,
+            },
             recommended_actions=rule.actions if is_violation else [],
         )
 
     def _check_conditions(
-        self, conditions: dict[str, Any], action: GovernanceAction, context: dict[str, Any]
+        self,
+        conditions: dict[str, Any],
+        action: GovernanceAction,
+        context: dict[str, Any],
     ) -> bool:
         """Check if an action violates the rule conditions."""
         if not conditions:

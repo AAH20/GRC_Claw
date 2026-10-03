@@ -38,7 +38,9 @@ class Settings(BaseSettings):
 
     # Storage
     redis_url: str = "redis://localhost:6379/0"
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ugc_marketplace"
+    database_url: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/ugc_marketplace"
+    )
 
     # Kafka
     kafka_bootstrap_servers: str = "localhost:9092"

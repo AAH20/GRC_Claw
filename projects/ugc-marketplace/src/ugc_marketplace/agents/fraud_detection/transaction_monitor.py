@@ -52,7 +52,7 @@ class TransactionMonitorAgent:
         )
         return agent
 
-    async def start_monitoring(self, account_id: str) -> "MonitoringSession":
+    async def start_monitoring(self, account_id: str) -> MonitoringSession:
         """Start monitoring transactions for an account.
 
         Args:
@@ -74,7 +74,7 @@ class TransactionMonitorAgent:
         logger.info("Monitoring started", session_id=session_id, account_id=account_id)
         return session  # type: ignore[return-value]
 
-    async def stop_monitoring(self, session_id: str) -> "MonitoringSession":
+    async def stop_monitoring(self, session_id: str) -> MonitoringSession:
         """Stop a monitoring session.
 
         Args:
@@ -95,7 +95,9 @@ class TransactionMonitorAgent:
         logger.info("Monitoring stopped", session_id=session_id)
         return session  # type: ignore[return-value]
 
-    async def monitor_transaction(self, session_id: str, transaction: "Transaction") -> dict[str, Any]:
+    async def monitor_transaction(
+        self, session_id: str, transaction: Transaction
+    ) -> dict[str, Any]:
         """Monitor a single transaction.
 
         Args:
@@ -135,7 +137,7 @@ class TransactionMonitorAgent:
         return {"account_id": account_id, "streaming": True}
 
     @staticmethod
-    async def _detect_real_time_fraud(transaction: "Transaction") -> dict[str, Any]:
+    async def _detect_real_time_fraud(transaction: Transaction) -> dict[str, Any]:
         """Detect fraud in real-time.
 
         Args:
@@ -147,7 +149,7 @@ class TransactionMonitorAgent:
         return {"transaction_id": transaction.transaction_id, "fraud_detected": False}
 
     @staticmethod
-    async def _generate_alert(transaction: "Transaction", reason: str) -> dict[str, Any]:
+    async def _generate_alert(transaction: Transaction, reason: str) -> dict[str, Any]:
         """Generate a fraud alert.
 
         Args:

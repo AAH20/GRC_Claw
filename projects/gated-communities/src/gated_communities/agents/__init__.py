@@ -15,16 +15,16 @@ Each sub-package corresponds to a specific domain:
 """
 
 from . import (
-    access_control,
-    community_governance,
-    community_health_scorer,
-    compliance_monitor,
-    escalation_workflow,
-    member_verification,
-    moderation_analytics,
-    moderation_queue,
-    reputation_system,
-    tier_management,
+               access_control,
+               community_governance,
+               community_health_scorer,
+               compliance_monitor,
+               escalation_workflow,
+               member_verification,
+               moderation_analytics,
+               moderation_queue,
+               reputation_system,
+               tier_management,
 )
 
 __all__ = [

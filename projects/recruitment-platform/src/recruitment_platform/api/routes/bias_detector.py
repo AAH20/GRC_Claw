@@ -20,7 +20,9 @@ async def analyze_language(data: dict[str, Any]) -> dict[str, Any]:
         Detected biased phrases with suggestions.
     """
     try:
-        from recruitment_platform.agents.bias_detector.language_bias_detector import LanguageBiasDetector
+        from recruitment_platform.agents.bias_detector.language_bias_detector import (
+            LanguageBiasDetector,
+        )
 
         agent = LanguageBiasDetector()
         result = await agent.process(data)

@@ -35,19 +35,27 @@ class Settings(BaseSettings):
     workers: int = Field(default=1, description="Number of worker processes")
 
     # Security
-    secret_key: str = Field(default="change-me-in-production", description="Secret key for JWT")
-    access_token_expire_minutes: int = Field(default=30, description="Token expiration in minutes")
+    secret_key: str = Field(
+        default="change-me-in-production", description="Secret key for JWT"
+    )
+    access_token_expire_minutes: int = Field(
+        default=30, description="Token expiration in minutes"
+    )
     api_key_header: str = Field(default="X-API-Key", description="API key header name")
 
     # LangChain / LLM
     openai_api_key: str = Field(default="", description="OpenAI API key")
     langchain_api_key: str = Field(default="", description="LangChain API key")
-    langchain_tracing_v2: bool = Field(default=False, description="Enable LangChain tracing")
+    langchain_tracing_v2: bool = Field(
+        default=False, description="Enable LangChain tracing"
+    )
     llm_model: str = Field(default="gpt-4o-mini", description="LLM model name")
     llm_temperature: float = Field(default=0.1, description="LLM temperature")
 
     # Redis
-    redis_url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    redis_url: str = Field(
+        default="redis://localhost:6379/0", description="Redis connection URL"
+    )
 
     # Database
     database_url: str = Field(
@@ -57,12 +65,20 @@ class Settings(BaseSettings):
 
     # Rate Limiting
     rate_limit_requests: int = Field(default=100, description="Max requests per window")
-    rate_limit_window: int = Field(default=60, description="Rate limit window in seconds")
+    rate_limit_window: int = Field(
+        default=60, description="Rate limit window in seconds"
+    )
 
     # Verification
-    min_trust_score: float = Field(default=0.3, description="Minimum trust score to pass")
-    max_fraud_risk: float = Field(default=0.7, description="Maximum fraud risk to allow")
-    verification_timeout: int = Field(default=30, description="Verification timeout in seconds")
+    min_trust_score: float = Field(
+        default=0.3, description="Minimum trust score to pass"
+    )
+    max_fraud_risk: float = Field(
+        default=0.7, description="Maximum fraud risk to allow"
+    )
+    verification_timeout: int = Field(
+        default=30, description="Verification timeout in seconds"
+    )
 
     @field_validator("llm_temperature")
     @classmethod

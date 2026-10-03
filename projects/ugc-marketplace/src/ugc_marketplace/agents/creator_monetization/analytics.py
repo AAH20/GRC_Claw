@@ -83,9 +83,7 @@ class AnalyticsAgent:
         if period.start >= period.end:
             raise ValueError("Period start must be before end")
 
-        logger.info(
-            "Generating report", report_id=report_id, creator_id=creator_id
-        )
+        logger.info("Generating report", report_id=report_id, creator_id=creator_id)
 
         period_metrics: dict[str, list[MetricPoint]] = {}
         for name, points in self._metrics.items():
@@ -142,7 +140,9 @@ class AnalyticsAgent:
             if summary["subscribers_total"] > 1000:
                 insights.append("Large subscriber base - focus on retention strategies")
             elif summary["subscribers_total"] < 50:
-                insights.append("Growing subscriber base - consider promotional campaigns")
+                insights.append(
+                    "Growing subscriber base - consider promotional campaigns"
+                )
 
         if "churn_rate_avg" in summary:
             if summary["churn_rate_avg"] > 0.1:
@@ -154,16 +154,16 @@ class AnalyticsAgent:
             if summary["engagement_rate_avg"] < 0.05:
                 insights.append("Low engagement - experiment with content formats")
             elif summary["engagement_rate_avg"] > 0.15:
-                insights.append("Strong engagement - leverage for upselling opportunities")
+                insights.append(
+                    "Strong engagement - leverage for upselling opportunities"
+                )
 
         if not insights:
             insights.append("Performance within normal ranges")
 
         return insights
 
-    async def forecast_metric(
-        self, name: str, days: int = 30
-    ) -> list[MetricPoint]:
+    async def forecast_metric(self, name: str, days: int = 30) -> list[MetricPoint]:
         """Forecast a metric for future days using simple linear regression.
 
         Args:
@@ -187,9 +187,7 @@ class AnalyticsAgent:
         x_mean = (n - 1) / 2
         y_mean = sum(p.value for p in points) / n
 
-        numerator = sum(
-            (i - x_mean) * (p.value - y_mean) for i, p in enumerate(points)
-        )
+        numerator = sum((i - x_mean) * (p.value - y_mean) for i, p in enumerate(points))
         denominator = sum((i - x_mean) ** 2 for i in range(n))
 
         slope = numerator / denominator if denominator != 0 else 0

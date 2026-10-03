@@ -42,7 +42,9 @@ class DisputeNotFoundError(GovernanceError):
         Args:
             dispute_id: The ID of the dispute that was not found.
         """
-        super().__init__(f"Dispute with ID '{dispute_id}' not found", {"dispute_id": dispute_id})
+        super().__init__(
+            f"Dispute with ID '{dispute_id}' not found", {"dispute_id": dispute_id}
+        )
         self.dispute_id = dispute_id
 
 
@@ -55,14 +57,18 @@ class PolicyNotFoundError(GovernanceError):
         Args:
             policy_id: The ID of the policy that was not found.
         """
-        super().__init__(f"Policy with ID '{policy_id}' not found", {"policy_id": policy_id})
+        super().__init__(
+            f"Policy with ID '{policy_id}' not found", {"policy_id": policy_id}
+        )
         self.policy_id = policy_id
 
 
 class RuleValidationError(GovernanceError):
     """Raised when rule validation fails."""
 
-    def __init__(self, message: str, field_errors: dict[str, str] | None = None) -> None:
+    def __init__(
+        self, message: str, field_errors: dict[str, str] | None = None
+    ) -> None:
         """Initialize the rule validation exception.
 
         Args:

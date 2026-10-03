@@ -45,10 +45,14 @@ class SLA(BaseModel):
     escalation_id: UUID
     priority: str = Field(..., description="Priority level this SLA applies to")
     response_time_minutes: int = Field(..., ge=1, description="Allowed response time")
-    resolution_time_minutes: int = Field(..., ge=1, description="Allowed resolution time")
+    resolution_time_minutes: int = Field(
+        ..., ge=1, description="Allowed resolution time"
+    )
     status: SLAStatus = Field(default=SLAStatus.ACTIVE)
     started_at: datetime = Field(default_factory=datetime.utcnow)
-    response_deadline: datetime = Field(..., description="Deadline for initial response")
+    response_deadline: datetime = Field(
+        ..., description="Deadline for initial response"
+    )
     resolution_deadline: datetime = Field(..., description="Deadline for resolution")
     responded_at: datetime | None = Field(default=None)
     resolved_at: datetime | None = Field(default=None)

@@ -37,12 +37,14 @@ class ExperienceExtractorAgent(BaseAgent[dict[str, Any], list[dict[str, Any]]]):
 
         for match in self._date_pattern.finditer(text):
             start = max(0, match.start() - 200)
-            context = text[start:match.end() + 500]
-            experiences.append({
-                "title": "",
-                "company": "",
-                "dates": match.group().strip(),
-                "description": context.strip(),
-            })
+            context = text[start : match.end() + 500]
+            experiences.append(
+                {
+                    "title": "",
+                    "company": "",
+                    "dates": match.group().strip(),
+                    "description": context.strip(),
+                }
+            )
 
         return experiences

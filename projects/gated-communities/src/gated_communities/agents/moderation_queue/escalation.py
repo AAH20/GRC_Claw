@@ -6,10 +6,9 @@ import json
 from typing import Any
 
 from langchain_core.messages import AIMessage
-from pydantic import BaseModel, Field
-
 from moderation_queue.agents.base import AgentConfig, BaseAgent
 from moderation_queue.models import Escalation, ModerationItem, PriorityLevel
+from pydantic import BaseModel, Field
 
 
 class EscalationInput(BaseModel):
@@ -33,7 +32,9 @@ class EscalationOutput(BaseModel):
 
     escalation_id: str = Field(..., description="Escalation record ID")
     assigned_team: str = Field(..., description="Assigned team ID")
-    assigned_reviewer: str | None = Field(default=None, description="Assigned reviewer ID")
+    assigned_reviewer: str | None = Field(
+        default=None, description="Assigned reviewer ID"
+    )
     priority: PriorityLevel = Field(..., description="Escalation priority")
     sla_minutes: int = Field(..., description="SLA in minutes")
     required_actions: list[str] = Field(
@@ -160,7 +161,11 @@ Respond with JSON only."""
             assigned_reviewer=None,
             priority=priority,
             sla_minutes=sla,
-            required_actions=["Review content", "Document decision", "Notify stakeholders"],
+            required_actions=[
+                "Review content",
+                "Document decision",
+                "Notify stakeholders",
+            ],
             reasoning="Fallback escalation (AI model unavailable)",
             notify_channels=["slack", "email"],
         )

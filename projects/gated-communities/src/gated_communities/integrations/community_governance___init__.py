@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
-
 from community_governance.config.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -179,7 +178,9 @@ class MetricsIntegration:
         key = self._build_key(name, labels)
         self._counters[key] = self._counters.get(key, 0) + value
 
-    def set_gauge(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
+    def set_gauge(
+        self, name: str, value: float, labels: dict[str, str] | None = None
+    ) -> None:
         """Set a gauge metric.
 
         Args:

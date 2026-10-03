@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
+    from access_control.config import Settings
     from langchain_core.language_models import BaseLanguageModel
 
-from access_control.config import Settings
 
 InputT = TypeVar("InputT", bound=BaseModel)
 OutputT = TypeVar("OutputT", bound=BaseModel)
@@ -48,7 +48,9 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         self._agent: Any = None
 
     @abstractmethod
-    async def run(self, payload: InputT, context: AgentContext | None = None) -> OutputT:
+    async def run(
+        self, payload: InputT, context: AgentContext | None = None
+    ) -> OutputT:
         """Execute the agent with the given input payload.
 
         Args:

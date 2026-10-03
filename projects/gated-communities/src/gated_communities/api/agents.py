@@ -5,27 +5,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
-
-from moderation_queue.agents.auto_moderation import (
-    AutoModerationAgent,
-    AutoModerationInput,
-)
+from moderation_queue.agents.auto_moderation import AutoModerationAgent, AutoModerationInput
 from moderation_queue.agents.escalation import EscalationAgent, EscalationInput
 from moderation_queue.agents.human_review_router import (
     HumanReviewRouterAgent,
     HumanReviewRouterInput,
 )
-from moderation_queue.agents.priority_scorer import (
-    PriorityScorerAgent,
-    PriorityScorerInput,
-)
-from moderation_queue.agents.queue_optimizer import (
-    QueueOptimizerAgent,
-    QueueOptimizerInput,
-)
+from moderation_queue.agents.priority_scorer import PriorityScorerAgent, PriorityScorerInput
+from moderation_queue.agents.queue_optimizer import QueueOptimizerAgent, QueueOptimizerInput
 from moderation_queue.api.dependencies import get_logger
 from moderation_queue.models import AgentResponse, ModerationItem
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -46,14 +36,18 @@ class AutoModerateRequest(BaseModel):
 
     item_id: UUID = Field(..., description="Item to moderate")
     rules: dict = Field(default_factory=dict, description="Moderation rules")
-    threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Confidence threshold")
+    threshold: float = Field(
+        default=0.7, ge=0.0, le=1.0, description="Confidence threshold"
+    )
 
 
 class RouteRequest(BaseModel):
     """Request model for human review routing."""
 
     item_id: UUID = Field(..., description="Item to route")
-    available_reviewers: list[dict] = Field(default_factory=list, description="Available reviewers")
+    available_reviewers: list[dict] = Field(
+        default_factory=list, description="Available reviewers"
+    )
     queue_info: dict = Field(default_factory=dict, description="Queue information")
     reviewer_workloads: dict[str, int] = Field(
         default_factory=dict, description="Reviewer workloads"
@@ -63,8 +57,12 @@ class RouteRequest(BaseModel):
 class OptimizeRequest(BaseModel):
     """Request model for queue optimization."""
 
-    queue_ids: list[UUID] = Field(default_factory=list, description="Queue IDs to optimize")
-    optimization_goals: dict = Field(default_factory=dict, description="Optimization goals")
+    queue_ids: list[UUID] = Field(
+        default_factory=list, description="Queue IDs to optimize"
+    )
+    optimization_goals: dict = Field(
+        default_factory=dict, description="Optimization goals"
+    )
 
 
 class EscalateRequest(BaseModel):
@@ -72,8 +70,12 @@ class EscalateRequest(BaseModel):
 
     item_id: UUID = Field(..., description="Item to escalate")
     reason: str = Field(..., description="Escalation reason")
-    available_teams: list[dict] = Field(default_factory=list, description="Available teams")
-    urgency_indicators: dict = Field(default_factory=dict, description="Urgency indicators")
+    available_teams: list[dict] = Field(
+        default_factory=list, description="Available teams"
+    )
+    urgency_indicators: dict = Field(
+        default_factory=dict, description="Urgency indicators"
+    )
 
 
 # Agent instances (singletons)

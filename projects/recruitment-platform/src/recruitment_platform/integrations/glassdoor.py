@@ -16,7 +16,9 @@ class GlassdoorIntegration(BaseIntegration):
     Monitors and manages company presence on Glassdoor.
     """
 
-    def __init__(self, api_key: str, base_url: str = "https://api.glassdoor.com") -> None:
+    def __init__(
+        self, api_key: str, base_url: str = "https://api.glassdoor.com"
+    ) -> None:
         """Initialize the Glassdoor integration.
 
         Args:

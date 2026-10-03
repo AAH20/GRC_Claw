@@ -3,7 +3,6 @@
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
-
 from moderation_queue.agents.base import BaseAgent
 from moderation_queue.config.settings import get_settings
 from moderation_queue.models import AgentResult
@@ -68,12 +67,23 @@ class AutoModeratorAgent(BaseAgent):
     async def _heuristic_moderate(self, content: str, content_type: str) -> AgentResult:
         """Fallback heuristic moderation when no LLM is available."""
         reject_keywords = [
-            "kill", "murder", "terrorist", "bomb", "hate",
-            "slur", "harass", "dox", "swat",
+            "kill",
+            "murder",
+            "terrorist",
+            "bomb",
+            "hate",
+            "slur",
+            "harass",
+            "dox",
+            "swat",
         ]
         escalate_keywords = [
-            "protest", "political", "controversial", "alleged",
-            "disputed", "opinion",
+            "protest",
+            "political",
+            "controversial",
+            "alleged",
+            "disputed",
+            "opinion",
         ]
 
         content_lower = content.lower()

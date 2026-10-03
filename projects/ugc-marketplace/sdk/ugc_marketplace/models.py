@@ -29,7 +29,9 @@ class Category(BaseModel):
     name: str = Field(..., description="Category name")
     slug: str = Field(..., description="URL-friendly category slug")
     description: str | None = Field(None, description="Category description")
-    parent_id: str | None = Field(None, description="Parent category ID for nested categories")
+    parent_id: str | None = Field(
+        None, description="Parent category ID for nested categories"
+    )
 
 
 class Product(BaseModel):
@@ -44,7 +46,9 @@ class Product(BaseModel):
     category_id: str = Field(..., description="Product category ID")
     images: list[str] = Field(default_factory=list, description="List of image URLs")
     tags: list[str] = Field(default_factory=list, description="Product tags")
-    status: str = Field(default="active", description="Product status (active, draft, archived)")
+    status: str = Field(
+        default="active", description="Product status (active, draft, archived)"
+    )
     created_at: datetime = Field(..., description="Product creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
@@ -59,7 +63,10 @@ class Order(BaseModel):
     quantity: int = Field(default=1, ge=1, description="Number of items purchased")
     total_amount: float = Field(..., ge=0, description="Total order amount")
     currency: str = Field(default="USD", description="ISO 4217 currency code")
-    status: str = Field(default="pending", description="Order status (pending, paid, fulfilled, cancelled, refunded)")
+    status: str = Field(
+        default="pending",
+        description="Order status (pending, paid, fulfilled, cancelled, refunded)",
+    )
     created_at: datetime = Field(..., description="Order creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
@@ -122,4 +129,6 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="JWT access token")
     token_type: str = Field(default="Bearer", description="Token type")
     expires_in: int = Field(..., description="Token expiration time in seconds")
-    refresh_token: str | None = Field(None, description="Refresh token for obtaining new access tokens")
+    refresh_token: str | None = Field(
+        None, description="Refresh token for obtaining new access tokens"
+    )

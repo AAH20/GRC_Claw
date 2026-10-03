@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import pytest
-from pydantic import ValidationError
-
 from moderation_analytics.models import (
     ModerationAction,
     ModerationAnalytics,
@@ -17,6 +15,7 @@ from moderation_analytics.models import (
     Trend,
     TrendDirection,
 )
+from pydantic import ValidationError
 
 
 def test_moderation_analytics_valid():

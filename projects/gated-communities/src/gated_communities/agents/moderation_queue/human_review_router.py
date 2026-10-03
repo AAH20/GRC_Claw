@@ -6,10 +6,9 @@ import json
 from typing import Any
 
 from langchain_core.messages import AIMessage
-from pydantic import BaseModel, Field
-
 from moderation_queue.agents.base import AgentConfig, BaseAgent
 from moderation_queue.models import ModerationItem, PriorityLevel
+from pydantic import BaseModel, Field
 
 
 class HumanReviewRouterInput(BaseModel):
@@ -52,7 +51,9 @@ Consider:
 Always respond with valid JSON matching the expected schema."""
 
 
-class HumanReviewRouterAgent(BaseAgent[HumanReviewRouterInput, HumanReviewRouterOutput]):
+class HumanReviewRouterAgent(
+    BaseAgent[HumanReviewRouterInput, HumanReviewRouterOutput]
+):
     """Agent that routes moderation items to human reviewers intelligently.
 
     This agent matches items with reviewers based on expertise, workload,
@@ -73,7 +74,9 @@ class HumanReviewRouterAgent(BaseAgent[HumanReviewRouterInput, HumanReviewRouter
         )
         super().__init__(config, settings)
 
-    async def process(self, input_data: HumanReviewRouterInput) -> HumanReviewRouterOutput:
+    async def process(
+        self, input_data: HumanReviewRouterInput
+    ) -> HumanReviewRouterOutput:
         """Route a moderation item to a human reviewer.
 
         Args:

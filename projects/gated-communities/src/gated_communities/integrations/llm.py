@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from tier_management.config.logging_config import get_logger
 from tier_management.config.settings import get_settings
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 logger = get_logger(__name__)
 

@@ -49,10 +49,14 @@ class AppealStatus(str, Enum):
 class ModerationRequest(BaseModel):
     """Request model for content moderation."""
 
-    content: str = Field(..., min_length=1, max_length=100_000, description="Content to moderate")
+    content: str = Field(
+        ..., min_length=1, max_length=100_000, description="Content to moderate"
+    )
     content_type: ContentType = Field(..., description="Type of content")
     user_id: str | None = Field(None, description="User identifier")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
     callback_url: str | None = Field(None, description="Webhook for async results")
 
 
@@ -138,9 +142,36 @@ class Appeal(BaseModel):
     resolved_at: datetime | None = None
 
 
+class ScoreDimension(str, Enum):
+    """Quality scoring dimensions."""
+
+    READABILITY = "readability"
+    ORIGINALITY = "originality"
+    ENGAGEMENT = "engagement"
+    SEO = "seo"
+
+
+class ScoreLevel(str, Enum):
+    """Quality score levels."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class DimensionScore(BaseModel):
+    """Score for a single quality dimension."""
+
+    dimension: ScoreDimension
+    score: float = Field(..., ge=0.0, le=1.0)
+    level: ScoreLevel
+
+
 class HealthResponse(BaseModel):
     """Health check response model."""
 
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Service version")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Response timestamp"
+    )

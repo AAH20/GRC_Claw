@@ -1,14 +1,13 @@
 """API router aggregation."""
 
 from fastapi import APIRouter
-
 from reputation_system.api.routes import (
-    badges,
-    explanations,
-    health,
-    history,
-    reputation,
-    trust_tiers,
+                                          badges,
+                                          explanations,
+                                          health,
+                                          history,
+                                          reputation,
+                                          trust_tiers,
 )
 
 api_router = APIRouter(prefix="/api/v1")

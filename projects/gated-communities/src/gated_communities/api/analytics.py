@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from tier_management.agents.tier_analytics import TierAnalyticsAgent
 from tier_management.config.settings import Settings, get_settings
 from tier_management.models.schemas import TierAnalytics
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 analytics_router = APIRouter()
 
@@ -17,7 +18,9 @@ analytics_router = APIRouter()
 _analytics_store: dict[UUID, TierAnalytics] = {}
 
 
-@analytics_router.post("", response_model=TierAnalytics, status_code=status.HTTP_201_CREATED)
+@analytics_router.post(
+    "", response_model=TierAnalytics, status_code=status.HTTP_201_CREATED
+)
 async def generate_analytics(
     analytics_data: dict[str, Any],
     settings: Settings = Depends(get_settings),  # noqa: B008
@@ -85,10 +88,7 @@ async def get_tier_analytics(
     Returns:
         List of analytics for the tier.
     """
-    return [
-        a for a in _analytics_store.values()
-        if a.tier_id == tier_id
-    ]
+    return [a for a in _analytics_store.values() if a.tier_id == tier_id]
 
 
 @analytics_router.get("/tier/{tier_id}/summary")
@@ -105,10 +105,7 @@ async def get_tier_summary(
     Returns:
         Summary dictionary with aggregated metrics.
     """
-    tier_analytics = [
-        a for a in _analytics_store.values()
-        if a.tier_id == tier_id
-    ]
+    tier_analytics = [a for a in _analytics_store.values() if a.tier_id == tier_id]
 
     if not tier_analytics:
         raise HTTPException(
@@ -121,7 +118,8 @@ async def get_tier_summary(
     total_revenue = sum(a.revenue for a in tier_analytics)
     avg_engagement = (
         sum(a.avg_engagement_score for a in tier_analytics) / len(tier_analytics)
-        if tier_analytics else 0.0
+        if tier_analytics
+        else 0.0
     )
 
     all_insights = []

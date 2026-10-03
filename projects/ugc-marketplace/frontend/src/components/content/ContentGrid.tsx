@@ -17,7 +17,7 @@ interface ContentGridProps {
 export function ContentGrid({ content, isLoading, onView, onEdit, onDelete }: ContentGridProps) {
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-testid="content-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
       </div>
     );
@@ -26,7 +26,7 @@ export function ContentGrid({ content, isLoading, onView, onEdit, onDelete }: Co
     return <EmptyState icon={FileText} title="No content found" description="Try adjusting your search or filters." />;
   }
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div data-testid="content-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {content.map((item) => (
         <ContentCard key={item.id} content={item} onView={onView} onEdit={onEdit} onDelete={onDelete} />
       ))}

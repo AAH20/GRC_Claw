@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
-
 from member_verification.config.settings import Settings, get_settings
 from member_verification.models.schemas import HealthResponse
 

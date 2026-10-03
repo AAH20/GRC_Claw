@@ -7,10 +7,8 @@ from the 10 consolidated sub-projects.
 
 from __future__ import annotations
 
-import logging
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import TYPE_CHECKING
 
 import structlog
 from fastapi import FastAPI, Request, status
@@ -19,6 +17,9 @@ from fastapi.responses import JSONResponse
 
 from .api.routes import router as api_router
 from .config.settings import get_settings
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -55,7 +56,9 @@ def create_app() -> FastAPI:
 
     # Exception handlers
     @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def global_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         logger.error("Unhandled exception", error=str(exc), path=request.url.path)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

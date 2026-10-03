@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from compliance_monitor.agents import ViolationDetectorAgent
 from compliance_monitor.api.dependencies import get_violation_detector
 from compliance_monitor.api.store import store
 from compliance_monitor.models.schemas import Violation, ViolationCreate
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from compliance_monitor.agents import ViolationDetectorAgent
 
 router = APIRouter()
 
@@ -27,7 +30,7 @@ async def list_violations() -> list[Violation]:
 @router.post("", response_model=Violation, status_code=status.HTTP_201_CREATED)
 async def report_violation(
     data: ViolationCreate,
-    agent: ViolationDetectorAgent = Depends(get_violation_detector)  # noqa: B008,
+    agent: ViolationDetectorAgent = Depends(get_violation_detector),  # noqa: B008,
 ) -> Violation:
     """Report a new compliance violation.
 
@@ -57,5 +60,7 @@ async def get_violation(violation_id: UUID) -> Violation:
     """
     violation = store.get_violation(violation_id)
     if not violation:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Violation not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Violation not found"
+        )
     return violation

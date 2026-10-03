@@ -39,7 +39,9 @@ async def recommend_learning_path(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Learning path recommendations.
     """
-    from recruitment_platform.agents.skills_assessor.learning_path_recommender import LearningPathRecommender
+    from recruitment_platform.agents.skills_assessor.learning_path_recommender import (
+        LearningPathRecommender,
+    )
 
     agent = LearningPathRecommender()
     result = await agent.process(data)

@@ -232,18 +232,19 @@ VALUES
 -- COMPLIANCE REPORTS
 -- =============================================================================
 
-INSERT INTO compliance_reports (id, community_id, reporter_id, report_type, status, subject, description, evidence_urls, metadata, external_ref)
+INSERT INTO compliance_reports (id, community_id, reporter_id, report_type, status, subject, description, evidence_urls, metadata, external_ref, reviewed_at)
 VALUES
     ('30eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'gdpr_access', 'pending',
      'GDPR Data Access Request',
      'User requests access to all personal data stored in the community platform.',
-     '[]', '{"request_date": "2026-10-01", "user_email": "user@example.com"}', 'GDPR-2026-001'),
+     '[]', '{"request_date": "2026-10-01", "user_email": "user@example.com"}', 'GDPR-2026-001', NULL),
 
     ('30eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', NULL, 'dmca', 'in_review',
      'DMCA Takedown Notice',
      'Copyright infringement claim regarding content posted in the community.',
      '["https://example.com/evidence1.pdf", "https://example.com/evidence2.pdf"]',
-     '{"claimant": "Copyright Holder Inc", "original_work": "https://original-work.com"}', 'DMCA-2026-042');
+     '{"claimant": "Copyright Holder Inc", "original_work": "https://original-work.com"}', 'DMCA-2026-042',
+     '2026-10-02 10:00:00+00');
 
 -- =============================================================================
 -- ANALYTICS EVENTS

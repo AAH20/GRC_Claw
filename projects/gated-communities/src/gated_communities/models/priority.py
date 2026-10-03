@@ -27,8 +27,12 @@ class Priority(BaseModel):
     level: PriorityLevel
     name: str = Field(..., min_length=1, max_length=100)
     description: str = Field(default="")
-    sla_minutes: int = Field(default=60, ge=1, description="SLA response time in minutes")
-    escalation_threshold: int = Field(default=3, ge=1, description="Auto-escalate after N breaches")
+    sla_minutes: int = Field(
+        default=60, ge=1, description="SLA response time in minutes"
+    )
+    escalation_threshold: int = Field(
+        default=3, ge=1, description="Auto-escalate after N breaches"
+    )
     notification_channels: list[str] = Field(default_factory=list)
     routing_rules: dict[str, str] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)

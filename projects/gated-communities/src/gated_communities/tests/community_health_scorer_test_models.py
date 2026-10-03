@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from community_health_scorer.models import (
     AgentRunRequest,
     AgentRunResponse,

@@ -27,4 +27,10 @@ class ToneAnalyzer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Tone analysis with recommendations.
         """
-        return {"tone": "", "formality": 0.0, "enthusiasm": 0.0, "inclusivity": 0.0, "recommendations": []}
+        return {
+            "tone": "",
+            "formality": 0.0,
+            "enthusiasm": 0.0,
+            "inclusivity": 0.0,
+            "recommendations": [],
+        }

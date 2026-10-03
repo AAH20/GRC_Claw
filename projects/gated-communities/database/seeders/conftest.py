@@ -15,6 +15,7 @@ def test_tier_creation(tier_factory):
     tier = tier_factory()
     assert tier.name
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -155,7 +156,6 @@ from .seeders import (
     seed_verification_results,
     seed_violations,
 )
-
 
 # ===========================================================================
 # Factory fixtures – one per factory
@@ -415,6 +415,7 @@ def queue_factory():
 
 @pytest.fixture
 def priority_score_factory():
+    from .factories import PriorityScoreFactory
     return PriorityScoreFactory
 
 
@@ -596,6 +597,7 @@ def sla_breaches():
 
 @pytest.fixture
 def priorities():
+    from .seeders import seed_priorities
     return seed_priorities()
 
 

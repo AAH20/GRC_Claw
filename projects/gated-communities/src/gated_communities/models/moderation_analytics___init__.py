@@ -55,7 +55,9 @@ class ModerationAnalytics(BaseModel):
     )
     period_start: datetime = Field(..., description="Start of analytics period")
     period_end: datetime = Field(..., description="End of analytics period")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     @field_validator("period_end")
     @classmethod
@@ -73,7 +75,9 @@ class Trend(BaseModel):
     direction: TrendDirection = Field(..., description="Direction of the trend")
     change_percentage: float = Field(..., description="Percentage change")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
-    data_points: list[float] = Field(default_factory=list, description="Raw data points")
+    data_points: list[float] = Field(
+        default_factory=list, description="Raw data points"
+    )
     start_date: datetime = Field(..., description="Start date of trend")
     end_date: datetime = Field(..., description="End date of trend")
     description: str = Field(default="", description="Human-readable description")
@@ -89,12 +93,20 @@ class ModeratorPerformance(BaseModel):
     average_response_time_seconds: float = Field(
         ..., ge=0, description="Average response time in seconds"
     )
-    consistency_score: float = Field(..., ge=0.0, le=1.0, description="Decision consistency")
-    escalation_rate: float = Field(..., ge=0.0, le=1.0, description="Rate of escalations")
+    consistency_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Decision consistency"
+    )
+    escalation_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="Rate of escalations"
+    )
     period_start: datetime = Field(..., description="Start of evaluation period")
     period_end: datetime = Field(..., description="End of evaluation period")
-    strengths: list[str] = Field(default_factory=list, description="Identified strengths")
-    weaknesses: list[str] = Field(default_factory=list, description="Identified weaknesses")
+    strengths: list[str] = Field(
+        default_factory=list, description="Identified strengths"
+    )
+    weaknesses: list[str] = Field(
+        default_factory=list, description="Identified weaknesses"
+    )
     recommendations: list[str] = Field(
         default_factory=list, description="Improvement recommendations"
     )
@@ -108,14 +120,24 @@ class PolicyEffectiveness(BaseModel):
     policy_version: str = Field(..., description="Policy version")
     total_violations: int = Field(..., ge=0, description="Total violations detected")
     total_enforcements: int = Field(..., ge=0, description="Total enforcements applied")
-    detection_rate: float = Field(..., ge=0.0, le=1.0, description="Violation detection rate")
-    false_positive_rate: float = Field(..., ge=0.0, le=1.0, description="False positive rate")
-    false_negative_rate: float = Field(..., ge=0.0, le=1.0, description="False negative rate")
+    detection_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="Violation detection rate"
+    )
+    false_positive_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="False positive rate"
+    )
+    false_negative_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="False negative rate"
+    )
     user_appeal_rate: float = Field(..., ge=0.0, le=1.0, description="User appeal rate")
-    appeal_success_rate: float = Field(..., ge=0.0, le=1.0, description="Appeal success rate")
+    appeal_success_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="Appeal success rate"
+    )
     period_start: datetime = Field(..., description="Start of evaluation period")
     period_end: datetime = Field(..., description="End of evaluation period")
-    effectiveness_score: float = Field(..., ge=0.0, le=1.0, description="Overall effectiveness")
+    effectiveness_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Overall effectiveness"
+    )
     recommendations: list[str] = Field(
         default_factory=list, description="Policy improvement recommendations"
     )
@@ -135,7 +157,9 @@ class ModerationPrediction(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Prediction confidence")
     factors: list[str] = Field(default_factory=list, description="Contributing factors")
     model_version: str = Field(default="v1", description="Model version used")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Creation timestamp"
+    )
 
 
 class AnalyticsSummary(BaseModel):
@@ -152,17 +176,25 @@ class AnalyticsSummary(BaseModel):
     predictions: list[ModerationPrediction] = Field(
         default_factory=list, description="Generated predictions"
     )
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation time")
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Generation time"
+    )
     summary_text: str = Field(default="", description="AI-generated summary")
 
 
 class HealthResponse(BaseModel):
     """Health check response."""
 
-    status: Literal["healthy", "degraded", "unhealthy"] = Field(..., description="Service status")
+    status: Literal["healthy", "degraded", "unhealthy"] = Field(
+        ..., description="Service status"
+    )
     version: str = Field(..., description="Service version")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
-    checks: dict[str, bool] = Field(default_factory=dict, description="Individual health checks")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Response timestamp"
+    )
+    checks: dict[str, bool] = Field(
+        default_factory=dict, description="Individual health checks"
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -170,5 +202,9 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
-    details: dict[str, Any] = Field(default_factory=dict, description="Additional error details")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Additional error details"
+    )
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Error timestamp"
+    )

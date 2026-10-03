@@ -48,7 +48,11 @@ def test_list_badges(client: TestClient) -> None:
     """Test listing badges."""
     client.post(
         "/api/v1/badges",
-        json={"name": "Badge 1", "description": "Test badge 1", "category": "contribution"},
+        json={
+            "name": "Badge 1",
+            "description": "Test badge 1",
+            "category": "contribution",
+        },
     )
     client.post(
         "/api/v1/badges",
@@ -64,7 +68,11 @@ def test_update_badge(client: TestClient) -> None:
     """Test updating a badge."""
     create_response = client.post(
         "/api/v1/badges",
-        json={"name": "Badge 1", "description": "Test badge", "category": "contribution"},
+        json={
+            "name": "Badge 1",
+            "description": "Test badge",
+            "category": "contribution",
+        },
     )
     badge_id = create_response.json()["id"]
     response = client.put(
@@ -80,7 +88,11 @@ def test_delete_badge(client: TestClient) -> None:
     """Test deleting a badge."""
     create_response = client.post(
         "/api/v1/badges",
-        json={"name": "Badge 1", "description": "Test badge", "category": "contribution"},
+        json={
+            "name": "Badge 1",
+            "description": "Test badge",
+            "category": "contribution",
+        },
     )
     badge_id = create_response.json()["id"]
     response = client.delete(f"/api/v1/badges/{badge_id}")

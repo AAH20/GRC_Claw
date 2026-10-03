@@ -4,8 +4,8 @@ import os
 import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -19,8 +19,7 @@ if config.config_file_name is not None:
 
 # Get database URL from environment or config
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/recruitment_platform"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/recruitment_platform"
 )
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 

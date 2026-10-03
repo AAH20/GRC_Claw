@@ -7,9 +7,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage
 
-from ugc_marketplace.models.schemas import TrustLevel, TrustScore, TrustScoreCreate
+from ugc_marketplace.models.schemas import (TrustLevel, TrustScore,
+                                            TrustScoreCreate)
 
 logger = logging.getLogger(__name__)
 
@@ -125,5 +125,7 @@ class TrustScorerAgent:
         Returns:
             List of top trust scores.
         """
-        sorted_scores = sorted(self._scores.values(), key=lambda x: x.score, reverse=True)
+        sorted_scores = sorted(
+            self._scores.values(), key=lambda x: x.score, reverse=True
+        )
         return sorted_scores[:limit]

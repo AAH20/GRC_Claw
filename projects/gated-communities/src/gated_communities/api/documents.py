@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, status
-
 from member_verification.api.dependencies import verify_api_key
 from member_verification.models.schemas import DocumentVerificationResult, DocumentVerifyRequest
 
@@ -11,7 +10,9 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 
 @router.post(
-    "/verify", response_model=DocumentVerificationResult, status_code=status.HTTP_201_CREATED
+    "/verify",
+    response_model=DocumentVerificationResult,
+    status_code=status.HTTP_201_CREATED,
 )
 async def verify_document(
     request: DocumentVerifyRequest,
@@ -32,7 +33,9 @@ async def verify_document(
     result = await agent.run(
         {
             "document": request.document.model_dump(),
-            "identity": {"government_id": request.member_id} if request.cross_reference else {},
+            "identity": (
+                {"government_id": request.member_id} if request.cross_reference else {}
+            ),
             "cross_reference": request.cross_reference,
         }
     )

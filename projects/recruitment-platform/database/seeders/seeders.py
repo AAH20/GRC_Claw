@@ -1,4 +1,5 @@
 """Seeder scripts for generating test data."""
+
 from __future__ import annotations
 
 import argparse
@@ -37,10 +38,11 @@ def create_session(database_url: str) -> Session:
     """
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine)
-    session = SessionLocal()
+    session_local = sessionmaker(bind=engine)
+    session = session_local()
     # Configure all factories to use this session
     from database.seeders.factories import configure_session
+
     configure_session(session)
     return session
 
@@ -271,7 +273,9 @@ def run_full_seed(database_url: str, scale: str = "medium") -> None:
 
 def main() -> None:
     """CLI entry point for seeders."""
-    parser = argparse.ArgumentParser(description="Database seeders for recruitment platform")
+    parser = argparse.ArgumentParser(
+        description="Database seeders for recruitment platform"
+    )
     parser.add_argument(
         "--database-url",
         default="sqlite:///./recruitment.db",

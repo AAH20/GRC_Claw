@@ -1,19 +1,10 @@
 """SQLAlchemy models for the recruitment platform database."""
+
 from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Table,
-    Text,
-)
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -95,7 +86,9 @@ class Job(Base):
 
     company = relationship("Company", back_populates="jobs")
     skills = relationship("Skill", secondary=job_skills, back_populates="jobs")
-    applications = relationship("Application", back_populates="job", cascade="all, delete-orphan")
+    applications = relationship(
+        "Application", back_populates="job", cascade="all, delete-orphan"
+    )
 
 
 class Candidate(Base):
@@ -114,10 +107,18 @@ class Candidate(Base):
     current_title = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    skills = relationship("Skill", secondary=candidate_skills, back_populates="candidates")
-    education = relationship("Education", back_populates="candidate", cascade="all, delete-orphan")
-    experience = relationship("Experience", back_populates="candidate", cascade="all, delete-orphan")
-    applications = relationship("Application", back_populates="candidate", cascade="all, delete-orphan")
+    skills = relationship(
+        "Skill", secondary=candidate_skills, back_populates="candidates"
+    )
+    education = relationship(
+        "Education", back_populates="candidate", cascade="all, delete-orphan"
+    )
+    experience = relationship(
+        "Experience", back_populates="candidate", cascade="all, delete-orphan"
+    )
+    applications = relationship(
+        "Application", back_populates="candidate", cascade="all, delete-orphan"
+    )
     talent_pools = relationship(
         "TalentPool", secondary=talent_pool_members, back_populates="members"
     )
@@ -137,7 +138,9 @@ class Application(Base):
 
     candidate = relationship("Candidate", back_populates="applications")
     job = relationship("Job", back_populates="applications")
-    interviews = relationship("Interview", back_populates="application", cascade="all, delete-orphan")
+    interviews = relationship(
+        "Interview", back_populates="application", cascade="all, delete-orphan"
+    )
 
 
 class Interview(Base):
@@ -167,7 +170,9 @@ class Skill(Base):
     name = Column(String(100), unique=True, nullable=False, index=True)
     category = Column(String(50))
 
-    candidates = relationship("Candidate", secondary=candidate_skills, back_populates="skills")
+    candidates = relationship(
+        "Candidate", secondary=candidate_skills, back_populates="skills"
+    )
     jobs = relationship("Job", secondary=job_skills, back_populates="skills")
 
 

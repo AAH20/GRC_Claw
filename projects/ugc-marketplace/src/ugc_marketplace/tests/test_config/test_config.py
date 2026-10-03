@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ugc_marketplace.config import Settings, get_settings
 
 

@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from compliance_monitor.agents import RemediationAgent
 from compliance_monitor.api.dependencies import get_remediation_agent
 from compliance_monitor.api.store import store
 from compliance_monitor.models.schemas import RemediationAction, RemediationRequest
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from compliance_monitor.agents import RemediationAgent
 
 router = APIRouter()
 
@@ -18,7 +21,7 @@ router = APIRouter()
 async def remediate_violation(
     violation_id: UUID,
     data: RemediationRequest,
-    agent: RemediationAgent = Depends(get_remediation_agent)  # noqa: B008,
+    agent: RemediationAgent = Depends(get_remediation_agent),  # noqa: B008,
 ) -> RemediationAction:
     """Remediate a compliance violation.
 
@@ -35,7 +38,9 @@ async def remediate_violation(
     """
     violation = store.get_violation(violation_id)
     if not violation:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Violation not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Violation not found"
+        )
 
     action = await agent.run(data)
     action.violation_id = violation_id

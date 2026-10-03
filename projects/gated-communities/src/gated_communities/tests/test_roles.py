@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from access_control.agents.role_manager import RoleManagerAgent
 from access_control.config import Settings
 from access_control.models.enums import RoleStatus
@@ -49,7 +48,9 @@ class TestRoles:
         assert role.status == RoleStatus.ACTIVE
 
     @pytest.mark.asyncio
-    async def test_create_role_failure(self, mock_llm: MagicMock, settings: Settings) -> None:
+    async def test_create_role_failure(
+        self, mock_llm: MagicMock, settings: Settings
+    ) -> None:
         """Test role creation failure."""
         mock_response = MagicMock()
         mock_response.content = '{"success": false, "message": "Invalid permissions"}'
@@ -99,7 +100,9 @@ class TestRoles:
         assert errors == []
 
     @pytest.mark.asyncio
-    async def test_suggest_permissions(self, mock_llm: MagicMock, settings: Settings) -> None:
+    async def test_suggest_permissions(
+        self, mock_llm: MagicMock, settings: Settings
+    ) -> None:
         """Test permission suggestions."""
         mock_response = MagicMock()
         mock_response.content = '{"success": true, "role": {"permissions": [{"resource": "documents", "action": "read"}]}}'  # noqa: E501
@@ -109,9 +112,7 @@ class TestRoles:
         agent = RoleManagerAgent(llm=mock_llm, settings=settings)
         agent._build_agent = MagicMock(return_value=mock_chain)
 
-        suggestions = await agent.suggest_permissions(
-            "viewer", "Can view documents"
-        )
+        suggestions = await agent.suggest_permissions("viewer", "Can view documents")
 
         assert len(suggestions) > 0
         assert suggestions[0].resource == "documents"

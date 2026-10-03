@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from recruitment_platform.integrations.base import BaseIntegration
 
@@ -68,10 +67,12 @@ class OpenAIClient(BaseIntegration):
         Returns:
             Analysis result.
         """
-        return await self.chat([
-            {"role": "system", "content": task},
-            {"role": "user", "content": text},
-        ])
+        return await self.chat(
+            [
+                {"role": "system", "content": task},
+                {"role": "user", "content": text},
+            ]
+        )
 
     async def health_check(self) -> bool:
         """Check if the OpenAI API is available.

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useState } from "react";
 import { BadgeCheck, MoreVertical, Mail, UserPlus, UserMinus } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/Card";
 import { Badge } from "../ui/Badge";
@@ -7,7 +8,6 @@ import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { formatNumber, formatCurrency } from "@/lib/utils";
 import type { Creator } from "@/lib/types";
-import { useState } from "react";
 
 interface CreatorCardProps {
   creator: Creator;
@@ -16,7 +16,7 @@ interface CreatorCardProps {
   isFollowing?: boolean;
 }
 
-export function CreatorCard({ creator, onMessage, onToggleFollow, isFollowing }: CreatorCardProps) {
+export const CreatorCard = memo(function CreatorCard({ creator, onMessage, onToggleFollow, isFollowing }: CreatorCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
   const statusColors = {
@@ -26,7 +26,7 @@ export function CreatorCard({ creator, onMessage, onToggleFollow, isFollowing }:
   } as const;
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-md">
+    <Card data-testid="creator-card" className="overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -86,4 +86,4 @@ export function CreatorCard({ creator, onMessage, onToggleFollow, isFollowing }:
       </CardFooter>
     </Card>
   );
-}
+});

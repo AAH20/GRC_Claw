@@ -6,7 +6,6 @@ from typing import Any
 
 import httpx
 import structlog
-
 from compliance_monitor.config.settings import get_settings
 
 logger = structlog.get_logger(__name__)
@@ -53,7 +52,11 @@ class Notifier:
                     "text": message,
                     "fields": [
                         {"title": "Severity", "value": severity, "short": True},
-                        {"title": "Service", "value": "compliance-monitor", "short": True},
+                        {
+                            "title": "Service",
+                            "value": "compliance-monitor",
+                            "short": True,
+                        },
                     ],
                 }
             ]
@@ -91,7 +94,11 @@ class Notifier:
             logger.warning("SMTP not configured, skipping email")
             return False
 
-        recipients = recipients or [self.settings.notification_email] if self.settings.notification_email else []
+        recipients = (
+            recipients or [self.settings.notification_email]
+            if self.settings.notification_email
+            else []
+        )
 
         if not recipients:
             logger.warning("No recipients configured for email")
@@ -106,7 +113,9 @@ class Notifier:
             msg["From"] = self.settings.smtp_user
             msg["To"] = ", ".join(recipients)
 
-            with smtplib.SMTP(self.settings.smtp_host, self.settings.smtp_port) as server:
+            with smtplib.SMTP(
+                self.settings.smtp_host, self.settings.smtp_port
+            ) as server:
                 if self.settings.smtp_user and self.settings.smtp_password:
                     server.starttls()
                     server.login(self.settings.smtp_user, self.settings.smtp_password)

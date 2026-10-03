@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from compliance_monitor.agents import AuditReporterAgent
 from compliance_monitor.api.dependencies import get_audit_reporter
 from compliance_monitor.api.store import store
 from compliance_monitor.models.schemas import AuditReport, AuditRequest
+from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from compliance_monitor.agents import AuditReporterAgent
 
 router = APIRouter()
 
@@ -27,7 +30,7 @@ async def list_audits() -> list[AuditReport]:
 @router.post("", response_model=AuditReport, status_code=status.HTTP_201_CREATED)
 async def generate_audit(
     data: AuditRequest,
-    agent: AuditReporterAgent = Depends(get_audit_reporter)  # noqa: B008,
+    agent: AuditReporterAgent = Depends(get_audit_reporter),  # noqa: B008,
 ) -> AuditReport:
     """Generate a new audit report.
 
@@ -57,5 +60,7 @@ async def get_audit(audit_id: UUID) -> AuditReport:
     """
     audit = store.get_audit(audit_id)
     if not audit:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audit report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Audit report not found"
+        )
     return audit

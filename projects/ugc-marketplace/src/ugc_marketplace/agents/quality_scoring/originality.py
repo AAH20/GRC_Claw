@@ -9,7 +9,8 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 
-from ugc_marketplace.agents.quality_scoring.base import AgentResult, BaseScoringAgent
+from ugc_marketplace.agents.quality_scoring.base import (AgentResult,
+                                                         BaseScoringAgent)
 from ugc_marketplace.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,9 @@ class OriginalityScorerAgent(BaseScoringAgent["DimensionScore"]):
         self.settings = get_settings()
         self._llm: BaseLanguageModel | None = None
 
-    async def score(self, content: str, context: dict[str, Any] | None = None) -> AgentResult["DimensionScore"]:
+    async def score(
+        self, content: str, context: dict[str, Any] | None = None
+    ) -> AgentResult[DimensionScore]:
         """Score content originality.
 
         Args:
@@ -53,7 +56,7 @@ class OriginalityScorerAgent(BaseScoringAgent["DimensionScore"]):
                 reasoning="Failed to calculate originality score.",
             )
 
-    def _calculate_originality_score(self, content: str) -> "DimensionScore":
+    def _calculate_originality_score(self, content: str) -> DimensionScore:
         """Calculate originality score for content.
 
         Args:
@@ -62,16 +65,29 @@ class OriginalityScorerAgent(BaseScoringAgent["DimensionScore"]):
         Returns:
             Dimension score with originality metrics.
         """
-        from ugc_marketplace.models.schemas import DimensionScore, ScoreDimension, ScoreLevel
+        from ugc_marketplace.models.schemas import (DimensionScore,
+                                                    ScoreDimension, ScoreLevel)
 
-        content_hash = hashlib.md5(content.encode()).hexdigest()
+        content_hash = hashlib.sha256(content.encode()).hexdigest()
         unique_words = set(content.lower().split())
         total_words = len(content.split())
         uniqueness_ratio = len(unique_words) / total_words if total_words > 0 else 0
 
-        has_perspective = bool(re.search(r"\b(I think|in my opinion|my perspective|I believe)\b", content, re.IGNORECASE))
-        has_examples = bool(re.search(r"\b(for example|for instance|such as)\b", content, re.IGNORECASE))
-        has_data = bool(re.search(r"\b(\d+%|\d+ percent|study|research|data)\b", content, re.IGNORECASE))
+        has_perspective = bool(
+            re.search(
+                r"\b(I think|in my opinion|my perspective|I believe)\b",
+                content,
+                re.IGNORECASE,
+            )
+        )
+        has_examples = bool(
+            re.search(r"\b(for example|for instance|such as)\b", content, re.IGNORECASE)
+        )
+        has_data = bool(
+            re.search(
+                r"\b(\d+%|\d+ percent|study|research|data)\b", content, re.IGNORECASE
+            )
+        )
 
         score_value = uniqueness_ratio * 0.5
         if has_perspective:

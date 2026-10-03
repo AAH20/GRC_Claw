@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
-
-from langchain_core.language_models import BaseLanguageModel
+from typing import TYPE_CHECKING, Any
 
 from member_verification.agents.base import AgentConfig, BaseAgent
 from member_verification.models.schemas import DocumentType
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class DocumentCheckerAgent(BaseAgent):
@@ -136,7 +137,9 @@ class DocumentCheckerAgent(BaseAgent):
         finally:
             self._status = "available"
 
-    def _cross_reference(self, document: dict[str, Any], identity: dict[str, Any]) -> bool:
+    def _cross_reference(
+        self, document: dict[str, Any], identity: dict[str, Any]
+    ) -> bool:
         """Cross-reference document data with identity data.
 
         Args:

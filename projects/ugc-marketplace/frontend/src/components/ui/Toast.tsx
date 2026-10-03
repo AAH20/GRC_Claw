@@ -22,16 +22,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const icons = { success: CheckCircle, error: XCircle, warning: AlertCircle, info: Info };
   const colors = {
-    success: "border-green-200 bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-100",
-    error: "border-red-200 bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-100",
-    warning: "border-yellow-200 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-100",
-    info: "border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-100",
+    success: "border-success/30 bg-success/10 text-success",
+    error: "border-destructive/30 bg-destructive/10 text-destructive",
+    warning: "border-warning/30 bg-warning/10 text-warning",
+    info: "border-info/30 bg-info/10 text-info",
   };
 
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[100] space-y-2">
+      <div className="fixed bottom-4 right-4 z-[100] space-y-2" aria-live="polite" aria-atomic="false">
         {toasts.map((t) => {
           const Icon = icons[t.type];
           return (

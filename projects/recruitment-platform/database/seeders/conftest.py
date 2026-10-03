@@ -1,7 +1,8 @@
 """Pytest fixtures for database testing."""
+
 from __future__ import annotations
 
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 from sqlalchemy import create_engine
@@ -172,7 +173,7 @@ def interview(db_session: Session, application, user):
     Returns:
         Created Interview instance.
     """
-    interview = InterviewFactory(application=application, interviewer=user)
+    interview = InterviewFactory(application=application, interviewer_id=user.id)
     db_session.add(interview)
     db_session.commit()
     return interview
@@ -224,7 +225,7 @@ def note(db_session: Session, candidate, user):
     Returns:
         Created Note instance.
     """
-    note = NoteFactory(candidate=candidate, author=user)
+    note = NoteFactory(candidate_id=candidate.id, author_id=user.id)
     db_session.add(note)
     db_session.commit()
     return note
@@ -241,7 +242,7 @@ def talent_pool(db_session: Session, user):
     Returns:
         Created TalentPool instance.
     """
-    pool = TalentPoolFactory(created_by=user)
+    pool = TalentPoolFactory(created_by=user.id)
     db_session.add(pool)
     db_session.commit()
     return pool

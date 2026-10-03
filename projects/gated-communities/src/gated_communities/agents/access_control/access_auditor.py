@@ -9,9 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseLanguageModel
-from pydantic import BaseModel, Field
-
 from access_control.agents.base import AgentContext, BaseAgent
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from access_control.config import Settings
@@ -64,10 +63,12 @@ Consider factors like: unusual time patterns, privilege escalation attempts, acc
 brute force patterns, and policy violations.
 Respond with a JSON object containing: severity, flagged, anomaly_score, findings, recommended_actions."""  # noqa: E501
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", "{input}"),
+            ]
+        )
 
         chain = prompt | self.llm
         return chain
@@ -87,12 +88,14 @@ Respond with a JSON object containing: severity, flagged, anomaly_score, finding
         agent = self._build_agent()
 
         input_data = {
-            "input": json.dumps({
-                "event_type": payload.event_type,
-                "audit_entry": payload.audit_entry,
-                "historical_events": payload.historical_events,
-                "context": payload.context,
-            })
+            "input": json.dumps(
+                {
+                    "event_type": payload.event_type,
+                    "audit_entry": payload.audit_entry,
+                    "historical_events": payload.historical_events,
+                    "context": payload.context,
+                }
+            )
         }
 
         response = await agent.ainvoke(input_data)

@@ -20,13 +20,17 @@ class TestAPI:
         assert "service" in data
         assert "version" in data
 
-    def test_evaluate_access(self, client: TestClient, sample_access_request: dict) -> None:
+    def test_evaluate_access(
+        self, client: TestClient, sample_access_request: dict
+    ) -> None:
         """Test access evaluation endpoint."""
         response = client.post("/api/v1/access/evaluate", json=sample_access_request)
         # May fail due to LLM dependency, but should return valid response
         assert response.status_code in (200, 500)
 
-    def test_check_access(self, client: TestClient, sample_access_request: dict) -> None:
+    def test_check_access(
+        self, client: TestClient, sample_access_request: dict
+    ) -> None:
         """Test quick access check endpoint."""
         response = client.post("/api/v1/access/check", json=sample_access_request)
         assert response.status_code in (200, 500)
@@ -86,7 +90,9 @@ class TestAPI:
         response = client.get("/api/v1/audit/123e4567-e89b-12d3-a456-426614174000")
         assert response.status_code == 501
 
-    def test_enforce_policies(self, client: TestClient, sample_access_request: dict) -> None:
+    def test_enforce_policies(
+        self, client: TestClient, sample_access_request: dict
+    ) -> None:
         """Test policy enforcement endpoint."""
         response = client.post("/api/v1/policies/enforce", json=sample_access_request)
         assert response.status_code in (200, 500)

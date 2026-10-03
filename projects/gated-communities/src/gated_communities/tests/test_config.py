@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from community_health_scorer.config import Settings, get_settings
 
 

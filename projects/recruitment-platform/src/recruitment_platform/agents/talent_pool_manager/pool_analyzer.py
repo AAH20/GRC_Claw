@@ -27,4 +27,9 @@ class PoolAnalyzer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Pool analysis with coverage and gap metrics.
         """
-        return {"total_candidates": 0, "skill_coverage": {}, "diversity": {}, "readiness": 0.0}
+        return {
+            "total_candidates": 0,
+            "skill_coverage": {},
+            "diversity": {},
+            "readiness": 0.0,
+        }

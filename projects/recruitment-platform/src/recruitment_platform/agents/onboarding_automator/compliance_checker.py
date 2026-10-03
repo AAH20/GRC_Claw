@@ -27,4 +27,9 @@ class ComplianceChecker(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Compliance status with any violations or pending items.
         """
-        return {"compliant": True, "violations": [], "pending_items": [], "risk_level": "low"}
+        return {
+            "compliant": True,
+            "violations": [],
+            "pending_items": [],
+            "risk_level": "low",
+        }

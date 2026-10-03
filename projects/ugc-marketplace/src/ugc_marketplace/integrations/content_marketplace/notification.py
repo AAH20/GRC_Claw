@@ -13,7 +13,9 @@ logger = structlog.get_logger(__name__)
 class NotificationResult:
     """Result of a notification send."""
 
-    def __init__(self, success: bool, message_id: str, metadata: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, success: bool, message_id: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Initialize notification result.
 
         Args:
@@ -54,7 +56,9 @@ class NotificationService(ABC):
 class EmailNotificationService(NotificationService):
     """Email notification service."""
 
-    def __init__(self, api_key: str, from_email: str = "noreply@ugc-marketplace.com") -> None:
+    def __init__(
+        self, api_key: str, from_email: str = "noreply@ugc-marketplace.com"
+    ) -> None:
         """Initialize email notification service.
 
         Args:

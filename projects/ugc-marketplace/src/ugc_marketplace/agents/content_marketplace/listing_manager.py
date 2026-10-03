@@ -7,9 +7,9 @@ from typing import Any
 from uuid import UUID
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage
 
-from ugc_marketplace.models.schemas import Listing, ListingCreate, ListingStatus, ListingUpdate
+from ugc_marketplace.models.schemas import (Listing, ListingCreate,
+                                            ListingStatus, ListingUpdate)
 
 logger = logging.getLogger(__name__)
 

@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
-
 from moderation_analytics.agents.base import BaseAgent
 from moderation_analytics.models import ModerationPrediction
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class ModerationPredictorAgent(BaseAgent[list[ModerationPrediction]]):
@@ -112,12 +113,17 @@ class ModerationPredictorAgent(BaseAgent[list[ModerationPrediction]]):
             prediction_type="workload",
             target_date=target,
             predicted_value=round(predicted, 2),
-            confidence_interval=(round(predicted - margin, 2), round(predicted + margin, 2)),
+            confidence_interval=(
+                round(predicted - margin, 2),
+                round(predicted + margin, 2),
+            ),
             confidence=0.75,
             factors=["historical average", "growth trend"],
         )
 
-    def _predict_risk(self, data: list[dict[str, Any]], target: datetime) -> ModerationPrediction:
+    def _predict_risk(
+        self, data: list[dict[str, Any]], target: datetime
+    ) -> ModerationPrediction:
         """Predict future risk levels.
 
         Args:
@@ -134,12 +140,17 @@ class ModerationPredictorAgent(BaseAgent[list[ModerationPrediction]]):
             prediction_type="risk",
             target_date=target,
             predicted_value=round(avg_severity, 4),
-            confidence_interval=(round(avg_severity * 0.8, 4), round(avg_severity * 1.2, 4)),
+            confidence_interval=(
+                round(avg_severity * 0.8, 4),
+                round(avg_severity * 1.2, 4),
+            ),
             confidence=0.70,
             factors=["severity trend", "historical patterns"],
         )
 
-    def _predict_trend(self, data: list[dict[str, Any]], target: datetime) -> ModerationPrediction:
+    def _predict_trend(
+        self, data: list[dict[str, Any]], target: datetime
+    ) -> ModerationPrediction:
         """Predict trend direction.
 
         Args:
@@ -169,7 +180,10 @@ class ModerationPredictorAgent(BaseAgent[list[ModerationPrediction]]):
             prediction_type="trend",
             target_date=target,
             predicted_value=round(trend_value, 4),
-            confidence_interval=(round(trend_value * 0.5, 4), round(trend_value * 1.5, 4)),
+            confidence_interval=(
+                round(trend_value * 0.5, 4),
+                round(trend_value * 1.5, 4),
+            ),
             confidence=0.65,
             factors=["comparative analysis"],
         )

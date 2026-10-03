@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import ChatPromptTemplate
-
 from moderation_analytics.agents.base import BaseAgent
 from moderation_analytics.models import PolicyEffectiveness
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 
 class PolicyEffectivenessAgent(BaseAgent[list[PolicyEffectiveness]]):

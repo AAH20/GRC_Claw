@@ -37,7 +37,9 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = Field(default=["*"])
 
     # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/gated_communities"
+    DATABASE_URL: str = (
+        "postgresql://postgres:postgres@localhost:5432/gated_communities"
+    )
     DATABASE_POOL_SIZE: int = 20
 
     # Redis

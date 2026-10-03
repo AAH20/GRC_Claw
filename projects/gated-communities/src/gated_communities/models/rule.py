@@ -40,7 +40,9 @@ class Rule(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Rule name")
     description: str = Field(..., min_length=1, description="Rule description")
     category: RuleCategory = Field(..., description="Rule category")
-    severity: RuleSeverity = Field(default=RuleSeverity.MEDIUM, description="Rule severity")
+    severity: RuleSeverity = Field(
+        default=RuleSeverity.MEDIUM, description="Rule severity"
+    )
     conditions: dict[str, Any] = Field(
         default_factory=dict, description="Rule conditions for evaluation"
     )
@@ -65,7 +67,9 @@ class RuleCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Rule name")
     description: str = Field(..., min_length=1, description="Rule description")
     category: RuleCategory = Field(..., description="Rule category")
-    severity: RuleSeverity = Field(default=RuleSeverity.MEDIUM, description="Rule severity")
+    severity: RuleSeverity = Field(
+        default=RuleSeverity.MEDIUM, description="Rule severity"
+    )
     conditions: dict[str, Any] = Field(
         default_factory=dict, description="Rule conditions for evaluation"
     )

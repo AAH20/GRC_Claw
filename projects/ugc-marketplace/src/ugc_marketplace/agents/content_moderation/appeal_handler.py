@@ -55,7 +55,9 @@ class AppealHandlerAgent(BaseModerationAgent):
                     content=content,
                 )
             ),
-            HumanMessage(content=f"Review this appeal:\n\nContent: {content}\nReason: {appeal_reason}"),
+            HumanMessage(
+                content=f"Review this appeal:\n\nContent: {content}\nReason: {appeal_reason}"
+            ),
         ]
 
         response = await self.model.ainvoke(messages)
@@ -69,5 +71,7 @@ class AppealHandlerAgent(BaseModerationAgent):
                 "action": "escalate",
                 "confidence": 0.5,
                 "categories": ["parse_error"],
-                "reasons": ["Could not parse LLM response, escalating for human review"],
+                "reasons": [
+                    "Could not parse LLM response, escalating for human review"
+                ],
             }

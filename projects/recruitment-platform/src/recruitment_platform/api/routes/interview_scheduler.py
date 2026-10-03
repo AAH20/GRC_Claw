@@ -20,7 +20,9 @@ async def optimize_slots(data: dict[str, Any]) -> dict[str, Any]:
         Optimal time slots.
     """
     try:
-        from recruitment_platform.agents.interview_scheduler.availability_optimizer import AvailabilityOptimizer
+        from recruitment_platform.agents.interview_scheduler.availability_optimizer import (
+            AvailabilityOptimizer,
+        )
 
         agent = AvailabilityOptimizer()
         result = await agent.process(data)

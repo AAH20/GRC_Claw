@@ -5,11 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field
-
 from escalation_workflow.agents.base import BaseAgent
 from escalation_workflow.models.sla import SLA, SLABreach, SLAStatus
+from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import BaseModel, Field
 
 
 class SLATrackerInput(BaseModel):
@@ -54,7 +53,9 @@ service level agreements and provide:
 
         now = input_data.current_time or datetime.utcnow()
         response_remaining = (input_data.response_deadline - now).total_seconds() / 60
-        resolution_remaining = (input_data.resolution_deadline - now).total_seconds() / 60
+        resolution_remaining = (
+            input_data.resolution_deadline - now
+        ).total_seconds() / 60
 
         status = self._determine_status(response_remaining, resolution_remaining)
         elapsed = (now - input_data.started_at).total_seconds() / 60
@@ -66,10 +67,12 @@ service level agreements and provide:
             escalation_id=input_data.escalation_id,
             priority=input_data.priority,
             response_time_minutes=int(
-                (input_data.response_deadline - input_data.started_at).total_seconds() / 60
+                (input_data.response_deadline - input_data.started_at).total_seconds()
+                / 60
             ),
             resolution_time_minutes=int(
-                (input_data.resolution_deadline - input_data.started_at).total_seconds() / 60
+                (input_data.resolution_deadline - input_data.started_at).total_seconds()
+                / 60
             ),
             status=status,
             started_at=input_data.started_at,
@@ -98,7 +101,10 @@ service level agreements and provide:
         return SLAStatus.ACTIVE
 
     async def _assess_risk(
-        self, input_data: SLATrackerInput, response_remaining: float, resolution_remaining: float
+        self,
+        input_data: SLATrackerInput,
+        response_remaining: float,
+        resolution_remaining: float,
     ) -> str:
         """Use LLM to assess breach risk.
 

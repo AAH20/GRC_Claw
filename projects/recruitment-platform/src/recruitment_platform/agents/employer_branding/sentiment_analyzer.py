@@ -27,4 +27,9 @@ class SentimentAnalyzer(BaseAgent[dict[str, Any], dict[str, Any]]):
         Returns:
             Sentiment analysis with scores and trends.
         """
-        return {"overall_sentiment": "", "positive_ratio": 0.0, "negative_ratio": 0.0, "trends": []}
+        return {
+            "overall_sentiment": "",
+            "positive_ratio": 0.0,
+            "negative_ratio": 0.0,
+            "trends": [],
+        }

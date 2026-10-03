@@ -49,10 +49,14 @@ class AppealStatus(str, Enum):
 class ModerationRequest(BaseModel):
     """Request model for content moderation."""
 
-    content: str = Field(..., min_length=1, max_length=100_000, description="Content to moderate")
+    content: str = Field(
+        ..., min_length=1, max_length=100_000, description="Content to moderate"
+    )
     content_type: ContentType = Field(..., description="Type of content")
     user_id: str | None = Field(None, description="User identifier")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
     callback_url: str | None = Field(None, description="Webhook for async results")
 
 
@@ -143,4 +147,6 @@ class HealthResponse(BaseModel):
 
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Service version")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Response timestamp"
+    )

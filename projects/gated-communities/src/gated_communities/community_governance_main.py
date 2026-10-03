@@ -5,10 +5,6 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
-from fastapi import FastAPI, Request, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-
 from community_governance.api.dependencies import set_agents, set_metrics
 from community_governance.api.routes import (
     analytics,
@@ -22,6 +18,9 @@ from community_governance.api.routes import (
 from community_governance.config.logging_config import get_logger, setup_logging
 from community_governance.config.settings import get_settings
 from community_governance.exceptions import GovernanceException
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -39,7 +38,9 @@ def create_llm() -> Any:
     """
     settings = get_settings()
     if not settings.openai_api_key:
-        logger.warning("No OpenAI API key configured, agents will use programmatic mode")
+        logger.warning(
+            "No OpenAI API key configured, agents will use programmatic mode"
+        )
         return None
 
     try:
@@ -52,7 +53,9 @@ def create_llm() -> Any:
             api_key=settings.openai_api_key,
         )
     except ImportError:
-        logger.warning("langchain-openai not installed, agents will use programmatic mode")
+        logger.warning(
+            "langchain-openai not installed, agents will use programmatic mode"
+        )
         return None
 
 
@@ -180,7 +183,9 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def general_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         """Handle general exceptions.
 
         Args:

@@ -21,7 +21,7 @@ export function TransactionChart({ data, isLoading }: TransactionChartProps) {
   const maxRevenue = Math.max(...data.map((d) => d.revenue), 1);
 
   return (
-    <Card>
+    <Card data-testid="transaction-chart">
       <CardHeader>
         <CardTitle>Revenue Overview</CardTitle>
       </CardHeader>

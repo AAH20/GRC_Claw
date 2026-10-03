@@ -37,6 +37,7 @@ export function Badge({
         sizes[size],
         className
       )}
+      role="status"
       {...props}
     >
       {children}

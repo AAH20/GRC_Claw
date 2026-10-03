@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from escalation_workflow.agents.base import BaseAgent
+from escalation_workflow.models.resolution import Resolution, ResolutionStatus
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
-from escalation_workflow.agents.base import BaseAgent
-from escalation_workflow.models.escalation import Escalation
-from escalation_workflow.models.resolution import Resolution, ResolutionStatus
+if TYPE_CHECKING:
+    from escalation_workflow.models.escalation import Escalation
 
 
 class AutoResolverInput(BaseModel):

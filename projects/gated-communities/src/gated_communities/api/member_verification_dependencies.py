@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from fastapi import Depends, Header, HTTPException, Request
-
 from member_verification.config.settings import Settings, get_settings
 
 

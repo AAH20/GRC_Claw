@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 
 class TestHealthAPI:
@@ -28,7 +31,9 @@ class TestHealthAPI:
 class TestEscalationsAPI:
     """Tests for escalation management endpoints."""
 
-    def test_create_escalation(self, client: TestClient, sample_escalation_data: dict) -> None:
+    def test_create_escalation(
+        self, client: TestClient, sample_escalation_data: dict
+    ) -> None:
         """Test creating a new escalation."""
         response = client.post("/escalations", json=sample_escalation_data)
         assert response.status_code == 201
@@ -50,7 +55,9 @@ class TestEscalationsAPI:
         response = client.get("/escalations/123e4567-e89b-12d3-a456-426614174000")
         assert response.status_code == 404
 
-    def test_update_escalation(self, client: TestClient, sample_escalation_data: dict) -> None:
+    def test_update_escalation(
+        self, client: TestClient, sample_escalation_data: dict
+    ) -> None:
         """Test updating an escalation."""
         create_response = client.post("/escalations", json=sample_escalation_data)
         escalation_id = create_response.json()["id"]
@@ -62,7 +69,9 @@ class TestEscalationsAPI:
         assert data["priority"] == "critical"
         assert data["status"] == "in_progress"
 
-    def test_delete_escalation(self, client: TestClient, sample_escalation_data: dict) -> None:
+    def test_delete_escalation(
+        self, client: TestClient, sample_escalation_data: dict
+    ) -> None:
         """Test deleting an escalation."""
         create_response = client.post("/escalations", json=sample_escalation_data)
         escalation_id = create_response.json()["id"]
@@ -137,7 +146,9 @@ class TestSLAAPI:
 class TestResolutionsAPI:
     """Tests for resolution management endpoints."""
 
-    def test_create_resolution(self, client: TestClient, sample_resolution_data: dict) -> None:
+    def test_create_resolution(
+        self, client: TestClient, sample_resolution_data: dict
+    ) -> None:
         """Test creating a resolution."""
         response = client.post("/resolutions", json=sample_resolution_data)
         assert response.status_code == 201
@@ -155,7 +166,9 @@ class TestResolutionsAPI:
         response = client.get("/resolutions/123e4567-e89b-12d3-a456-426614174000")
         assert response.status_code == 404
 
-    def test_approve_resolution(self, client: TestClient, sample_resolution_data: dict) -> None:
+    def test_approve_resolution(
+        self, client: TestClient, sample_resolution_data: dict
+    ) -> None:
         """Test approving a resolution."""
         create_response = client.post("/resolutions", json=sample_resolution_data)
         resolution_id = create_response.json()["id"]

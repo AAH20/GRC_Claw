@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from recruitment_platform.integrations.base import BaseIntegration
 
@@ -17,7 +16,12 @@ class LLMClient(BaseIntegration):
     embeddings, and other LLM operations.
     """
 
-    def __init__(self, api_key: str, model: str = "gpt-4", base_url: str = "https://api.openai.com/v1") -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-4",
+        base_url: str = "https://api.openai.com/v1",
+    ) -> None:
         """Initialize the LLM client.
 
         Args:

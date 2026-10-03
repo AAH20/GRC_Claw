@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
-from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
 
 T = TypeVar("T", bound=BaseModel)
 R = TypeVar("R", bound=BaseModel)

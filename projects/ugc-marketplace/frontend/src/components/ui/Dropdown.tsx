@@ -24,9 +24,9 @@ export function Dropdown({ trigger, children, align = "right" }: DropdownProps) 
 
   return (
     <div ref={ref} className="relative">
-      <div onClick={() => setIsOpen(!isOpen)}>{trigger}</div>
+      <div onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} aria-haspopup="menu">{trigger}</div>
       {isOpen && (
-        <div className={cn("absolute z-50 mt-1 min-w-[160px] rounded-md border bg-card p-1 shadow-lg", align === "right" ? "right-0" : "left-0")}>
+        <div role="menu" className={cn("absolute z-50 mt-1 min-w-[160px] rounded-md border bg-card p-1 shadow-lg", align === "right" ? "right-0" : "left-0")}>
           {children}
         </div>
       )}

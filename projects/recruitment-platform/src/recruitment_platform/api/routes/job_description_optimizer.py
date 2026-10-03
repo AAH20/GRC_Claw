@@ -20,7 +20,9 @@ async def check_ats(data: dict[str, Any]) -> dict[str, Any]:
         Compatibility results.
     """
     try:
-        from recruitment_platform.agents.job_description_optimizer.ats_compatibility import ATSCompatibility
+        from recruitment_platform.agents.job_description_optimizer.ats_compatibility import (
+            ATSCompatibility,
+        )
 
         agent = ATSCompatibility()
         result = await agent.process(data)
@@ -56,7 +58,9 @@ async def optimize_keywords(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Optimized text with keyword suggestions.
     """
-    from recruitment_platform.agents.job_description_optimizer.keyword_optimizer import KeywordOptimizer
+    from recruitment_platform.agents.job_description_optimizer.keyword_optimizer import (
+        KeywordOptimizer,
+    )
 
     agent = KeywordOptimizer()
     result = await agent.process(data)

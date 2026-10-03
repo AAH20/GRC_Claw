@@ -6,8 +6,12 @@ from typing import Any
 
 from recruitment_platform.agents.base import BaseAgent
 from recruitment_platform.agents.resume_parser.contact_extractor_agent import ContactExtractorAgent
-from recruitment_platform.agents.resume_parser.education_extractor_agent import EducationExtractorAgent
-from recruitment_platform.agents.resume_parser.experience_extractor_agent import ExperienceExtractorAgent
+from recruitment_platform.agents.resume_parser.education_extractor_agent import (
+    EducationExtractorAgent,
+)
+from recruitment_platform.agents.resume_parser.experience_extractor_agent import (
+    ExperienceExtractorAgent,
+)
 from recruitment_platform.agents.resume_parser.skills_extractor_agent import SkillsExtractorAgent
 
 

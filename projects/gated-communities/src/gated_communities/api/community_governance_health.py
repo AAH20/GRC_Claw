@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
-
 from community_governance.api.dependencies import get_agents
 from community_governance.config.settings import get_settings
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 
 router = APIRouter(tags=["health"])
 
@@ -17,12 +16,14 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="Application version")
     environment: str = Field(..., description="Deployment environment")
-    agents: dict[str, str] = Field(default_factory=dict, description="Agent health status")
+    agents: dict[str, str] = Field(
+        default_factory=dict, description="Agent health status"
+    )
 
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    agents: dict = Depends(get_agents)  # noqa: B008,
+    agents: dict = Depends(get_agents),  # noqa: B008,
 ) -> HealthResponse:
     """Health check endpoint.
 

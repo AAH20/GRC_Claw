@@ -13,60 +13,44 @@ Usage:
         creator = creator_factory()
         assert creator.id is not None
 """
+
 from __future__ import annotations
 
-import asyncio
-from typing import Any, AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
+from typing import Any
 from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import create_engine, event
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool
 
 from ugc_marketplace.database.seeders.factories import (
-    ActiveListingFactory,
-    AnalyticsEventFactory,
-    AuditLogFactory,
-    CommercialLicenseFactory,
-    CompletedTransactionFactory,
-    ContentFactory,
-    CreatorFactory,
-    DraftContentFactory,
-    FraudReportFactory,
-    LicenseFactory,
-    ListingFactory,
-    ModerationActionFactory,
-    PendingTransactionFactory,
-    PublishedContentFactory,
-    QualityScoreFactory,
-    RefundedTransactionFactory,
-    SuspendedCreatorFactory,
-    TransactionFactory,
-    VerifiedCreatorFactory,
-)
-from ugc_marketplace.database.seeders.models import (
-    AnalyticsEvent,
-    AuditLog,
-    Base,
-    Content,
-    Creator,
-    FraudReport,
-    License,
-    Listing,
-    ModerationAction,
-    QualityScore,
-    Transaction,
-)
+    ActiveListingFactory, AnalyticsEventFactory, AuditLogFactory,
+    CommercialLicenseFactory, CompletedTransactionFactory, ContentFactory,
+    CreatorFactory, DraftContentFactory, FraudReportFactory, LicenseFactory,
+    ListingFactory, ModerationActionFactory, PendingTransactionFactory,
+    PublishedContentFactory, QualityScoreFactory, RefundedTransactionFactory,
+    SuspendedCreatorFactory, TransactionFactory, VerifiedCreatorFactory)
+from ugc_marketplace.database.seeders.models import (AnalyticsEvent, AuditLog,
+                                                     Base, Content, Creator,
+                                                     FraudReport, License,
+                                                     Listing, ModerationAction,
+                                                     QualityScore, Transaction)
 from ugc_marketplace.database.seeders.seeders import seed_all, seed_all_async
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/ugc_marketplace_test"
-TEST_DATABASE_URL_SYNC = "postgresql://postgres:postgres@localhost:5432/ugc_marketplace_test"
+TEST_DATABASE_URL = (
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/ugc_marketplace_test"
+)
+TEST_DATABASE_URL_SYNC = (
+    "postgresql://postgres:postgres@localhost:5432/ugc_marketplace_test"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -133,12 +117,11 @@ async def async_db_session(async_db_engine) -> AsyncGenerator[AsyncSession, None
     Yields:
         Async SQLAlchemy Session instance.
     """
-    async with async_db_engine.connect() as connection:
-        async with connection.begin() as transaction:
-            session = async_sessionmaker(bind=connection, expire_on_commit=False)()
-            yield session
-            await session.close()
-            await transaction.rollback()
+    async with async_db_engine.connect() as connection, connection.begin() as transaction:
+        session = async_sessionmaker(bind=connection, expire_on_commit=False)()
+        yield session
+        await session.close()
+        await transaction.rollback()
 
 
 # ---------------------------------------------------------------------------
@@ -402,7 +385,9 @@ def sample_listing(db_session, sample_content) -> Listing:
     Returns:
         Listing instance.
     """
-    listing = ActiveListingFactory(content=sample_content, creator=sample_content.creator)
+    listing = ActiveListingFactory(
+        content=sample_content, creator=sample_content.creator
+    )
     db_session.add(listing)
     db_session.flush()
     return listing
@@ -462,7 +447,9 @@ def sample_quality_score(db_session, sample_content) -> QualityScore:
 
 
 @pytest.fixture
-def sample_moderation_action(db_session, sample_content, sample_creator) -> ModerationAction:
+def sample_moderation_action(
+    db_session, sample_content, sample_creator
+) -> ModerationAction:
     """Create a single sample moderation action.
 
     Args:
@@ -556,7 +543,9 @@ def content_items(db_session, sample_creator, count: int = 10) -> list[Content]:
     Returns:
         List of Content instances.
     """
-    content_items = [PublishedContentFactory(creator=sample_creator) for _ in range(count)]
+    content_items = [
+        PublishedContentFactory(creator=sample_creator) for _ in range(count)
+    ]
     db_session.add_all(content_items)
     db_session.flush()
     return content_items
@@ -573,14 +562,19 @@ def listings(db_session, sample_content, count: int = 10) -> list[Listing]:
     Returns:
         List of Listing instances.
     """
-    listings = [ActiveListingFactory(content=sample_content, creator=sample_content.creator) for _ in range(count)]
+    listings = [
+        ActiveListingFactory(content=sample_content, creator=sample_content.creator)
+        for _ in range(count)
+    ]
     db_session.add_all(listings)
     db_session.flush()
     return listings
 
 
 @pytest.fixture
-def transactions(db_session, sample_listing, sample_creator, count: int = 10) -> list[Transaction]:
+def transactions(
+    db_session, sample_listing, sample_creator, count: int = 10
+) -> list[Transaction]:
     """Create multiple sample transactions.
 
     Args:
@@ -592,7 +586,9 @@ def transactions(db_session, sample_listing, sample_creator, count: int = 10) ->
         List of Transaction instances.
     """
     transactions = [
-        CompletedTransactionFactory(listing=sample_listing, buyer=sample_creator, seller=sample_listing.creator)
+        CompletedTransactionFactory(
+            listing=sample_listing, buyer=sample_creator, seller=sample_listing.creator
+        )
         for _ in range(count)
     ]
     db_session.add_all(transactions)
@@ -611,14 +607,18 @@ def licenses(db_session, sample_transaction, count: int = 10) -> list[License]:
     Returns:
         List of License instances.
     """
-    licenses = [CommercialLicenseFactory(transaction=sample_transaction) for _ in range(count)]
+    licenses = [
+        CommercialLicenseFactory(transaction=sample_transaction) for _ in range(count)
+    ]
     db_session.add_all(licenses)
     db_session.flush()
     return licenses
 
 
 @pytest.fixture
-def moderation_actions(db_session, sample_content, sample_creator, count: int = 10) -> list[ModerationAction]:
+def moderation_actions(
+    db_session, sample_content, sample_creator, count: int = 10
+) -> list[ModerationAction]:
     """Create multiple sample moderation actions.
 
     Args:
@@ -629,7 +629,10 @@ def moderation_actions(db_session, sample_content, sample_creator, count: int = 
     Returns:
         List of ModerationAction instances.
     """
-    actions = [ModerationActionFactory(content=sample_content, moderator=sample_creator) for _ in range(count)]
+    actions = [
+        ModerationActionFactory(content=sample_content, moderator=sample_creator)
+        for _ in range(count)
+    ]
     db_session.add_all(actions)
     db_session.flush()
     return actions
@@ -670,7 +673,9 @@ def fraud_reports(db_session, sample_creator, count: int = 10) -> list[FraudRepo
 
 
 @pytest.fixture
-def analytics_events(db_session, sample_creator, count: int = 10) -> list[AnalyticsEvent]:
+def analytics_events(
+    db_session, sample_creator, count: int = 10
+) -> list[AnalyticsEvent]:
     """Create multiple sample analytics events.
 
     Args:
@@ -779,6 +784,7 @@ def faker():
         Faker instance.
     """
     from faker import Faker
+
     return Faker()
 
 
@@ -819,8 +825,9 @@ def random_price():
     Returns:
         Random price as Decimal.
     """
-    from decimal import Decimal
     import random
+    from decimal import Decimal
+
     return Decimal(str(round(random.uniform(0.99, 999.99), 2)))
 
 
@@ -831,8 +838,9 @@ def random_score():
     Returns:
         Random score as Decimal between 0.0 and 1.0.
     """
-    from decimal import Decimal
     import random
+    from decimal import Decimal
+
     return Decimal(str(round(random.uniform(0.0, 1.0), 3)))
 
 
@@ -841,15 +849,9 @@ def random_score():
 # ---------------------------------------------------------------------------
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as a slow test"
-    )
-    config.addinivalue_line(
-        "markers", "asyncio: mark test as an async test"
-    )
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "slow: mark test as a slow test")
+    config.addinivalue_line("markers", "asyncio: mark test as an async test")
 
 
 def pytest_collection_modifyitems(config, items):

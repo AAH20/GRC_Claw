@@ -32,6 +32,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         theme === "system" ? (mediaQuery.matches ? "dark" : "light") : theme;
       setResolvedTheme(resolved);
       document.documentElement.classList.toggle("dark", resolved === "dark");
+      document.documentElement.style.colorScheme = resolved;
     };
 
     resolve();

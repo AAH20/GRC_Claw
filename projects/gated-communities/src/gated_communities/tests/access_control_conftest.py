@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
-
 from access_control.config import Settings
 from access_control.main import create_app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture

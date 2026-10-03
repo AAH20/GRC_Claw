@@ -3,7 +3,6 @@
 from typing import Any
 
 from pydantic import BaseModel, Field
-
 from reputation_system.agents.base import BaseAgent
 
 
@@ -11,9 +10,13 @@ class BadgeEvaluationInput(BaseModel):
     """Input for badge evaluation."""
 
     member_id: str = Field(..., description="Member identifier")
-    badge_criteria: dict[str, Any] = Field(..., description="Badge criteria to evaluate")
+    badge_criteria: dict[str, Any] = Field(
+        ..., description="Badge criteria to evaluate"
+    )
     member_stats: dict[str, Any] = Field(..., description="Member statistics")
-    current_badges: list[str] = Field(default_factory=list, description="Current badge IDs")
+    current_badges: list[str] = Field(
+        default_factory=list, description="Current badge IDs"
+    )
 
 
 class BadgeEvaluationOutput(BaseModel):
@@ -52,12 +55,14 @@ class BadgeManagerAgent(BaseAgent[BadgeEvaluationInput, BadgeEvaluationOutput]):
             is_eligible = self._evaluate_criterion(criterion, input_data.member_stats)
 
             if is_eligible and criterion_name not in input_data.current_badges:
-                eligible_badges.append({
-                    "name": criterion_name,
-                    "category": criterion.get("category", "contribution"),
-                    "points": criterion.get("points", 10),
-                    "description": criterion.get("description", ""),
-                })
+                eligible_badges.append(
+                    {
+                        "name": criterion_name,
+                        "category": criterion.get("category", "contribution"),
+                        "points": criterion.get("points", 10),
+                        "description": criterion.get("description", ""),
+                    }
+                )
             elif not is_eligible and criterion_name in input_data.current_badges:
                 revoked_badges.append(criterion_name)
 

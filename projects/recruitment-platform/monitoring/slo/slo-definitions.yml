@@ -1,0 +1,187 @@
+# SLO/SLA definitions for recruitment-platform
+# Error budgets and availability targets
+
+slos:
+  # Core API availability
+  - name: api-availability
+    description: "Recruitment platform API must be available for all users"
+    target: 0.999
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4
+        severity: critical
+        lookback: 1h
+      - name: slow-burn
+        multiplier: 2
+        severity: warning
+        lookback: 6h
+    sli:
+      type: ratio
+      numerator: sum(rate(recruitment_api_requests_total{status_code!~"5.."}[5m]))
+      denominator: sum(rate(recruitment_api_requests_total[5m]))
+
+  # Application processing latency
+  - name: application-processing-latency
+    description: "95% of applications must be processed within 30 seconds"
+    target: 0.95
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4
+        severity: critical
+        lookback: 1h
+      - name: slow-burn
+        multiplier: 2
+        severity: warning
+        lookback: 6h
+    sli:
+      type: latency
+      threshold: 30s
+      query: histogram_quantile(0.95, sum(rate(recruitment_application_processing_duration_seconds_bucket[5m])) by (le))
+
+  # Search performance
+  - name: search-performance
+    description: "99% of job searches must return within 2 seconds"
+    target: 0.99
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4
+        severity: critical
+        lookback: 1h
+      - name: slow-burn
+        multiplier: 2
+        severity: warning
+        lookback: 6h
+    sli:
+      type: latency
+      threshold: 2s
+      query: histogram_quantile(0.99, sum(rate(recruitment_search_latency_seconds_bucket[5m])) by (le))
+
+  # Notification delivery
+  - name: notification-delivery
+    description: "99.5% of notifications must be delivered within 60 seconds"
+    target: 0.995
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4
+        severity: critical
+        lookback: 1h
+      - name: slow-burn
+        multiplier: 2
+        severity: warning
+        lookback: 6h
+    sli:
+      type: ratio
+      numerator: sum(rate(recruitment_notification_delivery_total{status="delivered"}[5m]))
+      denominator: sum(rate(recruitment_notification_delivery_total[5m]))
+
+  # Data consistency
+  - name: data-consistency
+    description: "99.99% of data operations must maintain consistency"
+    target: 0.9999
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4
+        severity: critical
+        lookback: 1h
+      - name: slow-burn
+        multiplier: 2
+        severity: warning
+        lookback: 6h
+    sli:
+      type: ratio
+      numerator: sum(rate(recruitment_api_requests_total{status_code!~"5..",endpoint=~".*write.*"}[5m]))
+      denominator: sum(rate(recruitment_api_requests_total{endpoint=~".*write.*"}[5m]))
+
+  # Background job processing
+  - name: background-job-success
+    description: "99% of background jobs must complete successfully"
+    target: 0.99
+    window: 30d
+    burn_rate_alerts:
+      - name: fast-burn
+        multiplier: 14.4
+        severity: critical
+        lookback: 1h
+      - name: slow-burn
+        multiplier: 2
+        severity: warning
+        lookback: 6h
+    sli:
+      type: ratio
+      numerator: sum(rate(recruitment_queue_depth{state="completed"}[5m]))
+      denominator: sum(rate(recruitment_queue_depth[5m]))
+
+# SLA commitments (external-facing)
+slas:
+  - name: uptime-sla
+    description: "Platform uptime guarantee"
+    commitment: 0.999
+    window: 30d
+    penalty:
+      - threshold: 0.995
+        credit: 10
+      - threshold: 0.99
+        credit: 25
+      - threshold: 0.95
+        credit: 50
+
+  - name: support-response-sla
+    description: "Support response time guarantee"
+    commitment: 0.95
+    window: 30d
+    tiers:
+      - severity: critical
+        response_time: 15m
+        resolution_time: 4h
+      - severity: high
+        response_time: 1h
+        resolution_time: 8h
+      - severity: medium
+        response_time: 4h
+        resolution_time: 24h
+      - severity: low
+        response_time: 8h
+        resolution_time: 72h
+
+  - name: data-retention-sla
+    description: "Candidate data retention and deletion"
+    commitment: 1.0
+    window: 30d
+    policy:
+      active_candidates: 365d
+      inactive_candidates: 180d
+      deleted_candidates: 30d
+      audit_logs: 2555d
+
+# Error budget policies
+error_budgets:
+  default:
+    window: 30d
+    alert_threshold: 0.5
+    page_threshold: 0.75
+    freeze_threshold: 1.0
+
+  strict:
+    window: 7d
+    alert_threshold: 0.25
+    page_threshold: 0.5
+    freeze_threshold: 1.0
+
+# Reporting configuration
+reporting:
+  cadence: weekly
+  stakeholders:
+    - team: recruitment-platform
+      channel: "#recruitment-slo"
+    - team: engineering-leadership
+      channel: "#eng-leadership"
+  dashboards:
+    - name: SLO Overview
+      url: "https://grafana.internal/d/recruitment-slo"
+    - name: Error Budget Burn
+      url: "https://grafana.internal/d/recruitment-error-budget"

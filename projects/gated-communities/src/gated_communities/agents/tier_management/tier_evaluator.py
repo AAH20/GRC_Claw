@@ -7,15 +7,16 @@ and engagement metrics to determine eligibility for tier upgrades.
 from __future__ import annotations
 
 from datetime import UTC
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
-
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.tools import BaseTool
 
 from tier_management.agents.base import BaseAgent
 from tier_management.config.logging_config import get_logger
 from tier_management.models.schemas import TierEvaluation
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseLanguageModel
+    from langchain_core.tools import BaseTool
 
 logger = get_logger(__name__)
 
@@ -65,7 +66,9 @@ class TierEvaluatorAgent(BaseAgent[dict[str, Any], TierEvaluation]):
         target_tier_id = input_data.get("target_tier_id")
 
         if not all([member_id, current_tier_id, target_tier_id]):
-            raise ValueError("member_id, current_tier_id, and target_tier_id are required")
+            raise ValueError(
+                "member_id, current_tier_id, and target_tier_id are required"
+            )
 
         logger.info(
             "evaluating_member",
@@ -159,7 +162,9 @@ class TierEvaluatorAgent(BaseAgent[dict[str, Any], TierEvaluation]):
             total_score += float(value) * weight
             total_weight += weight
 
-        return min(100.0, max(0.0, total_score / total_weight if total_weight > 0 else 50.0))
+        return min(
+            100.0, max(0.0, total_score / total_weight if total_weight > 0 else 50.0)
+        )
 
     def _identify_gaps(self, metrics: dict[str, Any]) -> list[str]:
         """Identify unmet requirements based on metrics.
@@ -211,6 +216,8 @@ class TierEvaluatorAgent(BaseAgent[dict[str, Any], TierEvaluation]):
             recommendations.append("Maintain consistent membership over time")
 
         if not recommendations:
-            recommendations.append("Continue current engagement level to maintain eligibility")
+            recommendations.append(
+                "Continue current engagement level to maintain eligibility"
+            )
 
         return recommendations

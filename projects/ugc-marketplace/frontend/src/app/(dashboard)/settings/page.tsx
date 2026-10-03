@@ -47,14 +47,14 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Full Name</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <label htmlFor="settings-name" className="text-sm font-medium">Full Name</label>
+              <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <label htmlFor="settings-email" className="text-sm font-medium">Email</label>
+              <Input id="settings-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button onClick={handleSave}>Save</Button>
           </CardContent>
         </Card>
       )}
@@ -71,7 +71,7 @@ export default function SettingsPage() {
                 <input type="checkbox" className="h-4 w-4 rounded border-input" defaultChecked />
               </div>
             ))}
-            <Button onClick={handleSave}>Save Preferences</Button>
+            <Button onClick={handleSave}>Save</Button>
           </CardContent>
         </Card>
       )}
@@ -90,7 +90,7 @@ export default function SettingsPage() {
               <label className="text-sm font-medium">New Password</label>
               <Input type="password" placeholder="••••••••" />
             </div>
-            <Button onClick={handleSave}>Update Password</Button>
+            <Button onClick={handleSave}>Save</Button>
           </CardContent>
         </Card>
       )}

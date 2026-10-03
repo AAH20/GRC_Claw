@@ -8,7 +8,6 @@ from typing import Any
 import structlog
 
 from ugc_marketplace.agents.community_curation.base import BaseCurationAgent
-from ugc_marketplace.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -42,7 +41,7 @@ class TopicClusterAgent(BaseCurationAgent[list["ContentItem"], list["TopicCluste
         )
         return agent
 
-    async def execute(self, input_data: list["ContentItem"]) -> list["TopicCluster"]:
+    async def execute(self, input_data: list[ContentItem]) -> list[TopicCluster]:
         """Execute topic clustering.
 
         Args:
@@ -72,7 +71,7 @@ class TopicClusterAgent(BaseCurationAgent[list["ContentItem"], list["TopicCluste
         logger.info("Topic clustering completed", clusters_created=len(result))
         return result
 
-    def _extract_topic(self, item: "ContentItem") -> str:
+    def _extract_topic(self, item: ContentItem) -> str:
         """Extract topic from content item.
 
         Args:
