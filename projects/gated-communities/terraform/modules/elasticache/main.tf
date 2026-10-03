@@ -42,6 +42,7 @@ resource "aws_security_group" "elasticache" {
   vpc_id      = var.vpc_id
 
   ingress {
+    description = "Allow Redis access from VPC"
     from_port   = 6379
     to_port     = 6379
     protocol    = "tcp"
@@ -49,10 +50,11 @@ resource "aws_security_group" "elasticache" {
   }
 
   egress {
+    description = "Allow outbound traffic to VPC CIDR"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [data.aws_vpc.main.cidr_block]
   }
 
   tags = merge(var.common_tags, {

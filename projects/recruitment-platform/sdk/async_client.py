@@ -171,6 +171,21 @@ class AsyncRecruitmentPlatformClient:
         enable_rate_limit: bool = True,
         log_level: int = logging.INFO,
     ) -> None:
+        """Initialize the asynchronous client.
+
+        Args:
+            base_url: The base URL of the Recruitment Platform API.
+            api_key: Optional API key for authentication.
+            timeout: Request timeout in seconds.
+            max_retries: Maximum number of retry attempts.
+            rate_limit_rate: Token bucket refill rate in tokens/second.
+            rate_limit_capacity: Token bucket capacity.
+            cache_ttl: Cache TTL in seconds.
+            cache_redis_url: Redis URL for response caching.
+            enable_cache: Whether to enable response caching.
+            enable_rate_limit: Whether to enable rate limiting.
+            log_level: Logging level.
+        """
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
         self._timeout = timeout

@@ -14,6 +14,8 @@ from .cache import RedisCache
 from .client import RecruitmentPlatformClient
 from .exceptions import (
     AuthenticationError,
+    CacheError,
+    ConfigurationError,
     ConnectionError,
     NotFoundError,
     RateLimitError,
@@ -26,6 +28,8 @@ from .logging_config import (
     clear_correlation_id,
     get_correlation_id,
     get_logger,
+    log_error,
+    log_performance,
     log_request,
     set_correlation_id,
     setup_logging,
@@ -133,6 +137,8 @@ __all__ = [
     "ValidationError",
     "TimeoutError",
     "ConnectionError",
+    "CacheError",
+    "ConfigurationError",
     # Models
     "HealthResponse",
     "APIResponse",
@@ -224,4 +230,7 @@ __all__ = [
     # Logging
     "get_logger",
     "setup_logging",
+    "log_request",
+    "log_error",
+    "log_performance",
 ]

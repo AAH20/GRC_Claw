@@ -76,15 +76,20 @@ resource "aws_security_group" "cluster" {
   vpc_id      = var.vpc_id
 
   egress {
+    description = "Allow outbound traffic to VPC CIDR"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [data.aws_vpc.main.cidr_block]
   }
 
   tags = merge(var.common_tags, {
     Name = "${var.project_name}-${var.environment}-eks-cluster-sg"
   })
+}
+
+data "aws_vpc" "main" {
+  id = var.vpc_id
 }
 
 # ─── EKS Cluster ──────────────────────────────────────────────────────────────

@@ -61,14 +61,23 @@ jobs:
 
       - name: Determine image tag
         id: tag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Deploy with Helm
+        env:
+          DEPLOY_ENV: ${{ github.event.inputs.environment || 'production' }}
+          DB_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          LLM_KEY: ${{ secrets.LLM_API_KEY }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
           helm upgrade --install gated-communities ./helm \
             --namespace ${{ env.NAMESPACE }} \
@@ -76,11 +85,11 @@ jobs:
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
             --set image.tag=${{ steps.tag.outputs.tag }} \
             --set image.pullPolicy=Always \
-            --set environment=${{ github.event.inputs.environment || 'production' }} \
-            --set secrets.databaseUrl=${{ secrets.DATABASE_URL }} \
-            --set secrets.redisUrl=${{ secrets.REDIS_URL }} \
-            --set secrets.llmApiKey=${{ secrets.LLM_API_KEY }} \
-            --set secrets.secretKey=${{ secrets.SECRET_KEY }} \
+            --set environment="$DEPLOY_ENV" \
+            --set secrets.databaseUrl="$DB_URL" \
+            --set secrets.redisUrl="$REDIS_URL" \
+            --set secrets.llmApiKey="$LLM_KEY" \
+            --set secrets.secretKey="$SECRET_KEY" \
             --wait \
             --timeout 5m \
             --atomic
