@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ugc-marketplace-api
+  namespace: ugc-marketplace
+  labels:
+    app: ugc-marketplace
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ugc-marketplace
+      component: api
+  template:
+    metadata:
+      labels:
+        app: ugc-marketplace
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: ugc-marketplace:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: ugc-marketplace-config
+            - secretRef:
+                name: ugc-marketplace-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12

@@ -1,0 +1,451 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "UGC Marketplace API",
+    "description": "Unified agentic AI platform for content marketplace operations",
+    "version": "1.0.0",
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Readiness check",
+        "operationId": "readiness_check",
+        "responses": {
+          "200": {
+            "description": "Service is ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": "Liveness check",
+        "operationId": "liveness_check",
+        "responses": {
+          "200": {
+            "description": "Service is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/moderate/text": {
+      "post": {
+        "summary": "Moderate text content",
+        "operationId": "moderate_text",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Moderation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/moderate/image": {
+      "post": {
+        "summary": "Moderate image content",
+        "operationId": "moderate_image",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Moderation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/moderate/video": {
+      "post": {
+        "summary": "Moderate video content",
+        "operationId": "moderate_video",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Moderation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/moderation/moderate/batch": {
+      "post": {
+        "summary": "Moderate multiple content items in batch",
+        "operationId": "moderate_batch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchModerationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch moderation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchModerationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/monetization/metrics": {
+      "post": {
+        "summary": "Record a metric data point",
+        "operationId": "record_metric",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "value"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "value": {"type": "number"},
+                  "label": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Metric recorded"
+          }
+        }
+      }
+    },
+    "/monetization/reports": {
+      "post": {
+        "summary": "Generate an analytics report",
+        "operationId": "generate_report",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["report_id", "creator_id", "period_start", "period_end"],
+                "properties": {
+                  "report_id": {"type": "string"},
+                  "creator_id": {"type": "string"},
+                  "period_start": {"type": "string", "format": "date-time"},
+                  "period_end": {"type": "string", "format": "date-time"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Report generated"
+          }
+        }
+      }
+    },
+    "/discovery/search": {
+      "get": {
+        "summary": "Search content",
+        "operationId": "search_content",
+        "parameters": [
+          {"name": "query", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 10}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/discovery/recommendations/{user_id}": {
+      "get": {
+        "summary": "Get personalized recommendations",
+        "operationId": "get_recommendations",
+        "parameters": [
+          {"name": "user_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 10}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Recommendations"
+          }
+        }
+      }
+    },
+    "/rights/licenses": {
+      "get": {
+        "summary": "List all licenses",
+        "operationId": "list_licenses",
+        "responses": {
+          "200": {
+            "description": "List of licenses"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new license",
+        "operationId": "create_license",
+        "responses": {
+          "201": {
+            "description": "License created"
+          }
+        }
+      }
+    },
+    "/quality/score": {
+      "post": {
+        "summary": "Score content quality",
+        "operationId": "score_content",
+        "responses": {
+          "200": {
+            "description": "Quality scores"
+          }
+        }
+      }
+    },
+    "/fraud/analyze": {
+      "post": {
+        "summary": "Analyze a transaction for fraud",
+        "operationId": "analyze_transaction",
+        "responses": {
+          "200": {
+            "description": "Fraud analysis result"
+          }
+        }
+      }
+    },
+    "/analytics/growth/{creator_id}": {
+      "get": {
+        "summary": "Get growth prediction for a creator",
+        "operationId": "get_growth_prediction",
+        "parameters": [
+          {"name": "creator_id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Growth prediction"
+          }
+        }
+      }
+    },
+    "/licensing/licenses": {
+      "get": {
+        "summary": "List all licenses",
+        "operationId": "list_licenses",
+        "responses": {
+          "200": {
+            "description": "List of licenses"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new license",
+        "operationId": "create_license",
+        "responses": {
+          "201": {
+            "description": "License created"
+          }
+        }
+      }
+    },
+    "/curation/curate": {
+      "post": {
+        "summary": "Curate content for a community feed",
+        "operationId": "curate_content",
+        "responses": {
+          "200": {
+            "description": "Curation result"
+          }
+        }
+      }
+    },
+    "/marketplace/listings": {
+      "get": {
+        "summary": "List all listings",
+        "operationId": "list_listings",
+        "responses": {
+          "200": {
+            "description": "List of listings"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new listing",
+        "operationId": "create_listing",
+        "responses": {
+          "201": {
+            "description": "Listing created"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "version"],
+        "properties": {
+          "status": {"type": "string"},
+          "version": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ContentType": {
+        "type": "string",
+        "enum": ["text", "image", "video"]
+      },
+      "ModerationAction": {
+        "type": "string",
+        "enum": ["allow", "flag", "block", "escalate"]
+      },
+      "ModerationRequest": {
+        "type": "object",
+        "required": ["content", "content_type"],
+        "properties": {
+          "content": {"type": "string", "minLength": 1, "maxLength": 100000},
+          "content_type": {"$ref": "#/components/schemas/ContentType"},
+          "user_id": {"type": "string"},
+          "metadata": {"type": "object"},
+          "callback_url": {"type": "string"}
+        }
+      },
+      "ModerationResult": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "request_id": {"type": "string", "format": "uuid"},
+          "content_type": {"$ref": "#/components/schemas/ContentType"},
+          "action": {"$ref": "#/components/schemas/ModerationAction"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "categories": {"type": "array", "items": {"type": "string"}},
+          "reasons": {"type": "array", "items": {"type": "string"}},
+          "policy_violations": {"type": "array", "items": {"type": "string"}},
+          "processing_time_ms": {"type": "number"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "agent_trace": {"type": "object"}
+        }
+      },
+      "BatchModerationRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {"$ref": "#/components/schemas/ModerationRequest"}
+          },
+          "priority": {"type": "string", "enum": ["low", "normal", "high"], "default": "normal"}
+        }
+      },
+      "BatchModerationResult": {
+        "type": "object",
+        "properties": {
+          "batch_id": {"type": "string", "format": "uuid"},
+          "results": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/ModerationResult"}
+          },
+          "total_processed": {"type": "integer"},
+          "total_flagged": {"type": "integer"},
+          "total_blocked": {"type": "integer"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+# Prometheus Configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: recruitment-platform
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  - job_name: recruitment-platform
+    static_configs:
+      - targets:
+          - api:8000
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090

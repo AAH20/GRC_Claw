@@ -1,0 +1,397 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Recruitment Platform API",
+    "description": "Unified AI-powered recruitment automation platform with 50 agents across 10 domains",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.example.com/api/v1",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {"name": "health", "description": "Health check endpoints"},
+    {"name": "resume-parser", "description": "Resume parsing and extraction"},
+    {"name": "candidate-matcher", "description": "Candidate matching and ranking"},
+    {"name": "interview-scheduler", "description": "Interview scheduling and optimization"},
+    {"name": "skills-assessor", "description": "Skills assessment and profiling"},
+    {"name": "bias-detector", "description": "Bias detection and mitigation"},
+    {"name": "talent-pool", "description": "Talent pool management"},
+    {"name": "analytics", "description": "Recruitment analytics and insights"},
+    {"name": "onboarding", "description": "Onboarding automation"},
+    {"name": "job-description", "description": "Job description optimization"},
+    {"name": "employer-branding", "description": "Employer branding management"}
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health check",
+        "description": "Check the health status of the API",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string", "example": "healthy"},
+                    "service": {"type": "string", "example": "recruitment-platform"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Readiness check",
+        "description": "Check if the API is ready to accept traffic",
+        "responses": {
+          "200": {
+            "description": "Service is ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string", "example": "ready"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resume-parser/parse": {
+      "post": {
+        "tags": ["resume-parser"],
+        "summary": "Parse resume",
+        "description": "Parse a resume into structured data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {"type": "string", "description": "Resume text content"}
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resume parsed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "contact": {"type": "object"},
+                        "education": {"type": "array"},
+                        "experience": {"type": "array"},
+                        "skills": {"type": "array", "items": {"type": "string"}}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/candidate-matcher/match": {
+      "post": {
+        "tags": ["candidate-matcher"],
+        "summary": "Match candidates",
+        "description": "Match candidates to job requirements with bias-aware ranking",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "candidates": {"type": "array", "items": {"type": "object"}},
+                  "job_requirements": {"type": "object"}
+                },
+                "required": ["candidates", "job_requirements"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Candidates matched successfully"
+          }
+        }
+      }
+    },
+    "/interview-scheduler/optimize-slots": {
+      "post": {
+        "tags": ["interview-scheduler"],
+        "summary": "Optimize interview slots",
+        "description": "Find optimal interview time slots based on participant availability",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "participants": {"type": "array", "items": {"type": "object"}},
+                  "duration_minutes": {"type": "integer", "default": 60}
+                },
+                "required": ["participants"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Optimal slots found"
+          }
+        }
+      }
+    },
+    "/skills-assessor/assess": {
+      "post": {
+        "tags": ["skills-assessor"],
+        "summary": "Assess skills",
+        "description": "Assess candidate skills and generate proficiency scores",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "skill_assessments": {"type": "object"}
+                },
+                "required": ["skill_assessments"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Skills assessed successfully"
+          }
+        }
+      }
+    },
+    "/bias-detector/analyze-language": {
+      "post": {
+        "tags": ["bias-detector"],
+        "summary": "Analyze language bias",
+        "description": "Detect biased language in text",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {"type": "string"}
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Language analysis complete"
+          }
+        }
+      }
+    },
+    "/talent-pool/source": {
+      "post": {
+        "tags": ["talent-pool"],
+        "summary": "Source candidates",
+        "description": "Source candidates from talent pool for a position",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "job_requirements": {"type": "object"},
+                  "pool_criteria": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Candidates sourced successfully"
+          }
+        }
+      }
+    },
+    "/analytics/cost-analysis": {
+      "post": {
+        "tags": ["analytics"],
+        "summary": "Cost analysis",
+        "description": "Analyze recruitment costs and ROI",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hiring_data": {"type": "object"},
+                  "cost_data": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cost analysis complete"
+          }
+        }
+      }
+    },
+    "/onboarding/check-compliance": {
+      "post": {
+        "tags": ["onboarding"],
+        "summary": "Check compliance",
+        "description": "Verify onboarding compliance requirements",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "employee_data": {"type": "object"},
+                  "jurisdiction": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compliance check complete"
+          }
+        }
+      }
+    },
+    "/job-description/check-ats": {
+      "post": {
+        "tags": ["job-description"],
+        "summary": "Check ATS compatibility",
+        "description": "Check job description compatibility with ATS systems",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "job_description": {"type": "string"}
+                },
+                "required": ["job_description"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ATS compatibility check complete"
+          }
+        }
+      }
+    },
+    "/employer-branding/brand-strategy": {
+      "post": {
+        "tags": ["employer-branding"],
+        "summary": "Brand strategy",
+        "description": "Develop employer branding strategy",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "company_data": {"type": "object"},
+                  "target_audience": {"type": "object"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Brand strategy generated"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "data": {"type": "object"},
+          "error": {"type": "string"},
+          "metadata": {"type": "object"}
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"},
+          "service": {"type": "string"},
+          "version": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean", "example": false},
+          "error": {"type": "string"},
+          "details": {"type": "array", "items": {"type": "object"}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gated-communities
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  tls:
+    - hosts:
+        - api.gated-communities.example.com
+      secretName: gated-communities-tls
+  rules:
+    - host: api.gated-communities.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gated-communities
+                port:
+                  number: 80
