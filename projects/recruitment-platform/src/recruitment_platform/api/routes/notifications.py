@@ -7,7 +7,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from recruitment_platform.notifications.notification_service import (
-    NotificationChannel, NotificationPriority, notification_service)
+    NotificationChannel,
+    NotificationPriority,
+    notification_service,
+)
 
 router = APIRouter()
 

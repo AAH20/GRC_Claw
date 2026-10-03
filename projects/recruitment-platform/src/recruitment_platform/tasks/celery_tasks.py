@@ -36,8 +36,9 @@ logger = logging.getLogger(__name__)
 def parse_resume_task(self, resume_text: str) -> dict[str, Any]:
     """Background task to parse a resume."""
     try:
-        from recruitment_platform.agents.resume_parser.resume_parser_agent import \
-            ResumeParserAgent
+        from recruitment_platform.agents.resume_parser.resume_parser_agent import (
+            ResumeParserAgent,
+        )
 
         agent = ResumeParserAgent()
         # Note: In production, use async_to_sync or run in event loop
@@ -58,8 +59,9 @@ def match_candidates_task(
 ) -> dict[str, Any]:
     """Background task to match candidates."""
     try:
-        from recruitment_platform.agents.candidate_matcher.bias_aware_ranker import \
-            BiasAwareRanker
+        from recruitment_platform.agents.candidate_matcher.bias_aware_ranker import (
+            BiasAwareRanker,
+        )
 
         agent = BiasAwareRanker()
         import asyncio

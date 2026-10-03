@@ -6,8 +6,9 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from recruitment_platform.agents.resume_parser.resume_parser_agent import \
-    ResumeParserAgent
+from recruitment_platform.agents.resume_parser.resume_parser_agent import (
+    ResumeParserAgent,
+)
 
 router = APIRouter()
 _agent = ResumeParserAgent()
@@ -43,8 +44,9 @@ async def extract_contact(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Extracted contact information.
     """
-    from recruitment_platform.agents.resume_parser.contact_extractor_agent import \
-        ContactExtractorAgent
+    from recruitment_platform.agents.resume_parser.contact_extractor_agent import (
+        ContactExtractorAgent,
+    )
 
     agent = ContactExtractorAgent()
     result = await agent.process(data)
@@ -61,8 +63,9 @@ async def extract_skills(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         List of extracted skills.
     """
-    from recruitment_platform.agents.resume_parser.skills_extractor_agent import \
-        SkillsExtractorAgent
+    from recruitment_platform.agents.resume_parser.skills_extractor_agent import (
+        SkillsExtractorAgent,
+    )
 
     agent = SkillsExtractorAgent()
     result = await agent.process(data)

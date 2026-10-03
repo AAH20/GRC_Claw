@@ -15,7 +15,9 @@ from recruitment_platform.config.settings import get_settings
 from recruitment_platform.monitoring.metrics import MetricsMiddleware
 from recruitment_platform.monitoring.tracing import setup_tracing
 from recruitment_platform.security.middleware import (
-    RequestIDMiddleware, SecurityHeadersMiddleware)
+    RequestIDMiddleware,
+    SecurityHeadersMiddleware,
+)
 
 settings = get_settings()
 configure_logging(settings.log_level, settings.log_format)

@@ -5,12 +5,15 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-from recruitment_platform.security.auth import (create_access_token,
-                                                generate_api_key,
-                                                generate_secure_id,
-                                                get_password_hash,
-                                                sanitize_input,
-                                                verify_password, verify_token)
+from recruitment_platform.security.auth import (
+    create_access_token,
+    generate_api_key,
+    generate_secure_id,
+    get_password_hash,
+    sanitize_input,
+    verify_password,
+    verify_token,
+)
 
 
 class TestPasswordHashing:

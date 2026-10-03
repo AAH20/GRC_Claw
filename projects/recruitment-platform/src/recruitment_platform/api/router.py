@@ -4,16 +4,22 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from recruitment_platform.api.routes import (bias_detector, candidate_matcher,
-                                             employer_branding, export, health,
-                                             interview_scheduler,
-                                             job_description_optimizer,
-                                             notifications,
-                                             onboarding_automator,
-                                             recruitment_analytics,
-                                             resume_parser, search,
-                                             skills_assessor,
-                                             talent_pool_manager)
+from recruitment_platform.api.routes import (
+    bias_detector,
+    candidate_matcher,
+    employer_branding,
+    export,
+    health,
+    interview_scheduler,
+    job_description_optimizer,
+    notifications,
+    onboarding_automator,
+    recruitment_analytics,
+    resume_parser,
+    search,
+    skills_assessor,
+    talent_pool_manager,
+)
 
 api_router = APIRouter()
 

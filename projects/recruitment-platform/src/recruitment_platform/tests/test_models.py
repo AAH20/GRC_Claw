@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from recruitment_platform.models.schemas import (AgentResponse, HealthResponse,
-                                                 ResumeParseRequest,
-                                                 ResumeParseResponse)
+from recruitment_platform.models.schemas import (
+    AgentResponse,
+    HealthResponse,
+    ResumeParseRequest,
+    ResumeParseResponse,
+)
 
 
 class TestSchemas:

@@ -80,8 +80,12 @@ class ExportService:
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import letter
             from reportlab.lib.styles import getSampleStyleSheet
-            from reportlab.platypus import (Paragraph, SimpleDocTemplate,
-                                            Table, TableStyle)
+            from reportlab.platypus import (
+                Paragraph,
+                SimpleDocTemplate,
+                Table,
+                TableStyle,
+            )
         except ImportError:
             raise ImportError("reportlab is required for PDF export") from None
         output = io.BytesIO()

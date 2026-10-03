@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from recruitment_platform.agents.resume_parser.resume_parser_agent import \
-    ResumeParserAgent
+from recruitment_platform.agents.resume_parser.resume_parser_agent import (
+    ResumeParserAgent,
+)
 
 logger = logging.getLogger(__name__)
 

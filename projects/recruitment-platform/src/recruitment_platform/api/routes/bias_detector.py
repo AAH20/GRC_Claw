@@ -20,8 +20,9 @@ async def analyze_language(data: dict[str, Any]) -> dict[str, Any]:
         Detected biased phrases with suggestions.
     """
     try:
-        from recruitment_platform.agents.bias_detector.language_bias_detector import \
-            LanguageBiasDetector
+        from recruitment_platform.agents.bias_detector.language_bias_detector import (
+            LanguageBiasDetector,
+        )
 
         agent = LanguageBiasDetector()
         result = await agent.process(data)
@@ -40,8 +41,7 @@ async def compute_fairness(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Fairness metric scores.
     """
-    from recruitment_platform.agents.bias_detector.fairness_scorer import \
-        FairnessScorer
+    from recruitment_platform.agents.bias_detector.fairness_scorer import FairnessScorer
 
     agent = FairnessScorer()
     result = await agent.process(data)
@@ -58,8 +58,9 @@ async def analyze_demographics(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Demographic analysis results.
     """
-    from recruitment_platform.agents.bias_detector.demographic_analyzer import \
-        DemographicAnalyzer
+    from recruitment_platform.agents.bias_detector.demographic_analyzer import (
+        DemographicAnalyzer,
+    )
 
     agent = DemographicAnalyzer()
     result = await agent.process(data)
@@ -76,8 +77,7 @@ async def get_recommendations(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Actionable recommendations.
     """
-    from recruitment_platform.agents.bias_detector.recommendation import \
-        Recommendation
+    from recruitment_platform.agents.bias_detector.recommendation import Recommendation
 
     agent = Recommendation()
     result = await agent.process(data)

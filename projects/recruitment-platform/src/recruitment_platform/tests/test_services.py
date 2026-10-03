@@ -5,7 +5,9 @@ from __future__ import annotations
 import pytest
 
 from recruitment_platform.services.agent_registry import (
-    AgentRegistry, register_default_agents)
+    AgentRegistry,
+    register_default_agents,
+)
 from recruitment_platform.services.parsing_service import ParsingService
 
 
@@ -15,8 +17,9 @@ class TestAgentRegistry:
     def test_register_agent(self) -> None:
         """Test agent registration."""
         registry = AgentRegistry()
-        from recruitment_platform.agents.resume_parser.contact_extractor_agent import \
-            ContactExtractorAgent
+        from recruitment_platform.agents.resume_parser.contact_extractor_agent import (
+            ContactExtractorAgent,
+        )
 
         registry.register("test_contact", ContactExtractorAgent)
         assert "test_contact" in registry.list_agents()
@@ -24,8 +27,9 @@ class TestAgentRegistry:
     def test_get_agent(self) -> None:
         """Test getting an agent instance."""
         registry = AgentRegistry()
-        from recruitment_platform.agents.resume_parser.contact_extractor_agent import \
-            ContactExtractorAgent
+        from recruitment_platform.agents.resume_parser.contact_extractor_agent import (
+            ContactExtractorAgent,
+        )
 
         registry.register("test_contact", ContactExtractorAgent)
         agent = registry.get("test_contact")
