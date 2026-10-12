@@ -113,6 +113,34 @@ function sha256(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(stable(value))).digest('hex');
 }
 
+/** Decision fields that determine whether and how an action may execute; bound into decision and receipt hashes. */
+function decisionIntegrityFields(decision: FirewallDecision): Record<string, unknown> {
+  return {
+    allowed: decision.allowed,
+    outcome: decision.outcome,
+    reason: decision.reason,
+    requiresApproval: decision.requiresApproval,
+    approvalThreshold: decision.approvalThreshold,
+    sandbox: decision.sandbox,
+    blastRadiusScore: decision.blastRadiusScore,
+  };
+}
+
+function receiptHashInput(receipt: Pick<FirewallReceipt, 'receiptId' | 'timestamp' | 'actor' | 'request' | 'decision'>): Record<string, unknown> {
+  return {
+    receiptId: receipt.receiptId,
+    timestamp: receipt.timestamp,
+    actor: receipt.actor.id,
+    tool: receipt.request.toolName,
+    decision: decisionIntegrityFields(receipt.decision),
+  };
+}
+
+/** Recomputes the receipt hash; fails if a bound decision field changed after the receipt was issued. */
+export function verifyFirewallReceipt(receipt: FirewallReceipt): boolean {
+  return sha256(receiptHashInput(receipt)) === receipt.receiptHash;
+}
+
 function generateReceiptId(): string {
   return `fw_receipt:${sha256({ ts: Date.now(), rand: Math.random().toString(36).slice(2) }).slice(0, 16)}`;
 }
@@ -236,11 +264,12 @@ export class AgentPolicyFirewall {
     // 9. Sandbox policy
     const sandbox = this.resolveSandbox(request.tier, context.sandboxPolicy);
 
-    // 10. Build decision
+    // 10. Build decision. An action awaiting approval is not executable yet (fail-closed).
+    const outcome: FirewallOutcome = requiresApproval ? 'needs_approval' : 'allowed';
     const decision: FirewallDecision = {
-      allowed: true,
-      outcome: requiresApproval ? 'needs_approval' : 'allowed',
-      reason: 'approved_by_firewall',
+      allowed: outcome === 'allowed',
+      outcome,
+      reason: outcome === 'allowed' ? 'approved_by_firewall' : `requires_${context.approvalThreshold}_approval`,
       sandbox,
       requiresApproval,
       approvalThreshold: context.approvalThreshold,
@@ -323,7 +352,7 @@ export class AgentPolicyFirewall {
   }
 
   private hashDecision(actor: FirewallActor, request: FirewallToolRequest, decision: FirewallDecision): string {
-    return sha256({ actor: actor.id, tool: request.toolName, allowed: decision.allowed, reason: decision.reason, ts: Date.now() });
+    return sha256({ actor: actor.id, tool: request.toolName, decision: decisionIntegrityFields(decision), ts: Date.now() });
   }
 
   private recordCanaryTrap(toolName: string, actor: FirewallActor): void {
@@ -345,7 +374,7 @@ export class AgentPolicyFirewall {
   createReceipt(actor: FirewallActor, request: FirewallToolRequest, context: FirewallContext, decision: FirewallDecision): FirewallReceipt {
     const receiptId = generateReceiptId();
     const timestamp = new Date().toISOString();
-    const receiptHash = sha256({ receiptId, timestamp, actor: actor.id, tool: request.toolName, allowed: decision.allowed });
+    const receiptHash = sha256(receiptHashInput({ receiptId, timestamp, actor, request, decision }));
 
     return {
       version: 'v1',
@@ -401,10 +430,12 @@ export class AgentPolicyFirewall {
 }
 
 export function formatFirewallReceiptForEvidenceGraph(receipt: FirewallReceipt): Record<string, unknown> {
+  // Receipts issued before `outcome` existed only carry `allowed`.
+  const outcome = receipt.decision.outcome ?? (receipt.decision.allowed ? 'allowed' : 'denied');
   return {
     objectKind: 'node',
     objectType: 'policy_decision',
-    label: `Firewall: ${receipt.request.toolName} → ${receipt.decision.allowed ? 'ALLOWED' : 'DENIED'}`,
+    label: `Firewall: ${receipt.request.toolName} → ${outcome.toUpperCase()}`,
     source: 'agent-policy-firewall',
     payload: {
       receipt_id: receipt.receiptId,
@@ -413,6 +444,8 @@ export function formatFirewallReceiptForEvidenceGraph(receipt: FirewallReceipt):
       tool: receipt.request.toolName,
       tier: receipt.request.tier,
       allowed: receipt.decision.allowed,
+      outcome,
+      requires_approval: receipt.decision.requiresApproval,
       reason: receipt.decision.reason,
       sandbox: receipt.decision.sandbox,
       blast_radius: receipt.decision.blastRadiusScore,

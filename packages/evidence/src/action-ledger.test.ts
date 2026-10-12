@@ -16,7 +16,18 @@ function recordDecision(input: { allowed: boolean; reason: string; requiresAppro
 
 describe('ActionLedger.recordDecision with an explicit outcome (firewall path)', () => {
   it('records needs_approval as approval_required', () => {
-    // AgentPolicyFirewall shape for an action that passed policy but awaits approval.
+    // AgentPolicyFirewall shape for an action that passed policy but awaits approval (fail-closed).
+    const { decision } = recordDecision({
+      allowed: false,
+      reason: 'requires_human_approval',
+      requiresApproval: true,
+      outcome: 'needs_approval',
+    });
+    assert.equal(decision.executionState, 'approval_required');
+    assert.equal(decision.requiresApproval, true);
+  });
+
+  it('records needs_approval as approval_required even if a caller passes allowed: true', () => {
     const { decision } = recordDecision({
       allowed: true,
       reason: 'approved_by_firewall',
@@ -24,7 +35,6 @@ describe('ActionLedger.recordDecision with an explicit outcome (firewall path)',
       outcome: 'needs_approval',
     });
     assert.equal(decision.executionState, 'approval_required');
-    assert.equal(decision.requiresApproval, true);
   });
 
   it('records allowed as executing', () => {
@@ -66,8 +76,8 @@ describe('ActionLedger hash chain', () => {
     const ledger = new ActionLedger();
     const firewallIntent = ledger.recordIntent({ tenantId: 7, sessionId: 's', tool: 'inventory.retire', args: { assetId: 'a' } });
     ledger.recordDecision(firewallIntent, {
-      allowed: true,
-      reason: 'approved_by_firewall',
+      allowed: false,
+      reason: 'requires_human_approval',
       requiresApproval: true,
       outcome: 'needs_approval',
     });

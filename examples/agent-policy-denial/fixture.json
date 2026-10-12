@@ -38,9 +38,9 @@
       "toolName": "inventory.retire",
       "tier": "destructive",
       "args": { "assetId": "fictional-asset-02" },
-      "expectedAllowed": true,
+      "expectedAllowed": false,
       "expectedOutcome": "needs_approval",
-      "expectedReason": "approved_by_firewall"
+      "expectedReason": "requires_human_approval"
     }
   ]
 }
