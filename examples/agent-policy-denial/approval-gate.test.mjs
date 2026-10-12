@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { AgentPolicyFirewall } from '../../packages/agent-policy-firewall/src/index.ts';
-import { AgentSession, ExecPolicy } from '../../packages/agent-runtime/src/index.ts';
-import { ActionLedger } from '../../packages/evidence/src/action-ledger.ts';
-import { createClawDispatchContext } from '../../packages/gateway/src/skill-runtime.ts';
+import { AgentPolicyFirewall } from '@grc-claw/agent-policy-firewall';
+import { AgentSession, ExecPolicy } from '@grc-claw/agent-runtime';
+import { ActionLedger } from '@grc-claw/evidence';
+import { createClawDispatchContext } from '../../packages/gateway/dist/skill-runtime.js';
 
 // Exercises the gateway skill runtime, which gates dispatch on `decision.allowed`
 // and records intent, decision and result events in the action ledger.
+// Runs against the built packages (`npm run build`) with plain Node, without tsx: under tsx on
+// Node 20/22, gateway dependencies that emit ES modules without "type": "module" fail to load.
 
 const tool = 'mcp.inventory.retire';
 const actor = { id: 'approval-gate-agent', type: 'agent', tenantId: 7 };
