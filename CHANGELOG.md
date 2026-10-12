@@ -2,6 +2,21 @@
 
 All notable changes documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **`@grc-claw/agent-policy-firewall` — behavior change for npm consumers:** an action that requires approval now returns `allowed: false` with `outcome: 'needs_approval'` and reason `requires_<threshold>_approval` (e.g. `requires_human_approval`). Previously it returned `allowed: true` with `requiresApproval: true` and reason `approved_by_firewall`. Callers that gate execution on `allowed` now hold these actions until they are approved; callers that relied on `allowed: true` for them must handle the approval step explicitly.
+- **`@grc-claw/agent-policy-firewall`** — `FirewallDecision` has a new required `outcome` field: `'allowed' | 'denied' | 'needs_approval'`.
+- **`@grc-claw/agent-policy-firewall`** — decision and receipt hashes now bind `allowed`, `outcome`, `reason`, `requiresApproval`, `approvalThreshold`, `sandbox` and `blastRadiusScore`. Receipts issued earlier used a narrower hash input. The receipt `version` stays `v1`.
+- **`@grc-claw/agent-policy-firewall`** — `formatFirewallReceiptForEvidenceGraph` labels nodes by outcome (`ALLOWED`, `DENIED`, `NEEDS_APPROVAL`) and adds `outcome` and `requires_approval` to the payload.
+
+### Added
+- **`@grc-claw/agent-policy-firewall`** — `verifyFirewallReceipt(receipt)` recomputes a receipt hash.
+- **`@grc-claw/evidence`** — `ActionLedger.recordDecision` accepts an optional `outcome`; `needs_approval` is recorded as the canonical `approval_required` state. Calls without `outcome` keep the existing mapping.
+
+### Fixed
+- An action awaiting approval was recorded in the action ledger as `executing` when `AgentPolicyFirewall` decisions were recorded directly.
+
 ## [1.0.0] — 2026-06-26
 
 ### Summary

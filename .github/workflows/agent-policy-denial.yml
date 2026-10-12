@@ -8,6 +8,9 @@ on:
       - 'examples/agent-policy-denial/**'
       - 'packages/agent-policy-firewall/src/**'
       - 'packages/evidence/src/action-ledger.ts'
+      - 'packages/evidence/src/action-ledger.test.ts'
+      - 'packages/gateway/src/skill-runtime.ts'
+      - 'packages/agent-runtime/src/index.ts'
       - 'package.json'
       - 'package-lock.json'
   pull_request:
@@ -17,6 +20,9 @@ on:
       - 'examples/agent-policy-denial/**'
       - 'packages/agent-policy-firewall/src/**'
       - 'packages/evidence/src/action-ledger.ts'
+      - 'packages/evidence/src/action-ledger.test.ts'
+      - 'packages/gateway/src/skill-runtime.ts'
+      - 'packages/agent-runtime/src/index.ts'
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
@@ -38,3 +44,7 @@ jobs:
           cache: npm
       - run: npm ci --include=optional --no-audit --no-fund
       - run: npm run test:agent-policy-denial
+      # The approval-gate integration test loads the gateway runtime, which imports built workspace packages.
+      - run: npm run build
+      - run: npm run typecheck:approval-contract
+      - run: npm run test:approval-contract

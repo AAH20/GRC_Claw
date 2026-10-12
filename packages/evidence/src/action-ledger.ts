@@ -14,6 +14,9 @@ export type ActionExecutionState =
   | 'not_configured'
   | 'failed';
 
+/** Explicit policy outcome, e.g. `FirewallDecision.outcome` from `@grc-claw/agent-policy-firewall`. */
+export type ActionDecisionOutcome = 'allowed' | 'denied' | 'needs_approval';
+
 export interface ActionLedgerEvent {
   sequence: number;
   actionId: string;
@@ -43,6 +46,24 @@ const GENESIS_HASH = '0'.repeat(64);
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+function decisionExecutionState(input: {
+  allowed: boolean;
+  requiresApproval: boolean;
+  outcome?: ActionDecisionOutcome;
+}): ActionExecutionState {
+  switch (input.outcome) {
+    case 'needs_approval':
+      return 'approval_required';
+    case 'denied':
+      return 'denied';
+    case 'allowed':
+      return 'executing';
+    default:
+      // No explicit outcome (gateway / agent-runtime path): keep the original mapping.
+      return input.allowed ? 'executing' : input.requiresApproval ? 'approval_required' : 'denied';
+  }
 }
 
 function hashable(event: Omit<ActionLedgerEvent, 'hash'>): string {
@@ -104,7 +125,7 @@ export class ActionLedger {
 
   recordDecision(
     intent: ActionLedgerEvent,
-    input: { allowed: boolean; reason: string; requiresApproval: boolean }
+    input: { allowed: boolean; reason: string; requiresApproval: boolean; outcome?: ActionDecisionOutcome }
   ): ActionLedgerEvent {
     return this.append({
       actionId: intent.actionId,
@@ -113,11 +134,7 @@ export class ActionLedger {
       sessionId: intent.sessionId,
       tool: intent.tool,
       idempotencyKey: intent.idempotencyKey,
-      executionState: input.allowed
-        ? 'executing'
-        : input.requiresApproval
-          ? 'approval_required'
-          : 'denied',
+      executionState: decisionExecutionState(input),
       decisionReason: input.reason,
       requiresApproval: input.requiresApproval,
     });
