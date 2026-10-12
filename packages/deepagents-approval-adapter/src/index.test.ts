@@ -1,10 +1,48 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import firewallModule from '../../agent-policy-firewall/src/index.ts';
-import type { FirewallActor, FirewallContext, FirewallToolRequest } from '../../agent-policy-firewall/src/index.ts';
-import { assertExecutable, createDeepAgentsApprovalPredicate, toDeepAgentsApprovalResult } from './index.ts';
+import {
+  assertExecutable,
+  createDeepAgentsApprovalPredicate,
+  toDeepAgentsApprovalResult,
+  type FirewallActor,
+  type FirewallContext,
+  type FirewallDecision,
+  type FirewallPort,
+  type FirewallReceipt,
+  type FirewallToolRequest,
+} from './index.js';
 
-const { AgentPolicyFirewall } = firewallModule;
+class FixtureFirewall implements FirewallPort {
+  evaluate(_actor: FirewallActor, request: FirewallToolRequest, _context: FirewallContext): FirewallDecision {
+    const denied = request.toolName === 'customer.export';
+    const pending = request.toolName === 'control.update';
+    const outcome = denied ? 'denied' : pending ? 'needs_approval' : 'allowed';
+    return {
+      allowed: outcome !== 'denied',
+      outcome,
+      reason: denied ? 'tool_explicitly_denied' : pending ? 'requires_human_approval' : 'approved_by_firewall',
+      sandbox: pending ? 'docker' : 'none',
+      requiresApproval: pending,
+      approvalThreshold: pending ? 'human' : 'none',
+      blastRadiusScore: pending ? 5 : 0,
+      controlImpact: ['SOC2-CC6.1'],
+      replayDetected: false,
+      canaryTriggered: false,
+      sodViolation: false,
+      anomaliesDetected: [],
+      receiptHash: `decision:${outcome}`,
+    };
+  }
+
+  createReceipt(_actor: FirewallActor, request: FirewallToolRequest, _context: FirewallContext, decision: FirewallDecision): FirewallReceipt {
+    return {
+      receiptId: `fixture:${request.toolName}`,
+      request,
+      decision,
+      receiptHash: `receipt:${decision.outcome}`,
+    };
+  }
+}
 
 const actor: FirewallActor = { id: 'deepagents-demo', type: 'agent', role: 'developer', tenantId: 7 };
 const context: FirewallContext = {
@@ -25,7 +63,7 @@ function request(toolName: string, tier: FirewallToolRequest['tier']): FirewallT
 }
 
 test('allowed decisions execute without an interrupt', () => {
-  const result = toDeepAgentsApprovalResult(new AgentPolicyFirewall(), {
+  const result = toDeepAgentsApprovalResult(new FixtureFirewall(), {
     actor,
     context,
     request: request('inventory.read', 'read'),
@@ -37,7 +75,7 @@ test('allowed decisions execute without an interrupt', () => {
 });
 
 test('needs_approval becomes a resumable DeepAgents interrupt', () => {
-  const result = toDeepAgentsApprovalResult(new AgentPolicyFirewall(), {
+  const result = toDeepAgentsApprovalResult(new FixtureFirewall(), {
     actor,
     context,
     request: request('control.update', 'destructive'),
@@ -50,7 +88,7 @@ test('needs_approval becomes a resumable DeepAgents interrupt', () => {
 });
 
 test('denied decisions fail closed even when a caller checks allowed', () => {
-  const result = toDeepAgentsApprovalResult(new AgentPolicyFirewall(), {
+  const result = toDeepAgentsApprovalResult(new FixtureFirewall(), {
     actor,
     context,
     request: request('customer.export', 'read'),
@@ -63,7 +101,7 @@ test('denied decisions fail closed even when a caller checks allowed', () => {
 });
 
 test('predicate preserves a receipt for the interrupt boundary', () => {
-  const predicate = createDeepAgentsApprovalPredicate(new AgentPolicyFirewall(), { actor, context });
+  const predicate = createDeepAgentsApprovalPredicate(new FixtureFirewall(), { actor, context });
   const result = predicate(request('control.update', 'destructive'));
   assert.equal(result.state, 'interrupt');
   assert.equal(result.receipt.request.toolName, 'control.update');
