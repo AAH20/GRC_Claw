@@ -5,7 +5,7 @@
   "context": {
     "tenantScope": ["demo-tenant"],
     "role": "reader",
-    "allowedTools": ["inventory.read"],
+    "allowedTools": ["inventory.read", "inventory.retire"],
     "deniedTools": ["customer.export"],
     "sandboxPolicy": "none",
     "approvalThreshold": "human",
@@ -21,6 +21,7 @@
       "tier": "read",
       "args": { "assetId": "fictional-asset-01" },
       "expectedAllowed": true,
+      "expectedOutcome": "allowed",
       "expectedReason": "approved_by_firewall"
     },
     {
@@ -29,7 +30,17 @@
       "tier": "read",
       "args": { "dataset": "fictional-customers", "destination": "fixture://outside" },
       "expectedAllowed": false,
+      "expectedOutcome": "denied",
       "expectedReason": "tool_explicitly_denied"
+    },
+    {
+      "id": "approval-required-retire",
+      "toolName": "inventory.retire",
+      "tier": "destructive",
+      "args": { "assetId": "fictional-asset-02" },
+      "expectedAllowed": true,
+      "expectedOutcome": "needs_approval",
+      "expectedReason": "approved_by_firewall"
     }
   ]
 }

@@ -11,6 +11,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(readFileSync(join(here, 'fixture.json'), 'utf8'));
 const defaultOutput = join(here, 'out');
 
+// The ledger keeps approval_required as its canonical state for a firewall needs_approval outcome.
+const ledgerStateForOutcome = { allowed: 'executing', denied: 'denied', needs_approval: 'approval_required' };
+
 function usage() {
   console.error('Usage: node --import tsx examples/agent-policy-denial/demo.mjs <run|verify> [output-directory]');
   process.exitCode = 2;
@@ -36,10 +39,12 @@ function verify(outputDirectory) {
   let offset = 0;
   let allowed = 0;
   let denied = 0;
+  let needsApproval = 0;
 
   for (const scenario of fixture.cases) {
     const expected = evaluateCase(firewall, scenario);
     assert.equal(expected.allowed, scenario.expectedAllowed, `fixture mismatch: ${scenario.id}`);
+    assert.equal(expected.outcome, scenario.expectedOutcome, `fixture outcome mismatch: ${scenario.id}`);
     assert.equal(expected.reason, scenario.expectedReason, `fixture reason mismatch: ${scenario.id}`);
 
     const intent = events[offset++];
@@ -54,14 +59,17 @@ function verify(outputDirectory) {
     assert.equal(decision?.kind, 'decision', `missing decision: ${scenario.id}`);
     assert.equal(decision?.actionId, intent.actionId, `action linkage mismatch: ${scenario.id}`);
     assert.equal(decision?.decisionReason, expected.reason, `reason mismatch: ${scenario.id}`);
-    assert.equal(decision?.executionState, expected.allowed ? 'executing' : 'denied', `decision mismatch: ${scenario.id}`);
+    assert.equal(decision?.executionState, ledgerStateForOutcome[expected.outcome], `decision mismatch: ${scenario.id}`);
+    assert.equal(decision?.requiresApproval, expected.requiresApproval, `approval flag mismatch: ${scenario.id}`);
 
-    if (expected.allowed) {
+    if (expected.outcome === 'allowed') {
       const result = events[offset++];
       assert.equal(result?.kind, 'result', `missing simulated result: ${scenario.id}`);
       assert.equal(result?.actionId, intent.actionId, `result linkage mismatch: ${scenario.id}`);
       assert.equal(result?.executionState, 'simulated', `unexpected execution: ${scenario.id}`);
       allowed++;
+    } else if (expected.outcome === 'needs_approval') {
+      needsApproval++;
     } else {
       denied++;
     }
@@ -80,6 +88,7 @@ function verify(outputDirectory) {
     fixtureCases: fixture.cases.length,
     expectedAllowed: allowed,
     expectedDenied: denied,
+    expectedNeedsApproval: needsApproval,
     observedLedgerEvents: events.length,
     ledgerIntegrity: 'verified',
     rawArgumentDisclosure: 'none-observed',
@@ -110,14 +119,17 @@ function run(outputDirectory) {
     });
     const decision = firewall.evaluate(fixture.actor, request, fixture.context);
     assert.equal(decision.allowed, scenario.expectedAllowed, `unexpected policy outcome: ${scenario.id}`);
+    assert.equal(decision.outcome, scenario.expectedOutcome, `unexpected firewall outcome: ${scenario.id}`);
     assert.equal(decision.reason, scenario.expectedReason, `unexpected policy reason: ${scenario.id}`);
     ledger.recordDecision(intent, {
       allowed: decision.allowed,
       reason: decision.reason,
       requiresApproval: decision.requiresApproval,
+      outcome: decision.outcome,
     });
-    // This demo never invokes either tool. The permitted path records a simulated result only.
-    if (decision.allowed) ledger.recordResult(intent, { executionState: 'simulated' });
+    // This demo never invokes any tool. Only the permitted path records a simulated result;
+    // an action awaiting approval stops at its decision.
+    if (decision.outcome === 'allowed') ledger.recordResult(intent, { executionState: 'simulated' });
   }
 
   const result = verify(outputDirectory);

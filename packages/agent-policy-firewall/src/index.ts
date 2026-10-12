@@ -42,8 +42,12 @@ export interface FirewallContext {
   controlImpactIds?: string[];
 }
 
+/** `needs_approval`: the action passed policy checks but must not run until it is approved. */
+export type FirewallOutcome = 'allowed' | 'denied' | 'needs_approval';
+
 export interface FirewallDecision {
   allowed: boolean;
+  outcome: FirewallOutcome;
   reason: string;
   sandbox: SandboxPolicy;
   requiresApproval: boolean;
@@ -235,6 +239,7 @@ export class AgentPolicyFirewall {
     // 10. Build decision
     const decision: FirewallDecision = {
       allowed: true,
+      outcome: requiresApproval ? 'needs_approval' : 'allowed',
       reason: 'approved_by_firewall',
       sandbox,
       requiresApproval,
@@ -302,6 +307,7 @@ export class AgentPolicyFirewall {
   ): FirewallDecision {
     return {
       allowed: false,
+      outcome: 'denied',
       reason,
       sandbox: 'denied',
       requiresApproval: false,
