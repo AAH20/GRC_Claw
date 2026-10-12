@@ -89,6 +89,7 @@
     { "path": "./packages/compliance-automation-marketplace" },
     { "path": "./packages/real-time-compliance-monitor" },
     { "path": "./packages/agent-policy-firewall" },
+    { "path": "./packages/deepagents-approval-adapter" },
     { "path": "./packages/defense-procurement" },
     { "path": "./packages/verifier-network" },
     { "path": "./packages/benchmark-intelligence" },
