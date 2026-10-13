@@ -4,16 +4,6 @@
   "entries": [
     {
       "runner": "node",
-      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
-      "test": "Trust Transaction + Evidence Graph Integration > verifies the graph node hash matches recomputed hash"
-    },
-    {
-      "runner": "node",
-      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
-      "test": "Trust Transaction + Evidence Graph Integration > tx hash and graph object hash are independently verifiable"
-    },
-    {
-      "runner": "node",
       "file": "packages/ingest/test/comprehensive.test.ts",
       "test": "netsec-grc-architecture: GRC + evidence plane > four framework packs (ISO 27001, NIST, SOC2, ISO 42001 AIMS)"
     },
