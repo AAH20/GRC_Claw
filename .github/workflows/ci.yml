@@ -31,8 +31,9 @@ jobs:
       - name: Graph/proof coverage gate
         run: npm run graph:coverage
 
+      # The root tsconfig.json only lists project references, so `tsc --noEmit` checked no files.
       - name: TypeScript type check
-        run: npx tsc --noEmit
+        run: npx tsc -b tsconfig.json
 
   test:
     name: Test (Node ${{ matrix.node-version }})
@@ -41,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["20", "22"]
+        node-version: ["20", "22", "24"]
     steps:
       - uses: actions/checkout@v4
 
@@ -55,8 +56,13 @@ jobs:
       - name: Build all packages
         run: npm run build
 
-      - name: Run tests
-        run: node --import tsx --test packages/*/src/**/*.test.ts
+      - name: Test the test runner
+        run: node --test scripts/ci-tests/ci-tests.test.mjs
+
+      # Discovers packages/*/src/**/*.test.ts and packages/*/test/**/*.test.ts, runs each file with its
+      # runner, and reports discovered, executed, baseline, skipped and failed counts per runner.
+      - name: Run package tests
+        run: node scripts/ci-tests/run.mjs
 
   build:
     name: Build

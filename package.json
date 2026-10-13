@@ -17,6 +17,7 @@
     "graph:coverage": "node scripts/graph-proof-coverage.mjs",
     "graph:coverage:history": "node scripts/graph-proof-coverage.mjs --write-history",
     "test": "npm run test -w @grc-claw/ingest",
+    "test:packages": "node scripts/ci-tests/run.mjs",
     "test:iso42001": "bash scripts/test-iso-42001.sh",
     "test:byoc": "bash scripts/test-byoc-connectors.sh",
     "test:action-ledger": "npm run build && node scripts/test-action-ledger.mjs",
