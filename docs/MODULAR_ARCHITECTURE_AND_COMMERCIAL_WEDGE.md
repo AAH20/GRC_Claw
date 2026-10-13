@@ -4,6 +4,45 @@ This document defines how GRC_Claw is packaged as an inspectable OSS control and
 
 The goal is not to turn the repository into a monolith or to claim that an adapter is a production integration before it has been exercised. Every boundary below is designed to be testable with fixtures, receipts, and reproducible end-to-end runs.
 
+## Navigation and implementation map
+
+This proposal is anchored to the repository's existing implementation, not to an abstract platform diagram.
+
+| Layer in this document | Current repository entry point | What to inspect |
+| --- | --- | --- |
+| Shared value objects | [`packages/core`](../packages/core/) | Common IDs, types, and domain primitives |
+| Identity and tenant context | [`packages/agent-identity`](../packages/agent-identity/) and [`packages/rbac-multi-tenant`](../packages/rbac-multi-tenant/) | Actor, tenant, and authorization boundaries |
+| Policy boundary | [`packages/agent-policy-firewall`](../packages/agent-policy-firewall/) | Fail-closed decisions, approval state, tool boundary, receipts |
+| Runtime and transport | [`packages/agent-runtime`](../packages/agent-runtime/), [`packages/gateway`](../packages/gateway/) | Dispatch, gateway, idempotency, and lifecycle behavior |
+| Evidence and hashes | [`packages/evidence`](../packages/evidence/) and [`packages/evidence-graph`](../packages/evidence-graph/) | Action ledger, canonical objects, evidence projection, verification |
+| Framework semantics | [`packages/frameworks`](../packages/frameworks/) and [`packages/framework-crosswalk`](../packages/framework-crosswalk/) | Control vocabulary and cross-framework mapping |
+| Benchmarks | [`packages/benchmark-intelligence`](../packages/benchmark-intelligence/) and [Issue #22](https://github.com/AAH20/GRC_Claw/issues/22) | Fixture, gate, replay, mutation, and report contracts |
+| Domain assurance | [`packages/cjadc2-operations`](../packages/cjadc2-operations/), [`packages/physical-ai-assurance`](../packages/physical-ai-assurance/), [`packages/military-robot-firewall`](../packages/military-robot-firewall/) | Existing policy and assurance reference domains |
+| Public architecture | [`ARCHITECTURE.md`](../ARCHITECTURE.md), [`CLAIMS_AND_LIMITATIONS.md`](../CLAIMS_AND_LIMITATIONS.md) | Current planes, boundaries, and claim discipline |
+
+Related external repositories and surfaces:
+
+- [Apex JADC2](https://github.com/AAH20/Apex_JADC2) is the decision-policy reference surface for F2T2EA, rules of engagement, authorization, deconfliction, coalition federation, and sovereign or air-gapped operation.
+- [Robot Black Box](https://github.com/AAH20/robot-black-box) is the evidence and verification reference surface for authority, execution, outcome, provenance, offline verification, and explicit unknown states.
+- [GRC_Claw PR #21](https://github.com/AAH20/GRC_Claw/pull/21) is the deterministic package-test discovery and failure-accounting baseline.
+- [GRC_Claw Issue #22](https://github.com/AAH20/GRC_Claw/issues/22) defines the approval, replay, policy, receipt-integrity, and report-schema benchmark direction.
+- [A2Z SOC](https://a2zsoc.com) is the hosted commercial plane. Its public entry points include the [trust center](https://a2zsoc.com/trust-center), [AI assurance passport](https://a2zsoc.com/ai-assurance-passport), and [international partner desk](https://a2zsoc.com/international-partners).
+
+For the competitive boundary, the relevant IBM references are [watsonx Orchestrate agent orchestration](https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=agents-adding-orchestration), [agent lifecycle guidance](https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=agents-getting-started-building), and [workflow builder documentation](https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=workflows-creating-agentic-in-workflow-builder). These links are used to define a precise complement, not to claim parity.
+
+### Reproduce the core path
+
+From the repository root:
+
+```bash
+npm install
+npm run build
+npm run test:firewall
+npm run test:benchmark
+```
+
+The commands above exercise the local OSS build and package-level policy and benchmark surfaces. A domain adapter is not considered integrated merely because its types compile. It must add fixture cases, observed payloads, receipt verification, and a report that records limitations.
+
 ## 1. Macro architecture
 
 ```mermaid
