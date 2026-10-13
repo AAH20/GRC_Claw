@@ -870,7 +870,15 @@ describe('Full Pipeline: Scan -> Evidence -> Crosswalk -> Trust -> Verifier', ()
       idempotencyKey: 'scan-001',
       args: { scanType: 'full', frameworks: ['CMMC', 'SOC2'] },
     });
-    const scanContext = makeContext({ role: 'executor' });
+    // The firewall denies tools outside the context allowlist (fail-closed), so the scan must be listed.
+    const unlistedDecision = new AgentPolicyFirewall().evaluate(actor, scanRequest, makeContext({ role: 'executor' }));
+    assert.equal(unlistedDecision.outcome, 'denied');
+    assert.equal(unlistedDecision.reason, 'tool_not_in_allowlist');
+
+    const scanContext = makeContext({
+      role: 'executor',
+      allowedTools: ['compliance.scan', 'evidence.collect', 'evidence.list'],
+    });
 
     const scanDecision = firewall.evaluate(actor, scanRequest, scanContext);
     assert.equal(scanDecision.allowed, true, 'Scan action approved by firewall');
