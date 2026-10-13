@@ -1,0 +1,66 @@
+{
+  "description": "Known behavior failures surfaced by #17. CI fails on any failure not listed here, and on entries that pass or no longer exist. Fix each in a focused PR and remove its entry.",
+  "trackingIssue": "https://github.com/AAH20/GRC_Claw/issues/20",
+  "entries": [
+    {
+      "runner": "node",
+      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
+      "test": "Trust Transaction + Evidence Graph Integration > verifies the graph node hash matches recomputed hash"
+    },
+    {
+      "runner": "node",
+      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
+      "test": "Trust Transaction + Evidence Graph Integration > tx hash and graph object hash are independently verifiable"
+    },
+    {
+      "runner": "node",
+      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
+      "test": "Agent Policy Firewall + Trust Transaction Integration > firewall receipt hash matches formatted evidence graph hash"
+    },
+    {
+      "runner": "node",
+      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
+      "test": "Full Pipeline: Scan -> Evidence -> Crosswalk -> Trust -> Verifier > simulates a complete compliance pipeline end-to-end"
+    },
+    {
+      "runner": "node",
+      "file": "packages/ingest/test/comprehensive.test.ts",
+      "test": "netsec-grc-architecture: GRC + evidence plane > four framework packs (ISO 27001, NIST, SOC2, ISO 42001 AIMS)"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/cjadc2-operations/src/index.test.ts",
+      "test": "Cjadc2Engine > assessDomain > should return empty assessment for unknown domain"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/military-robot-firewall/src/index.test.ts",
+      "test": "MilitaryRobotFirewall > evaluateAction > allows valid lethal engagement with PID"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/military-robot-firewall/src/index.test.ts",
+      "test": "MilitaryRobotFirewall > evaluateAction > denies action without positive identification"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/military-robot-firewall/src/index.test.ts",
+      "test": "MilitaryRobotFirewall > audit logging > exports audit log"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/nim-firewall-integration/src/index.test.ts",
+      "test": "PromptInjectionDetector > should detect multiple patterns and increase score"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/nim-firewall-integration/src/index.test.ts",
+      "test": "DataBoundaryEnforcer > should enforce response boundaries"
+    },
+    {
+      "runner": "vitest",
+      "file": "packages/nim-firewall-integration/src/index.test.ts",
+      "test": "NimFirewall > should handle multiple violations"
+    }
+  ]
+}
