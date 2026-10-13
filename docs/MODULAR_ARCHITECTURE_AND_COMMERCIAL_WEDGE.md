@@ -123,7 +123,7 @@ packages/
   evidence/                     receipts, action ledger, assurance envelopes
   evidence-graph/               canonical evidence objects and hashes
   frameworks/                   controls and crosswalks
-  benchmark-intelligence/      reproducible evaluation reports
+  benchmark-intelligence/      report aggregation and benchmark analysis
   browser-evidence/             browser evidence collection
   connectors/                   provider-neutral connector contracts
   cjadc2-operations/            policy and assurance reference domain
@@ -141,6 +141,22 @@ Each publishable package must provide:
 6. A fixture or example that can be replayed without customer data or network access.
 
 The root workspace may compose packages for demos, but a package must remain usable without the demo application. This keeps the OSS core independently auditable and prevents accidental coupling between the public engine and A2Z SOC operations.
+
+### Benchmark placement
+
+Benchmark v0 is intentionally split by responsibility:
+
+```text
+benchmarks/runner/              executable deterministic harness
+benchmarks/fixtures/            versioned offline input cases
+benchmarks/reports/             local generated output, ignored by Git
+schemas/grc-claw-benchmark-report-v1.schema.json
+                                versioned report contract
+packages/benchmark-intelligence/
+                                report aggregation and analysis APIs
+```
+
+The runner stays beside the fixtures because it is an executable repository-level conformance harness. `@grc-claw/benchmark-intelligence` remains a reusable package that consumes validated reports for aggregation, trend analysis, and opt-in anonymized outcome intelligence. It does not own fixture execution or silently turn unverified inputs into benchmark claims.
 
 ## 3. Stable integration contract
 
