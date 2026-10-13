@@ -230,15 +230,10 @@ describe('Trust Transaction + Evidence Graph Integration', () => {
       weight: 90,
     });
 
-    const recomputed = evidenceObjectHash({
-      orgSlug: graphNode.orgSlug,
-      graphId: graphNode.graphId,
-      objectKind: graphNode.objectKind,
-      objectType: graphNode.objectType,
-      label: graphNode.label,
-      source: graphNode.source,
-    });
+    // The object hash covers the complete node, so it is recomputed from the whole object.
+    const recomputed = evidenceObjectHash(graphNode);
     assert.equal(graphNode.objectHash, recomputed);
+    assert.notEqual(evidenceObjectHash({ ...graphNode, controlIds: ['AC.L2-3.1.3'] }), graphNode.objectHash);
   });
 
   it('snapshot includes trust transaction node with org ownership edge', () => {
@@ -285,15 +280,9 @@ describe('Trust Transaction + Evidence Graph Integration', () => {
     const txVerify = verifyTrustTransaction(tx);
     assert.equal(txVerify.ok, true);
 
-    const graphRecompute = evidenceObjectHash({
-      orgSlug: graphNode.orgSlug,
-      graphId: graphNode.graphId,
-      objectKind: graphNode.objectKind,
-      objectType: graphNode.objectType,
-      label: graphNode.label,
-      source: graphNode.source,
-    });
+    const graphRecompute = evidenceObjectHash(graphNode);
     assert.equal(graphNode.objectHash, graphRecompute);
+    assert.notEqual(evidenceObjectHash({ ...graphNode, controlIds: ['AC.L2-3.1.3'] }), graphNode.objectHash);
   });
 
   it('tampered graph node is detectable via hash mismatch', () => {
