@@ -53,6 +53,11 @@ jobs:
 
       - run: npm ci
 
+      # package-lock.json only records @rollup/rollup-darwin-arm64 (npm/cli#4828), so Vitest cannot
+      # load Rollup on this runner. Install the matching Linux binding without changing the lockfile.
+      - name: Install Rollup native binding for Vitest
+        run: npm install --no-save "@rollup/rollup-linux-x64-gnu@$(node -p "require('rollup/package.json').version")"
+
       - name: Build all packages
         run: npm run build
 
