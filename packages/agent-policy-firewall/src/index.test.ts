@@ -117,4 +117,11 @@ describe('AgentPolicyFirewall receipt integrity', () => {
     assert.equal(payload.outcome, 'needs_approval');
     assert.equal(payload.requires_approval, true);
   });
+
+  it('binds the evidence-graph payload to the verified receipt hash', () => {
+    const receipt = pendingReceipt();
+    const payload = formatFirewallReceiptForEvidenceGraph(receipt).payload as Record<string, unknown>;
+    assert.equal(verifyFirewallReceipt(receipt), true);
+    assert.equal(payload.receipt_hash, receipt.receiptHash);
+  });
 });

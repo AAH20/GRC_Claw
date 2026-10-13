@@ -429,6 +429,11 @@ export class AgentPolicyFirewall {
   }
 }
 
+/**
+ * Projects a receipt into evidence-graph node fields. `payload.receipt_hash` binds the node to the
+ * verified receipt; evidence-graph's `nodeObject()` computes the node's `objectHash`, which keeps
+ * this package free of a graph dependency.
+ */
 export function formatFirewallReceiptForEvidenceGraph(receipt: FirewallReceipt): Record<string, unknown> {
   // Receipts issued before `outcome` existed only carry `allowed`.
   const outcome = receipt.decision.outcome ?? (receipt.decision.allowed ? 'allowed' : 'denied');
@@ -439,6 +444,7 @@ export function formatFirewallReceiptForEvidenceGraph(receipt: FirewallReceipt):
     source: 'agent-policy-firewall',
     payload: {
       receipt_id: receipt.receiptId,
+      receipt_hash: receipt.receiptHash,
       actor_id: receipt.actor.id,
       actor_type: receipt.actor.type,
       tool: receipt.request.toolName,

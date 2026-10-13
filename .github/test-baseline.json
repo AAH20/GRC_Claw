@@ -14,11 +14,6 @@
     },
     {
       "runner": "node",
-      "file": "packages/grc-claw-v16/test/integration-e2e.test.ts",
-      "test": "Agent Policy Firewall + Trust Transaction Integration > firewall receipt hash matches formatted evidence graph hash"
-    },
-    {
-      "runner": "node",
       "file": "packages/ingest/test/comprehensive.test.ts",
       "test": "netsec-grc-architecture: GRC + evidence plane > four framework packs (ISO 27001, NIST, SOC2, ISO 42001 AIMS)"
     },

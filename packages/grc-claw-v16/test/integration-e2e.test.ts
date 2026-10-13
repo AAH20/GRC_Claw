@@ -10,6 +10,7 @@ import {
 import {
   AgentPolicyFirewall,
   formatFirewallReceiptForEvidenceGraph,
+  verifyFirewallReceipt,
   type FirewallActor,
   type FirewallToolRequest,
   type FirewallContext,
@@ -385,12 +386,32 @@ describe('Agent Policy Firewall + Trust Transaction Integration', () => {
 
     const decision = firewall.evaluate(actor, request, context);
     const receipt = firewall.createReceipt(actor, request, context, decision);
-    const formatted = formatFirewallReceiptForEvidenceGraph(receipt);
+    assert.equal(verifyFirewallReceipt(receipt), true, 'receipt verifies');
 
-    assert.equal(formatted.objectHash.length, 64);
+    // The formatter stays dependency-free and binds the node payload to the verified receipt.
+    const formatted = formatFirewallReceiptForEvidenceGraph(receipt);
+    const payload = formatted.payload as Record<string, unknown>;
+    assert.equal(payload.receipt_hash, receipt.receiptHash);
     assert.equal(formatted.objectKind, 'node');
     assert.equal(formatted.objectType, 'policy_decision');
     assert.equal(formatted.source, 'agent-policy-firewall');
+
+    // evidence-graph computes the object hash from the complete node.
+    const node = nodeObject({
+      orgSlug: actor.orgSlug ?? 'acme-corp',
+      graphId: `fw_receipt:${receipt.receiptId}`,
+      objectType: 'policy_decision',
+      label: String(formatted.label),
+      source: 'agent-policy-firewall',
+      controlIds: receipt.decision.controlImpact,
+      payload,
+    });
+    assert.equal(node.objectHash.length, 64);
+    assert.equal(node.objectHash, evidenceObjectHash(node));
+
+    // Tampering with the controls or the bound receipt hash changes the node hash.
+    assert.notEqual(evidenceObjectHash({ ...node, controlIds: ['AC.L1-3.1.2'] }), node.objectHash);
+    assert.notEqual(evidenceObjectHash({ ...node, payload: { ...payload, receipt_hash: '0'.repeat(64) } }), node.objectHash);
   });
 
   it('denied action produces trust transaction with denied policy decision', () => {
