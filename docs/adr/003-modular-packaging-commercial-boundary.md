@@ -18,7 +18,7 @@ The concrete implementation map is maintained in [`MODULAR_ARCHITECTURE_AND_COMM
 4. Keep hosted custody, private policy calibration, managed connectors, operational support, and customer-specific workflows outside the OSS core.
 5. Require every benchmark and commercial claim to link to observed artifacts, environment metadata, and stated limitations.
 6. Treat `unknown` and `not_applicable` as first-class evaluation results.
-7. Treat [Apex JADC2](https://github.com/AAH20/Apex_JADC2) and [Robot Black Box](https://github.com/AAH20/robot-black-box) as external reference surfaces until an adapter has fixture-backed and observed end-to-end evidence.
+7. Treat [Apex Rig](https://github.com/AAH20/apex-rig), [Apex Aura](https://github.com/AAH20/apex-aura), [Apex JADC2](https://github.com/AAH20/Apex_JADC2), and [Robot Black Box](https://github.com/AAH20/robot-black-box) as distinct external reference surfaces. Their adapters must preserve each system's role and require fixture-backed and observed end-to-end evidence before production claims.
 8. Use [A2Z SOC](https://a2zsoc.com) for the hosted commercial plane, including custody, calibration, managed connectors, and operational workflows.
 
 ## Consequences

@@ -24,6 +24,8 @@ Related external repositories and surfaces:
 
 - [Apex JADC2](https://github.com/AAH20/Apex_JADC2) is the decision-policy reference surface for F2T2EA, rules of engagement, authorization, deconfliction, coalition federation, and sovereign or air-gapped operation.
 - [Robot Black Box](https://github.com/AAH20/robot-black-box) is the evidence and verification reference surface for authority, execution, outcome, provenance, offline verification, and explicit unknown states.
+- [Apex Rig](https://github.com/AAH20/apex-rig) is the sovereign multi-harness aggregator and hardware-aware cognitive router. Its README describes harness supervision, entropy-based routing, dynamic VRAM/KV-cache projection, provider bridges, and a zero-dependency Python core.
+- [Apex Aura](https://github.com/AAH20/apex-aura) is the sovereign cognitive fabric and AI hypervisor reference. Its README describes a layered ingress, perception, routing, inference, execution, governance, and data subsystem, with NVIDIA NIM, IBM Granite, OpenShift, and 6G-related integration points.
 - [GRC_Claw PR #21](https://github.com/AAH20/GRC_Claw/pull/21) is the deterministic package-test discovery and failure-accounting baseline.
 - [GRC_Claw Issue #22](https://github.com/AAH20/GRC_Claw/issues/22) defines the approval, replay, policy, receipt-integrity, and report-schema benchmark direction.
 - [A2Z SOC](https://a2zsoc.com) is the hosted commercial plane. Its public entry points include the [trust center](https://a2zsoc.com/trust-center), [AI assurance passport](https://a2zsoc.com/ai-assurance-passport), and [international partner desk](https://a2zsoc.com/international-partners).
@@ -182,36 +184,56 @@ type VerificationReport = {
 
 An adapter may add domain fields, but it must preserve the base contract. Unknown domain behavior is represented as `unknown` or `not_applicable`, never as an inferred pass.
 
-## 4. Apex_Rig and Apex_Aura boundary
+## 4. Apex Rig and Apex Aura integration boundary
 
-The names Apex_Rig and Apex_Aura are treated as external domain systems in this repository. No source, API, or public repository for either system is assumed here. Their adapters therefore begin as contract packages and fixtures, not as claims of integration.
+These are real public projects with distinct responsibilities, so the boundary is explicit rather than generic.
 
-### Apex_Rig adapter contract
+### Apex Rig: harness and routing plane
 
-The intended boundary is a rig or infrastructure execution system that submits a proposed action and receives a policy decision. The adapter must expose:
+The [Apex Rig repository](https://github.com/AAH20/apex-rig) describes a sovereign multi-harness aggregator, hardware-aware cognitive router, and agent mesh. The repository documents a Python core, harness supervision, prefix deduplication, entropy routing, provider bridges, dynamic memory projection, and workspace journaling.
 
-- actor, tenant, system, and environment identity;
-- action and input digests;
-- requested capability and blast-radius metadata;
-- approval requirement and expiry;
-- execution result and evidence references.
+GRC_Claw should integrate at the proposed-action boundary:
 
-The adapter must never execute an action directly from an LLM response. It calls the GRC_Claw policy boundary and only forwards an `allowed` decision with a valid receipt context.
+| Apex Rig signal | GRC_Claw contract |
+| --- | --- |
+| Harness, workspace, and operator identity | `IntegrationRequest.actorId`, `tenantId`, and `systemId` |
+| Selected harness, provider, model, and routing rationale | Evidence metadata and policy evaluation context |
+| Prompt or task input | Redacted input digest and provenance reference |
+| Tool, file, or subprocess proposal | Policy evaluation and capability request |
+| Workspace journal mutation | Approval-required or denied decision before commit |
+| Result, rollback, or failure | Execution receipt, ledger entry, and evidence reference |
 
-### Apex_Aura adapter contract
+The adapter must not treat a router selection as authorization. Apex Rig chooses how work may be carried out; GRC_Claw decides whether the requested capability is permitted and records the evidence needed to review that decision.
 
-The intended boundary is an agent or orchestration system that proposes plans, delegates work, or synthesizes decisions. The adapter must expose:
+### Apex Aura: sovereign execution and infrastructure plane
 
-- plan identity and parent-child delegation;
-- model/provider metadata when available;
-- tool or capability requests;
-- policy version and evaluation inputs;
-- approval, resume, cancellation, and expiry transitions;
-- final result and cited evidence.
+The [Apex Aura repository](https://github.com/AAH20/apex-aura) describes a sovereign cognitive fabric and AI hypervisor with layered ingress, perception, routing, inference, execution, governance, and data subsystems. Its documented integration vocabulary includes NVIDIA NIM, IBM Granite, OpenShift, BlueField and DOCA, 6G or O-RAN, computer-use perception, action contracts, rollback journals, and audit-ledger components.
 
-The adapter is not a replacement orchestrator. It makes the orchestration observable, policy-constrained, and reviewable.
+GRC_Claw should integrate at the control and evidence seams:
 
-Both adapters must begin with fixture-backed conformance tests. A production connector is only claimed after a real integration run records the source version, observed payloads, verification results, and limitations.
+| Apex Aura signal | GRC_Claw contract |
+| --- | --- |
+| Ingress packet and system identity | Versioned integration request and tenant context |
+| Decision-router output | Policy decision with outcome, reason, and policy version |
+| Precondition and postcondition checks | Evidence references and execution-state transitions |
+| Saga or rollback event | Receipt, ledger ordering, and compensating-action evidence |
+| Model, NIM, Granite, GPU, DPU, or edge metadata | Environment metadata in the verification report |
+| Governance or audit event | Canonical evidence object and independent verification |
+
+GRC_Claw does not replace Apex Aura's inference, hardware, or execution components. It supplies the cross-system policy, approval, receipt, evidence, and verification contracts that make those components reviewable by security, audit, procurement, and regulated buyers.
+
+The empirical benchmark numbers documented in either project remain project-local claims until a reproducible fixture, environment capture, and independent run are attached to a GRC_Claw benchmark report. The adapter must preserve the distinction between a repository-reported result and a result verified by this project.
+
+### Combined composition
+
+```text
+Apex Rig harness and router
+  -> Apex Aura execution and infrastructure fabric
+  -> GRC_Claw policy, approval, receipt, ledger, and evidence graph
+  -> A2Z SOC hosted custody, calibration, and buyer workflow
+```
+
+This composition gives each project a clear role instead of collapsing the stack into one opaque agent runtime.
 
 ## 5. Positioning relative to IBM watsonx Orchestrate
 
@@ -220,6 +242,8 @@ IBM watsonx Orchestrate is an enterprise automation and agent-orchestration prod
 | Concern | Orchestration product | GRC_Claw and A2Z SOC wedge |
 | --- | --- | --- |
 | Plan and task execution | Agent skills, workflows, and enterprise actions | Observes and constrains proposed actions through policy contracts |
+| Harness and model routing | [Apex Rig](https://github.com/AAH20/apex-rig) focuses on multi-harness supervision, routing, and hardware-aware selection | GRC_Claw records the routing context and evaluates the requested capability |
+| Sovereign execution fabric | [Apex Aura](https://github.com/AAH20/apex-aura) documents ingress, perception, inference, execution, governance, and infrastructure layers | GRC_Claw supplies approval, receipt, evidence, and independent verification seams |
 | Authority | Product and connector permissions | Explicit actor, tenant, tool, approval, expiry, and separation-of-duties evidence |
 | Evidence | Product execution history | Portable receipts, hash-linked ledger, evidence graph, and independent verification |
 | Cross-framework assurance | Usually an integration or governance activity | Framework mappings and buyer-ready proof packets are first-class OSS contracts |
