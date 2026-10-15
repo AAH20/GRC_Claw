@@ -54,3 +54,6 @@ package-lock.json
 *.mov
 *.wav
 *.mp3
+
+# Approval evidence chain demo output
+examples/approval-evidence-chain/out/

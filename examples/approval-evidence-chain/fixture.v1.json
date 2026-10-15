@@ -1,0 +1,56 @@
+{
+  "id": "approval-evidence-chain",
+  "version": 1,
+  "classification": "synthetic-offline",
+  "description": "One agent requests three actions. The firewall allows one, holds one for human approval and denies one. No tool, model or external service is called.",
+  "orgSlug": "demo-org",
+  "sessionId": "approval-evidence-chain-demo",
+  "actor": { "id": "demo-agent", "type": "agent", "tenantId": 7, "role": "operator" },
+  "context": {
+    "tenantScope": ["demo-tenant"],
+    "role": "operator",
+    "allowedTools": ["inventory.read", "control.update"],
+    "deniedTools": ["customer.export"],
+    "sandboxPolicy": "none",
+    "approvalThreshold": "human",
+    "dataBoundary": "tenant-confidential",
+    "replayWindowSeconds": 300,
+    "maxBlastRadius": 10,
+    "controlImpactIds": ["SOC2-CC6.1"]
+  },
+  "cases": [
+    {
+      "id": "read-inventory",
+      "request": { "toolName": "inventory.read", "tier": "read", "args": { "assetId": "fictional-asset-01" } },
+      "expected": {
+        "outcome": "allowed",
+        "reason": "approved_by_firewall",
+        "boundaryState": "execute",
+        "toolInvoked": true,
+        "ledgerStates": ["intent_recorded", "executing", "simulated"]
+      }
+    },
+    {
+      "id": "update-control",
+      "request": { "toolName": "control.update", "tier": "destructive", "args": { "controlId": "fictional-control-02" } },
+      "expected": {
+        "outcome": "needs_approval",
+        "reason": "requires_human_approval",
+        "boundaryState": "interrupt",
+        "toolInvoked": false,
+        "ledgerStates": ["intent_recorded", "approval_required"]
+      }
+    },
+    {
+      "id": "export-customers",
+      "request": { "toolName": "customer.export", "tier": "read", "args": { "dataset": "fictional-customers" } },
+      "expected": {
+        "outcome": "denied",
+        "reason": "tool_explicitly_denied",
+        "boundaryState": "deny",
+        "toolInvoked": false,
+        "ledgerStates": ["intent_recorded", "denied"]
+      }
+    }
+  ]
+}
