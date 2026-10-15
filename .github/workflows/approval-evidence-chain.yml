@@ -1,0 +1,55 @@
+name: Approval evidence chain demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/approval-evidence-chain.yml'
+      - 'examples/approval-evidence-chain/**'
+      - 'packages/agent-policy-firewall/src/**'
+      - 'packages/deepagents-approval-adapter/src/**'
+      - 'packages/evidence/src/action-ledger.ts'
+      - 'packages/evidence-graph/src/**'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/approval-evidence-chain.yml'
+      - 'examples/approval-evidence-chain/**'
+      - 'packages/agent-policy-firewall/src/**'
+      - 'packages/deepagents-approval-adapter/src/**'
+      - 'packages/evidence/src/action-ledger.ts'
+      - 'packages/evidence-graph/src/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    name: Demo (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci --include=optional --no-audit --no-fund
+      - run: npm run test:approval-evidence-chain
+      # Record the walkthrough and its artifacts for this commit and Node version.
+      - run: npm run demo:approval-evidence-chain
+      - run: npm run verify:approval-evidence-chain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: approval-evidence-chain-node${{ matrix.node-version }}
+          path: examples/approval-evidence-chain/out/
+          if-no-files-found: error
